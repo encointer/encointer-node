@@ -18,8 +18,8 @@ members = [
 #[patch."https://github.com/encointer/pallet-encointer-balances"]
 #pallet-encointer-balances = { path = "../pallet-encointer-balances" }
 
-[patch."https://github.com/encointer/pallet-encointer-scheduler"]
-pallet-encointer-scheduler = { path = "../pallet-encointer-scheduler" }
+#[patch."https://github.com/encointer/pallet-encointer-scheduler"]
+#pallet-encointer-scheduler = { path = "../pallet-encointer-scheduler" }
 
 #[patch."https://github.com/encointer/substrate-fixed"]
 #substrate-fixed = { path = "../substrate-fixed" }
