@@ -1,12 +1,12 @@
 [package]
-authors = ['Anonymous']
+authors = ["encointer.org <alain@encointer.org>"]
 build = 'build.rs'
 edition = '2018'
-homepage = 'https://substrate.dev'
-license = 'Unlicense'
-name = 'node-template'
-repository = 'https://github.com/paritytech/substrate/'
-version = '2.0.0-alpha.5'
+homepage = 'https://encointer.org'
+license = "GPL-3.0"
+name = 'encointer-node'
+repository = 'https://github.com/encointer/encointer-node'
+version = '0.2.0'
 
 [build-dependencies]
 vergen = '3.0.4'
@@ -28,9 +28,9 @@ version = '0.8.0-alpha.5'
 package = 'sp-finality-grandpa'
 version = '2.0.0-alpha.5'
 
-[dependencies.node-template-runtime]
+[dependencies.encointer-node-runtime]
 path = '../runtime'
-version = '2.0.0-alpha.5'
+version = '0.2.0'
 
 [dependencies.sc-basic-authorship]
 version = '0.8.0-alpha.5'
@@ -78,4 +78,4 @@ version = '2.0.0-alpha.5'
 version = '2.0.0-alpha.5'
 
 [[bin]]
-name = 'node-template'
+name = 'encointer-node'
