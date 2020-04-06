@@ -9,14 +9,14 @@ mod command;
 
 fn main() -> sc_cli::Result<()> {
 	let version = sc_cli::VersionInfo {
-		name: "Substrate Node",
+		name: "Encointer Node",
 		commit: env!("VERGEN_SHA_SHORT"),
 		version: env!("CARGO_PKG_VERSION"),
-		executable_name: "node-template",
-		author: "Anonymous",
-		description: "Template Node",
-		support_url: "support.anonymous.an",
-		copyright_start_year: 2017,
+		executable_name: "encointer-node",
+		author: "Alain Brenzikofer",
+		description: "Encointer Node",
+		support_url: "alain@encointer.org",
+		copyright_start_year: 2019,
 	};
 
 	command::run(version)
