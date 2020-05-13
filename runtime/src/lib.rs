@@ -107,8 +107,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node"),
 	impl_name: create_runtime_str!("encointer-node"),
 	authoring_version: 2,
-	spec_version: 3,
-	impl_version: 3,
+	spec_version: 4,
+	impl_version: 4,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
