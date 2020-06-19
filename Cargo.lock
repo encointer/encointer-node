@@ -837,7 +837,9 @@ version = "0.2.0"
 dependencies = [
  "encointer-node-runtime",
  "futures 0.3.4",
+ "jsonrpc-core",
  "log",
+ "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client",
@@ -846,8 +848,11 @@ dependencies = [
  "sc-executor",
  "sc-finality-grandpa",
  "sc-network",
+ "sc-rpc",
  "sc-service",
  "sc-transaction-pool",
+ "sp-api",
+ "sp-blockchain",
  "sp-consensus",
  "sp-consensus-aura",
  "sp-core",
@@ -857,6 +862,7 @@ dependencies = [
  "sp-transaction-pool",
  "structopt",
  "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
  "vergen",
 ]
 
@@ -867,6 +873,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-system-rpc-runtime-api",
  "pallet-aura",
  "pallet-balances",
  "pallet-encointer-balances",
@@ -878,6 +885,7 @@ dependencies = [
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -1203,6 +1211,16 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-version",
+]
+
+[[package]]
+name = "frame-system-rpc-runtime-api"
+version = "2.0.0-alpha.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63ab31fe2ac70adb4c6e4ad3da007a84159d4a9299ca8a6007597d81b9bec770"
+dependencies = [
+ "parity-scale-codec",
+ "sp-api",
 ]
 
 [[package]]
@@ -1923,9 +1941,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpc-core"
-version = "14.0.5"
+version = "14.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe3b688648f1ef5d5072229e2d672ecb92cbff7d1c79bcf3fd5898f3f3df0970"
+checksum = "a0747307121ffb9703afd93afbd0fb4f854c38fb873f2c8b90e0e902f27c7b62"
 dependencies = [
  "futures 0.1.29",
  "log",
@@ -3264,6 +3282,25 @@ dependencies = [
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-transaction-payment-rpc"
+version = "2.0.0-alpha.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13a097c3a28793329287aab6562463f651daed4db132c91555ab7de3210696f6"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -5493,9 +5530,9 @@ dependencies = [
 
 [[package]]
 name = "sp-panic-handler"
-version = "2.0.0-alpha.5"
+version = "2.0.0-rc3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "643ae9f2dc119551342422394cdfa8bfe0a230d1adc9891fcb08cf15fdf0f703"
+checksum = "48327f6f9617180513cf20db80af8151b32d965937810c8d4464503a78e77070"
 dependencies = [
  "backtrace",
  "log",
@@ -5616,9 +5653,9 @@ dependencies = [
 
 [[package]]
 name = "sp-std"
-version = "2.0.0-alpha.5"
+version = "2.0.0-rc3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "752e038359704226bb5737531fb91df2e4ab33214e0be6eb6f32ad688a71b411"
+checksum = "b3dc3b71646e5b94bd6c9ff73d42d86bcbd55a257709ac0b3bcde90d42a16b45"
 
 [[package]]
 name = "sp-storage"
@@ -5692,9 +5729,9 @@ dependencies = [
 
 [[package]]
 name = "sp-wasm-interface"
-version = "2.0.0-alpha.5"
+version = "2.0.0-rc3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ab9dec817ad8e5eed83a3579da8638703d7559be5da5342312c8effee6a70aa"
+checksum = "cd42500c3a67a99a4a45bf3ca66b41a63e882a4a9e4f632b63218b57b75a929b"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -5862,6 +5899,28 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "typenum",
+]
+
+[[package]]
+name = "substrate-frame-rpc-system"
+version = "2.0.0-alpha.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b56a16c2e8b534958a8df3f41b20a898b78a615412a0476c380a5707f9cb788"
+dependencies = [
+ "frame-system-rpc-runtime-api",
+ "futures 0.3.4",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "log",
+ "parity-scale-codec",
+ "sc-client",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-transaction-pool",
 ]
 
 [[package]]
@@ -6389,9 +6448,9 @@ dependencies = [
 
 [[package]]
 name = "trie-db"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de9222c50cc325855621271157c973da27a0dcd26fa06f8edf81020bd2333df0"
+checksum = "bcc309f34008563989045a4c4dbcc5770467f3a3785ee80a9b5cc0d83362475f"
 dependencies = [
  "hash-db",
  "hashbrown 0.6.3",
@@ -6432,7 +6491,7 @@ version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bfd5b7557925ce778ff9b9ef90e3ade34c524b5ff10e239c69a42d546d2af56"
 dependencies = [
- "rand 0.7.3",
+ "rand 0.5.6",
 ]
 
 [[package]]

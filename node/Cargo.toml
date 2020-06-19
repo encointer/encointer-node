@@ -19,6 +19,7 @@ version = '2.0.0-alpha.5'
 futures = '0.3.1'
 log = '0.4.8'
 structopt = '0.3.8'
+jsonrpc-core = "14.2.0"
 
 [dependencies.grandpa]
 package = 'sc-finality-grandpa'
@@ -76,6 +77,22 @@ version = '2.0.0-alpha.5'
 
 [dependencies.sp-transaction-pool]
 version = '2.0.0-alpha.5'
+
+# for rpc
+[dependencies.sc-rpc]
+version = "2.0.0-alpha.5"
+
+[dependencies.sp-blockchain]
+version = '2.0.0-alpha.5'
+
+[dependencies.sp-api]
+version = "2.0.0-alpha.5"
+
+[dependencies.substrate-frame-rpc-system]
+version = "2.0.0-alpha.5"
+
+[dependencies.pallet-transaction-payment-rpc]
+version = "2.0.0-alpha.5"
 
 [[bin]]
 name = 'encointer-node'
