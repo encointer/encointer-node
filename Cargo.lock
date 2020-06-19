@@ -5530,9 +5530,9 @@ dependencies = [
 
 [[package]]
 name = "sp-panic-handler"
-version = "2.0.0-rc3"
+version = "2.0.0-alpha.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48327f6f9617180513cf20db80af8151b32d965937810c8d4464503a78e77070"
+checksum = "643ae9f2dc119551342422394cdfa8bfe0a230d1adc9891fcb08cf15fdf0f703"
 dependencies = [
  "backtrace",
  "log",
@@ -5653,9 +5653,9 @@ dependencies = [
 
 [[package]]
 name = "sp-std"
-version = "2.0.0-rc3"
+version = "2.0.0-alpha.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3dc3b71646e5b94bd6c9ff73d42d86bcbd55a257709ac0b3bcde90d42a16b45"
+checksum = "752e038359704226bb5737531fb91df2e4ab33214e0be6eb6f32ad688a71b411"
 
 [[package]]
 name = "sp-storage"
@@ -5729,9 +5729,9 @@ dependencies = [
 
 [[package]]
 name = "sp-wasm-interface"
-version = "2.0.0-rc3"
+version = "2.0.0-alpha.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd42500c3a67a99a4a45bf3ca66b41a63e882a4a9e4f632b63218b57b75a929b"
+checksum = "7ab9dec817ad8e5eed83a3579da8638703d7559be5da5342312c8effee6a70aa"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
