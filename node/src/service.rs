@@ -26,6 +26,7 @@ native_executor_instance!(
 macro_rules! new_full_start {
 	($config:expr) => {{
 		use std::sync::Arc;
+		type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 		let mut import_setup = None;
 		let inherent_data_providers = sp_inherents::InherentDataProviders::new();
 
@@ -62,6 +63,13 @@ macro_rules! new_full_start {
 				import_setup = Some((grandpa_block_import, grandpa_link));
 
 				Ok(import_queue)
+            })?
+		    .with_rpc_extensions(|builder| -> Result<RpcExtension, _> {
+				let deps = crate::rpc::FullDeps {
+					client: builder.client().clone(),
+					pool: builder.pool(),
+				};
+				Ok(crate::rpc::create_full(deps))
 			})?;
 
 		(builder, import_setup, inherent_data_providers)
@@ -184,6 +192,7 @@ pub fn new_full(config: Configuration)
 pub fn new_light(config: Configuration)
 	-> Result<impl AbstractService, ServiceError>
 {
+	type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 	let inherent_data_providers = InherentDataProviders::new();
 
 	ServiceBuilder::new_light::<Block, RuntimeApi, Executor>(config)?
@@ -230,5 +239,21 @@ pub fn new_light(config: Configuration)
 			let provider = client as Arc<dyn StorageAndProofProvider<_, _>>;
 			Ok(Arc::new(GrandpaFinalityProofProvider::new(backend, provider)) as _)
 		})?
+		.with_rpc_extensions(|builder,| ->
+										Result<RpcExtension, _>
+			{
+				let fetcher = builder.fetcher()
+					.ok_or_else(|| "Trying to start node RPC without active fetcher")?;
+				let remote_blockchain = builder.remote_backend()
+					.ok_or_else(|| "Trying to start node RPC without active remote blockchain")?;
+
+				let light_deps = crate::rpc::LightDeps {
+					remote_blockchain,
+					fetcher,
+					client: builder.client().clone(),
+					pool: builder.pool(),
+				};
+				Ok(crate::rpc::create_light(light_deps))
+			})?
 		.build()
 }
