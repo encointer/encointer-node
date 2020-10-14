@@ -48,11 +48,12 @@ use geojson::GeoJson;
 use serde_json;
 use std::fs;
 use substrate_api_client::{
-    compose_extrinsic, extrinsic::xt_primitives::UncheckedExtrinsicV4,
+    compose_extrinsic, compose_extrinsic_offline, extrinsic::xt_primitives::UncheckedExtrinsicV4,
     node_metadata::Metadata, utils::hexstr_to_vec, Api, XtStatus,
 };
 use encointer_node_notee_runtime::{
-    AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, BlockNumber, Header
+    AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, 
+    BlockNumber, Header, Call, BalancesCall
 };
 use encointer_ceremonies::{
     Attestation, AttestationIndexType, ClaimOfAttendance,
@@ -128,7 +129,7 @@ fn main() {
                 .description("lists all accounts in keystore")
                 .runner(|_args: &str, _matches: &ArgMatches<'_>| {
                     let store = Store::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-                    println!("sr25519 keys:");
+                    info!("sr25519 keys:");
                     for pubkey in store
                         .read()
                         .public_keys::<sr25519::AppPublic>()
@@ -137,7 +138,7 @@ fn main() {
                     {
                         println!("{}", pubkey.to_ss58check());
                     }
-                    println!("ed25519 keys:");
+                    info!("ed25519 keys:");
                     for pubkey in store
                         .read()
                         .public_keys::<ed25519::AppPublic>()
@@ -161,40 +162,45 @@ fn main() {
         )
         .add_cmd(
             Command::new("faucet")
-                .description("send some bootstrapping funds to an account")
+                .description("send some bootstrapping funds to supplied account(s)")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
-                        Arg::with_name("AccountId")
+                        Arg::with_name("accounts")
                             .takes_value(true)
                             .required(true)
-                            .value_name("SS58")
-                            .help("AccountId to be funded"),
+                            .value_name("ACCOUNT")
+                            .multiple(true)
+                            .min_values(1)
+                            .help("Account(s) to be funded, ss58check encoded"),
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
-                    let account = matches.value_of("AccountId").unwrap();
-                    let accountid = get_accountid_from_str(account);
                     let _api = api.set_signer(AccountKeyring::Alice.pair());
-                    let xt = _api.balance_transfer(accountid.clone(), PREFUNDING_AMOUNT);
-                    info!(
-                        "[+] Alice is generous and pre funds account {}\n",
-                        accountid.to_ss58check()
-                    );
-                    let tx_hash = _api
-                        .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
-                        .unwrap();
-                    info!(
-                        "[+] Pre-Funding transaction got finalized. Hash: {:?}\n",
-                        tx_hash
-                    );
-                    let result = _api.get_account_data(&accountid).unwrap();
-                    println!(
-                        "balance for {} is now {}",
-                        account,
-                        result.free
-                    );
+                    let accounts: Vec<_> = matches.values_of("accounts").unwrap().collect();
+
+                    let mut nonce = _api.get_nonce().unwrap();
+                    for account in accounts.into_iter() {
+                        let to = get_accountid_from_str(account);
+                        #[allow(clippy::redundant_clone)]
+                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
+                            _api.clone().signer.unwrap(),
+                            Call::Balances(BalancesCall::transfer(to.clone(), PREFUNDING_AMOUNT)),
+                            nonce,
+                            Era::Immortal,
+                            _api.genesis_hash,
+                            _api.genesis_hash,
+                            _api.runtime_version.spec_version,
+                            _api.runtime_version.transaction_version
+                        );
+                        // send and watch extrinsic until finalized
+                        println!("Faucet drips to {} (Alice's nonce={})", to, nonce);
+                        let _blockh = _api
+                            .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
+                            .unwrap();
+                        nonce += 1;
+                    }
                     Ok(())
                 }),
         )
@@ -621,13 +627,13 @@ fn main() {
                             .value_name("SS58")
                             .help("AccountId in ss58check format"),
                     )
-                        .arg(
-                            Arg::with_name("attestations")
-                                .takes_value(true)
-                                .required(true)
-                                .multiple(true)
-                                .min_values(2)
-                        )
+                    .arg(
+                        Arg::with_name("attestations")
+                            .takes_value(true)
+                            .required(true)
+                            .multiple(true)
+                            .min_values(2)
+                    )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.value_of("accountid").unwrap();
