@@ -14,7 +14,7 @@ substrate-bip39 = "0.3.1"
 tiny-bip39 = "0.6.2"
 serde_json      = { version = "1.0"}
 clap = "2.33"
-clap-nested = "0.3.1"
+clap-nested = "0.4.0"
 primitive-types = { version = "0.6.1", default-features = false, features = ["codec"] }
 geojson = "0.17"
 base58  = "0.1"

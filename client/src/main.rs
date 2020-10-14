@@ -72,7 +72,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() {
     env_logger::init();
 
-    let res = Commander::new()
+    let _ = Commander::new()
         .options(|app| {
             app.arg(
                 Arg::with_name("node-url")
@@ -98,7 +98,7 @@ fn main() {
                 Arg::with_name("cid")
                     .short("c")
                     .long("cid")
-                    //.global(true)
+                    .global(true)
                     .takes_value(true)
                     .value_name("STRING")
                     .help("currency identifier, base58 encoded"),
@@ -110,7 +110,7 @@ fn main() {
             .after_help("")
             .setting(AppSettings::ColoredHelp)
         })
-        .args(|_args, matches| matches.value_of("environment").unwrap_or("dev"))
+        .args(|_args, _matches| "")
         .add_cmd(
             Command::new("new-account")
                 .description("generates a new account")
@@ -454,6 +454,7 @@ fn main() {
             Command::new("list-participants")
                 .description("list all registered participants for current ceremony and supplied currency identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    debug!("{:?}", matches);
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
                     let cid = get_cid(
@@ -564,13 +565,6 @@ fn main() {
                             .value_name("SS58")
                             .help("AccountId in ss58check format"),
                     )
-                        .arg(
-                            Arg::with_name("attestations")
-                                .takes_value(true)
-                                .required(true)
-                                .multiple(true)
-                                .min_values(2)
-                        )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.value_of("accountid").unwrap();
@@ -678,6 +672,7 @@ fn main() {
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    debug!("{:?}", matches);
                     let arg_who = matches.value_of("accountid").unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
@@ -717,6 +712,7 @@ fn main() {
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    debug!("{:?}", matches);
                     let signer_arg = matches.value_of("signer").unwrap();
                     let claim = ClaimOfAttendance::decode(
                         &mut &hex::decode(matches.value_of("claim").unwrap()).unwrap()[..],
@@ -726,18 +722,12 @@ fn main() {
                     Ok(())
                 }),
         )
-
-
-
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");
             Ok(())
         })
         .run();
-    if let Err(e) = res {
-        println!("{}", e)
-    }
 }
 
 fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair> {
@@ -966,7 +956,8 @@ fn new_claim_for(
     n_participants: u32,
 ) -> Vec<u8> {
     let cindex = get_ceremony_index(api);
-    let mindex = get_meetup_index_for(api, (cid, cindex), &accountid).unwrap();
+    let mindex = get_meetup_index_for(api, (cid, cindex), &accountid)
+        .expect("participant must be assigned to meetup to generate a claim");
 
     // implicitly assume that participant meet at the right place at the right time
     let mloc = get_meetup_location(api, cid, mindex).unwrap();
@@ -1042,7 +1033,7 @@ fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: Me
         CeremonyPhaseType::REGISTERING => panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location.")
     };
     
-    Some(attesting_start + ONE_DAY
+    Some(attesting_start + ONE_DAY/2
     - (mlon * (ONE_DAY as f64) / 360.0) as Moment )
 }
 
