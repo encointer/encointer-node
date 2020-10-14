@@ -19,6 +19,7 @@
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
+#[macro_use]
 extern crate clap;
 extern crate env_logger;
 extern crate log;
@@ -309,9 +310,16 @@ fn main() {
                     .arg(
                         Arg::with_name("events")
                             .short("e")
-                            .long("exit-after")
+                            .long("await-events")
                             .takes_value(true)
-                            .help("exit after given number of SubstraTEE events"),
+                            .help("exit after given number of encointer events"),
+                    )
+                    .arg(
+                        Arg::with_name("blocks")
+                            .short("b")
+                            .long("await-blocks")
+                            .takes_value(true)
+                            .help("exit after given number of blocks"),
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
@@ -599,8 +607,8 @@ fn main() {
                         proof
                     );
                     // send and watch extrinsic until finalized
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Broadcast).unwrap();
-                    println!("registration broadcast for: {}, tx hash: {:?}", signer.public().to_ss58check(), tx_hash);
+                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    println!("registration 'ready' for: {}, tx hash: {:?}", signer.public().to_ss58check(), tx_hash);
                     Ok(())
                 }),
         )
@@ -646,8 +654,8 @@ fn main() {
                         "register_attestations",
                         attestations.clone()
                     );
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Broadcast).unwrap();
-                    println!("Transaction got broadcast. tx hash: {:?}", tx_hash);
+                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    println!("Transaction 'ready'. tx hash: {:?}", tx_hash);
                     Ok(())
                 }),
         )
@@ -744,18 +752,32 @@ fn listen(matches: &ArgMatches<'_>) {
     let api = get_chain_api(matches);
     info!("Subscribing to events");
     let (events_in, events_out) = channel();
+    let mut count = 0u32;
+    let mut blocks = 0u32;
     api.subscribe_events(events_in.clone());
     loop {
+        if matches.is_present("events")
+            && count >= value_t!(matches.value_of("events"), u32).unwrap()
+        {
+            return;
+        };
+        if matches.is_present("blocks")
+            && blocks >= 1 + value_t!(matches.value_of("blocks"), u32).unwrap()
+        {
+            return;
+        };
         let event_str = events_out.recv().unwrap();
         let _unhex = hexstr_to_vec(event_str).unwrap();
         let mut _er_enc = _unhex.as_slice();
         let _events = Vec::<frame_system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
+        blocks += 1;
         match _events {
             Ok(evts) => {
                 for evr in &evts {
                     debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
                     match &evr.event {
                         Event::encointer_ceremonies(ee) => {
+                            count += 1;
                             println!(">>>>>>>>>> ceremony event: {:?}", ee);
                             match &ee {
                                 encointer_ceremonies::RawEvent::ParticipantRegistered(
@@ -769,6 +791,7 @@ fn listen(matches: &ArgMatches<'_>) {
                             }
                         }, 
                         Event::encointer_scheduler(ee) => {
+                            count += 1;
                             println!(">>>>>>>>>> scheduler event: {:?}", ee);
                             match &ee {
                                 encointer_scheduler::Event::PhaseChangedTo(phase) => {
@@ -777,12 +800,17 @@ fn listen(matches: &ArgMatches<'_>) {
                             }
                         }
                         Event::encointer_currencies(ee) => {
+                            count += 1;
                             println!(">>>>>>>>>> currency event: {:?}", ee);
                             match &ee {
                                 encointer_currencies::RawEvent::CurrencyRegistered(account, cid) => {
                                     println!("Currency registered: by {}, cid: {:?}", account, cid);
                                 }
                             }
+                        },
+                        Event::encointer_balances(ee) => {
+                            count += 1;
+                            println!(">>>>>>>>>> encointer balances event: {:?}", ee);
                         },
                         _ => debug!("ignoring unsupported module event: {:?}", evr.event),
                     }

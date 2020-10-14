@@ -35,6 +35,9 @@ $CLIENT --cid $cid register-participant $account1
 $CLIENT --cid $cid register-participant $account2
 $CLIENT --cid $cid register-participant $account3
 
+# await next block
+$CLIENT listen -b 1
+
 # list registry
 $CLIENT --cid $cid list-participants
 
@@ -67,6 +70,9 @@ echo "*** send witnesses to chain"
 $CLIENT register-attestations $account1 $witness2_1 $witness3_1
 $CLIENT register-attestations $account2 $witness1_2 $witness3_2
 $CLIENT register-attestations $account3 $witness1_3 $witness2_3
+
+# await next block
+$CLIENT listen -b 1
 
 $CLIENT --cid $cid list-attestations
 
