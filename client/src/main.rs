@@ -223,14 +223,14 @@ fn main() {
                     let accountid = get_accountid_from_str(account);
                     match matches.value_of("cid") {
                         Some(cid_str) => {
-                            let cid = get_cid(cid_str);
+                            let cid = verify_cid(&api, cid_str);
                             let bn = get_block_number(&api);
                             let dr = get_demurrage_per_block(&api, cid);
                             let balance = if let Some(entry) = api
                                 .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, None) {
                                     apply_demurrage(entry, bn, dr)
                             } else { BalanceType::from_num(0) }; 
-                            println!("NCTR balance for {} is {} in currency {}", account, balance, cid.encode().to_base58());
+                            println!("NCTR balance for {} in currency {} is {} ", account, cid.encode().to_base58(), balance);
                         }
                         None => {
                             let balance = if let Some(data) = api.get_account_data(&accountid) {
@@ -282,7 +282,7 @@ fn main() {
                     let _api = api.set_signer(sr25519_core::Pair::from(from));
                     let tx_hash = match matches.value_of("cid") {
                         Some(cid_str) => {
-                            let cid = get_cid(cid_str);
+                            let cid = verify_cid(&_api, cid_str);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
                             let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
@@ -468,7 +468,7 @@ fn main() {
                     debug!("{:?}", matches);
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
-                    let cid = get_cid(
+                    let cid = verify_cid(&api,
                         matches
                             .value_of("cid")
                             .expect("please supply argument --cid"),
@@ -493,7 +493,7 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
-                    let cid = get_cid(
+                    let cid = verify_cid(&api,
                         matches
                             .value_of("cid")
                             .expect("please supply argument --cid"),
@@ -529,7 +529,7 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
-                    let cid = get_cid(
+                    let cid = verify_cid(&api,
                         matches
                             .value_of("cid")
                             .expect("please supply argument --cid"),
@@ -583,7 +583,7 @@ fn main() {
                     let signer = get_pair_from_str(arg_who);
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
-                    let cid = get_cid(
+                    let cid = verify_cid(&api,
                         matches
                             .value_of("cid")
                             .expect("please supply argument --cid"),
@@ -684,7 +684,7 @@ fn main() {
                     let arg_who = matches.value_of("accountid").unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
-                    let cid = get_cid(
+                    let cid = verify_cid(&api,
                         matches
                             .value_of("cid")
                             .expect("please supply argument --cid"),
@@ -822,7 +822,18 @@ fn listen(matches: &ArgMatches<'_>) {
 }
 
 fn get_cid(cid: &str) -> CurrencyIdentifier {
-    CurrencyIdentifier::decode(&mut &cid.from_base58().unwrap()[..]).unwrap()
+    CurrencyIdentifier::decode(&mut &cid.from_base58()
+        .expect("cid must be base58 encoded")[..])
+        .expect("failed to decode cid")
+}
+
+fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CurrencyIdentifier {
+    let cids = get_currency_identifiers(&api).expect("no currency registered");
+    let cid = get_cid(cid);
+    if !cids.contains(&cid) {
+        panic!("cid {} does not exist on chain", cid.encode().to_base58());
+    }
+    cid
 }
 
 fn get_accountid_from_str(account: &str) -> AccountId {
