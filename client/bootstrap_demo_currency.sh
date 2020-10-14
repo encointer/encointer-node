@@ -1,5 +1,5 @@
 #!/bin/bash
-CLIENT="../target/release/encointer-client-notee ws://127.0.0.1:9979 "
+CLIENT="../target/release/encointer-client-notee"
 
 # register new currency
 cid=$($CLIENT new-currency test-locations-mediterranean.json //Alice)
@@ -29,19 +29,19 @@ account2=//Bob
 account3=//Charlie
 
 # charlie has no genesis funds
-$CLIENT fund-account $account3
+$CLIENT faucet $account3
 
 $CLIENT --cid $cid register-participant $account1
 $CLIENT --cid $cid register-participant $account2
 $CLIENT --cid $cid register-participant $account3
 
 # list registry
-$CLIENT --cid $cid list-participant-registry
+$CLIENT --cid $cid list-participants
 
 $CLIENT next-phase
 # should now be ASSIGNING
 
-$CLIENT --cid $cid list-meetup-registry
+$CLIENT --cid $cid list-meetups
 
 $CLIENT next-phase
 # should now be ATTESTING
@@ -68,11 +68,11 @@ $CLIENT register-attestations $account1 $witness2_1 $witness3_1
 $CLIENT register-attestations $account2 $witness1_2 $witness3_2
 $CLIENT register-attestations $account3 $witness1_3 $witness2_3
 
-$CLIENT --cid $cid list-attestations-registry
+$CLIENT --cid $cid list-attestations
 
 $CLIENT next-phase
 # should now be REGISTERING
 
 echo "account balances for new currency with cid $cid"
-$CLIENT --cid $cid get-balance //Alice
-$CLIENT --cid $cid get-balance //Bob
+$CLIENT --cid $cid balance //Alice
+$CLIENT --cid $cid balance //Bob
