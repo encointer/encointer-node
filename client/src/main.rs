@@ -192,7 +192,7 @@ fn main() {
                     let result = _api.get_account_data(&accountid).unwrap();
                     println!(
                         "balance for {} is now {}",
-                        accountid.to_ss58check(),
+                        account,
                         result.free
                     );
                     Ok(())
@@ -449,12 +449,9 @@ fn main() {
                         compose_extrinsic!(api.clone(), "EncointerScheduler", "next_phase");
 
                     // send and watch extrinsic until finalized
-                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     let phase = get_current_phase(&api);
-                    println!(
-                        "Transaction got finalized. Phase is now: {:?}. tx hash: {:?}",
-                        phase, tx_hash
-                    );
+                    println!("Phase is now: {:?}", phase);
                     Ok(())
                 }),
         )
@@ -607,8 +604,8 @@ fn main() {
                         proof
                     );
                     // send and watch extrinsic until finalized
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("registration 'ready' for: {}, tx hash: {:?}", signer.public().to_ss58check(), tx_hash);
+                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    println!("Registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
         )
@@ -642,10 +639,7 @@ fn main() {
                         attestations.push(w);
                     }
                     debug!("attestations: {:?}", attestations);
-                    println!(
-                        "send register_attestations for {}",
-                        who.public()
-                    );
+                    info!("send register_attestations for {}", who.public());
                     let api = get_chain_api(matches);
                     let _api = api.set_signer(sr25519_core::Pair::from(who));                    
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
@@ -654,8 +648,8 @@ fn main() {
                         "register_attestations",
                         attestations.clone()
                     );
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Transaction 'ready'. tx hash: {:?}", tx_hash);
+                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    println!("Attestations sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
         )

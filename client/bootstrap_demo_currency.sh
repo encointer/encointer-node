@@ -2,6 +2,7 @@
 CLIENT="../target/release/encointer-client-notee"
 
 # register new currency
+echo "registering demo currency with cid:"
 cid=$($CLIENT new-currency test-locations-mediterranean.json //Alice)
 echo $cid
 
@@ -21,8 +22,6 @@ elif [ "$phase" == "ATTESTING" ]; then
    echo "need to advance"
    $CLIENT next-phase   
 fi
-phase=$($CLIENT get-phase)
-echo "phase is now: $phase"
 
 account1=//Alice
 account2=//Bob
@@ -82,3 +81,4 @@ $CLIENT next-phase
 echo "account balances for new currency with cid $cid"
 $CLIENT --cid $cid balance //Alice
 $CLIENT --cid $cid balance //Bob
+$CLIENT --cid $cid balance //Charlie
