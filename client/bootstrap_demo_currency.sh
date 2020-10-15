@@ -30,6 +30,9 @@ account3=//Charlie
 # charlie has no genesis funds
 $CLIENT faucet $account3
 
+# await next block
+$CLIENT listen -b 1
+
 $CLIENT --cid $cid register-participant $account1
 $CLIENT --cid $cid register-participant $account2
 $CLIENT --cid $cid register-participant $account3
