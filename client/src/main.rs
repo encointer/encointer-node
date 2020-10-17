@@ -1071,9 +1071,12 @@ fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: Me
         },
         CeremonyPhaseType::REGISTERING => panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location.")
     };
-    
-    Some(attesting_start + ONE_DAY/2
-    - (mlon * (ONE_DAY as f64) / 360.0) as Moment )
+    let mtime = (
+        (attesting_start + ONE_DAY/2) as i64
+        - (mlon * (ONE_DAY as f64) / 360.0) as i64
+        ) as Moment; 
+    debug!("meetup time at lon {}: {:?}", mlon, mtime);
+    Some(mtime)
 }
 
 fn prove_attendance(
