@@ -3,12 +3,15 @@ import argparse
 import subprocess
 import geojson
 
-from math import sqrt
+from math import sqrt, ceil
 from random_word import RandomWords
 from pyproj import Geod
 geoid = Geod(ellps='WGS84')
 
 cli = ["../target/release/encointer-client-notee"]
+
+NUMBER_OF_LOCATIONS = 10
+MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
 def move_point(point, az, dist):
     """ move a point a certain distance [meters] into a direction (azimuth) in [degrees] """
@@ -65,7 +68,8 @@ def await_block():
     subprocess.run(cli + ["listen", "-b", "1"], stdout=subprocess.PIPE)
 
 def register_participant(account, cid):
-    subprocess.run(cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
+    ret = subprocess.run(cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
+    #print(ret.stdout.decode("utf-8"))
 
 def new_claim(account, vote, cid):
     ret = subprocess.run(cli + ["--cid", cid, "new-claim", account, str(vote)], stdout=subprocess.PIPE)
@@ -77,7 +81,7 @@ def sign_claim(account, claim):
 
 def list_meetups(cid):
     ret = subprocess.run(cli + ["--cid", cid, "list-meetups"], stdout=subprocess.PIPE)
-    print(ret.stdout.decode("utf-8"))
+    #print(ret.stdout.decode("utf-8"))
     meetups = []
     lines = ret.stdout.decode("utf-8").splitlines()
     while len(lines) > 0:
@@ -93,7 +97,7 @@ def list_meetups(cid):
 
 def register_attestations(account, attestations):
     ret = subprocess.run(cli + ["register-attestations", account] + attestations, stdout=subprocess.PIPE)
-    print(ret.stdout.decode("utf-8"))
+    #print(ret.stdout.decode("utf-8"))
 
 
 def generate_currency_spec(name, locations, bootstrappers):
@@ -106,7 +110,7 @@ def generate_currency_spec(name, locations, bootstrappers):
     
 def random_currency_spec(nloc):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
-    locations = populate_locations(point, 16)
+    locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
     bootstrappers = []
     for bi in range(0,10):
@@ -114,7 +118,7 @@ def random_currency_spec(nloc):
     print('new bootstrappers:' + ' '.join(bootstrappers))
     faucet(bootstrappers)
     await_block()
-    name = '-'.join(RandomWords().get_random_words(limit=3))
+    name = 'currencyspec-' + '-'.join(RandomWords().get_random_words(limit=3))
     return generate_currency_spec(name, locations, bootstrappers)
 
 def init():
@@ -130,39 +134,70 @@ def init():
 def run():
     f = open("cid.txt", "r")
     cid = f.read()
+    print("cid is " + cid)
     phase = get_phase()
+    print("phase is " + phase)
     accounts = list_accounts()
+    print("number of known accounts: " + str(len(accounts)))
     if phase == 'REGISTERING':
+        bal = balance(accounts, cid=cid)
+        total = sum(bal)
+        print("****** money supply is " + str(total))
+        f = open("bot-stats.csv", "a")
+        f.write(str(len(accounts)) + ", " + str(total) + "\n")
+        f.close()
+        if total > 0:
+            n_newbies = min(ceil(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
+            print("*** adding " + str(n_newbies) + " newbies")
+            newbies = []
+            for n in range(0,n_newbies):
+                newbies.append(new_account())
+            faucet(newbies)
+            await_block()
+            accounts = list_accounts()
+
         print("registering " + str(len(accounts)) + " participants")
         for p in accounts:
+            #print("registering " + p)
             register_participant(p, cid)
         await_block()
     if phase == 'ATTESTING':
         meetups = list_meetups(cid)
-        print("Performing " + str(len(meetups)) + " meetups")
+        print("****** Performing " + str(len(meetups)) + " meetups")
         for meetup in meetups:
             n = len(meetup)
             print("Performing meetup with " + str(n) + " participants")
             claims = {}
             for p in meetup:
                 claims[p] = new_claim(p, n, cid)
-            print("signing claims")
             for claimant in meetup:
                 attestations = []
                 for attester in meetup:
                     if claimant == attester:
                         continue
-                    print(claimant + " is attested by " + attester)
+                    #print(claimant + " is attested by " + attester)
                     attestations.append(sign_claim(attester, claims[claimant]))
-                print("registering attestations for " + claimant)
+                #print("registering attestations for " + claimant)
                 register_attestations(claimant, attestations)
-                
+        await_block()
+
+def benchmark():            
+    print("will grow population forever")
+    while True:
+        run()
+        await_block
+        next_phase()
+        await_block
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='bot-community')
     subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
     parser_a = subparsers.add_parser('init', help='a help')
     parser_b = subparsers.add_parser('run', help='b help')
+    parser_c = subparsers.add_parser('benchmark', help='b help')
 
     kwargs = vars(parser.parse_args())
-    globals()[kwargs.pop('subparser')](**kwargs)
+    try:
+        globals()[kwargs.pop('subparser')](**kwargs)
+    except KeyError:
+        parser.print_help()

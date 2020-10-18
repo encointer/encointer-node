@@ -1,6 +1,6 @@
 [package]
 name = "encointer-client-notee"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2018"
 

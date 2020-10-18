@@ -68,7 +68,7 @@ use std::str::FromStr;
 
 type AccountPublic = <Signature as Verify>::Signer;
 const KEYSTORE_PATH: &str = "my_keystore";
-const PREFUNDING_AMOUNT: u128 = 1_000_000_000;
+const PREFUNDING_AMOUNT: u128 = 100_000_000_000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
