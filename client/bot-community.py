@@ -149,12 +149,13 @@ def run():
         if total > 0:
             n_newbies = min(ceil(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
             print("*** adding " + str(n_newbies) + " newbies")
-            newbies = []
-            for n in range(0,n_newbies):
-                newbies.append(new_account())
-            faucet(newbies)
-            await_block()
-            accounts = list_accounts()
+            if n_newbies > 0:
+                newbies = []
+                for n in range(0,n_newbies):
+                    newbies.append(new_account())
+                faucet(newbies)
+                await_block()
+                accounts = list_accounts()
 
         print("registering " + str(len(accounts)) + " participants")
         for p in accounts:
