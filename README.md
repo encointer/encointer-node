@@ -36,7 +36,7 @@ Install required tools:
 Build the node:
 
 ```bash
-cargo +nightly build --release
+cargo build --release
 ```
 
 ## Run Dev Node
@@ -44,7 +44,7 @@ cargo +nightly build --release
 You can start a development chain with:
 
 ```bash
-./target/release/encointer-node --dev --ws-port 9979 --execution native -lruntime=debug 2>&1 | grep --color=always -e "^" -e 'DEBUG runtime'
+./target/release/encointer-node-notee --dev --ws-port 9979 --execution native -lruntime=debug 2>&1 | grep --color=always -e "^" -e 'DEBUG runtime'
 ```
 
 Additional CLI usage options are available and may be shown by running `./target/release/encointer-node --help`.
@@ -53,14 +53,14 @@ Additional CLI usage options are available and may be shown by running `./target
 Join our testnet as a full node with 
 
 ```bash
-./target/release/encointer-node --chain gesellSpecRaw.json --name giveyournodeaname
+./target/release/encointer-node-notee --chain gesellSpecRaw.json --name giveyournodeaname
 ```
 
 ## Build CLI client
 We currently have limited support for the [polkadot-js apps](https://polkadot.js.org/apps) UI. Encointer comes with a cli application instead that supports all interactions with the chain:
 
 ```bash
-cargo +nightly build encointer-client --release
+cargo build encointer-client --release
 ```
 
 ## Run Client
