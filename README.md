@@ -44,7 +44,7 @@ cargo build --release
 You can start a development chain with:
 
 ```bash
-./target/release/encointer-node-notee --dev --ws-port 9979 --execution native -lruntime=debug 2>&1 | grep --color=always -e "^" -e 'DEBUG runtime'
+./target/release/encointer-node-notee --dev --ws-port 9979 --execution native -lencointer=debug 2>&1 | grep --color=always -e "^" -e 'DEBUG encointer'
 ```
 
 Additional CLI usage options are available and may be shown by running `./target/release/encointer-node --help`.
