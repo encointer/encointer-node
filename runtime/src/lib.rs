@@ -43,6 +43,7 @@ pub use encointer_scheduler::Call as EncointerSchedulerCall;
 pub use encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use encointer_currencies::Call as EncointerCurrenciesCall;
 pub use encointer_balances::Call as EncointerBalancesCall;
+pub use encointer_bazaar::Call as EncointerBazaarCall;
 
 pub use encointer_scheduler::CeremonyPhaseType;
 pub use encointer_balances::{BalanceType, BalanceEntry};
@@ -338,6 +339,7 @@ construct_runtime!(
 		EncointerCeremonies: encointer_ceremonies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerCurrencies: encointer_currencies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerBalances: encointer_balances::{Module, Call, Storage, Event<T>},	
+		EncointerBazaar: encointer_bazaar::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
