@@ -320,6 +320,10 @@ impl encointer_balances::Trait for Runtime {
 	type Event = Event; 
 }
 
+impl encointer_bazaar::Trait for Runtime {
+	type Event = Event; 
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -339,7 +343,7 @@ construct_runtime!(
 		EncointerCeremonies: encointer_ceremonies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerCurrencies: encointer_currencies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerBalances: encointer_balances::{Module, Call, Storage, Event<T>},	
-		EncointerBazaar: encointer_bazaar::{Module, Call, Storage, Config<T>, Event<T>},
+		EncointerBazaar: encointer_bazaar::{Module, Call, Storage, Event<T>},
 	}
 );
 

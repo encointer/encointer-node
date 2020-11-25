@@ -33,6 +33,12 @@ git = "https://github.com/encointer/pallets"
 tag = "v0.3.6"
 package = "pallet-encointer-balances"
 
+[dependencies.encointer-bazaar]
+default-features = false
+git = "https://github.com/encointer/pallets"
+tag = "v0.3.6"
+package = "pallet-encointer-bazaar"
+
 [dependencies.fixed]
 default-features = false
 git = "https://github.com/encointer/substrate-fixed"

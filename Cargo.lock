@@ -1267,6 +1267,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-encointer-balances",
+ "pallet-encointer-bazaar",
  "pallet-encointer-ceremonies",
  "pallet-encointer-currencies",
  "pallet-encointer-scheduler",
@@ -3806,6 +3807,18 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-fixed",
+]
+
+[[package]]
+name = "pallet-encointer-bazaar"
+version = "0.3.6"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-encointer-currencies",
+ "parity-scale-codec",
+ "sp-io",
+ "sp-std",
 ]
 
 [[package]]
@@ -8353,7 +8366,3 @@ dependencies = [
  "itertools 0.9.0",
  "libc",
 ]
-
-[[patch.unused]]
-name = "pallet-encointer-bazaar"
-version = "0.3.6"
