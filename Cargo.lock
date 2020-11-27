@@ -1199,6 +1199,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-encointer-balances",
+ "pallet-encointer-bazaar",
  "pallet-encointer-ceremonies",
  "pallet-encointer-currencies",
  "pallet-encointer-scheduler",
