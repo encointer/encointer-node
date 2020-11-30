@@ -1,12 +1,11 @@
 [package]
 name = "encointer-client-notee"
 #keep with node version
-version = "0.3.6"
+version = "0.3.7"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2018"
 
 [dependencies]
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", rev="1b13b6c"}
 log = "0.4"
 env_logger = "0.7"
 hex = "0.4"
@@ -22,28 +21,36 @@ base58  = "0.1"
 parking_lot = "0.10.0"
 async-trait = "0.1.30"
 
+[dependencies.substrate-api-client]
+git = "https://github.com/scs/substrate-api-client"
+tag = "v0.4.13"
+
+[dependencies.substrate-client-keystore]
+git = "https://github.com/scs/substrate-api-client"
+tag = "v0.4.13"
+
 [dependencies.encointer-scheduler]
 default-features = false
 git = "https://github.com/encointer/pallets"
-#tag = "v0.3.6"
+tag = "v0.3.7"
 package = "pallet-encointer-scheduler"
 
 [dependencies.encointer-ceremonies]
 default-features = false
 git = "https://github.com/encointer/pallets"
-#tag = "v0.3.6"
+tag = "v0.3.7"
 package = "pallet-encointer-ceremonies"
 
 [dependencies.encointer-currencies]
 default-features = false
 git = "https://github.com/encointer/pallets"
-#tag = "v0.3.6"
+tag = "v0.3.7"
 package = "pallet-encointer-currencies"
 
 [dependencies.encointer-balances]
 default-features = false
 git = "https://github.com/encointer/pallets"
-#tag = "v0.3.6"
+tag = "v0.3.7"
 package = "pallet-encointer-balances"
 
 [dependencies.fixed]

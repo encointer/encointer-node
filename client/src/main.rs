@@ -50,6 +50,7 @@ use substrate_api_client::{
     extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
     node_metadata::Metadata, utils::hexstr_to_vec, Api, XtStatus,
 };
+use substrate_client_keystore::LocalKeystore;
 use encointer_node_notee_runtime::{
     AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, 
     BlockNumber, Header, Call, BalancesCall
@@ -64,9 +65,6 @@ use fixed::transcendental::exp;
 use fixed::traits::LossyInto;
 use std::convert::TryInto;
 use std::str::FromStr;
-
-mod keystore;
-use keystore::LocalKeystore;
 
 type AccountPublic = <Signature as Verify>::Signer;
 const KEYSTORE_PATH: &str = "my_keystore";

@@ -3,14 +3,14 @@ import argparse
 import subprocess
 import geojson
 
-from math import sqrt, ceil
+from math import sqrt, floor
 from random_word import RandomWords
 from pyproj import Geod
 geoid = Geod(ellps='WGS84')
 
 cli = ["../target/release/encointer-client-notee"]
 
-NUMBER_OF_LOCATIONS = 10
+NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
 def move_point(point, az, dist):
@@ -108,7 +108,7 @@ def generate_currency_spec(name, locations, bootstrappers):
         geojson.dump(gj, outfile)
     return fname
     
-def random_currency_spec(nloc):
+def random_currency_spec():
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
@@ -118,12 +118,12 @@ def random_currency_spec(nloc):
     print('new bootstrappers:' + ' '.join(bootstrappers))
     faucet(bootstrappers)
     await_block()
-    name = 'currencyspec-' + '-'.join(RandomWords().get_random_words(limit=3))
+    name = 'currencyspec' # + '-'.join(RandomWords().get_random_words(limit=3))
     return generate_currency_spec(name, locations, bootstrappers)
 
 def init():
     print("initializing community")
-    specfile = random_currency_spec(16)
+    specfile = random_currency_spec()
     print("generated currency spec: ", specfile)
     cid = new_currency(specfile)
     print("created community with cid: ", cid)
@@ -147,7 +147,7 @@ def run():
         f.write(str(len(accounts)) + ", " + str(total) + "\n")
         f.close()
         if total > 0:
-            n_newbies = min(ceil(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
+            n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
             print("*** adding " + str(n_newbies) + " newbies")
             if n_newbies > 0:
                 newbies = []
