@@ -61,6 +61,7 @@ use encointer_ceremonies::{
 };
 use encointer_scheduler::{CeremonyIndexType, CeremonyPhaseType};
 use encointer_currencies::{CurrencyIdentifier, CurrencyPropertiesType, Location, Degree};
+use encointer_bazaar::{ShopIdentifier, ArticleIdentifier};
 use fixed::transcendental::exp;
 use fixed::traits::LossyInto;
 use std::convert::TryInto;
@@ -742,21 +743,18 @@ fn main() {
                             .help("AccountId in ss58check format"),
                     )
                     .arg(
-                        Arg::with_name("url")
+                        Arg::with_name("shopidentifier")
                             .takes_value(true)
                             .required(true)
-                           // .parse::<u64>().unwrap()
                             .help("link pointing to the json file containg shop information"),
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     debug!("{:?}", matches);
                     let arg_who = matches.value_of("accountid").unwrap();
-                    // let accountid = get_accountid_from_str(arg_who);
-                    let accountid = get_pair_from_str(arg_who);  
-                    //let url = from_str(matches.value_of("url").unwrap());                
-                   let url = matches.value_of("url").unwrap().parse::<u64>().unwrap();
-                   //let url = matches.value_of("url").unwrap();
+                    let accountid = get_pair_from_str(arg_who);                  
+                    let string_shop = matches.value_of("shopidentifier").unwrap();
+                    let shopid = ShopIdentifier::from(string_shop);
                     let api = get_chain_api(matches);
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(accountid));                    
                     let cid = verify_cid(&api,
@@ -769,88 +767,12 @@ fn main() {
                             "EncointerBazaar",
                             "new_shop",
                             cid,
-                            url
+                            shopid
                     );
                     let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
-                    println!("new shop created {}", url);
-                    Ok(())
-                    /*
-                     let n_participants = matches
-                        .value_of("vote")
-                        .unwrap()
-                        .parse::<u32>()
-                        .unwrap();
-
-                   .description("register new currency")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("specfile")
-                            .takes_value(true)
-                            .required(true)
-                            .help("enhanced geojson file that specifies a currency"),
-                    )
-                    .arg(
-                        Arg::with_name("signer")
-                            .takes_value(true)
-                            .required(true)
-                            .help("a bootstrapper account to sign the registration extrinsic"),
-                    )
-                })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let p_arg = matches.value_of("signer").unwrap();
-                    let signer = get_pair_from_str(p_arg);
-
-                    let spec_file = matches.value_of("specfile").unwrap();
-
-                    let spec_str = fs::read_to_string(spec_file).unwrap();
-                    let geoloc = spec_str.parse::<GeoJson>().unwrap();
-
-                    let mut loc = Vec::with_capacity(100);
-                    match geoloc {
-                        GeoJson::FeatureCollection(ref ctn) => {
-                            for feature in &ctn.features {
-                                let val = &feature.geometry.as_ref().unwrap().value;
-                                if let geojson::Value::Point(pt) = val {
-                                    let l = Location {
-                                        lon: Degree::from_num(pt[0]),
-                                        lat: Degree::from_num(pt[1]),
-                                    };
-                                    loc.push(l);
-                                    debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
-                                }
-                            }
-                        }
-                        _ => (),
-                    };
-                    let meta: serde_json::Value = serde_json::from_str(&spec_str).unwrap();
-                    debug!("meta: {:?}", meta["currency_meta"]);
-                    let bootstrappers: Vec<AccountId> = meta["currency_meta"]["bootstrappers"]
-                        .as_array()
-                        .expect("bootstrappers must be array")
-                        .iter()
-                        .map(|a| get_accountid_from_str(&a.as_str().unwrap()))
-                        .collect();
-
-                    let cid = blake2_256(&(loc.clone(), bootstrappers.clone()).encode());
-                    let name = meta["currency_meta"]["name"].as_str().unwrap();
-                    info!("bootstrappers: {:?}", bootstrappers);
-                    info!("name: {}", name);
-                    info!("Currency registered by {}", signer.public().to_ss58check());
-                    let api = get_chain_api(matches);
-                    let _api = api.clone().set_signer(sr25519_core::Pair::from(signer));
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-                        _api.clone(),
-                        "EncointerCurrencies",
-                        "new_currency",
-                        loc,
-                        bootstrappers
-                    );
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
-                    println!("{}", cid.to_base58());
-                    Ok(())*/
+                    println!("new shop created {}", string_shop);
+                    Ok(())                   
                 }),
         )
         // To handle when no subcommands match
