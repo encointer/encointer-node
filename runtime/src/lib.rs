@@ -44,6 +44,7 @@ pub use encointer_scheduler::Call as EncointerSchedulerCall;
 pub use encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use encointer_currencies::Call as EncointerCurrenciesCall;
 pub use encointer_balances::Call as EncointerBalancesCall;
+pub use encointer_bazaar::Call as EncointerBazaarCall;
 
 pub use encointer_scheduler::CeremonyPhaseType;
 pub use encointer_balances::{BalanceType, BalanceEntry};
@@ -113,7 +114,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	/// Version of the runtime specification. A full-node will not attempt to use its native
     /// runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
     /// `spec_version` and `authoring_version` are the same between Wasm and native.
-	spec_version: 5,
+	spec_version: 6,
 
 	/// Version of the implementation of the specification. Nodes are free to ignore this; it
     /// serves only as an indication that the code is different; as long as the other two versions
@@ -319,6 +320,10 @@ impl encointer_balances::Trait for Runtime {
 	type Event = Event; 
 }
 
+impl encointer_bazaar::Trait for Runtime {
+	type Event = Event; 
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -338,6 +343,7 @@ construct_runtime!(
 		EncointerCeremonies: encointer_ceremonies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerCurrencies: encointer_currencies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerBalances: encointer_balances::{Module, Call, Storage, Event<T>},	
+		EncointerBazaar: encointer_bazaar::{Module, Call, Storage, Event<T>},	
 	}
 );
 
