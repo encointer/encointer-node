@@ -38,11 +38,14 @@ $CLIENT --cid $cid register-participant $account2
 $CLIENT --cid $cid register-participant $account3
 
 # await next block
-$CLIENT listen -b 1
+#$CLIENT listen -b 1
+sleep 15
+
 
 # list registry
 $CLIENT --cid $cid list-participants
 
+# Todo: for some reason it hangs here
 $CLIENT next-phase
 # should now be ASSIGNING
 
