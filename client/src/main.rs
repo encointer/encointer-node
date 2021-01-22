@@ -46,14 +46,14 @@ use geojson::GeoJson;
 use serde_json;
 use std::fs;
 use substrate_api_client::{
-    compose_extrinsic, compose_extrinsic_offline, 
+    compose_extrinsic,
     extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
     node_metadata::Metadata, utils::hexstr_to_vec, Api, XtStatus,
 };
 use substrate_client_keystore::LocalKeystore;
 use encointer_node_notee_runtime::{
     AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, 
-    BlockNumber, Header, Call, BalancesCall
+    BlockNumber, Header,
 };
 use encointer_ceremonies::{
     Attestation, AttestationIndexType, ClaimOfAttendance,
@@ -179,19 +179,9 @@ fn main() {
                     let mut nonce = _api.get_nonce().unwrap();
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
-                        #[allow(clippy::redundant_clone)]
-                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
-                            _api.clone().signer.unwrap(),
-                            Call::Balances(BalancesCall::transfer(
-                                GenericAddress::Id(to.clone()),
-                                PREFUNDING_AMOUNT
-                            )),
-                            nonce,
-                            Era::Immortal,
-                            _api.genesis_hash,
-                            _api.genesis_hash,
-                            _api.runtime_version.spec_version,
-                            _api.runtime_version.transaction_version
+                        let xt = _api.balance_transfer(
+                            GenericAddress::Id(to.clone()),
+                            PREFUNDING_AMOUNT
                         );
                         // send and watch extrinsic until finalized
                         println!("Faucet drips to {} (Alice's nonce={})", to, nonce);
