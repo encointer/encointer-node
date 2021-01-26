@@ -43,7 +43,6 @@ sleep 30
 # list registry
 $CLIENT --cid $cid list-participants
 
-# Todo: for some reason it hangs here
 $CLIENT next-phase
 # should now be ASSIGNING
 
