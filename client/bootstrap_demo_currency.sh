@@ -1,5 +1,5 @@
 #!/bin/bash
-CLIENT="../target/release/encointer-client-notee -p 9946"
+CLIENT="../target/release/encointer-client-notee"
 
 # register new currency
 echo "registering demo currency with cid:"
@@ -28,10 +28,10 @@ account2=//Bob
 account3=//Charlie
 
 # charlie has no genesis funds
-#$CLIENT faucet $account3
+$CLIENT faucet $account3
 
-# await next block
-$CLIENT listen -b 1
+# wait long enough to make sure extrinsics are processed
+sleep 30
 
 $CLIENT --cid $cid register-participant $account1
 $CLIENT --cid $cid register-participant $account2
