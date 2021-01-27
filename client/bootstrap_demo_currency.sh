@@ -31,14 +31,16 @@ account3=//Charlie
 $CLIENT faucet $account3
 
 # wait long enough to make sure extrinsics are processed
-sleep 30
+blocks_to_wait=2
+echo "\n waiting for $blocks_to_wait blocks, such that xt's are processed"
+$CLIENT listen -b $blocks_to_wait
 
 $CLIENT --cid $cid register-participant $account1
 $CLIENT --cid $cid register-participant $account2
 $CLIENT --cid $cid register-participant $account3
 
-# wait long enough to make sure extrinsics are processed
-sleep 30
+echo "waiting for $blocks_to_wait blocks, such that xt's are processed"
+$CLIENT listen -b $blocks_to_wait
 
 # list registry
 $CLIENT --cid $cid list-participants
@@ -73,8 +75,9 @@ $CLIENT register-attestations $account1 $witness2_1 $witness3_1
 $CLIENT register-attestations $account2 $witness1_2 $witness3_2
 $CLIENT register-attestations $account3 $witness1_3 $witness2_3
 
-# wait long enough to make sure extrinsics are processed
-sleep 30
+blocks_to_wait=3
+echo "waiting for $blocks_to_wait blocks, such that xt's are processed"
+$CLIENT listen -b $blocks_to_wait
 
 $CLIENT --cid $cid list-attestations
 
