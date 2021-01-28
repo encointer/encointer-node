@@ -33,7 +33,7 @@ use base58::{FromBase58, ToBase58};
 
 use clap::{Arg, ArgMatches, AppSettings};
 use clap_nested::{Command, Commander};
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, Compact};
 use log::*;
 use sp_core::{crypto::Ss58Codec, hashing::blake2_256, sr25519 as sr25519_core, Pair};
 use sp_runtime::{
@@ -186,7 +186,7 @@ fn main() {
                             "Balances",
                             "transfer",
                             GenericAddress::Id(to.clone()),
-                            PREFUNDING_AMOUNT
+                            Compact(PREFUNDING_AMOUNT)
                         );
                         let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
                             api.clone().signer.unwrap(),
