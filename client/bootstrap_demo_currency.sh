@@ -1,5 +1,10 @@
 #!/bin/bash
-CLIENT="../target/release/encointer-client-notee"
+
+# usage:
+#  ./bootstrap_demo_currency.sh <NODEPORT>
+NPORT=${1:-9944}
+
+CLIENT="../target/release/encointer-client-notee -p $NPORT"
 
 # register new currency
 echo "registering demo currency with cid:"
@@ -16,11 +21,11 @@ if [ "$phase" == "REGISTERING" ]; then
    echo "that's fine"
 elif [ "$phase" == "ASSIGNING" ]; then
    echo "need to advance"
-   $CLIENT next-phase   
+   $CLIENT next-phase
    $CLIENT next-phase
 elif [ "$phase" == "ATTESTING" ]; then
    echo "need to advance"
-   $CLIENT next-phase   
+   $CLIENT next-phase
 fi
 
 account1=//Alice
@@ -30,15 +35,17 @@ account3=//Charlie
 # charlie has no genesis funds
 $CLIENT faucet $account3
 
-# await next block
-$CLIENT listen -b 1
+# wait long enough to make sure extrinsics are processed
+blocks_to_wait=3
+echo "waiting for $blocks_to_wait blocks, such that xt's are processed"
+$CLIENT listen -b $blocks_to_wait
 
 $CLIENT --cid $cid register-participant $account1
 $CLIENT --cid $cid register-participant $account2
 $CLIENT --cid $cid register-participant $account3
 
-# await next block
-$CLIENT listen -b 1
+echo "waiting for $blocks_to_wait blocks, such that xt's are processed"
+$CLIENT listen -b $blocks_to_wait
 
 # list registry
 $CLIENT --cid $cid list-participants
@@ -73,8 +80,8 @@ $CLIENT register-attestations $account1 $witness2_1 $witness3_1
 $CLIENT register-attestations $account2 $witness1_2 $witness3_2
 $CLIENT register-attestations $account3 $witness1_3 $witness2_3
 
-# await next block
-$CLIENT listen -b 1
+echo "waiting for $blocks_to_wait blocks, such that xt's are processed"
+$CLIENT listen -b $blocks_to_wait
 
 $CLIENT --cid $cid list-attestations
 
