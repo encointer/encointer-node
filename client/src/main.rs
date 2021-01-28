@@ -46,7 +46,9 @@ use geojson::GeoJson;
 use serde_json;
 use std::fs;
 use substrate_api_client::{
+    compose_call,
     compose_extrinsic,
+    compose_extrinsic_offline,
     extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
     node_metadata::Metadata, utils::hexstr_to_vec, Api, XtStatus,
 };
@@ -172,20 +174,33 @@ fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let _api = api.set_signer(AccountKeyring::Alice.pair());
+                    let api = get_chain_api(matches)
+                        .set_signer(AccountKeyring::Alice.pair());
                     let accounts: Vec<_> = matches.values_of("accounts").unwrap().collect();
 
-                    let mut nonce = _api.get_nonce().unwrap();
+                    let mut nonce = api.get_nonce().unwrap();
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
-                        let xt = _api.balance_transfer(
+                        let call = compose_call!(
+                            api.metadata,
+                            "Balances",
+                            "transfer",
                             GenericAddress::Id(to.clone()),
                             PREFUNDING_AMOUNT
                         );
+                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
+                            api.clone().signer.unwrap(),
+                            call.clone(),
+                            nonce,
+                            Era::Immortal,
+                            api.genesis_hash,
+                            api.genesis_hash,
+                            api.runtime_version.spec_version,
+                            api.runtime_version.transaction_version
+                        );
                         // send and watch extrinsic until finalized
                         println!("Faucet drips to {} (Alice's nonce={})", to, nonce);
-                        let _blockh = _api
+                        let _blockh = api
                             .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
                             .unwrap();
                         nonce += 1;
