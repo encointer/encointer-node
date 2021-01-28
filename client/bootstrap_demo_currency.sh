@@ -1,5 +1,10 @@
 #!/bin/bash
-CLIENT="../target/release/encointer-client-notee"
+
+# usage:
+#  ./bootstrap_demo_currency.sh <NODEPORT>
+NPORT=${1:-9944}
+
+CLIENT="../target/release/encointer-client-notee -p $NPORT"
 
 # register new currency
 echo "registering demo currency with cid:"
