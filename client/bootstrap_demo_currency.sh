@@ -1,5 +1,5 @@
 #!/bin/bash
-CLIENT="../target/release/encointer-client-notee -p 9946"
+CLIENT="../target/release/encointer-client-notee"
 
 # register new currency
 echo "registering demo currency with cid:"
