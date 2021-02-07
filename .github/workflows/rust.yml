@@ -16,9 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: init-rust
-      run: |  
-        ./scripts/init.sh
+    - name: init-rust-target
+      run: rustup target add wasm32-unknown-unknown
     - name: Build
       run: cargo build --release
     - uses: actions/upload-artifact@v2
