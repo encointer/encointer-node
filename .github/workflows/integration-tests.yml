@@ -43,7 +43,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson random_word pyproj
     - name: grow community
-        run: |
-          ./bot-community.py init
-          ./bot-community.py run
+      run: |
+        ./bot-community.py init
+        ./bot-community.py run
 
