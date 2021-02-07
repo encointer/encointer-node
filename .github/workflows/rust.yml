@@ -1,0 +1,29 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master, sgx-master ]
+  pull_request:
+    branches: [ master, sgx-master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: init-rust
+      run: |  
+        ./scripts/init.sh
+    - name: Build
+      run: cargo build --release
+    - uses: actions/upload-artifact@v2
+      with:
+        name: release
+        path: target/release/encointer-node-*
+    - name: Run tests
+      run: cargo test
