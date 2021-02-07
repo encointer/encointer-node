@@ -39,6 +39,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+    - name: install py dependencies
       run: |
         python -m pip install --upgrade pip
         pip install geojson random_word pyproj
