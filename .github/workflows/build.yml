@@ -1,4 +1,4 @@
-name: Rust
+name: build node and client
 
 on:
   push:
@@ -11,9 +11,7 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: init-rust-target
@@ -23,6 +21,8 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: release
-        path: target/release/encointer-node-*
-    - name: Run tests
-      run: cargo test
+        path: | 
+          target/release/encointer-node-*
+          target/release/encointer-client-*
+          !target/release/*.d
+

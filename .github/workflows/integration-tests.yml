@@ -1,0 +1,49 @@
+name: integration tests for notee client and node
+
+on:
+  schedule:
+    - cron:  '42 3 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: init-rust-target
+      run: rustup target add wasm32-unknown-unknown
+    - name: Build
+      run: cargo build --release
+      env:
+        SKIP_WASM_BUILD: 1
+    - uses: actions/upload-artifact@v2
+      with:
+        name: release
+        path: | 
+          target/release/encointer-node-*
+          target/release/encointer-client-*
+          !target/release/*.d
+    - name: start dev node
+      run: target/release/encointer-node-notee --tmp --dev &
+    - name: get-phase
+      run: target/release/encointer-client-notee get-phase
+    - name: next-phase
+      run: target/release/encointer-client-notee next-phase
+    - name: bootstrap community
+      run: |
+        cd client
+        ./bootstrap_demo_currency.sh
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+      run: |
+        python -m pip install --upgrade pip
+        pip install geojson random_word pyproj
+    - name: grow community
+        run: |
+          ./bot-community.py init
+          ./bot-community.py run
+

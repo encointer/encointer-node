@@ -89,6 +89,18 @@ $CLIENT next-phase
 # should now be REGISTERING
 
 echo "account balances for new currency with cid $cid"
-$CLIENT --cid $cid balance //Alice
-$CLIENT --cid $cid balance //Bob
-$CLIENT --cid $cid balance //Charlie
+BALA=$($CLIENT --cid $cid balance //Alice | xargs)
+BALB=$($CLIENT --cid $cid balance //Bob | xargs)
+BALC=$($CLIENT --cid $cid balance //Charlie | xargs)
+
+echo "account balanace for Alice   is $BALA"
+echo "account balanace for Bob     is $BALB"
+echo "account balanace for Charlie is $BALC"
+
+if [ "1" = "$BALA" ]; then
+   echo "test passed"
+   exit 0
+else
+   echo "test ran through but balance is wrong"
+   exit 1
+fi
