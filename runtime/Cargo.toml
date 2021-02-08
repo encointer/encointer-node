@@ -7,7 +7,7 @@ name = 'encointer-node-notee-runtime'
 repository = 'https://github.com/encointer/encointer-node/'
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = '0.3.6'
+version = '0.3.7'
 
 [dependencies.encointer-scheduler]
 default-features = false
@@ -51,7 +51,7 @@ tag = "v0.5.5"
 package = "substrate-fixed"
 
 [build-dependencies]
-substrate-wasm-builder = { version = "3.0.0", path = "../../../utils/wasm-builder" }
+substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
 
 # alias "parity-scale-code" to "codec"
 [dependencies.codec]
