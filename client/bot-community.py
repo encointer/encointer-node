@@ -60,8 +60,8 @@ def balance(accounts, **kwargs):
         bal.append(float(ret.stdout.strip().decode("utf-8").split(' ')[-1]))
     return bal
 
-def new_currency(specfile):
-    ret = subprocess.run(cli + ["new-currency", specfile, '//Alice'], stdout=subprocess.PIPE)
+def new_community(specfile):
+    ret = subprocess.run(cli + ["new-community", specfile, '//Alice'], stdout=subprocess.PIPE)
     return ret.stdout.decode("utf-8").strip()
 
 def await_block():
@@ -100,15 +100,15 @@ def register_attestations(account, attestations):
     #print(ret.stdout.decode("utf-8"))
 
 
-def generate_currency_spec(name, locations, bootstrappers):
+def generate_community_spec(name, locations, bootstrappers):
     gj = geojson.FeatureCollection(list(map(lambda x : geojson.Feature(geometry=x), locations)))
-    gj['currency_meta'] = { 'name': name, 'bootstrappers': bootstrappers }
+    gj['community_meta'] = { 'name': name, 'bootstrappers': bootstrappers }
     fname = name + '.json'
     with open(fname, 'w') as outfile:
         geojson.dump(gj, outfile)
     return fname
     
-def random_currency_spec():
+def random_community_spec():
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
@@ -118,14 +118,14 @@ def random_currency_spec():
     print('new bootstrappers:' + ' '.join(bootstrappers))
     faucet(bootstrappers)
     await_block()
-    name = 'currencyspec' # + '-'.join(RandomWords().get_random_words(limit=3))
-    return generate_currency_spec(name, locations, bootstrappers)
+    name = 'communityspec' # + '-'.join(RandomWords().get_random_words(limit=3))
+    return generate_community_spec(name, locations, bootstrappers)
 
 def init():
     print("initializing community")
-    specfile = random_currency_spec()
-    print("generated currency spec: ", specfile)
-    cid = new_currency(specfile)
+    specfile = random_community_spec()
+    print("generated community spec: ", specfile)
+    cid = new_community(specfile)
     print("created community with cid: ", cid)
     f = open("cid.txt", "w")
     f.write(cid)

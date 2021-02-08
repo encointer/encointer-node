@@ -34,7 +34,7 @@ jobs:
     - name: bootstrap community
       run: |
         cd client
-        ./bootstrap_demo_currency.sh
+        ./bootstrap_demo_community.sh
     - name: Set up Python
       uses: actions/setup-python@v2
       with:

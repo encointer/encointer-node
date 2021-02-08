@@ -66,7 +66,7 @@ encointer-node/client> ./encointer-client-notee next_phase
 
 To run a full demo (you may need to fix ports in the scripts if you change them):
 ```
-encointer-node/client> ./bootstrap_demo_currency.sh
+encointer-node/client> ./bootstrap_demo_community.sh
 ```
 
 ### Grow Bot Community

@@ -12,41 +12,46 @@ version = '0.3.6'
 [dependencies.encointer-scheduler]
 default-features = false
 git = "https://github.com/encointer/pallets"
-tag = "v0.3.8"
+tag = "v0.3.9"
 package = "pallet-encointer-scheduler"
 
 [dependencies.encointer-ceremonies]
 default-features = false
 git = "https://github.com/encointer/pallets"
-tag = "v0.3.8"
+tag = "v0.3.9"
 package = "pallet-encointer-ceremonies"
 
-[dependencies.encointer-currencies]
+[dependencies.encointer-communities]
 default-features = false
 git = "https://github.com/encointer/pallets"
-tag = "v0.3.8"
-package = "pallet-encointer-currencies"
+tag = "v0.3.9"
+package = "pallet-encointer-communities"
 
 [dependencies.encointer-balances]
 default-features = false
 git = "https://github.com/encointer/pallets"
-tag = "v0.3.8"
+tag = "v0.3.9"
 package = "pallet-encointer-balances"
 
 [dependencies.encointer-bazaar]
 default-features = false
 git = "https://github.com/encointer/pallets"
-tag = "v0.3.8"
+tag = "v0.3.9"
 package = "pallet-encointer-bazaar"
+
+[dependencies.encointer-primitives]
+default-features = false
+git = "https://github.com/encointer/pallets"
+tag = "v0.3.9"
 
 [dependencies.fixed]
 default-features = false
 git = "https://github.com/encointer/substrate-fixed"
-tag = "v0.5.4+sub_v0.1"
+tag = "v0.5.5"
 package = "substrate-fixed"
 
 [build-dependencies]
-wasm-builder-runner = { package = 'substrate-wasm-builder-runner', version = '1.0.5' }
+substrate-wasm-builder = { version = "3.0.0", path = "../../../utils/wasm-builder" }
 
 # alias "parity-scale-code" to "codec"
 [dependencies.codec]
@@ -60,31 +65,31 @@ hex-literal = { optional = true, version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.101' }
 
 # Substrate dependencies
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", rev = "a208da16"}
-frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-frame-system-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-offchain = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-session = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-transaction-pool = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
-sp-version = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "a208da16" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf"}
+frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+frame-system-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-offchain = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-session = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-transaction-pool = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
+sp-version = { default-features = false, git = "https://github.com/paritytech/substrate.git", rev = "38f723bf" }
 
 [features]
 default = ['std']
@@ -125,9 +130,10 @@ std = [
     'sp-transaction-pool/std',
     'sp-version/std',
 	"encointer-scheduler/std",
-	"encointer-ceremonies/std",
+	"encointer-communities/std",
 	"encointer-balances/std",
-	"encointer-currencies/std",
+	"encointer-communities/std",
 	"encointer-bazaar/std",
+    "encointer-primitives/std",
     "fixed/std"    
 ]

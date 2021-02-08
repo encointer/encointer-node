@@ -50,19 +50,20 @@ use substrate_api_client::{
     compose_extrinsic,
     compose_extrinsic_offline,
     extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
-    node_metadata::Metadata, utils::hexstr_to_vec, Api, XtStatus,
+    node_metadata::Metadata, Api, XtStatus,
+    utils::FromHexString
 };
 use substrate_client_keystore::LocalKeystore;
 use encointer_node_notee_runtime::{
     AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, 
     BlockNumber, Header,
 };
-use encointer_ceremonies::{
+use encointer_primitives::ceremonies::{
     Attestation, AttestationIndexType, ClaimOfAttendance,
-    CurrencyCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
+    CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
 };
-use encointer_scheduler::{CeremonyIndexType, CeremonyPhaseType};
-use encointer_currencies::{CurrencyIdentifier, CurrencyPropertiesType, Location, Degree};
+use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
+use encointer_primitives::communities::{CommunityIdentifier, CommunityPropertiesType, Location, Degree};
 use fixed::transcendental::exp;
 use fixed::traits::LossyInto;
 use std::convert::TryInto;
@@ -105,7 +106,7 @@ fn main() {
                     .global(true)
                     .takes_value(true)
                     .value_name("STRING")
-                    .help("currency identifier, base58 encoded"),
+                    .help("community identifier, base58 encoded"),
             )            
             .name("encointer-client-notee")
             .version(VERSION)
@@ -153,7 +154,7 @@ fn main() {
             Command::new("print-metadata")
                 .description("query node metadata and print it as json to stdout")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let meta = get_chain_api(matches).get_metadata();
+                    let meta = get_chain_api(matches).get_metadata().unwrap();
                     println!("Metadata:\n {}", Metadata::pretty_format(&meta).unwrap());
                     Ok(())
                 }),
@@ -210,7 +211,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("balance")
-                .description("query on-chain balance for AccountId. If --cid is supplied, returns balance in that currency. Otherwise balance of native ERT token")
+                .description("query on-chain balance for AccountId. If --cid is supplied, returns balance in that community. Otherwise balance of native ERT token")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -231,13 +232,13 @@ fn main() {
                             let bn = get_block_number(&api);
                             let dr = get_demurrage_per_block(&api, cid);
                             let balance = if let Some(entry) = api
-                                .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, None) {
+                                .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, None).unwrap() {
                                     apply_demurrage(entry, bn, dr)
                             } else { BalanceType::from_num(0) }; 
-                            println!("NCTR balance for {} in currency {} is {} ", account, cid.encode().to_base58(), balance);
+                            println!("NCTR balance for {} in community {} is {} ", account, cid.encode().to_base58(), balance);
                         }
                         None => {
-                            let balance = if let Some(data) = api.get_account_data(&accountid) {
+                            let balance = if let Some(data) = api.get_account_data(&accountid).unwrap() {
                                 data.free
                             } else {
                                 0
@@ -250,7 +251,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("transfer")
-                .description("transfer funds from one account to another. If --cid is supplied, send that currency (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
+                .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -310,7 +311,7 @@ fn main() {
                         }
                     };
                     info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
-                    let result = _api.get_account_data(&to.clone()).unwrap();
+                    let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
                     println!("balance for {} is now {}", to, result.free);
                     Ok(())
                 }),
@@ -342,15 +343,15 @@ fn main() {
         )
         // start encointer stuff
         .add_cmd(
-            Command::new("new-currency")
-                .description("register new currency")
+            Command::new("new-community")
+                .description("register new community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
                         Arg::with_name("specfile")
                             .takes_value(true)
                             .required(true)
-                            .help("enhanced geojson file that specifies a currency"),
+                            .help("enhanced geojson file that specifies a community"),
                     )
                     .arg(
                         Arg::with_name("signer")
@@ -386,8 +387,8 @@ fn main() {
                         _ => (),
                     };
                     let meta: serde_json::Value = serde_json::from_str(&spec_str).unwrap();
-                    debug!("meta: {:?}", meta["currency_meta"]);
-                    let bootstrappers: Vec<AccountId> = meta["currency_meta"]["bootstrappers"]
+                    debug!("meta: {:?}", meta["community_meta"]);
+                    let bootstrappers: Vec<AccountId> = meta["community_meta"]["bootstrappers"]
                         .as_array()
                         .expect("bootstrappers must be array")
                         .iter()
@@ -395,16 +396,16 @@ fn main() {
                         .collect();
 
                     let cid = blake2_256(&(loc.clone(), bootstrappers.clone()).encode());
-                    let name = meta["currency_meta"]["name"].as_str().unwrap();
+                    let name = meta["community_meta"]["name"].as_str().unwrap();
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", name);
-                    info!("Currency registered by {}", signer.public().to_ss58check());
+                    info!("Community registered by {}", signer.public().to_ss58check());
                     let api = get_chain_api(matches);
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(signer));
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
                         _api.clone(),
-                        "EncointerCurrencies",
-                        "new_currency",
+                        "EncointerCommunities",
+                        "new_community",
                         loc,
                         bootstrappers
                     );
@@ -415,14 +416,14 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("list-currencies")
-                .description("list all registered currencies")
+            Command::new("list-communities")
+                .description("list all registered communities")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
-                    let cids = get_currency_identifiers(&api).expect("no currency registered");
-                    println!("number of currencies:  {}", cids.len());
+                    let cids = get_community_identifiers(&api).expect("no community registered");
+                    println!("number of communities:  {}", cids.len());
                     for cid in cids.iter() {
-                        println!("currency with cid {}", cid.encode().to_base58());
+                        println!("community with cid {}", cid.encode().to_base58());
                     }
                     Ok(())
                 }),
@@ -442,7 +443,7 @@ fn main() {
                         "EncointerScheduler",
                         "NextPhaseTimestamp",
                         None
-                    ).unwrap();
+                    ).unwrap().unwrap();
                     info!("next phase timestamp: {}", tnext);
                     // <<<<
 
@@ -470,7 +471,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("list-participants")
-                .description("list all registered participants for current ceremony and supplied currency identifier")
+                .description("list all registered participants for current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     debug!("{:?}", matches);
                     let api = get_chain_api(matches);
@@ -496,7 +497,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("list-meetups")
-                .description("list all assigned meetups for current ceremony and supplied currency identifier")
+                .description("list all assigned meetups for current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
@@ -532,7 +533,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("list-attestations")
-                .description("list all attestations for participants of current ceremony and supplied currency identifier")
+                .description("list all attestations for participants of current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
@@ -573,7 +574,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("register-participant")
-                .description("register encointer ceremony participant for supplied currency")
+                .description("register encointer ceremony participant for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -624,7 +625,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("register-attestations")
-                .description("register encointer ceremony attestations for supplied currency")
+                .description("register encointer ceremony attestations for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -752,7 +753,7 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair> {
         matches.value_of("node-port").unwrap()
     );
     info!("connecting to {}", url);
-    Api::<sr25519::Pair>::new(url)
+    Api::<sr25519::Pair>::new(url).unwrap()
 }
 
 fn listen(matches: &ArgMatches<'_>) {
@@ -761,7 +762,7 @@ fn listen(matches: &ArgMatches<'_>) {
     let (events_in, events_out) = channel();
     let mut count = 0u32;
     let mut blocks = 0u32;
-    api.subscribe_events(events_in.clone());
+    api.subscribe_events(events_in.clone()).unwrap();
     loop {
         if matches.is_present("events")
             && count >= value_t!(matches.value_of("events"), u32).unwrap()
@@ -774,7 +775,7 @@ fn listen(matches: &ArgMatches<'_>) {
             return;
         };
         let event_str = events_out.recv().unwrap();
-        let _unhex = hexstr_to_vec(event_str).unwrap();
+        let _unhex = Vec::from_hex(event_str).unwrap();
         let mut _er_enc = _unhex.as_slice();
         let _events = Vec::<frame_system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
         blocks += 1;
@@ -806,12 +807,12 @@ fn listen(matches: &ArgMatches<'_>) {
                                 }
                             }
                         }
-                        Event::encointer_currencies(ee) => {
+                        Event::encointer_communities(ee) => {
                             count += 1;
-                            println!(">>>>>>>>>> currency event: {:?}", ee);
+                            println!(">>>>>>>>>> community event: {:?}", ee);
                             match &ee {
-                                encointer_currencies::RawEvent::CurrencyRegistered(account, cid) => {
-                                    println!("Currency registered: by {}, cid: {:?}", account, cid);
+                                encointer_communities::RawEvent::CommunityRegistered(account, cid) => {
+                                    println!("Community registered: by {}, cid: {:?}", account, cid);
                                 }
                             }
                         },
@@ -828,14 +829,14 @@ fn listen(matches: &ArgMatches<'_>) {
     }
 }
 
-fn get_cid(cid: &str) -> CurrencyIdentifier {
-    CurrencyIdentifier::decode(&mut &cid.from_base58()
+fn get_cid(cid: &str) -> CommunityIdentifier {
+    CommunityIdentifier::decode(&mut &cid.from_base58()
         .expect("cid must be base58 encoded")[..])
         .expect("failed to decode cid")
 }
 
-fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CurrencyIdentifier {
-    let cids = get_currency_identifiers(&api).expect("no currency registered");
+fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CommunityIdentifier {
+    let cids = get_community_identifiers(&api).expect("no community registered");
     let cid = get_cid(cid);
     if !cids.contains(&cid) {
         panic!("cid {} does not exist on chain", cid.encode().to_base58());
@@ -874,58 +875,58 @@ fn get_pair_from_str(account: &str) -> sr25519::AppPair {
 }
 
 fn get_block_number(api: &Api<sr25519::Pair>) -> BlockNumber {
-    let hdr: Header = api.get_header(None).unwrap();
+    let hdr: Header = api.get_header(None).unwrap().unwrap();
     debug!("decoded: {:?}", hdr);
     //let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
     hdr.number
 }
 
-fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier) -> BalanceType {
-    let cp: CurrencyPropertiesType = api
-        .get_storage_map("EncointerCurrencies", "CurrencyProperties", cid, None)
-        .unwrap();
-    debug!("CurrencyProperties are {:?}", cp);
+fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> BalanceType {
+    let cp: CommunityPropertiesType = api
+        .get_storage_map("EncointerCommunities", "CommunityProperties", cid, None)
+        .unwrap().unwrap();
+    debug!("CommunityProperties are {:?}", cp);
     cp.demurrage_per_block
 }
 
 fn get_ceremony_index(api: &Api<sr25519::Pair>) -> CeremonyIndexType {
     api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
-        .unwrap()
+        .unwrap().unwrap()
 }
 
 fn get_current_phase(api: &Api<sr25519::Pair>) -> CeremonyPhaseType {
-    api.get_storage_value("EncointerScheduler", "CurrentPhase", None)
+    api.get_storage_value("EncointerScheduler", "CurrentPhase", None).unwrap()
         .or(Some(CeremonyPhaseType::default()))
         .unwrap()
 }
 
-fn get_meetup_count(api: &Api<sr25519::Pair>, key: CurrencyCeremony) -> MeetupIndexType {
-    api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
+fn get_meetup_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> MeetupIndexType {
+    api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None).unwrap()
         .or(Some(0))
         .unwrap()
 }
 
-fn get_participant_count(api: &Api<sr25519::Pair>, key: CurrencyCeremony) -> ParticipantIndexType {
+fn get_participant_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
     api.get_storage_map(
         "EncointerCeremonies",
         "ParticipantCount",
         key,
         None
-    ).or(Some(0)).unwrap()
+    ).unwrap().or(Some(0)).unwrap()
 }
 
-fn get_attestation_count(api: &Api<sr25519::Pair>, key: CurrencyCeremony) -> ParticipantIndexType {
+fn get_attestation_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
     api.get_storage_map(
             "EncointerCeremonies",
             "AttestationCount",
             key,
             None
-    ).or(Some(0)).unwrap()
+    ).unwrap().or(Some(0)).unwrap()
 }
 
 fn get_participant(
     api: &Api<sr25519::Pair>,
-    key: CurrencyCeremony,
+    key: CommunityCeremony,
     pindex: ParticipantIndexType,
 ) -> Option<AccountId> {
     api.get_storage_double_map(
@@ -934,12 +935,12 @@ fn get_participant(
         key,
         pindex,
         None
-    )
+    ).unwrap()
 }
 
 fn get_meetup_index_for(
     api: &Api<sr25519::Pair>,
-    key: CurrencyCeremony,
+    key: CommunityCeremony,
     account: &AccountId,
 ) -> Option<MeetupIndexType> {
     api.get_storage_double_map(
@@ -948,12 +949,12 @@ fn get_meetup_index_for(
         key,
         account.clone(),
         None
-    )
+    ).unwrap()
 }
 
 fn get_meetup_participants(
     api: &Api<sr25519::Pair>,
-    key: CurrencyCeremony,
+    key: CommunityCeremony,
     mindex: MeetupIndexType,
 ) -> Option<Vec<AccountId>> {
     api.get_storage_double_map(
@@ -962,12 +963,12 @@ fn get_meetup_participants(
         key,
         mindex,
         None
-    )
+    ).unwrap()
 }
 
 fn get_attestations(
     api: &Api<sr25519::Pair>,
-    key: CurrencyCeremony,
+    key: CommunityCeremony,
     windex: ParticipantIndexType,
 ) -> Option<Vec<AccountId>> {
     api.get_storage_double_map(
@@ -976,12 +977,12 @@ fn get_attestations(
         key,
         windex,
         None
-    )
+    ).unwrap()
 }
 
 fn get_participant_attestation_index(
     api: &Api<sr25519::Pair>,
-    key: CurrencyCeremony,
+    key: CommunityCeremony,
     accountid: &AccountId,
 ) -> Option<ParticipantIndexType> {
     api.get_storage_double_map(
@@ -990,13 +991,13 @@ fn get_participant_attestation_index(
         key,
         accountid,
         None
-    )
+    ).unwrap()
 }
 
 fn new_claim_for(
     api: &Api<sr25519::Pair>,
     accountid: AccountId,
-    cid: CurrencyIdentifier,
+    cid: CommunityIdentifier,
     n_participants: u32,
 ) -> Vec<u8> {
     let cindex = get_ceremony_index(api);
@@ -1009,7 +1010,7 @@ fn new_claim_for(
 
     let claim = ClaimOfAttendance::<AccountId, Moment> {
         claimant_public: accountid,
-        currency_identifier: cid,
+        community_identifier: cid,
         ceremony_index: cindex,
         meetup_index: mindex,
         location: mloc,
@@ -1031,21 +1032,21 @@ fn sign_claim(claim: ClaimOfAttendance<AccountId, Moment>, account_str: &str) ->
     attestation.encode()
 }
 
-fn get_currency_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CurrencyIdentifier>> {
-    api.get_storage_value("EncointerCurrencies", "CurrencyIdentifiers", None)
+fn get_community_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CommunityIdentifier>> {
+    api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None).unwrap()
 }
 
-fn get_currency_locations(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier) -> Option<Vec<Location>> {
+fn get_community_locations(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<Location>> {
     api.get_storage_map(
-        "EncointerCurrencies",
+        "EncointerCommunities",
         "Locations",
         cid,
         None
-    )
+    ).unwrap()
 }
 
-fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: MeetupIndexType) -> Option<Location> {
-    let locations = get_currency_locations(api, cid).or(Some(vec![])).unwrap();
+fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, mindex: MeetupIndexType) -> Option<Location> {
+    let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
     let lidx = (mindex -1) as usize;
     if lidx >= locations.len() {
         return None 
@@ -1053,7 +1054,7 @@ fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex
     Some(locations[lidx])
 }
 
-fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: MeetupIndexType) -> Option<Moment> {
+fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, mindex: MeetupIndexType) -> Option<Moment> {
     let mlocation = get_meetup_location(api, cid, mindex).unwrap();
     let mlon: f64 = mlocation.lon.lossy_into();
 
@@ -1061,7 +1062,7 @@ fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: Me
         "EncointerScheduler",
         "NextPhaseTimestamp",
         None
-    ).unwrap();
+    ).unwrap().unwrap();
 
     let attesting_start = match get_current_phase(api) {
         CeremonyPhaseType::ASSIGNING => next_phase_timestamp, // - next_phase_timestamp.rem(ONE_DAY),
@@ -1071,7 +1072,7 @@ fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: Me
                 "PhaseDurations",
                 CeremonyPhaseType::ATTESTING,
                 None
-            ).unwrap();
+            ).unwrap().unwrap();
             next_phase_timestamp - attesting_duration //- next_phase_timestamp.rem(ONE_DAY)
         },
         CeremonyPhaseType::REGISTERING => panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location.")
@@ -1086,7 +1087,7 @@ fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CurrencyIdentifier, mindex: Me
 
 fn prove_attendance(
     prover: AccountId,
-    cid: CurrencyIdentifier,
+    cid: CommunityIdentifier,
     cindex: CeremonyIndexType,
     attendee_str: &str,
 ) -> ProofOfAttendance<Signature, AccountId> {
@@ -1097,7 +1098,7 @@ fn prove_attendance(
     debug!("signature payload is {:x?}", msg.encode());
     ProofOfAttendance {
         prover_public: prover,
-        currency_identifier: cid,
+        community_identifier: cid,
         ceremony_index: cindex,
         attendee_public: attendeeid,
         attendee_signature: Signature::from(sr25519_core::Signature::from(
@@ -1109,7 +1110,7 @@ fn prove_attendance(
 fn get_reputation(
     api: &Api<sr25519::Pair>, 
     prover: &AccountId,
-    cid: CurrencyIdentifier,
+    cid: CommunityIdentifier,
     cindex: CeremonyIndexType,    
 ) -> Reputation {
     api.get_storage_double_map(
@@ -1118,7 +1119,7 @@ fn get_reputation(
         (cid, cindex),
         prover.clone(),
         None
-    ).or(Some(Reputation::Unverified)).unwrap()   
+    ).unwrap().or(Some(Reputation::Unverified)).unwrap()   
 }
 
 fn apply_demurrage(entry: BalanceEntry<BlockNumber>, current_block: BlockNumber, demurrage_per_block: BalanceType) -> BalanceType {

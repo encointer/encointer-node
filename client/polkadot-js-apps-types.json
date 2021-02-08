@@ -10,10 +10,10 @@
   "ParticipantIndexType": "u64",
   "MeetupIndexType": "u64",
   "AttestationIndexType": "u64",
-  "CurrencyIdentifier": "Hash",
+  "CommunityIdentifier": "Hash",
   "BalanceType": "i128",
   "BalanceEntry": "(BalanceType,Moment)",
-  "CurrencyCeremony": "(CurrencyIdentifier,CeremonyIndexType)",
+  "CommunityCeremony": "(CommunityIdentifier,CeremonyIndexType)",
   "Location": {
     "lat": "i64",
     "lon": "i64"
@@ -26,7 +26,7 @@
       "VerifiedLinked"
     ]
   },
-  "CurrencyPropertiesType": {
+  "CommunityPropertiesType": {
     "name_utf8": "Text",
     "demurrage_per_block": "i128"
   },

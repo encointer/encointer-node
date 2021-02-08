@@ -3,7 +3,7 @@ use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature,
 	CeremonyPhaseType, BalanceType,
-	EncointerCeremoniesConfig, EncointerCurrenciesConfig, EncointerSchedulerConfig,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
@@ -170,8 +170,8 @@ fn testnet_genesis(
 			time_tolerance: 600_000, // +-10min
 			location_tolerance: 1_000, // [m] 
 		}),
-		encointer_currencies: Some(EncointerCurrenciesConfig {
-            currency_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
+		encointer_communities: Some(EncointerCommunitiesConfig {
+            community_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
         }),
 	}
 }

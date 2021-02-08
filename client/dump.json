@@ -1885,7 +1885,7 @@ Metadata:
      },
      "calls": [
       {
-       "name": "new_currency",
+       "name": "new_community",
        "arguments": [
         {
          "name": "loc",

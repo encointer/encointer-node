@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # usage:
-#  ./bootstrap_demo_currency.sh <NODEPORT>
+#  ./bootstrap_demo_community.sh <NODEPORT>
 NPORT=${1:-9944}
 
 CLIENT="../target/release/encointer-client-notee -p $NPORT"
 
-# register new currency
-echo "registering demo currency with cid:"
-cid=$($CLIENT new-currency test-locations-mediterranean.json //Alice)
+# register new community
+echo "registering demo community with cid:"
+cid=$($CLIENT new-community test-locations-mediterranean.json //Alice)
 echo $cid
 
-# list currenies
-$CLIENT list-currencies
+# list communitites
+$CLIENT list-communities
 
-# bootstrap currency with well-known keys
+# bootstrap community with well-known keys
 phase=$($CLIENT get-phase)
 echo "phase is $phase"
 if [ "$phase" == "REGISTERING" ]; then
@@ -88,7 +88,7 @@ $CLIENT --cid $cid list-attestations
 $CLIENT next-phase
 # should now be REGISTERING
 
-echo "account balances for new currency with cid $cid"
+echo "account balances for new community with cid $cid"
 BALA=$($CLIENT --cid $cid balance //Alice | xargs)
 BALB=$($CLIENT --cid $cid balance //Bob | xargs)
 BALC=$($CLIENT --cid $cid balance //Charlie | xargs)

@@ -2,8 +2,8 @@
 {
     "type": "FeatureCollection",
 
-    "currency_meta": {
-        "name": "mediterranean test currency",
+    "community_meta": {
+        "name": "mediterranean test community",
         "bootstrappers": [
           "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
           "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
