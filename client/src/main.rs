@@ -624,6 +624,43 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("get-proof-of-attendances")
+                .description("creates proof of ProofOfAttendances, for the past <amount> ceremonies, (which might be invalid, as reputation is not checked)")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .arg(
+                            Arg::with_name("accountid")
+                                .takes_value(true)
+                                .required(true)
+                                .value_name("SS58")
+                                .help("AccountId in ss58check format"),
+                        )
+                        .arg(
+                        Arg::with_name("amount")
+                            .takes_value(true)
+                            .default_value("3")
+                            .help("amount of proofs to create"),
+                    )
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let arg_who = matches.value_of("accountid").unwrap();
+                    let accountid = get_accountid_from_str(arg_who);
+                    let amount: u32 = matches.value_of("amount").unwrap().parse().unwrap();
+                    let api = get_chain_api(matches);
+                    let cindex = get_ceremony_index(&api);
+                    let cid = verify_cid(
+                        &api,
+                     matches.value_of("cid").expect("please supply argument --cid"),
+                    );
+
+                    for i in 1..=amount {
+                        let proof = prove_attendance(accountid.clone(), cid, cindex - i, arg_who);
+                        println!("Proof: {:?}\n", hex::encode(proof.encode()));
+                    }
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("register-attestations")
                 .description("register encointer ceremony attestations for supplied community")
                 .options(|app| {
