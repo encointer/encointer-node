@@ -16,8 +16,6 @@ jobs:
       run: rustup target add wasm32-unknown-unknown
     - name: Build
       run: cargo build --release
-      env:
-        SKIP_WASM_BUILD: 1
     - uses: actions/upload-artifact@v2
       with:
         name: release
@@ -25,8 +23,20 @@ jobs:
           target/release/encointer-node-*
           target/release/encointer-client-*
           !target/release/*.d
+  test-bootstrapping:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@master
+    - uses: actions/download-artifact@master
+      with:
+        name: release
+        path: | 
+          target/release/encointer-node-*
+          target/release/encointer-client-*
+          !target/release/*.d
     - name: start dev node
-      run: target/release/encointer-node-notee --tmp --dev --execution=native &
+      run: target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
       run: target/release/encointer-client-notee get-phase
     - name: next-phase
@@ -35,6 +45,18 @@ jobs:
       run: |
         cd client
         ./bootstrap_demo_community.sh
+  test-community-growing:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@master
+    - uses: actions/download-artifact@master
+      with:
+        name: release
+        path: | 
+          target/release/encointer-node-*
+          target/release/encointer-client-*
+          !target/release/*.d
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -43,6 +65,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install geojson random_word pyproj
+    - name: start dev node
+      run: target/release/encointer-node-notee --tmp --dev &
     - name: grow community
       run: |
         ./bot-community.py init
