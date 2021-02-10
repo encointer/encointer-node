@@ -1,9 +1,9 @@
 name: integration tests for notee client and node
 
 on:
+  workflow_dispatch:
   schedule:
     - cron:  '42 3 * * *'
-
 env:
   CARGO_TERM_COLOR: always
 
