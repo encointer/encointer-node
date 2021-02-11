@@ -625,7 +625,8 @@ fn main() {
         )
         .add_cmd(
             Command::new("get-proof-of-attendances")
-                .description("creates proof of ProofOfAttendances, for the past <amount> ceremonies, (which might be invalid, as reputation is not checked)")
+                .description("creates proof of ProofOfAttendances for an <account> for the \
+                past <amount> ceremonies (which might be invalid, as reputation is not checked)")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .arg(
@@ -655,6 +656,7 @@ fn main() {
 
                     for i in 1..=amount {
                         let proof = prove_attendance(accountid.clone(), cid, cindex - i, arg_who);
+                        println!("Proof: {:?}\n", &proof);
                         println!("Proof: {:?}\n", hex::encode(proof.encode()));
                     }
                     Ok(())
