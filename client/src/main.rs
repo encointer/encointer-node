@@ -656,7 +656,7 @@ fn main() {
 
                     for i in 1..=amount {
                         let proof = prove_attendance(accountid.clone(), cid, cindex - i, arg_who);
-                        println!("Proof: {:?}\n", &proof);
+                        info!("Proof: {:?}\n", &proof);
                         println!("Proof: {:?}\n", hex::encode(proof.encode()));
                     }
                     Ok(())
