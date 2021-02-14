@@ -38,8 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: init-rust-target
-      run: rustup target add wasm32-unknown-unknown
+    - name: init-rust
+      run: rustup component add clippy
     - name: cargo clippy client
       run: cargo clippy -p encointer-client-notee
 
