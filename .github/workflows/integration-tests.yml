@@ -26,7 +26,7 @@ jobs:
         ./target/release/encointer-client-notee
     - uses: actions/upload-artifact@v2
       with:
-        name: client_and_node
+        name: executables
         path: | 
           target/release/encointer-node-notee
           target/release/encointer-client-notee
@@ -37,14 +37,17 @@ jobs:
     - uses: actions/checkout@master
     - name: download build artifacts
       uses: actions/download-artifact@master
-    - name: start dev node
+    - name: fix permissions of artifacts
       run: |
-        chmod +x client_and_node/encointer-node-notee
-        ./client_and_node/encointer-node-notee --tmp --dev &
+        chmod +x executables/encointer-node-notee
+        chmod +x executables/encointer-client-notee
+    - name: start dev node
+      run: 
+        ./executables/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: ./client_and_node/encointer-client-notee get-phase
+      run: ./executables/encointer-client-notee get-phase
     - name: next-phase
-      run: ./client_and_node/encointer-client-notee next-phase
+      run: ./executables/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
@@ -56,6 +59,10 @@ jobs:
     - uses: actions/checkout@master
     - name: download build artifacts
       uses: actions/download-artifact@master
+    - name: fix permissions of artifacts
+      run: |
+        chmod +x executables/encointer-node-notee
+        chmod +x executables/encointer-client-notee
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -65,7 +72,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson random_word pyproj
     - name: start dev node
-      run: /home/runner/work/encointer-node/encointer-node/client_and_node/encointer-node-notee --tmp --dev &
+      run: /home/runner/work/encointer-node/encointer-node/executables/encointer-node-notee --tmp --dev &
     - name: grow community
       run: |
         cd client
