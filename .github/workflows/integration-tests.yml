@@ -72,7 +72,7 @@ jobs:
     - name: install py dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install geojson random_word pyproj yaml
+        pip install geojson pyproj
         which python
         which python3
         python --version

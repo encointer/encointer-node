@@ -4,7 +4,7 @@ import subprocess
 import geojson
 
 from math import sqrt, floor
-from random_word import RandomWords
+#from random_word import RandomWords
 from pyproj import Geod
 geoid = Geod(ellps='WGS84')
 
