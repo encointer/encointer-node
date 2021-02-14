@@ -41,7 +41,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: init-rust
-      run: rustup component add clippy
+      run: |
+        rustup component add clippy
+        rustup target add wasm32-unknown-unknown
     - name: cargo clippy client
       run: cargo clippy -p encointer-client-notee
 
