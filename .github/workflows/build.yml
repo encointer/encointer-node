@@ -14,10 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: install-tools
+      if: ${{ env.ACT }}
+      run: |
+        apt update
+        apt install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl libz-dev
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --default-toolchain none
     - name: init-rust-target
-      run: rustup target add wasm32-unknown-unknown
+      run: | 
+        source $HOME/.cargo/env
+        rustup target add wasm32-unknown-unknown
     - name: Build
-      run: cargo build --release
+      run: | 
+        source $HOME/.cargo/env
+        cargo build --release
     - uses: actions/upload-artifact@v2
       with:
         name: release
