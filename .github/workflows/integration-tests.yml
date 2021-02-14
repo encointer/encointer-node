@@ -13,9 +13,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: init-rust-target
-      run: rustup target add wasm32-unknown-unknown
+      #run: rustup target add wasm32-unknown-unknown
     - name: Build
-      run: cargo build --release
+      #run: cargo build --release
+      run: |
+        mkdir -p target/release
+        echo "echo helloworldnode" > target/release/encointer-node-notee
+        chmod +x target/release/encointer-node-notee
+        echo "echo helloworldclient" > target/release/encointer-client-notee
+        chmod +x target/release/encointer-client-notee
     - uses: actions/upload-artifact@v2
       with:
         name: release
@@ -30,11 +36,11 @@ jobs:
     - name: download build artifacts
       uses: actions/download-artifact@master
     - name: start dev node
-      run: ./target/release/encointer-node-notee --tmp --dev &
+      run: target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: ./target/release/encointer-client-notee get-phase
+      run: target/release/encointer-client-notee get-phase
     - name: next-phase
-      run: ./target/release/encointer-client-notee next-phase
+      run: target/release/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
@@ -58,6 +64,7 @@ jobs:
       run: ./target/release/encointer-node-notee --tmp --dev &
     - name: grow community
       run: |
+        cd client
         ./bot-community.py init
         ./bot-community.py run
 
