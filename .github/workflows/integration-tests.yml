@@ -20,9 +20,8 @@ jobs:
       with:
         name: release
         path: | 
-          target/release/encointer-node-*
-          target/release/encointer-client-*
-          !target/release/*.d
+          target/release/encointer-node-notee
+          target/release/encointer-client-notee
   test-bootstrapping:
     runs-on: ubuntu-latest
     needs: build
@@ -32,9 +31,8 @@ jobs:
       with:
         name: release
         path: | 
-          target/release/encointer-node-*
-          target/release/encointer-client-*
-          !target/release/*.d
+          target/release/encointer-node-notee
+          target/release/encointer-client-notee
     - name: start dev node
       run: target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
@@ -54,9 +52,8 @@ jobs:
       with:
         name: release
         path: | 
-          target/release/encointer-node-*
-          target/release/encointer-client-*
-          !target/release/*.d
+          target/release/encointer-node-notee
+          target/release/encointer-client-notee
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
