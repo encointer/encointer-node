@@ -28,17 +28,12 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: actions/download-artifact@master
-      with:
-        name: release
-        path: | 
-          target/release/encointer-node-notee
-          target/release/encointer-client-notee
     - name: start dev node
-      run: target/release/encointer-node-notee --tmp --dev &
+      run: ./target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: target/release/encointer-client-notee get-phase
+      run: ./target/release/encointer-client-notee get-phase
     - name: next-phase
-      run: target/release/encointer-client-notee next-phase
+      run: ./target/release/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
@@ -49,11 +44,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: actions/download-artifact@master
-      with:
-        name: release
-        path: | 
-          target/release/encointer-node-notee
-          target/release/encointer-client-notee
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -63,7 +53,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson random_word pyproj
     - name: start dev node
-      run: target/release/encointer-node-notee --tmp --dev &
+      run: ./target/release/encointer-node-notee --tmp --dev &
     - name: grow community
       run: |
         ./bot-community.py init
