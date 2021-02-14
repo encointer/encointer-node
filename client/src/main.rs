@@ -235,7 +235,7 @@ fn main() {
                                 .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, None).unwrap() {
                                     apply_demurrage(entry, bn, dr)
                             } else { BalanceType::from_num(0) }; 
-                            println!("NCTR balance for {} in community {} is {} ", account, cid.encode().to_base58(), balance);
+                            println!("{}", balance);
                         }
                         None => {
                             let balance = if let Some(data) = api.get_account_data(&accountid).unwrap() {
@@ -243,7 +243,7 @@ fn main() {
                             } else {
                                 0
                             };
-                            println!("ERT balance for {} is {}", account, balance);
+                            println!("{}", balance);
                         }
                     };
                     Ok(())

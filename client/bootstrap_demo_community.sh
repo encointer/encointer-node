@@ -97,7 +97,7 @@ echo "account balanace for Alice   is $BALA"
 echo "account balanace for Bob     is $BALB"
 echo "account balanace for Charlie is $BALC"
 
-if [ "1" = "$BALA" ]; then
+if (( $(echo "$BALA > 0" |bc -l) )); then
    echo "test passed"
    exit 0
 else
