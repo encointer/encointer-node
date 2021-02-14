@@ -27,7 +27,8 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@master
-    - uses: actions/download-artifact@master
+    - name: download build artifacts
+      uses: actions/download-artifact@master
     - name: start dev node
       run: ./target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
@@ -43,7 +44,8 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@master
-    - uses: actions/download-artifact@master
+    - name: download build artifacts
+      uses: actions/download-artifact@master
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
