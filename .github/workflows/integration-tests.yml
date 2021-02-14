@@ -37,7 +37,7 @@ jobs:
     - uses: actions/checkout@master
     - name: download build artifacts
       uses: actions/download-artifact@master
-    - name: fix permissions of artifacts
+    - name: fix permissions of artifacts and move to original folder
       run: |
         chmod +x executables/encointer-node-notee
         chmod +x executables/encointer-client-notee
@@ -45,11 +45,11 @@ jobs:
         mv executables/* target/release
     - name: start dev node
       run: 
-        ./executables/encointer-node-notee --tmp --dev &
+        ./target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: ./executables/encointer-client-notee get-phase
+      run: ./target/release/encointer-client-notee get-phase
     - name: next-phase
-      run: ./executables/encointer-client-notee next-phase
+      run: ./target/release/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
