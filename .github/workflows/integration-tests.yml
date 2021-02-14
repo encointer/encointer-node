@@ -36,11 +36,11 @@ jobs:
     - name: download build artifacts
       uses: actions/download-artifact@master
     - name: start dev node
-      run: client_and_node/target/release/encointer-node-notee --tmp --dev &
+      run: /home/runner/work/encointer-node/encointer-node/client_and_node/target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: client_and_node/target/release/encointer-client-notee get-phase
+      run: /home/runner/work/encointer-node/encointer-node/client_and_node/target/release/encointer-client-notee get-phase
     - name: next-phase
-      run: client_and_node/target/release/encointer-client-notee next-phase
+      run: /home/runner/work/encointer-node/encointer-node/client_and_node/target/release/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
@@ -61,7 +61,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson random_word pyproj
     - name: start dev node
-      run: ./target/release/encointer-node-notee --tmp --dev &
+      run: /home/runner/work/encointer-node/encointer-node/client_and_node/encointer-node-notee --tmp --dev &
     - name: grow community
       run: |
         cd client
