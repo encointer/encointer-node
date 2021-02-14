@@ -38,11 +38,13 @@ jobs:
     - name: download build artifacts
       uses: actions/download-artifact@master
     - name: start dev node
-      run: client_and_node/encointer-node-notee --tmp --dev &
+      run: |
+        chmod +x client_and_node/encointer-node-notee
+        ./client_and_node/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: client_and_node/encointer-client-notee get-phase
+      run: ./client_and_node/encointer-client-notee get-phase
     - name: next-phase
-      run: client_and_node/encointer-client-notee next-phase
+      run: ./client_and_node/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
