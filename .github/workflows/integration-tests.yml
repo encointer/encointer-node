@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: init-rust-target
-      #run: rustup target add wasm32-unknown-unknown
+      run: rustup target add wasm32-unknown-unknown
     - name: Build
       #run: cargo build --release
       run: |
