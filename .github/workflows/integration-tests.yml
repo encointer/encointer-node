@@ -41,6 +41,8 @@ jobs:
       run: |
         chmod +x executables/encointer-node-notee
         chmod +x executables/encointer-client-notee
+        mkdir -p target/release
+        mv executables/* target/release
     - name: start dev node
       run: 
         ./executables/encointer-node-notee --tmp --dev &
