@@ -83,6 +83,6 @@ jobs:
     - name: grow community
       run: |
         cd client
-        ./bot-community.py init
-        ./bot-community.py run
+        python bot-community.py init
+        python bot-community.py run
 
