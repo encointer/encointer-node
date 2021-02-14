@@ -18,16 +18,16 @@ jobs:
       #run: cargo build --release
       run: |
         mkdir -p target/release
-        echo "echo helloworldnode" > encointer-node-notee
-        chmod +x encointer-node-notee
-        echo "echo helloworldclient" > encointer-client-notee
-        chmod +x encointer-client-notee
+        echo "echo helloworldnode" > target/release/encointer-node-notee
+        chmod +x target/release/encointer-node-notee
+        echo "echo helloworldclient" > target/release/encointer-client-notee
+        chmod +x target/release/encointer-client-notee
     - uses: actions/upload-artifact@v2
       with:
-        name: release
+        name: client_and_node
         path: | 
-          encointer-node-notee
-          encointer-client-notee
+          target/release/encointer-node-notee
+          target/release/encointer-client-notee
   test-bootstrapping:
     runs-on: ubuntu-latest
     needs: build
@@ -36,11 +36,11 @@ jobs:
     - name: download build artifacts
       uses: actions/download-artifact@master
     - name: start dev node
-      run: encointer-node-notee --tmp --dev &
+      run: client_and_node/target/release/encointer-node-notee --tmp --dev &
     - name: get-phase
-      run: encointer-client-notee get-phase
+      run: client_and_node/target/release/encointer-client-notee get-phase
     - name: next-phase
-      run: encointer-client-notee next-phase
+      run: client_and_node/target/release/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
