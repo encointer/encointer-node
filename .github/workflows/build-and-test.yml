@@ -94,7 +94,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson pyproj
     - name: start dev node
-      run: /home/runner/work/encointer-node/encointer-node/executables/encointer-node-notee --tmp --dev &
+      run: ./target/release/encointer-node-notee --tmp --dev &
     - name: grow community
       run: |
         cd client
