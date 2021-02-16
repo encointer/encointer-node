@@ -652,9 +652,6 @@ fn main() {
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
 
-                    let index = matches.value_of("ceremony-index").unwrap();
-                    println!("Index unparsed: {:?}", index);
-
                     let index: i32 = matches.value_of("ceremony-index").unwrap().parse().unwrap();
                     let cindex= match index {
                         i32::MIN..0 => get_ceremony_index(&api) - index.abs() as u32,
@@ -662,13 +659,12 @@ fn main() {
                         0 => panic!("Zero not allowed as ceremony index"),
                     };
 
-                    println!("Ceremony index: {:?}", cindex);
-
                     let cid = verify_cid(
                         &api,
                      matches.value_of("cid").expect("please supply argument --cid"),
                     );
 
+                    debug!("Getting proof for ceremony index: {:?}", cindex);
                     let proof = prove_attendance(accountid.clone(), cid, cindex, arg_who);
                     info!("Proof: {:?}\n", &proof);
                     println!("0x{}", hex::encode(proof.encode()));
