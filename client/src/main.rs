@@ -18,8 +18,6 @@
 //! encointer-client-notee get-phase
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
-//!
-#![feature(exclusive_range_pattern)]
 
 #[macro_use]
 extern crate clap;
@@ -653,7 +651,7 @@ fn main() {
 
                     let index: i32 = matches.value_of("ceremony-index").unwrap().parse().unwrap();
                     let cindex = match index {
-                        i32::MIN..0 => get_ceremony_index(&api) - index.abs() as u32,
+                        i32::MIN..=-1 => get_ceremony_index(&api) - index.abs() as u32,
                         1..=i32::MAX => index as u32,
                         0 => panic!("Zero not allowed as ceremony index"),
                     };
