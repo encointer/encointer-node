@@ -627,8 +627,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("get-proof-of-attendance")
-                .description("creates a proof of ProofOfAttendances for an <account> for the \
-                given ceremony index")
+                .description("creates a proof of ProofOfAttendances for an <account> for the given ceremony index")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .setting(AppSettings::AllowLeadingHyphen)
@@ -653,9 +652,9 @@ fn main() {
                     let api = get_chain_api(matches);
 
                     let index: i32 = matches.value_of("ceremony-index").unwrap().parse().unwrap();
-                    let cindex= match index {
+                    let cindex = match index {
                         i32::MIN..0 => get_ceremony_index(&api) - index.abs() as u32,
-                        1..=i32::MAX=> index as u32,
+                        1..=i32::MAX => index as u32,
                         0 => panic!("Zero not allowed as ceremony index"),
                     };
 
