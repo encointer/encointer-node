@@ -624,6 +624,52 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("get-proof-of-attendance")
+                .description("creates a proof of ProofOfAttendances for an <account> for the given ceremony index")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .setting(AppSettings::AllowLeadingHyphen)
+                        .arg(
+                            Arg::with_name("accountid")
+                                .takes_value(true)
+                                .required(true)
+                                .value_name("SS58")
+                                .help("AccountId in ss58check format"),
+                        )
+                        .arg(
+                            Arg::with_name("ceremony-index")
+                                .takes_value(true)
+                                .allow_hyphen_values(true)
+                                .default_value("-1")
+                                .help("If positive, absolute index. If negative, current_index -i. 0 is not allowed"),
+                    )
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let arg_who = matches.value_of("accountid").unwrap();
+                    let accountid = get_accountid_from_str(arg_who);
+                    let api = get_chain_api(matches);
+
+                    let index: i32 = matches.value_of("ceremony-index").unwrap().parse().unwrap();
+                    let cindex = match index {
+                        i32::MIN..=-1 => get_ceremony_index(&api) - index.abs() as u32,
+                        1..=i32::MAX => index as u32,
+                        0 => panic!("Zero not allowed as ceremony index"),
+                    };
+
+                    let cid = verify_cid(
+                        &api,
+                     matches.value_of("cid").expect("please supply argument --cid"),
+                    );
+
+                    debug!("Getting proof for ceremony index: {:?}", cindex);
+                    let proof = prove_attendance(accountid.clone(), cid, cindex, arg_who);
+                    info!("Proof: {:?}\n", &proof);
+                    println!("0x{}", hex::encode(proof.encode()));
+
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("register-attestations")
                 .description("register encointer ceremony attestations for supplied community")
                 .options(|app| {
