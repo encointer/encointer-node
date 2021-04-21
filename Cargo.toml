@@ -5,7 +5,7 @@ panic = 'unwind'
 members = [
     'node',
     'runtime',
-    'client',
+#    'client',
 ]
 
 #only while debugging
