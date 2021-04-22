@@ -63,7 +63,8 @@ use encointer_primitives::ceremonies::{
     CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
 };
 use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
-use encointer_primitives::communities::{CommunityIdentifier, CommunityPropertiesType, Location, Degree};
+use encointer_primitives::communities::{CommunityIdentifier, Location, Degree};
+use encointer_primitives::balances::Demurrage;
 use fixed::transcendental::exp;
 use fixed::traits::LossyInto;
 use std::convert::TryInto;
@@ -859,6 +860,15 @@ fn listen(matches: &ArgMatches<'_>) {
                             match &ee {
                                 encointer_communities::RawEvent::CommunityRegistered(account, cid) => {
                                     println!("Community registered: by {}, cid: {:?}", account, cid);
+                                },
+                                encointer_communities::RawEvent::MetadataUpdated(cid) => {
+                                    println!("Community metadata updated cid: {:?}", cid);
+                                },
+                                encointer_communities::RawEvent::NominalIncomeUpdated(cid, income) => {
+                                    println!("Community metadata updated cid: {:?}, value: {:?}", cid, income);
+                                },
+                                encointer_communities::RawEvent::DemurrageUpdated(cid, demurrage) => {
+                                    println!("Community metadata updated cid: {:?}, value: {:?}", cid, demurrage );
                                 }
                             }
                         },
@@ -927,12 +937,12 @@ fn get_block_number(api: &Api<sr25519::Pair>) -> BlockNumber {
     hdr.number
 }
 
-fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> BalanceType {
-    let cp: CommunityPropertiesType = api
-        .get_storage_map("EncointerCommunities", "CommunityProperties", cid, None)
+fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Demurrage {
+    let d: Demurrage = api
+        .get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
         .unwrap().unwrap();
-    debug!("CommunityProperties are {:?}", cp);
-    cp.demurrage_per_block
+    debug!("Fetched demurrage per block {:?}", d);
+    d
 }
 
 fn get_ceremony_index(api: &Api<sr25519::Pair>) -> CeremonyIndexType {
