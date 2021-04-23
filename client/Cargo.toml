@@ -64,11 +64,6 @@ git = "https://github.com/encointer/substrate-fixed"
 tag = "v0.5.6"
 package = "substrate-fixed"
 
-[dependencies.serde]
-features = ['derive']
-optional = true
-version = '1.0.101'
-
 [dependencies.codec]
 #default-features = false
 package = "parity-scale-codec"

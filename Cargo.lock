@@ -1382,7 +1382,6 @@ dependencies = [
  "parking_lot 0.10.2",
  "primitive-types 0.6.2",
  "sc-keystore",
- "serde",
  "serde_json",
  "sp-application-crypto",
  "sp-core",
@@ -8869,7 +8868,7 @@ dependencies = [
 [[package]]
 name = "xcm"
 version = "0.8.30"
-source = "git+https://github.com/paritytech/polkadot.git?branch=master#d4f4ad4bba2e934de649bd1c627b8ea85e927058"
+source = "git+https://github.com/paritytech/polkadot.git?branch=master#4a5bf3a9b44649d152fdb63216bbbe6b5449c079"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples 0.2.1",

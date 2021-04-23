@@ -63,7 +63,7 @@ use encointer_primitives::ceremonies::{
     CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
 };
 use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
-use encointer_primitives::communities::{CommunityIdentifier, Location, Degree};
+use encointer_primitives::communities::{CommunityIdentifier, Location, Degree, CommunityMetadata, NominalIncome};
 use encointer_primitives::balances::Demurrage;
 use fixed::transcendental::exp;
 use fixed::traits::LossyInto;
@@ -387,19 +387,25 @@ fn main() {
                         }
                         _ => (),
                     };
-                    let meta: serde_json::Value = serde_json::from_str(&spec_str).unwrap();
-                    debug!("meta: {:?}", meta["community_meta"]);
-                    let bootstrappers: Vec<AccountId> = meta["community_meta"]["bootstrappers"]
+                    let spec: serde_json::Value = serde_json::from_str(&spec_str).unwrap();
+                    debug!("meta: {:?}", spec["community"]);
+                    let bootstrappers: Vec<AccountId> = spec["community"]["bootstrappers"]
                         .as_array()
                         .expect("bootstrappers must be array")
                         .iter()
                         .map(|a| get_accountid_from_str(&a.as_str().unwrap()))
                         .collect();
 
+
+                    let meta: CommunityMetadata = serde_json::from_value(spec["community"]["meta"].clone())
+                        .unwrap();
+
+                    info!("Metadata: {:?}", meta);
+
                     let cid = blake2_256(&(loc.clone(), bootstrappers.clone()).encode());
-                    let name = meta["community_meta"]["name"].as_str().unwrap();
+
                     info!("bootstrappers: {:?}", bootstrappers);
-                    info!("name: {}", name);
+                    info!("name: {}", meta.name);
                     info!("Community registered by {}", signer.public().to_ss58check());
                     let api = get_chain_api(matches);
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(signer));
@@ -408,9 +414,12 @@ fn main() {
                         "EncointerCommunities",
                         "new_community",
                         loc,
-                        bootstrappers
+                        bootstrappers,
+                        meta,
+                        None::<Demurrage>,
+                        None::<NominalIncome>
                     );
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     println!("{}", cid.to_base58());
                     Ok(())
