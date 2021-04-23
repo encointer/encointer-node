@@ -2,7 +2,7 @@ use sp_core::{Pair, Public, sr25519};
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature,
-	CeremonyPhaseType, BalanceType,
+	CeremonyPhaseType, BalanceType, Demurrage, EncointerBalancesConfig,
 	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -173,5 +173,8 @@ fn testnet_genesis(
 		encointer_communities: Some(EncointerCommunitiesConfig {
             community_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
         }),
+		encointer_balances: Some(EncointerBalancesConfig {
+			demurrage_per_block_default: Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128),
+		}),
 	}
 }

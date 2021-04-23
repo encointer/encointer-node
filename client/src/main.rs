@@ -400,6 +400,8 @@ fn main() {
                     let meta: CommunityMetadata = serde_json::from_value(spec["community"]["meta"].clone())
                         .unwrap();
 
+                    meta.validate().unwrap();
+
                     info!("Metadata: {:?}", meta);
 
                     let cid = blake2_256(&(loc.clone(), bootstrappers.clone()).encode());
@@ -419,7 +421,7 @@ fn main() {
                         None::<Demurrage>,
                         None::<NominalIncome>
                     );
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
+                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     println!("{}", cid.to_base58());
                     Ok(())
@@ -947,11 +949,17 @@ fn get_block_number(api: &Api<sr25519::Pair>) -> BlockNumber {
 }
 
 fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Demurrage {
-    let d: Demurrage = api
+    let mut d: Option<Demurrage> = api
         .get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
-        .unwrap().unwrap();
-    debug!("Fetched demurrage per block {:?}", d);
-    d
+        .unwrap();
+
+    if d.is_none() {
+        d = api.get_storage_value("EncointerBalances", "DemurragePerBlockDefault", None)
+            .unwrap();
+    }
+
+    debug!("Fetched demurrage per block {:?}", &d);
+    d.unwrap()
 }
 
 fn get_ceremony_index(api: &Api<sr25519::Pair>) -> CeremonyIndexType {

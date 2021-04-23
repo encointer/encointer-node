@@ -47,7 +47,7 @@ pub use encointer_balances::Call as EncointerBalancesCall;
 pub use encointer_bazaar::Call as EncointerBazaarCall;
 
 pub use encointer_primitives::scheduler::CeremonyPhaseType;
-pub use encointer_primitives::balances::{BalanceType, BalanceEntry};
+pub use encointer_primitives::balances::{BalanceType, BalanceEntry, Demurrage};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -333,7 +333,7 @@ construct_runtime!(
 		EncointerScheduler: encointer_scheduler::{Module, Call, Storage, Config<T>, Event},
 		EncointerCeremonies: encointer_ceremonies::{Module, Call, Storage, Config<T>, Event<T>},
 		EncointerCommunities: encointer_communities::{Module, Call, Storage, Config<T>, Event<T>},
-		EncointerBalances: encointer_balances::{Module, Call, Storage, Event<T>},	
+		EncointerBalances: encointer_balances::{Module, Call, Storage, Event<T>, Config},
 		EncointerBazaar: encointer_bazaar::{Module, Call, Storage, Event<T>},	
 	}
 );
