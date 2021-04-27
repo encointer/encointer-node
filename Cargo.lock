@@ -1404,6 +1404,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "jsonrpc-core",
+ "pallet-encointer-communities-rpc",
+ "pallet-encointer-communities-rpc-runtime-api",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -4111,6 +4113,21 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-fixed",
+]
+
+[[package]]
+name = "pallet-encointer-communities-rpc"
+version = "0.1.0"
+dependencies = [
+ "encointer-primitives",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-encointer-communities-rpc-runtime-api",
+ "sc-rpc",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
 ]
 
 [[package]]
