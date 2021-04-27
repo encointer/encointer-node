@@ -1478,6 +1478,7 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "0.4.0"
+source = "git+https://github.com/encointer/pallets?branch=master#72b038e4351826b4c319c9c62905bd09f2b2eadf"
 dependencies = [
  "parity-scale-codec 2.1.1",
  "serde",
@@ -4049,6 +4050,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "0.4.0"
+source = "git+https://github.com/encointer/pallets?branch=master#72b038e4351826b4c319c9c62905bd09f2b2eadf"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4068,6 +4070,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "0.4.0"
+source = "git+https://github.com/encointer/pallets?branch=master#72b038e4351826b4c319c9c62905bd09f2b2eadf"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4081,6 +4084,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "0.4.0"
+source = "git+https://github.com/encointer/pallets?branch=master#72b038e4351826b4c319c9c62905bd09f2b2eadf"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4100,6 +4104,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "0.4.0"
+source = "git+https://github.com/encointer/pallets?branch=master#72b038e4351826b4c319c9c62905bd09f2b2eadf"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4115,6 +4120,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "0.4.0"
+source = "git+https://github.com/encointer/pallets?branch=master#72b038e4351826b4c319c9c62905bd09f2b2eadf"
 dependencies = [
  "encointer-primitives",
  "frame-support",
