@@ -43,7 +43,7 @@ use sp_runtime::{
 
 use std::sync::mpsc::channel;
 use geojson::GeoJson;
-use serde_json;
+use serde_json::{json};
 use std::fs;
 use substrate_api_client::{
     compose_call,
@@ -54,10 +54,7 @@ use substrate_api_client::{
     utils::FromHexString
 };
 use substrate_client_keystore::LocalKeystore;
-use encointer_node_notee_runtime::{
-    AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, 
-    BlockNumber, Header,
-};
+use encointer_node_notee_runtime::{AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, BlockNumber, Header};
 use encointer_primitives::ceremonies::{
     Attestation, AttestationIndexType, ClaimOfAttendance,
     CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
@@ -437,6 +434,9 @@ fn main() {
                     for cid in cids.iter() {
                         println!("community with cid {}", cid.encode().to_base58());
                     }
+                    let names = get_community_names(&api).unwrap();
+                    println!("Names: {}", names);
+
                     Ok(())
                 }),
         )
@@ -1125,6 +1125,20 @@ fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, minde
         return None 
     } 
     Some(locations[lidx])
+}
+
+fn get_community_names(api: &Api<sr25519::Pair>) -> Option<String> {
+    let req = json!({
+        "method": "communities_getNames",
+        "params": [],
+        "jsonrpc": "2.0",
+        "id": "1",
+    });
+
+    let names = api.get_request(req.to_string()).unwrap().unwrap();
+    println!("Got all community names {:?}", names);
+
+    Some(names)
 }
 
 fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, mindex: MeetupIndexType) -> Option<Moment> {
