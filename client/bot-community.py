@@ -101,8 +101,11 @@ def register_attestations(account, attestations):
 
 
 def generate_community_spec(name, locations, bootstrappers):
+    meta = meta_json(name, "CSP", "Defau1tCidThat1s46Characters1nLength1111111111")
+    print("Community metadata: " + str(meta))
+
     gj = geojson.FeatureCollection(list(map(lambda x : geojson.Feature(geometry=x), locations)))
-    gj['community_meta'] = { 'name': name, 'bootstrappers': bootstrappers }
+    gj['community'] = { 'meta': meta, 'bootstrappers': bootstrappers }
     fname = name + '.json'
     with open(fname, 'w') as outfile:
         geojson.dump(gj, outfile)
@@ -130,6 +133,9 @@ def init():
     f = open("cid.txt", "w")
     f.write(cid)
     f.close()
+
+def meta_json(name, symbol, icons_cid):
+    return { "name": name, "symbol": symbol, "icons": icons_cid }
 
 def run():
     f = open("cid.txt", "r")
