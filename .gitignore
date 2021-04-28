@@ -11,3 +11,7 @@
 
 # The cache for chain data in container
 .local
+/client/my_keystore/
+/client/bot-stats.csv
+/client/cid.txt
+/client/communityspec.json

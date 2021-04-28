@@ -2,7 +2,7 @@ use sp_core::{Pair, Public, sr25519};
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature,
-	CeremonyPhaseType, BalanceType,
+	CeremonyPhaseType, BalanceType, Demurrage, EncointerBalancesConfig,
 	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -41,7 +41,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
-	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	Ok(ChainSpec::from_genesis(
 		// Name
@@ -80,7 +80,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
-	let wasm_binary = WASM_BINARY.ok_or("Development wasm binary not available".to_string())?;
+	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
 	Ok(ChainSpec::from_genesis(
 		// Name
@@ -173,5 +173,8 @@ fn testnet_genesis(
 		encointer_communities: Some(EncointerCommunitiesConfig {
             community_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
         }),
+		encointer_balances: Some(EncointerBalancesConfig {
+			demurrage_per_block_default: Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128),
+		}),
 	}
 }
