@@ -34,8 +34,8 @@ def populate_locations(northwest, n, dist=1000):
 
 def next_phase():
     subprocess.run(cli + ["next-phase"])
-    
-def get_phase():    
+
+def get_phase():
     ret = subprocess.run(cli + ["get-phase"], stdout=subprocess.PIPE)
     return ret.stdout.strip().decode("utf-8")
 
@@ -107,7 +107,7 @@ def generate_community_spec(name, locations, bootstrappers):
     with open(fname, 'w') as outfile:
         geojson.dump(gj, outfile)
     return fname
-    
+
 def random_community_spec():
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
@@ -182,13 +182,13 @@ def run():
                 register_attestations(claimant, attestations)
         await_block()
 
-def benchmark():            
+def benchmark():
     print("will grow population forever")
     while True:
         run()
-        await_block
+        await_block()
         next_phase()
-        await_block
+        await_block()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='bot-community')
