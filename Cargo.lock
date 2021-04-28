@@ -4123,6 +4123,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
+ "log",
  "pallet-encointer-communities-rpc-runtime-api",
  "sc-rpc",
  "sp-api",
