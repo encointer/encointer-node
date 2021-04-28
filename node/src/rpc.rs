@@ -67,9 +67,12 @@ pub fn create_full<C, P, TBackend>(
 	// to call into the runtime.
 	// `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
 
-	io.extend_with(
-		CommunitiesApi::to_delegate(Communities::new(client.clone(), backend.offchain_storage()))
-	);
+	match backend.offchain_storage() {
+		Some(storage) => io.extend_with(
+			CommunitiesApi::to_delegate(Communities::new(client.clone(), storage))
+		),
+		None => log::warn!("Offchain caching disabled, due to lack of offchain storage support in backend.")
+	};
 
 	io
 }
