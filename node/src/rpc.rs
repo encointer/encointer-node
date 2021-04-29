@@ -23,6 +23,8 @@ pub struct FullDeps<C, P, Backend> {
 	pub pool: Arc<P>,
 	/// backend instance used to access offchain storage
 	pub backend: Arc<Backend>,
+	/// whether offchain-indexing is enabled
+	pub offchain_indexing_enabled: bool,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
 }
@@ -51,6 +53,7 @@ pub fn create_full<C, P, TBackend>(
 		client,
 		pool,
 		backend,
+		offchain_indexing_enabled,
 		deny_unsafe,
 	} = deps;
 
@@ -69,7 +72,7 @@ pub fn create_full<C, P, TBackend>(
 
 	match backend.offchain_storage() {
 		Some(storage) => io.extend_with(
-			CommunitiesApi::to_delegate(Communities::new(client.clone(), storage))
+			CommunitiesApi::to_delegate(Communities::new(client.clone(), storage, offchain_indexing_enabled))
 		),
 		None => log::warn!("Offchain caching disabled, due to lack of offchain storage support in backend.")
 	};
