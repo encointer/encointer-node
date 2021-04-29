@@ -60,7 +60,7 @@ use encointer_primitives::ceremonies::{
     CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
 };
 use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
-use encointer_primitives::communities::{CommunityIdentifier, Location, Degree, CommunityMetadata, NominalIncome};
+use encointer_primitives::communities::{CidName, CommunityIdentifier, Location, Degree, CommunityMetadata, NominalIncome};
 use encointer_primitives::balances::Demurrage;
 use fixed::transcendental::exp;
 use fixed::traits::LossyInto;
@@ -434,8 +434,8 @@ fn main() {
                     for cid in cids.iter() {
                         println!("community with cid {}", cid.encode().to_base58());
                     }
-                    let names = get_community_names(&api).unwrap();
-                    println!("Names: {}", names);
+                    let names = get_cid_names(&api).unwrap();
+                    println!("Names: {:?}", names);
 
                     Ok(())
                 }),
@@ -1127,18 +1127,18 @@ fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, minde
     Some(locations[lidx])
 }
 
-fn get_community_names(api: &Api<sr25519::Pair>) -> Option<String> {
+fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
     let req = json!({
-        "method": "communities_getNames",
+        "method": "communities_getCidNames",
         "params": [],
         "jsonrpc": "2.0",
         "id": "1",
     });
 
-    let names = api.get_request(req.to_string()).unwrap().unwrap();
-    println!("Got all community names {:?}", names);
+    let n = api.get_request(req.to_string()).unwrap().unwrap();
+    println!("Got all community names {:?}", n);
 
-    Some(names)
+    Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, mindex: MeetupIndexType) -> Option<Moment> {
