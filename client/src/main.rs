@@ -1129,7 +1129,7 @@ fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, minde
 
 fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
     let req = json!({
-        "method": "communities_getCidNames",
+        "method": "communities_getAll",
         "params": [],
         "jsonrpc": "2.0",
         "id": "1",
