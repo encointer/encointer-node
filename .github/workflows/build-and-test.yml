@@ -92,7 +92,7 @@ jobs:
     - name: install py dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install geojson pyproj
+        pip install geojson pyproj RandomWords
     - name: start dev node
       run: ./target/release/encointer-node-notee --tmp --dev &
     - name: grow community
