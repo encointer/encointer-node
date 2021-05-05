@@ -1136,8 +1136,6 @@ fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
     });
 
     let n = api.get_request(req.to_string()).unwrap().unwrap();
-    println!("Got all community names {:?}", n);
-
     Some(serde_json::from_str(&n).unwrap())
 }
 
