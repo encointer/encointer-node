@@ -34,7 +34,7 @@ def generate_community_spec(meta, locations, bootstrappers):
     gj['community'] = {'meta': meta, 'bootstrappers': bootstrappers}
     fname = meta['name'] + '.json'
     with open(fname, 'w') as outfile:
-        geojson.dump(gj, outfile)
+        geojson.dump(gj, outfile, indent=2)
     return fname
 
 
