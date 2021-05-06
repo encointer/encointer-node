@@ -61,7 +61,7 @@ def run(client=Client()):
             print("*** adding " + str(n_newbies) + " newbies")
             if n_newbies > 0:
                 newbies = []
-                for n in range(0,n_newbies):
+                for n in range(0, n_newbies):
                     newbies.append(client.new_account())
                 client.faucet(newbies)
                 client.await_block()
@@ -69,7 +69,7 @@ def run(client=Client()):
 
         print("registering " + str(len(accounts)) + " participants")
         for p in accounts:
-            #print("registering " + p)
+            # print("registering " + p)
             client.register_participant(p, cid)
         client.await_block()
     if phase == 'ATTESTING':
@@ -86,11 +86,12 @@ def run(client=Client()):
                 for attester in meetup:
                     if claimant == attester:
                         continue
-                    #print(claimant + " is attested by " + attester)
+                    # print(claimant + " is attested by " + attester)
                     attestations.append(client.sign_claim(attester, claims[claimant]))
-                #print("registering attestations for " + claimant)
+                # print("registering attestations for " + claimant)
                 client.register_attestations(claimant, attestations)
         client.await_block()
+
 
 def benchmark():
     print("will grow population forever")
@@ -100,6 +101,7 @@ def benchmark():
         client.await_block()
         client.next_phase()
         client.await_block()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='bot-community')
