@@ -3,7 +3,7 @@ import json
 
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
-from py_client.ipfs import Ipfs
+from py_client.ipfs import Ipfs, ICONS_PATH
 
 account1 = '//Alice'
 account2 = '//Bob'
@@ -53,7 +53,7 @@ def main(client=Client()):
     print(f'Registered community with cid: {cid}')
 
     print('Uploading icons to ipfs')
-    ipfs_cid = Ipfs.add_recursive()
+    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
     update_spec_with_cid(SPEC_FILE, ipfs_cid)
 
