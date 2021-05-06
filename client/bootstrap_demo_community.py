@@ -42,8 +42,12 @@ def main(client=Client()):
     client.go_to_phase(CeremonyPhase.REGISTERING)
 
     # charlie has no genesis funds
-    print('Dripping faucets to Charlie...')
+    print('Faucet is dripping to Charlie...')
     client.faucet([account3])
+
+    blocks_to_wait = 3
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    client.await_block(blocks_to_wait)
 
     print('Registering Participants...')
     [client.register_participant(b, cid) for b in accounts]
