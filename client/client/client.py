@@ -19,7 +19,6 @@ class Client:
 
     def go_to_phase(self, phase):
         print("Advancing to phase: " + str(phase))
-        print(self.get_phase())
         while True:
             p = CeremonyPhase[self.get_phase()]
             if p == phase:
