@@ -66,7 +66,7 @@ jobs:
         python-version: 3.7
     - name: start dev node
       run: 
-        ./target/release/encointer-node-notee --tmp --dev &
+        ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
     - name: bootstrap community
       run: |
         cd client
@@ -94,7 +94,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson pyproj RandomWords
     - name: start dev node
-      run: ./target/release/encointer-node-notee --tmp --dev &
+      run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
     - name: grow community
       run: |
         cd client
