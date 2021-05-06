@@ -1,9 +1,7 @@
 #!python
-import argparse
 import subprocess
 import re
 import warnings
-# import click
 
 from client.client import Client
 from client.scheduler import CeremonyPhase
