@@ -1,66 +1,34 @@
 #!python
 import argparse
-import subprocess
 
 from random_words import RandomWords
 
 import geojson
 
 from math import sqrt, floor
-from pyproj import Geod
 
 from client.client import Client
-
-geoid = Geod(ellps='WGS84')
+from client.communities import populate_locations, generate_community_spec
 
 cli = ["../target/release/encointer-client-notee"]
 
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
-def move_point(point, az, dist):
-    """ move a point a certain distance [meters] into a direction (azimuth) in [degrees] """
-
-    lng_new, lat_new, return_az = geoid.fwd(point['coordinates'][0], point['coordinates'][1], az, dist)
-    return geojson.Point([lng_new, lat_new])
-
-def populate_locations(northwest, n, dist=1000):
-    """ populate approximately n locations on a square grid of a specified distance in meters """
-    row = [ northwest ]
-    for li in range(1, round(sqrt(n))):
-        row.append(move_point(row[-1], 90, dist))
-    locations = []
-    for pnt in row:
-        col = [ pnt ]
-        for li in range(1, round(sqrt(n))):
-            col.append(move_point(col[-1], 180, dist))
-        locations += col
-    return locations
-
-
-def generate_community_spec(name, locations, bootstrappers):
-    meta = meta_json(name, "CSP", "Defau1tCidThat1s46Characters1nLength1111111111")
-    print("Community metadata: " + str(meta))
-
-    gj = geojson.FeatureCollection(list(map(lambda x : geojson.Feature(geometry=x), locations)))
-    gj['community'] = { 'meta': meta, 'bootstrappers': bootstrappers }
-    fname = name + '.json'
-    with open(fname, 'w') as outfile:
-        geojson.dump(gj, outfile)
-    return fname
 
 def random_community_spec(client=Client()):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
-    bootstrappers = []
-    for bi in range(0, 10):
-        bootstrappers.append(client.new_account())
-    print('new bootstrappers:' + ' '.join(bootstrappers))
+
+    bootstrappers = [client.new_account() for _ in range(0, 10)]
+    print('new bootstrappers: ' + ' '.join(bootstrappers))
     client.faucet(bootstrappers)
     client.await_block()
+
     name = '#' + '-'.join(RandomWords().random_words(count=1))
     return generate_community_spec(name, locations, bootstrappers)
+
 
 def init(client=Client()):
     print("initializing community")
@@ -72,8 +40,6 @@ def init(client=Client()):
     f.write(cid)
     f.close()
 
-def meta_json(name, symbol, icons_cid):
-    return { "name": name, "symbol": symbol, "icons": icons_cid }
 
 def run(client=Client()):
     f = open("cid.txt", "r")
