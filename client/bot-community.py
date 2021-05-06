@@ -50,7 +50,7 @@ def run(client=Client()):
     accounts = client.list_accounts()
     print("number of known accounts: " + str(len(accounts)))
     if phase == 'REGISTERING':
-        bal = client.balance(accounts, cid=cid)
+        bal = [client.balance(a, cid=cid) for a in accounts]
         total = sum(bal)
         print("****** money supply is " + str(total))
         f = open("bot-stats.csv", "a")

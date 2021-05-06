@@ -1,5 +1,6 @@
-import os
 import subprocess
+
+from client.scheduler import CeremonyPhase
 
 
 class Client:
@@ -16,6 +17,18 @@ class Client:
         ret = subprocess.run(self.cli + ["get-phase"], stdout=subprocess.PIPE)
         return ret.stdout.strip().decode("utf-8")
 
+    def go_to_phase(self, phase):
+        print("Advancing to phase: " + str(phase))
+        print(self.get_phase())
+        while True:
+            p = CeremonyPhase[self.get_phase()]
+            if p == phase:
+                print(f"Arrived at {p}.")
+                return
+            else:
+                print(f"Phase is: {p}. Need to advance")
+                self.next_phase()
+
     def list_accounts(self):
         ret = subprocess.run(self.cli + ["list-accounts"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").splitlines()
@@ -27,22 +40,28 @@ class Client:
     def faucet(self, accounts):
         subprocess.run(self.cli + ["faucet"] + accounts, stdout=subprocess.PIPE)
 
-    def balance(self, accounts, **kwargs):
-        bal = []
-        cid_arg = []
-        if 'cid' in kwargs:
-            cid_arg = ["--cid", kwargs.get('cid')]
-        for account in accounts:
-            ret = subprocess.run(self.cli + cid_arg + ["balance", account], stdout=subprocess.PIPE)
-            bal.append(float(ret.stdout.strip().decode("utf-8").split(' ')[-1]))
-        return bal
+    def balance(self, account, cid=None):
+        if not cid:
+            ret = subprocess.run(self.cli + ["balance", account], stdout=subprocess.PIPE)
+            return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
+        else:
+            ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
+            return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
     def new_community(self, specfile, sender='//Alice'):
         ret = subprocess.run(self.cli + ["new-community", specfile, sender], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
+    def list_communities(self):
+        ret = subprocess.run(self.cli + ["list-communities"], stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
     def await_block(self, amount=1):
         subprocess.run(self.cli + ["listen", "-b", str(amount)], stdout=subprocess.PIPE)
+
+    def list_participants(self, cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "list-participants"], stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
 
     def register_participant(self, account, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
@@ -75,3 +94,7 @@ class Client:
     def register_attestations(self, account, attestations):
         ret = subprocess.run(self.cli + ["register-attestations", account] + attestations, stdout=subprocess.PIPE)
         # print(ret.stdout.decode("utf-8"))
+
+    def list_attestations(self, cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "list-attestations"], stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
