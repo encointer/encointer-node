@@ -1,6 +1,6 @@
 import subprocess
 
-from client.scheduler import CeremonyPhase
+from .scheduler import CeremonyPhase
 
 
 class Client:

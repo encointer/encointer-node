@@ -5,8 +5,8 @@ import geojson
 from random_words import RandomWords
 from math import floor
 
-from client.client import Client
-from client.communities import populate_locations, generate_community_spec
+from py_client.client import Client
+from py_client.communities import populate_locations, generate_community_spec
 
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
