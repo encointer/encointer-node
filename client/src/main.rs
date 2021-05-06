@@ -429,14 +429,11 @@ fn main() {
                 .description("list all registered communities")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
-                    let cids = get_community_identifiers(&api).expect("no community registered");
-                    println!("number of communities:  {}", cids.len());
-                    for cid in cids.iter() {
-                        println!("community with cid {}", cid.encode().to_base58());
-                    }
                     let names = get_cid_names(&api).unwrap();
-                    println!("Names: {:?}", names);
-
+                    println!("number of communities:  {}", names.len());
+                    for n in names.iter() {
+                        println!("{:?}", n);
+                    }
                     Ok(())
                 }),
         )
