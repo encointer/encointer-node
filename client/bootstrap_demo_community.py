@@ -11,7 +11,6 @@ account3 = '//Charlie'
 accounts = [account1, account2, account3]
 
 SPEC_FILE = 'test-locations-mediterranean.json'
-ICONS_PATH = '../assets/icons'
 
 
 def perform_meetup(client, cid):
@@ -54,7 +53,7 @@ def main(client=Client()):
     print(f'Registered community with cid: {cid}')
 
     print('Uploading icons to ipfs')
-    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
+    ipfs_cid = Ipfs.add_recursive()
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
     update_spec_with_cid(SPEC_FILE, ipfs_cid)
 
