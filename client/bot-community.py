@@ -6,7 +6,7 @@ from random_words import RandomWords
 from math import floor
 
 from py_client.client import Client
-from py_client.ipfs import Ipfs
+from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
 
 NUMBER_OF_LOCATIONS = 100
@@ -34,7 +34,7 @@ def init_bootstrappers(client=Client()):
 
 
 def init(client=Client()):
-    ipfs_cid = Ipfs.add_recursive()
+    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     print("initializing community")
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)

@@ -8,7 +8,7 @@ class Ipfs:
     """ Minimal wrapper for the ipfs cli """
 
     @staticmethod
-    def add_recursive(path_to_files=ICONS_PATH):
+    def add_recursive(path_to_files):
         ret = subprocess.run("ipfs add -rw " + path_to_files, stdout=subprocess.PIPE)
 
         # last line contains the directory cid
