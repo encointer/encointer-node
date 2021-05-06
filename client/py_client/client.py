@@ -36,6 +36,9 @@ class Client:
         ret = subprocess.run(self.cli + ["new-account"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
+    def create_accounts(self, amount):
+        return [self.new_account() for _ in range(0, amount)]
+
     def faucet(self, accounts):
         subprocess.run(self.cli + ["faucet"] + accounts, stdout=subprocess.PIPE)
 
