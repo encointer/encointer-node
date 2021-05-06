@@ -13,13 +13,16 @@ NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
 
-def random_community_spec(bootstrappers):
+def random_community_spec(bootstrappers, ipfs_cid):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
 
     name = '#' + '-'.join(RandomWords().random_words(count=1))
-    return generate_community_spec(name, locations, bootstrappers)
+    symbol = name[1:4].upper()
+    meta = meta_json(name, symbol, ipfs_cid)
+
+    return generate_community_spec(meta, locations, bootstrappers)
 
 
 def init_bootstrappers(client=Client()):
@@ -34,7 +37,7 @@ def init(client=Client()):
     ipfs_cid = Ipfs.add_recursive()
     print("initializing community")
     b = init_bootstrappers(client)
-    specfile = random_community_spec(b)
+    specfile = random_community_spec(b, ipfs_cid)
     print("generated community spec: ", specfile)
     cid = client.new_community(specfile)
     print("created community with cid: ", cid)

@@ -27,17 +27,16 @@ def populate_locations(northwest, n, dist=1000):
     return locations
 
 
-def generate_community_spec(name, locations, bootstrappers):
-    meta = meta_json(name, "CSP", "Defau1tCidThat1s46Characters1nLength1111111111")
+def generate_community_spec(meta, locations, bootstrappers):
     print("Community metadata: " + str(meta))
 
     gj = geojson.FeatureCollection(list(map(lambda x: geojson.Feature(geometry=x), locations)))
     gj['community'] = {'meta': meta, 'bootstrappers': bootstrappers}
-    fname = name + '.json'
+    fname = meta['name'] + '.json'
     with open(fname, 'w') as outfile:
         geojson.dump(gj, outfile)
     return fname
 
 
-def meta_json(name, symbol, icons_cid):
+def meta_json(name, symbol, icons_cid="Defau1tCidThat1s46Characters1nLength1111111111"):
     return {"name": name, "symbol": symbol, "icons": icons_cid}
