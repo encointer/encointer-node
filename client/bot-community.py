@@ -6,29 +6,35 @@ from random_words import RandomWords
 from math import floor
 
 from py_client.client import Client
+from py_client.client.ipfs import Ipfs
 from py_client.communities import populate_locations, generate_community_spec
 
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
 
-def random_community_spec(client=Client()):
+def random_community_spec(bootstrappers):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
-
-    bootstrappers = [client.new_account() for _ in range(0, 10)]
-    print('new bootstrappers: ' + ' '.join(bootstrappers))
-    client.faucet(bootstrappers)
-    client.await_block()
 
     name = '#' + '-'.join(RandomWords().random_words(count=1))
     return generate_community_spec(name, locations, bootstrappers)
 
 
+def init_bootstrappers(client=Client()):
+    bootstrappers = client.create_accounts(10)
+    print('created bootstrappers: ' + ' '.join(bootstrappers))
+    client.faucet(bootstrappers)
+    client.await_block()
+    return bootstrappers
+
+
 def init(client=Client()):
+    ipfs_cid = Ipfs.add_recursive()
     print("initializing community")
-    specfile = random_community_spec(client)
+    b = init_bootstrappers(client)
+    specfile = random_community_spec(b)
     print("generated community spec: ", specfile)
     cid = client.new_community(specfile)
     print("created community with cid: ", cid)
