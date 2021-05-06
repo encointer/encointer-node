@@ -64,6 +64,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+
+    - name: Set up ipfs
+      uses: ibnesayeed/setup-ipfs@master
+      with:
+        run_daemon: true
+
     - name: start dev node
       run: 
         ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
@@ -93,6 +99,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install geojson pyproj RandomWords
+
+    - name: Set up ipfs
+      uses: ibnesayeed/setup-ipfs@master
+      with:
+        run_daemon: true
+
     - name: start dev node
       run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
     - name: grow community
