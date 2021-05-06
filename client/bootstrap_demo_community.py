@@ -1,13 +1,17 @@
 #!python
+import json
+
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
-
-cli = ["../target/release/encointer-client.py-notee -p 9444"]
+from client.ipfs import Ipfs
 
 account1 = '//Alice'
 account2 = '//Bob'
 account3 = '//Charlie'
 accounts = [account1, account2, account3]
+
+SPEC_FILE = 'test-locations-mediterranean.json'
+ICONS_PATH = '../assets/icons'
 
 
 def perform_meetup(client, cid):
@@ -34,9 +38,25 @@ def perform_meetup(client, cid):
     client.register_attestations(account3, [witness1_3, witness2_3])
 
 
+def update_spec_with_cid(file, cid):
+    with open(file, 'r+') as spec_json:
+        spec = json.load(spec_json)
+        spec['community']['meta']['icons'] = cid
+        print(spec)
+        # go to beginning of the file to overwrite
+        spec_json.seek(0)
+        json.dump(spec, spec_json, indent=2)
+        spec_json.truncate()
+
+
 def main(client=Client()):
     cid = client.new_community('test-locations-mediterranean.json')
     print(f'Registered community with cid: {cid}')
+
+    print('Uploading icons to ipfs')
+    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
+    print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
+    update_spec_with_cid(SPEC_FILE, ipfs_cid)
 
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.REGISTERING)
