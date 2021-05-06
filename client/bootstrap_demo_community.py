@@ -95,6 +95,12 @@ def main(client=Client()):
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
 
+    if round(bal[0]) > 0:
+        print("tests passed")
+    else:
+        print("balance is wrong")
+        exit(1)
+
 
 if __name__ == '__main__':
     main()
