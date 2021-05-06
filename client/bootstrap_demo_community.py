@@ -1,6 +1,6 @@
 #!python
-from client.client import Client
-from client.scheduler import CeremonyPhase
+from py_client.client import Client
+from py_client.scheduler import CeremonyPhase
 
 cli = ["../target/release/encointer-client.py-notee -p 9444"]
 
