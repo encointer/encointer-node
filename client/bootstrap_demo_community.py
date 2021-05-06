@@ -1,8 +1,4 @@
 #!python
-import subprocess
-import re
-import warnings
-
 from client.client import Client
 from client.scheduler import CeremonyPhase
 
@@ -12,24 +8,6 @@ account1 = '//Alice'
 account2 = '//Bob'
 account3 = '//Charlie'
 accounts = [account1, account2, account3]
-
-
-def upload(path_to_files):
-    ret = subprocess.run("ipfs add -rw " + path_to_files, stdout=subprocess.PIPE)
-
-    # last line contains the directory cid
-    last = ret.stdout.splitlines()[-1]
-    p = re.compile('Qm\\w*')
-    cids = p.findall(str(last))
-
-    if cids:
-        print()
-        print(cids)
-        return cids[0]
-    else:
-        warnings.warn('No cid returned something happened. stderr: ')
-        warnings.warn(str(ret.stderr))
-        return ''
 
 
 def perform_meetup(client, cid):
