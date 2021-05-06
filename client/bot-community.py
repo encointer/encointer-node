@@ -1,16 +1,12 @@
 #!python
 import argparse
-
-from random_words import RandomWords
-
 import geojson
 
-from math import sqrt, floor
+from random_words import RandomWords
+from math import floor
 
 from client.client import Client
 from client.communities import populate_locations, generate_community_spec
-
-cli = ["../target/release/encointer-client-notee"]
 
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
@@ -41,6 +37,47 @@ def init(client=Client()):
     f.close()
 
 
+def register_participants(client, accounts, cid):
+    bal = [client.balance(a, cid=cid) for a in accounts]
+    total = sum(bal)
+    print("****** money supply is " + str(total))
+    f = open("bot-stats.csv", "a")
+    f.write(str(len(accounts)) + ", " + str(total) + "\n")
+    f.close()
+    if total > 0:
+        n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
+        print("*** adding " + str(n_newbies) + " newbies")
+        if n_newbies > 0:
+            newbies = []
+            for n in range(0, n_newbies):
+                newbies.append(client.new_account())
+            client.faucet(newbies)
+            client.await_block()
+            accounts = client.list_accounts()
+
+    print("registering " + str(len(accounts)) + " participants")
+    for p in accounts:
+        # print("registering " + p)
+        client.register_participant(p, cid)
+
+
+def perform_meetup(client, meetup, cid):
+    n = len(meetup)
+    print("Performing meetup with " + str(n) + " participants")
+    claims = {}
+    for p in meetup:
+        claims[p] = client.new_claim(p, n, cid)
+    for claimant in meetup:
+        attestations = []
+        for attester in meetup:
+            if claimant == attester:
+                continue
+            # print(claimant + " is attested by " + attester)
+            attestations.append(client.sign_claim(attester, claims[claimant]))
+        # print("registering attestations for " + claimant)
+        client.register_attestations(claimant, attestations)
+
+
 def run(client=Client()):
     f = open("cid.txt", "r")
     cid = f.read()
@@ -50,46 +87,13 @@ def run(client=Client()):
     accounts = client.list_accounts()
     print("number of known accounts: " + str(len(accounts)))
     if phase == 'REGISTERING':
-        bal = [client.balance(a, cid=cid) for a in accounts]
-        total = sum(bal)
-        print("****** money supply is " + str(total))
-        f = open("bot-stats.csv", "a")
-        f.write(str(len(accounts)) + ", " + str(total) + "\n")
-        f.close()
-        if total > 0:
-            n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
-            print("*** adding " + str(n_newbies) + " newbies")
-            if n_newbies > 0:
-                newbies = []
-                for n in range(0, n_newbies):
-                    newbies.append(client.new_account())
-                client.faucet(newbies)
-                client.await_block()
-                accounts = client.list_accounts()
-
-        print("registering " + str(len(accounts)) + " participants")
-        for p in accounts:
-            # print("registering " + p)
-            client.register_participant(p, cid)
+        register_participants(client, accounts, cid)
         client.await_block()
     if phase == 'ATTESTING':
         meetups = client.list_meetups(cid)
         print("****** Performing " + str(len(meetups)) + " meetups")
         for meetup in meetups:
-            n = len(meetup)
-            print("Performing meetup with " + str(n) + " participants")
-            claims = {}
-            for p in meetup:
-                claims[p] = client.new_claim(p, n, cid)
-            for claimant in meetup:
-                attestations = []
-                for attester in meetup:
-                    if claimant == attester:
-                        continue
-                    # print(claimant + " is attested by " + attester)
-                    attestations.append(client.sign_claim(attester, claims[claimant]))
-                # print("registering attestations for " + claimant)
-                client.register_attestations(claimant, attestations)
+            perform_meetup(client, meetup, cid)
         client.await_block()
 
 
