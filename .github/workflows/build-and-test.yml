@@ -63,14 +63,10 @@ jobs:
     - name: start dev node
       run: 
         ./target/release/encointer-node-notee --tmp --dev &
-    - name: get-phase
-      run: ./target/release/encointer-client-notee get-phase
-    - name: next-phase
-      run: ./target/release/encointer-client-notee next-phase
     - name: bootstrap community
       run: |
         cd client
-        ./bootstrap_demo_community.sh
+        python bootstrap_demo_community.py
 
   test-community-growing:
     runs-on: ubuntu-latest
