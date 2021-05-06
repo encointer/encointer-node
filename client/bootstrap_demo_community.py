@@ -3,7 +3,7 @@ import json
 
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
-from client.ipfs import Ipfs
+from py_client.ipfs import Ipfs
 
 account1 = '//Alice'
 account2 = '//Bob'
