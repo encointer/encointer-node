@@ -35,3 +35,4 @@ jobs:
         run: |
           cd client
           ipfs add -rw ../assets/icons
+          python bootstrap_demo_community.py

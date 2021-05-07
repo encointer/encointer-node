@@ -102,4 +102,5 @@ def main(client=Client()):
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    Ipfs.add_recursive(ICONS_PATH)
