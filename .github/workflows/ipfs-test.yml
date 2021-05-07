@@ -12,7 +12,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test-community-growing:
+  test-ipfs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -34,4 +34,5 @@ jobs:
       - name: Test ipfs
         run: |
           ipfs
-          ipfs add -rw ../assets/icons
+          ipfs add -rw ./assets/icons
+          cd client ipfs add -rw ../assets/icons
