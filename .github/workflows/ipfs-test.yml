@@ -1,0 +1,38 @@
+name: build and test notee client and node
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master, sgx-master, github-action-ipfs-test ]
+  pull_request:
+    branches: [ master, sgx-master ]
+#  schedule:
+#    - cron:  '42 3 * * *'
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-community-growing:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: install py dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geojson pyproj RandomWords
+
+      - name: Set up ipfs
+        uses: ibnesayeed/setup-ipfs@master
+        with:
+          run_daemon: true
+
+      - name: Test ipfs
+        run: |
+          ipfs
+          ipfs add -rw ../assets/icons
