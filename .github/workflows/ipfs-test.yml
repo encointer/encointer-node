@@ -33,6 +33,5 @@ jobs:
 
       - name: Test ipfs
         run: |
-          ipfs
-          ipfs add -rw ./assets/icons
-          cd client && ipfs add -rw ../assets/icons
+          cd client
+          ipfs add -rw ../assets/icons
