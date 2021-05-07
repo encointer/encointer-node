@@ -9,7 +9,7 @@ class Ipfs:
 
     @staticmethod
     def add_recursive(path_to_files):
-        ret = subprocess.run("ipfs add -rw " + path_to_files, stdout=subprocess.PIPE)
+        ret = subprocess.run(["ipfs", "add", "-rw", path_to_files], stdout=subprocess.PIPE)
 
         # last line contains the directory cid
         last = ret.stdout.splitlines()[-1]
