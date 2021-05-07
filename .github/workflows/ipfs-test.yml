@@ -14,7 +14,6 @@ env:
 jobs:
   test-community-growing:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@master
 
