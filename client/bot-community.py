@@ -1,10 +1,12 @@
 #!python
 import argparse
 import subprocess
+
+from random_words import RandomWords
+
 import geojson
 
 from math import sqrt, floor
-#from random_word import RandomWords
 from pyproj import Geod
 geoid = Geod(ellps='WGS84')
 
@@ -121,7 +123,7 @@ def random_community_spec():
     print('new bootstrappers:' + ' '.join(bootstrappers))
     faucet(bootstrappers)
     await_block()
-    name = 'communityspec' # + '-'.join(RandomWords().get_random_words(limit=3))
+    name = '#' + '-'.join(RandomWords().random_words(count=2))
     return generate_community_spec(name, locations, bootstrappers)
 
 def init():

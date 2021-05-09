@@ -151,11 +151,15 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
+		let backend = backend.clone();
+		let offchain_indexing_enabled = config.offchain_worker.indexing_enabled;
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
+				backend: backend.clone(),
+				offchain_indexing_enabled,
 				deny_unsafe,
 			};
 

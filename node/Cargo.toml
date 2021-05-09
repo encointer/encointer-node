@@ -22,6 +22,7 @@ substrate-build-script-utils = '3.0.0'
 [dependencies]
 jsonrpc-core = '15.0.0'
 structopt = '0.3.8'
+log = "0.4.14"
 
 # local dependencies
 encointer-node-notee-runtime = { path = '../runtime' }
@@ -54,6 +55,9 @@ sp-inherents = { git = "https://github.com/paritytech/substrate.git",branch = "m
 sp-runtime = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
+
+pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "master"}
+pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master"}
 
 [features]
 default = []

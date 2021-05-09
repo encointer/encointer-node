@@ -48,6 +48,8 @@ pub use encointer_bazaar::Call as EncointerBazaarCall;
 
 pub use encointer_primitives::scheduler::CeremonyPhaseType;
 pub use encointer_primitives::balances::{BalanceType, BalanceEntry, Demurrage};
+pub use encointer_primitives::communities::CommunityIdentifier;
+pub use encointer_primitives::common::PalletString;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -498,6 +500,16 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+	impl encointer_communities_rpc_runtime_api::CommunitiesApi<Block> for Runtime {
+		fn get_cids() -> Vec<CommunityIdentifier> {
+			EncointerCommunities::get_cids()
+		}
+
+		fn get_name(cid: &CommunityIdentifier) -> Option<PalletString> {
+			EncointerCommunities::get_name(cid)
 		}
 	}
 

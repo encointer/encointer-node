@@ -8,7 +8,8 @@ use encointer_node_notee_runtime::{
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
-use sc_service::ChainType;
+use sc_service::{ChainType, Properties};
+use jsonrpc_core::{serde_from_str};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -38,6 +39,14 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 		get_from_seed::<AuraId>(s),
 		get_from_seed::<GrandpaId>(s),
 	)
+}
+
+fn properties() -> Option<Properties> {
+	serde_from_str(r#"{
+    "ss58Format": 42,
+    "tokenDecimals": 12,
+    "tokenSymbol": "ERT"
+  }"#).ok()
 }
 
 pub fn development_config() -> Result<ChainSpec, String> {
@@ -73,7 +82,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		properties(),
 		// Extensions
 		None,
 	))
@@ -121,7 +130,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Protocol ID
 		None,
 		// Properties
-		None,
+		properties(),
 		// Extensions
 		None,
 	))
