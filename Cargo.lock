@@ -1210,17 +1210,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derivative"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "derive_more"
 version = "0.99.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1482,7 +1471,6 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "parity-scale-codec 2.1.1",
  "serde",
@@ -1490,7 +1478,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-fixed",
- "xcm",
 ]
 
 [[package]]
@@ -4054,7 +4041,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4074,7 +4060,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4088,7 +4073,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4108,7 +4092,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4124,7 +4107,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4142,7 +4124,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "sp-api",
@@ -4152,7 +4133,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#99f707dc9638e70c8fb68f15f933ed8cf2280684"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -8901,16 +8881,6 @@ dependencies = [
  "curve25519-dalek 3.1.0",
  "rand_core 0.5.1",
  "zeroize",
-]
-
-[[package]]
-name = "xcm"
-version = "0.8.30"
-source = "git+https://github.com/paritytech/polkadot.git?branch=master#4a5bf3a9b44649d152fdb63216bbbe6b5449c079"
-dependencies = [
- "derivative",
- "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec 2.1.1",
 ]
 
 [[package]]

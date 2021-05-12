@@ -303,6 +303,9 @@ impl encointer_ceremonies::Config for Runtime {
 	type Event = Event;
 	type Public = <MultiSignature as Verify>::Signer;
 	type Signature = MultiSignature;
+	// Note: in production networks it is advised to use babes randomness source.
+	// But we have low security requirements here, so it should be fine.
+	type RandomnessSource = pallet_randomness_collective_flip::Module<Runtime>;
 }
 
 impl encointer_communities::Config for Runtime {
