@@ -56,7 +56,7 @@ use substrate_api_client::{
 use substrate_client_keystore::LocalKeystore;
 use encointer_node_notee_runtime::{AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, BlockNumber, Header};
 use encointer_primitives::ceremonies::{
-    Attestation, AttestationIndexType, ClaimOfAttendance,
+    AttestationIndexType, ClaimOfAttendance,
     CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
 };
 use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
@@ -541,8 +541,8 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("list-attestations")
-                .description("list all attestations for participants of current ceremony and supplied community identifier")
+            Command::new("list-attestees")
+                .description("list all attestees for participants of current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
@@ -552,12 +552,12 @@ fn main() {
                             .expect("please supply argument --cid"),
                     );
                     println!(
-                        "listing attestations for cid {} and ceremony nr {}",
+                        "listing attestees for cid {} and ceremony nr {}",
                         cid.encode().to_base58(),
                         cindex
                     );
-                    let wcount = get_attestation_count(&api, (cid, cindex));
-                    println!("number of attestations:  {}", wcount);
+                    let wcount = get_attestee_count(&api, (cid, cindex));
+                    println!("number of attestees:  {}", wcount);
                     let pcount = get_participant_count(&api, (cid, cindex));
             
                     let mut participants_windex = HashMap::new();
@@ -572,12 +572,12 @@ fn main() {
                         };
                     }
                     for w in 1..wcount + 1 {
-                        let attestations = get_attestations(&api, (cid, cindex), w);
+                        let attestees = get_attestees(&api, (cid, cindex), w);
                         println!(
                             "AttestationRegistry[{}, {} ({})] = {:?}",
-                            cindex, w, participants_windex[&w], attestations
+                            cindex, w, participants_windex[&w], attestees
                         );
-                    }    
+                    }
                     Ok(())
                 }),
         )
@@ -954,7 +954,7 @@ fn get_participant_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> Pa
     ).unwrap().or(Some(0)).unwrap()
 }
 
-fn get_attestation_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
     api.get_storage_map(
             "EncointerCeremonies",
             "AttestationCount",
@@ -1005,7 +1005,7 @@ fn get_meetup_participants(
     ).unwrap()
 }
 
-fn get_attestations(
+fn get_attestees(
     api: &Api<sr25519::Pair>,
     key: CommunityCeremony,
     windex: ParticipantIndexType,
