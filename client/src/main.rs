@@ -745,7 +745,7 @@ fn main() {
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     debug!("{:?}", matches);
                     let arg_who = matches.value_of("accountid").unwrap();
-                    let accountid = get_accountid_from_str(arg_who);
+                    let claimant = get_pair_from_str(arg_who);
                     let api = get_chain_api(matches);
                     let cid = verify_cid(&api,
                         matches
@@ -757,7 +757,7 @@ fn main() {
                         .unwrap()
                         .parse::<u32>()
                         .unwrap();
-                    let claim = new_claim_for(&api, accountid, cid, n_participants);
+                    let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
                     println!("{}", hex::encode(claim));
                     Ok(())
                 }),
@@ -1035,27 +1035,27 @@ fn get_participant_attestation_index(
 
 fn new_claim_for(
     api: &Api<sr25519::Pair>,
-    accountid: AccountId,
+    claimant: &sr25519::Pair,
     cid: CommunityIdentifier,
     n_participants: u32,
 ) -> Vec<u8> {
     let cindex = get_ceremony_index(api);
-    let mindex = get_meetup_index_for(api, (cid, cindex), &accountid)
+    let mindex = get_meetup_index_for(api, (cid, cindex), &claimant.public().into())
         .expect("participant must be assigned to meetup to generate a claim");
 
     // implicitly assume that participant meet at the right place at the right time
     let mloc = get_meetup_location(api, cid, mindex).unwrap();
     let mtime = get_meetup_time(api, cid, mindex).unwrap();
 
-    let claim = ClaimOfAttendance::<AccountId, Moment> {
-        claimant_public: accountid,
-        community_identifier: cid,
-        ceremony_index: cindex,
-        meetup_index: mindex,
-        location: mloc,
-        timestamp: mtime,
-        number_of_participants_confirmed: n_participants,
-    };
+    let claim: ClaimOfAttendance<Signature, AccountId, Moment> = ClaimOfAttendance::new_unsigned(
+        claimant.public().into(),
+        cindex,
+        cid,
+        mindex,
+        mloc,
+        mtime,
+        n_participants,
+    ).sign(claimant);
     claim.encode()
 }
 
