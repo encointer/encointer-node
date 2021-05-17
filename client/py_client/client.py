@@ -73,10 +73,6 @@ class Client:
         ret = subprocess.run(self.cli + ["--cid", cid, "new-claim", account, str(vote)], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
-    def sign_claim(self, account, claim):
-        ret = subprocess.run(self.cli + ["sign-claim", account, claim], stdout=subprocess.PIPE)
-        return ret.stdout.decode("utf-8").strip()
-
     def list_meetups(self, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "list-meetups"], stdout=subprocess.PIPE)
         # print(ret.stdout.decode("utf-8"))
@@ -93,10 +89,10 @@ class Client:
                 meetups.append(participants)
         return meetups
 
-    def register_attestations(self, account, attestations):
-        ret = subprocess.run(self.cli + ["register-attestations", account] + attestations, stdout=subprocess.PIPE)
+    def attest_claims(self, account, claims):
+        ret = subprocess.run(self.cli + ["attest-claims", account] + claims, stdout=subprocess.PIPE)
         # print(ret.stdout.decode("utf-8"))
 
-    def list_attestations(self, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-attestations"], stdout=subprocess.PIPE)
+    def list_attestees(self, cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
