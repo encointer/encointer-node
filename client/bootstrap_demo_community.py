@@ -21,20 +21,10 @@ def perform_meetup(client, cid):
     claim2 = client.new_claim(account2, vote, cid)
     claim3 = client.new_claim(account3, vote, cid)
 
-    print('Signing claims...')
-    witness1_2 = client.sign_claim(account1, claim2)
-    witness1_3 = client.sign_claim(account1, claim3)
-
-    witness2_1 = client.sign_claim(account2, claim1)
-    witness2_3 = client.sign_claim(account2, claim3)
-
-    witness3_1 = client.sign_claim(account3, claim1)
-    witness3_2 = client.sign_claim(account3, claim2)
-
-    print('Sending witnesses to chain...')
-    client.register_attestations(account1, [witness2_1, witness3_1])
-    client.register_attestations(account2, [witness1_2, witness3_2])
-    client.register_attestations(account3, [witness1_3, witness2_3])
+    print('Sending claims of attestees to chain...')
+    client.attest_claims(account1, [claim2, claim3])
+    client.attest_claims(account2, [claim1, claim3])
+    client.attest_claims(account3, [claim1, claim2])
 
 
 def update_spec_with_cid(file, cid):
@@ -87,7 +77,7 @@ def main(client=Client()):
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
-    print(client.list_attestations(cid))
+    print(client.list_attestees(cid))
     client.next_phase()
 
     print(f'Balances for new community with cid: {cid}.')
