@@ -60,17 +60,17 @@ jobs:
         chmod +x executables/encointer-client-notee
         mkdir -p target/release
         mv executables/* target/release
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
     - name: start dev node
       run: 
-        ./target/release/encointer-node-notee --tmp --dev &
-    - name: get-phase
-      run: ./target/release/encointer-client-notee get-phase
-    - name: next-phase
-      run: ./target/release/encointer-client-notee next-phase
+        ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
     - name: bootstrap community
       run: |
         cd client
-        ./bootstrap_demo_community.sh
+        python bootstrap_demo_community.py
 
   test-community-growing:
     runs-on: ubuntu-latest
@@ -94,7 +94,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install geojson pyproj RandomWords
     - name: start dev node
-      run: ./target/release/encointer-node-notee --tmp --dev &
+      run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
     - name: grow community
       run: |
         cd client
