@@ -762,37 +762,6 @@ fn main() {
                     Ok(())
                 }),
         )
-        .add_cmd(
-            Command::new("sign-claim")
-                .description("sign someone's claim to attest their personhood")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("signer")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("SIGNER")
-                            .help("AccountId in ss58check format"),
-                    )
-                    .arg(
-                        Arg::with_name("claim")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("CLAIM")
-                            .help("claim of other party to be signed/attested"),
-                    )
-                })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    debug!("{:?}", matches);
-                    let signer_arg = matches.value_of("signer").unwrap();
-                    let claim = ClaimOfAttendance::decode(
-                        &mut &hex::decode(matches.value_of("claim").unwrap()).unwrap()[..],
-                    ).unwrap();
-                    let attestation = sign_claim(claim, signer_arg);
-                    println!("{}", hex::encode(attestation));
-                    Ok(())
-                }),
-        )
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");
@@ -1088,18 +1057,6 @@ fn new_claim_for(
         number_of_participants_confirmed: n_participants,
     };
     claim.encode()
-}
-
-fn sign_claim(claim: ClaimOfAttendance<AccountId, Moment>, account_str: &str) -> Vec<u8> {
-    info!("second call to get_pair_from_str");
-    let pair = get_pair_from_str(account_str);
-    let accountid = get_accountid_from_str(account_str);
-    let attestation = Attestation {
-        claim: claim.clone(),
-        signature: Signature::from(sr25519_core::Signature::from(pair.sign(&claim.encode()))),
-        public: accountid,
-    };
-    attestation.encode()
 }
 
 fn get_community_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CommunityIdentifier>> {
