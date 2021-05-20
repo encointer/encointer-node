@@ -1,13 +1,13 @@
 [package]
 authors = ["encointer.org <alain@encointer.org>"]
-edition = '2018'
-homepage = 'https://encointer.org'
+edition = "2018"
+homepage = "https://encointer.org"
 license = "GPL-3.0"
-name = 'encointer-node-notee-runtime'
-repository = 'https://github.com/encointer/encointer-node/'
+name = "encointer-node-notee-runtime"
+repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = '0.4.8'
+version = "0.4.8"
 
 [dependencies.encointer-scheduler]
 default-features = false
@@ -62,13 +62,13 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", 
 # alias "parity-scale-code" to "codec"
 [dependencies.codec]
 default-features = false
-features = ['derive']
-package = 'parity-scale-codec'
-version = '2.1.1'
+features = ["derive"]
+package = "parity-scale-codec"
+version = "2.1.1"
 
 [dependencies]
-hex-literal = { optional = true, version = '0.3.1' }
-serde = { features = ['derive'], optional = true, version = '1.0.101' }
+hex-literal = { optional = true, version = "0.3.1" }
+serde = { features = ["derive"], optional = true, version = "1.0.101" }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master"}
@@ -98,43 +98,43 @@ sp-transaction-pool = { default-features = false, git = "https://github.com/pari
 sp-version = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 
 [features]
-default = ['std']
+default = ["std"]
 runtime-benchmarks = [
-    'hex-literal',
-    'frame-benchmarking',
-    'frame-support/runtime-benchmarks',
-    'frame-system-benchmarking',
-    'frame-system/runtime-benchmarks',
-    'pallet-balances/runtime-benchmarks',
-    'pallet-timestamp/runtime-benchmarks',
-    'sp-runtime/runtime-benchmarks',
+    "hex-literal",
+    "frame-benchmarking",
+    "frame-support/runtime-benchmarks",
+    "frame-system-benchmarking",
+    "frame-system/runtime-benchmarks",
+    "pallet-balances/runtime-benchmarks",
+    "pallet-timestamp/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
 ]
 std = [
-    'codec/std',
-    'serde',
-    'frame-executive/std',
-    'frame-support/std',
-    'frame-system/std',
-    'frame-system-rpc-runtime-api/std',
-    'pallet-aura/std',
-    'pallet-balances/std',
-    'pallet-grandpa/std',
-    'pallet-randomness-collective-flip/std',
-    'pallet-sudo/std',
-    'pallet-timestamp/std',
-    'pallet-transaction-payment/std',
-    'pallet-transaction-payment-rpc-runtime-api/std',
-    'sp-api/std',
-    'sp-block-builder/std',
-    'sp-consensus-aura/std',
-    'sp-core/std',
-    'sp-inherents/std',
-    'sp-offchain/std',
-    'sp-runtime/std',
-    'sp-session/std',
-    'sp-std/std',
-    'sp-transaction-pool/std',
-    'sp-version/std',
+    "codec/std",
+    "serde",
+    "frame-executive/std",
+    "frame-support/std",
+    "frame-system/std",
+    "frame-system-rpc-runtime-api/std",
+    "pallet-aura/std",
+    "pallet-balances/std",
+    "pallet-grandpa/std",
+    "pallet-randomness-collective-flip/std",
+    "pallet-sudo/std",
+    "pallet-timestamp/std",
+    "pallet-transaction-payment/std",
+    "pallet-transaction-payment-rpc-runtime-api/std",
+    "sp-api/std",
+    "sp-block-builder/std",
+    "sp-consensus-aura/std",
+    "sp-core/std",
+    "sp-inherents/std",
+    "sp-offchain/std",
+    "sp-runtime/std",
+    "sp-session/std",
+    "sp-std/std",
+    "sp-transaction-pool/std",
+    "sp-version/std",
 	"encointer-scheduler/std",
 	"encointer-communities/std",
 	"encointer-balances/std",
