@@ -1348,7 +1348,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
 name = "encointer-client-notee"
-version = "0.3.9"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "base58",
@@ -1387,7 +1387,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "0.3.9"
+version = "0.4.0"
 dependencies = [
  "encointer-node-notee-runtime",
  "frame-benchmarking",
@@ -1427,7 +1427,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "0.3.7"
+version = "0.4.0"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -1470,8 +1470,8 @@ dependencies = [
 
 [[package]]
 name = "encointer-primitives"
-version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+version = "0.5.0"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "parity-scale-codec 2.1.1",
  "serde",
@@ -1496,9 +1496,9 @@ dependencies = [
 
 [[package]]
 name = "environmental"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6576a1755ddffd988788025e75bce9e74b018f7cc226198fe931d077911c6d7e"
+checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 
 [[package]]
 name = "erased-serde"
@@ -4041,8 +4041,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-encointer-balances"
-version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+version = "0.5.0"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4061,8 +4061,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-encointer-bazaar"
-version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+version = "0.5.0"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4075,8 +4075,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-encointer-ceremonies"
-version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+version = "0.5.0"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4095,8 +4095,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-encointer-communities"
-version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+version = "0.5.0"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4112,7 +4112,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4130,7 +4130,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "sp-api",
@@ -4139,8 +4139,8 @@ dependencies = [
 
 [[package]]
 name = "pallet-encointer-scheduler"
-version = "0.4.0"
-source = "git+https://github.com/encointer/pallets?branch=master#d4efcee69fadc442de94141334a369e48c562f73"
+version = "0.5.0"
+source = "git+https://github.com/encointer/pallets?branch=master#3805db14c92d1291e7c92782d1135e5547b0cf4b"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -8185,7 +8185,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.6.5",
  "static_assertions",
 ]
 

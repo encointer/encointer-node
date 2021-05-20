@@ -1,47 +1,47 @@
 [package]
 authors = ["encointer.org <alain@encointer.org>"]
-build = 'build.rs'
-description = 'Encointer Node noTEE'
-edition = '2018'
-homepage = 'https://encointer.org'
+build = "build.rs"
+description = "Encointer Node noTEE"
+edition = "2018"
+homepage = "https://encointer.org"
 license = "GPL-3.0"
-name = 'encointer-node-notee'
-repository = 'https://github.com/encointer/encointer-node'
+name = "encointer-node-notee"
+repository = "https://github.com/encointer/encointer-node"
 #keep with client version
-version = '0.3.9'
+version = "0.4.0"
 
 [[bin]]
-name = 'encointer-node-notee'
+name = "encointer-node-notee"
 
 [package.metadata.docs.rs]
-targets = ['x86_64-unknown-linux-gnu']
+targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies]
-substrate-build-script-utils = '3.0.0'
+substrate-build-script-utils = "3.0.0"
 
 [dependencies]
-jsonrpc-core = '15.0.0'
-structopt = '0.3.8'
+jsonrpc-core = "15.0.0"
+structopt = "0.3.8"
 log = "0.4.14"
 
 # local dependencies
-encointer-node-notee-runtime = { path = '../runtime' }
+encointer-node-notee-runtime = { path = "../runtime" }
 
 # Substrate dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-basic-authorship = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
-sc-cli = { features = ['wasmtime'], git = "https://github.com/paritytech/substrate.git",branch = "master" }
+sc-cli = { features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-client-api = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-consensus = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-consensus-aura = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
-sc-executor = { features = ['wasmtime'], git = "https://github.com/paritytech/substrate.git",branch = "master" }
+sc-executor = { features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-finality-grandpa = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-keystore = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-rpc = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-rpc-api = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
-sc-service = { features = ['wasmtime'], git = "https://github.com/paritytech/substrate.git",branch = "master" }
+sc-service = { features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-telemetry = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-transaction-pool = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sp-api = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
@@ -61,4 +61,4 @@ pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encoi
 
 [features]
 default = []
-runtime-benchmarks = ['encointer-node-notee-runtime/runtime-benchmarks']
+runtime-benchmarks = ["encointer-node-notee-runtime/runtime-benchmarks"]
