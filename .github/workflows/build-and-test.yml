@@ -23,7 +23,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: executables
-        path: | 
+        path: |
           target/release/encointer-node-notee
           target/release/encointer-client-notee
 
@@ -52,21 +52,31 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@master
+
     - name: download build artifacts
       uses: actions/download-artifact@master
+
     - name: fix permissions of artifacts and move to original folder
       run: |
         chmod +x executables/encointer-node-notee
         chmod +x executables/encointer-client-notee
         mkdir -p target/release
         mv executables/* target/release
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+
+    - name: Set up ipfs
+      uses: ibnesayeed/setup-ipfs@master
+      with:
+        run_daemon: true
+
     - name: start dev node
-      run: 
+      run:
         ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
+
     - name: bootstrap community
       run: |
         cd client
@@ -77,14 +87,17 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@master
+
     - name: download build artifacts
       uses: actions/download-artifact@master
+
     - name: fix permissions of artifacts and move to original folder
       run: |
         chmod +x executables/encointer-node-notee
         chmod +x executables/encointer-client-notee
         mkdir -p target/release
         mv executables/* target/release
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -93,11 +106,17 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install geojson pyproj RandomWords
+
+    - name: Set up ipfs
+      uses: ibnesayeed/setup-ipfs@master
+      with:
+        run_daemon: true
+
     - name: start dev node
       run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true &
+
     - name: grow community
       run: |
         cd client
         python bot-community.py init
         python bot-community.py run
-
