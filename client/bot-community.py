@@ -1,5 +1,7 @@
 #!python
 import argparse
+import itertools
+
 import geojson
 
 from random_words import RandomWords
@@ -73,18 +75,13 @@ def register_participants(client, accounts, cid):
 def perform_meetup(client, meetup, cid):
     n = len(meetup)
     print("Performing meetup with " + str(n) + " participants")
-    claims = {}
-    for p in meetup:
-        claims[p] = client.new_claim(p, n, cid)
-    for claimant in meetup:
-        attestations = []
-        for attester in meetup:
-            if claimant == attester:
-                continue
-            # print(claimant + " is attested by " + attester)
-            attestations.append(client.sign_claim(attester, claims[claimant]))
-        # print("registering attestations for " + claimant)
-        client.register_attestations(claimant, attestations)
+
+    claims = [client.new_claim(p, n, cid) for p in meetup]
+
+    for p_index in range(len(meetup)):
+        attestor = meetup[p_index]
+        attestees_claims = claims[:p_index] + claims[p_index + 1:]
+        client.attest_claims(attestor, attestees_claims)
 
 
 def run(client=Client()):

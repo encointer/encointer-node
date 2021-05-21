@@ -1,9 +1,9 @@
 [package]
 name = "encointer-client-notee"
-#keep with node version
-version = "0.3.9"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2018"
+#keep with node version
+version = "0.4.0"
 
 [dependencies]
 log = "0.4"

@@ -56,7 +56,7 @@ use substrate_api_client::{
 use substrate_client_keystore::LocalKeystore;
 use encointer_node_notee_runtime::{AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, BlockNumber, Header};
 use encointer_primitives::ceremonies::{
-    Attestation, AttestationIndexType, ClaimOfAttendance,
+    AttestationIndexType, ClaimOfAttendance,
     CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
 };
 use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
@@ -541,8 +541,8 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("list-attestations")
-                .description("list all attestations for participants of current ceremony and supplied community identifier")
+            Command::new("list-attestees")
+                .description("list all attestees for participants of current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
@@ -552,12 +552,12 @@ fn main() {
                             .expect("please supply argument --cid"),
                     );
                     println!(
-                        "listing attestations for cid {} and ceremony nr {}",
+                        "listing attestees for cid {} and ceremony nr {}",
                         cid.encode().to_base58(),
                         cindex
                     );
-                    let wcount = get_attestation_count(&api, (cid, cindex));
-                    println!("number of attestations:  {}", wcount);
+                    let wcount = get_attestee_count(&api, (cid, cindex));
+                    println!("number of attestees:  {}", wcount);
                     let pcount = get_participant_count(&api, (cid, cindex));
             
                     let mut participants_windex = HashMap::new();
@@ -572,12 +572,12 @@ fn main() {
                         };
                     }
                     for w in 1..wcount + 1 {
-                        let attestations = get_attestations(&api, (cid, cindex), w);
+                        let attestees = get_attestees(&api, (cid, cindex), w);
                         println!(
                             "AttestationRegistry[{}, {} ({})] = {:?}",
-                            cindex, w, participants_windex[&w], attestations
+                            cindex, w, participants_windex[&w], attestees
                         );
-                    }    
+                    }
                     Ok(())
                 }),
         )
@@ -679,8 +679,8 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("register-attestations")
-                .description("register encointer ceremony attestations for supplied community")
+            Command::new("attest-claims")
+                .description("register encointer ceremony claim of attendances for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -691,7 +691,7 @@ fn main() {
                             .help("AccountId in ss58check format"),
                     )
                     .arg(
-                        Arg::with_name("attestations")
+                        Arg::with_name("claims")
                             .takes_value(true)
                             .required(true)
                             .multiple(true)
@@ -701,24 +701,23 @@ fn main() {
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.value_of("accountid").unwrap();
                     let who = get_pair_from_str(arg_who);
-                    let attestation_args: Vec<_> = matches.values_of("attestations").unwrap().collect();
-                    let mut attestations: Vec<Attestation<MultiSignature, AccountId, Moment>> = vec![];
-                    for arg in attestation_args.iter() {
-                        let w = Attestation::decode(&mut &hex::decode(arg).unwrap()[..]).unwrap();
-                        attestations.push(w);
+                    let claims_arg: Vec<_> = matches.values_of("claims").unwrap().collect();
+                    let mut claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = vec![];
+                    for arg in claims_arg.iter() {
+                        let w = ClaimOfAttendance::decode(&mut &hex::decode(arg).unwrap()[..]).unwrap();
+                        claims.push(w);
                     }
-                    debug!("attestations: {:?}", attestations);
-                    info!("send register_attestations for {}", who.public());
-                    let api = get_chain_api(matches);
-                    let _api = api.set_signer(sr25519_core::Pair::from(who));                    
+                    debug!("claims: {:?}", claims);
+                    info!("send attest_claims by {}", who.public());
+                    let api = get_chain_api(matches).set_signer(sr25519_core::Pair::from(who));
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-                        _api.clone(),
+                        api.clone(),
                         "EncointerCeremonies",
-                        "register_attestations",
-                        attestations.clone()
+                        "attest_claims",
+                        claims.clone()
                     );
-                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Attestations sent for {}. status: 'ready'", arg_who);
+                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    println!("Claims sent by {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
         )
@@ -745,7 +744,7 @@ fn main() {
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     debug!("{:?}", matches);
                     let arg_who = matches.value_of("accountid").unwrap();
-                    let accountid = get_accountid_from_str(arg_who);
+                    let claimant = get_pair_from_str(arg_who);
                     let api = get_chain_api(matches);
                     let cid = verify_cid(&api,
                         matches
@@ -757,39 +756,8 @@ fn main() {
                         .unwrap()
                         .parse::<u32>()
                         .unwrap();
-                    let claim = new_claim_for(&api, accountid, cid, n_participants);
+                    let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
                     println!("{}", hex::encode(claim));
-                    Ok(())
-                }),
-        )
-        .add_cmd(
-            Command::new("sign-claim")
-                .description("sign someone's claim to attest their personhood")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("signer")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("SIGNER")
-                            .help("AccountId in ss58check format"),
-                    )
-                    .arg(
-                        Arg::with_name("claim")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("CLAIM")
-                            .help("claim of other party to be signed/attested"),
-                    )
-                })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    debug!("{:?}", matches);
-                    let signer_arg = matches.value_of("signer").unwrap();
-                    let claim = ClaimOfAttendance::decode(
-                        &mut &hex::decode(matches.value_of("claim").unwrap()).unwrap()[..],
-                    ).unwrap();
-                    let attestation = sign_claim(claim, signer_arg);
-                    println!("{}", hex::encode(attestation));
                     Ok(())
                 }),
         )
@@ -985,7 +953,7 @@ fn get_participant_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> Pa
     ).unwrap().or(Some(0)).unwrap()
 }
 
-fn get_attestation_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
     api.get_storage_map(
             "EncointerCeremonies",
             "AttestationCount",
@@ -1036,7 +1004,7 @@ fn get_meetup_participants(
     ).unwrap()
 }
 
-fn get_attestations(
+fn get_attestees(
     api: &Api<sr25519::Pair>,
     key: CommunityCeremony,
     windex: ParticipantIndexType,
@@ -1066,40 +1034,28 @@ fn get_participant_attestation_index(
 
 fn new_claim_for(
     api: &Api<sr25519::Pair>,
-    accountid: AccountId,
+    claimant: &sr25519::Pair,
     cid: CommunityIdentifier,
     n_participants: u32,
 ) -> Vec<u8> {
     let cindex = get_ceremony_index(api);
-    let mindex = get_meetup_index_for(api, (cid, cindex), &accountid)
+    let mindex = get_meetup_index_for(api, (cid, cindex), &claimant.public().into())
         .expect("participant must be assigned to meetup to generate a claim");
 
     // implicitly assume that participant meet at the right place at the right time
     let mloc = get_meetup_location(api, cid, mindex).unwrap();
     let mtime = get_meetup_time(api, cid, mindex).unwrap();
 
-    let claim = ClaimOfAttendance::<AccountId, Moment> {
-        claimant_public: accountid,
-        community_identifier: cid,
-        ceremony_index: cindex,
-        meetup_index: mindex,
-        location: mloc,
-        timestamp: mtime,
-        number_of_participants_confirmed: n_participants,
-    };
+    let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> = ClaimOfAttendance::new_unsigned(
+        claimant.public().into(),
+        cindex,
+        cid,
+        mindex,
+        mloc,
+        mtime,
+        n_participants,
+    ).sign(claimant);
     claim.encode()
-}
-
-fn sign_claim(claim: ClaimOfAttendance<AccountId, Moment>, account_str: &str) -> Vec<u8> {
-    info!("second call to get_pair_from_str");
-    let pair = get_pair_from_str(account_str);
-    let accountid = get_accountid_from_str(account_str);
-    let attestation = Attestation {
-        claim: claim.clone(),
-        signature: Signature::from(sr25519_core::Signature::from(pair.sign(&claim.encode()))),
-        public: accountid,
-    };
-    attestation.encode()
 }
 
 fn get_community_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CommunityIdentifier>> {
