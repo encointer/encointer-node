@@ -1,4 +1,5 @@
 #!python
+import argparse
 import json
 
 from py_client.client import Client
@@ -92,4 +93,17 @@ def main(client=Client()):
 
 
 if __name__ == '__main__':
-    main()
+    default_client = '../target/release/encointer-client-notee'
+
+    p = argparse.ArgumentParser(prog='bootstrap-demo-community')
+    p.add_argument('--client',
+                   default=default_client,
+                   help=f'The rust client binary that should be used. (default={default_client})')
+    p.add_argument('--port',
+                   default=9944,
+                   help='Port of the node (default=9944).')
+    args = p.parse_args()
+
+    print(f"Starting script with client '{args.client}' on port {args.port}")
+
+    main(Client(rust_client=args.client, port=args.port))
