@@ -1080,6 +1080,7 @@ fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, minde
     Some(locations[lidx])
 }
 
+/// This rpc needs to have offchain indexing enabled in the node.
 fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
     let req = json!({
         "method": "communities_getAll",
@@ -1088,7 +1089,8 @@ fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
         "id": "1",
     });
 
-    let n = api.get_request(req.to_string()).unwrap().unwrap();
+    let n = api.get_request(req.to_string()).unwrap()
+        .expect("No communities returned. Are you running the node with `--enable-offchain-indexing true`?");
     Some(serde_json::from_str(&n).unwrap())
 }
 
