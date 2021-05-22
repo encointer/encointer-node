@@ -2,6 +2,7 @@
 import argparse
 import json
 
+from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -93,15 +94,8 @@ def main(client=Client()):
 
 
 if __name__ == '__main__':
-    default_client = '../target/release/encointer-client-notee'
 
-    p = argparse.ArgumentParser(prog='bootstrap-demo-community')
-    p.add_argument('--client',
-                   default=default_client,
-                   help=f'The rust client binary that should be used. (default={default_client})')
-    p.add_argument('--port',
-                   default=9944,
-                   help='Port of the node (default=9944).')
+    p = argparse.ArgumentParser(prog='bootstrap-demo-community', parents=[simple_parser()])
     args = p.parse_args()
 
     print(f"Starting script with client '{args.client}' on port {args.port}")

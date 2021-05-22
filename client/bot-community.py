@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import argparse
-import itertools
 
 import geojson
 
 from random_words import RandomWords
 from math import floor
 
+from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
@@ -35,7 +35,8 @@ def init_bootstrappers(client=Client()):
     return bootstrappers
 
 
-def init(client=Client()):
+def init(client, port):
+    client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     print("initializing community")
     b = init_bootstrappers(client)
@@ -84,7 +85,8 @@ def perform_meetup(client, meetup, cid):
         client.attest_claims(attestor, attestees_claims)
 
 
-def run(client=Client()):
+def run(client, port):
+    client = Client(rust_client=client, port=port)
     f = open("cid.txt", "r")
     cid = f.read()
     print("cid is " + cid)
@@ -103,18 +105,17 @@ def run(client=Client()):
         client.await_block()
 
 
-def benchmark():
+def benchmark(client, port):
     print("will grow population forever")
-    client = Client()
     while True:
-        run()
+        run(client, port)
         client.await_block()
         client.next_phase()
         client.await_block()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='bot-community')
+    parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
     subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
     parser_a = subparsers.add_parser('init', help='a help')
     parser_b = subparsers.add_parser('run', help='b help')
