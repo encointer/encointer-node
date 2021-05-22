@@ -4,7 +4,7 @@ import itertools
 
 import geojson
 
-from random_words import RandomWords
+from random_word import RandomWords
 from math import floor
 
 from py_client.client import Client
@@ -20,7 +20,7 @@ def random_community_spec(bootstrappers, ipfs_cid):
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print("created " + str(len(locations)) + " random locations around " + str(point))
 
-    name = '#' + '-'.join(RandomWords().random_words(count=1))
+    name = '#' + '-'.join(RandomWords().get_random_word())
     symbol = name[1:4].upper()
     meta = meta_json(name, symbol, ipfs_cid)
 
