@@ -1,6 +1,6 @@
 import argparse
 
-default_client = '../target/release/encointer-client-notee'
+DEFAULT_CLIENT = '../target/release/encointer-client-notee'
 
 
 def simple_parser(add_help=False):
@@ -13,8 +13,8 @@ def simple_parser(add_help=False):
 
     p = argparse.ArgumentParser(add_help=add_help)
     p.add_argument('--client',
-                   default=default_client,
-                   help=f'The rust client binary that should be used. (default={default_client})')
+                   default=DEFAULT_CLIENT,
+                   help=f'The rust client binary that should be used. (default={DEFAULT_CLIENT})')
     p.add_argument('--port',
                    default=9944,
                    help='Port of the node (default=9944).')

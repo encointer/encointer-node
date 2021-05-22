@@ -94,7 +94,6 @@ def main(client=Client()):
 
 
 if __name__ == '__main__':
-
     p = argparse.ArgumentParser(prog='bootstrap-demo-community', parents=[simple_parser()])
     args = p.parse_args()
 

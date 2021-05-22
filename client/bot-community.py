@@ -119,7 +119,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
     subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
 
-    # note: the function args' names' `client` and `port` must match the cli's args' names.
+    # Note: the function args' names `client` and `port` must match the cli's args' names.
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
     parser_b = subparsers.add_parser('run', help='b help')
