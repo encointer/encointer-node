@@ -1,12 +1,12 @@
-#!python
+#!/usr/bin/env python3
 import argparse
-import itertools
 
 import geojson
 
 from random_words import RandomWords
 from math import floor
 
+from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
@@ -35,7 +35,8 @@ def init_bootstrappers(client=Client()):
     return bootstrappers
 
 
-def init(client=Client()):
+def init(client: str, port: str):
+    client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     print("initializing community")
     b = init_bootstrappers(client)
@@ -48,7 +49,7 @@ def init(client=Client()):
     f.close()
 
 
-def register_participants(client, accounts, cid):
+def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
     total = sum(bal)
     print("****** money supply is " + str(total))
@@ -72,7 +73,7 @@ def register_participants(client, accounts, cid):
         client.register_participant(p, cid)
 
 
-def perform_meetup(client, meetup, cid):
+def perform_meetup(client: Client, meetup, cid):
     n = len(meetup)
     print("Performing meetup with " + str(n) + " participants")
 
@@ -84,7 +85,8 @@ def perform_meetup(client, meetup, cid):
         client.attest_claims(attestor, attestees_claims)
 
 
-def run(client=Client()):
+def run(client: str, port: int):
+    client = Client(rust_client=client, port=port)
     f = open("cid.txt", "r")
     cid = f.read()
     print("cid is " + cid)
@@ -103,19 +105,22 @@ def run(client=Client()):
         client.await_block()
 
 
-def benchmark():
+def benchmark(client: str, port: int):
+    py_client = Client(rust_client=client, port=port)
     print("will grow population forever")
-    client = Client()
     while True:
-        run()
-        client.await_block()
-        client.next_phase()
-        client.await_block()
+        run(client, port)
+        py_client.await_block()
+        py_client.next_phase()
+        py_client.await_block()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='bot-community')
+    parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
     subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
+
+    # Note: the function args' names `client` and `port` must match the cli's args' names.
+    # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')

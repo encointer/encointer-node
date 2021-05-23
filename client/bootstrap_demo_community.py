@@ -1,6 +1,8 @@
-#!python
+#!/usr/bin/env python3
+import argparse
 import json
 
+from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -92,4 +94,9 @@ def main(client=Client()):
 
 
 if __name__ == '__main__':
-    main()
+    p = argparse.ArgumentParser(prog='bootstrap-demo-community', parents=[simple_parser()])
+    args = p.parse_args()
+
+    print(f"Starting script with client '{args.client}' on port {args.port}")
+
+    main(Client(rust_client=args.client, port=args.port))
