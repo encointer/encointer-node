@@ -16,6 +16,8 @@ use sp_transaction_pool::TransactionPool;
 
 
 /// Full client dependencies.
+///
+/// Note: `backend` and `offchain_indexing_enabled` are encointer customizations.
 pub struct FullDeps<C, P, Backend> {
 	/// The client instance to use.
 	pub client: Arc<C>,
