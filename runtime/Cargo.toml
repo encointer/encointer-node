@@ -123,7 +123,7 @@ std = [
     "sp-transaction-pool/std",
     "sp-version/std",
 	"encointer-scheduler/std",
-	"encointer-communities/std",
+	"encointer-ceremonies/std",
 	"encointer-balances/std",
 	"encointer-communities/std",
     "encointer-communities-rpc-runtime-api/std",
