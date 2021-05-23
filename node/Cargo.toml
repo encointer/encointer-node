@@ -40,6 +40,7 @@ sc-finality-grandpa = { git = "https://github.com/paritytech/substrate.git",bran
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-client-api = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
+sp-timestamp = { git = "https://github.com/paritytech/substrate.git",branch = "master" }
 
 # These dependencies are used for the node's RPCs
 jsonrpc-core = "15.1.0"
