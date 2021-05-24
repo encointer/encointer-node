@@ -53,7 +53,7 @@ use substrate_api_client::{
     node_metadata::Metadata, Api, XtStatus,
     utils::FromHexString
 };
-use substrate_client_keystore::LocalKeystore;
+use substrate_client_keystore::{LocalKeystore, KeystoreExt};
 use encointer_node_notee_runtime::{AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, BlockNumber, Header};
 use encointer_primitives::ceremonies::{
     AttestationIndexType, ClaimOfAttendance,
@@ -896,12 +896,12 @@ fn get_pair_from_str(account: &str) -> sr25519::AppPair {
             let store =
                 LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).expect("store should exist");
             info!("store opened");
-            let _pair = store.key_pair::<sr25519::AppPair>(
+            let pair = store.key_pair::<sr25519::AppPair>(
                     &sr25519::Public::from_ss58check(account).unwrap().into(),
                 )
                 .unwrap();
             drop(store);
-            _pair
+            pair.unwrap()
         }
     }
 }
