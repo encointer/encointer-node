@@ -1485,6 +1485,7 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "0.6.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "parity-scale-codec 2.1.1",
  "serde",
@@ -4133,6 +4134,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "0.6.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4153,6 +4155,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "0.6.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4167,6 +4170,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "0.6.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4187,6 +4191,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "0.6.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4203,6 +4208,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4220,6 +4226,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "sp-api",
@@ -4229,6 +4236,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "0.6.0"
+source = "git+https://github.com/encointer/pallets?branch=master#ccbed093b68caaa9e8a4225d416a335adc862747"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -7644,8 +7652,8 @@ dependencies = [
 
 [[package]]
 name = "substrate-api-client"
-version = "0.5.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=reintroduce-substrate-branch-id#206975fee0c0a17e6743f10b72eb6c71847cf9f2"
+version = "0.6.0"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#3c8c04cd785b383dfbacb48a374503e644d13a08"
 dependencies = [
  "env_logger",
  "frame-metadata",
@@ -7691,8 +7699,8 @@ dependencies = [
 
 [[package]]
 name = "substrate-client-keystore"
-version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=reintroduce-substrate-branch-id#206975fee0c0a17e6743f10b72eb6c71847cf9f2"
+version = "0.6.0"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#3c8c04cd785b383dfbacb48a374503e644d13a08"
 dependencies = [
  "async-trait",
  "hex",
