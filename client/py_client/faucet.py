@@ -7,9 +7,7 @@ app = flask.Flask(__name__)
 app.config['DEBUG'] = True
 
 
-#CLI = ['../target/release/encointer-client-notee', '-p', '9944']
-CLI = ['/home/nm/encointer/encointer-node/target/release/encointer-client-notee',  '-p', '9944']
-
+CLI = ['../target/release/encointer-client-notee', '-p', '9944']
 
 def faucet(accounts):
     return subprocess.run(CLI + ['faucet'] + accounts, stdout=subprocess.PIPE)
