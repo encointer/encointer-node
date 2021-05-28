@@ -41,7 +41,6 @@ class Client:
         return [self.new_account() for _ in range(0, amount)]
 
     def faucet(self, accounts, faucet_api='localhost:5000/api'):
-        subprocess.run(self.cli + ["faucet"] + accounts, stdout=subprocess.PIPE)
         payload = {'accounts': accounts}
         requests.get(faucet_api, params=payload)
 
