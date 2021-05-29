@@ -145,26 +145,26 @@ fn testnet_genesis(
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
-		frame_system: Some(SystemConfig {
+		frame_system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
 			changes_trie_config: Default::default(),
-		}),
-		pallet_balances: Some(BalancesConfig {
+		},
+		pallet_balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
-		}),
-		pallet_aura: Some(AuraConfig {
+		},
+		pallet_aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
-		}),
-		pallet_grandpa: Some(GrandpaConfig {
+		},
+		pallet_grandpa: GrandpaConfig {
 			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
-		}),
-		pallet_sudo: Some(SudoConfig {
+		},
+		pallet_sudo: SudoConfig {
 			// Assign network admin rights.
 			key: root_key,
-		}),
-	    encointer_scheduler: Some(EncointerSchedulerConfig {
+		},
+	    encointer_scheduler: EncointerSchedulerConfig {
             current_phase: CeremonyPhaseType::REGISTERING,
 			current_ceremony_index: 1,
 			ceremony_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -173,17 +173,17 @@ fn testnet_genesis(
                 (CeremonyPhaseType::ASSIGNING, 28800000),
                 (CeremonyPhaseType::ATTESTING, 172800000),
             ],
-		}),
-		encointer_ceremonies: Some(EncointerCeremoniesConfig {
+		},
+		encointer_ceremonies: EncointerCeremoniesConfig {
 			ceremony_reward: BalanceType::from_num(1),
 			time_tolerance: 600_000, // +-10min
 			location_tolerance: 1_000, // [m] 
-		}),
-		encointer_communities: Some(EncointerCommunitiesConfig {
+		},
+		encointer_communities: EncointerCommunitiesConfig {
             community_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
-        }),
-		encointer_balances: Some(EncointerBalancesConfig {
+        },
+		encointer_balances: EncointerBalancesConfig {
 			demurrage_per_block_default: Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128),
-		}),
+		},
 	}
 }
