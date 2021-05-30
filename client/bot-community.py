@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+"""
+Bootstrap and grow Encointer BOT communities on a *dev* chain or testnet
+
+you may need to install a few packages first
+   pip3 install --upgrade pip
+   pip3 install randomwords geojson pyproj
+
+then start a node with
+   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true
+
+and init and grow a community
+   ./bot-community.py --port 9945 init
+   ./bot-community.py --port 9945 benchmark
+   
+on testnet Gesell, run this script once per ceremony phase (after calling `init` first)
+   ./bot-community.py --port 9945 run
+
+"""
 import argparse
 
 import geojson
