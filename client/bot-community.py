@@ -18,6 +18,8 @@ on testnet Gesell, run this script once per ceremony phase (after calling `init`
 
 """
 import argparse
+import glob
+import os
 
 import geojson
 
@@ -29,6 +31,7 @@ from py_client.client import Client
 from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
 
+KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
@@ -53,7 +56,21 @@ def init_bootstrappers(client=Client()):
     return bootstrappers
 
 
+def purge_keystore_prompt():
+    accounts = glob.glob(KEYSTORE_PATH + '/*')
+    if accounts:
+        print(f'Keystore already contains {len(accounts)} accounts.')
+        should_clear = input('Do you want to purge the keystore? [y, n]')
+        if should_clear == 'y':
+            [os.remove(f) for f in accounts]
+            print('Purged the keystore.')
+        else:
+            print('Leaving keystore as is.')
+
+
 def init(client: str, port: str):
+    purge_keystore_prompt()
+
     client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     print("initializing community")
