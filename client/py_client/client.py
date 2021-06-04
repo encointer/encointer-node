@@ -1,7 +1,7 @@
 import subprocess
 import requests
 
-from .scheduler import CeremonyPhase
+from scheduler import CeremonyPhase
 
 
 class Client:
@@ -52,7 +52,7 @@ class Client:
             ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
-    def new_community(self, specfile, sender='//Alice'):
+    def new_community(self, specfile, sender='//Bob'):
         ret = subprocess.run(self.cli + ["new-community", specfile, sender], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 

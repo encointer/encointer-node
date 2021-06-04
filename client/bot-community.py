@@ -111,8 +111,8 @@ def benchmark(client: str, port: int):
     while True:
         run(client, port)
         py_client.await_block()
-        py_client.next_phase()
-        py_client.await_block()
+#        py_client.next_phase()
+#        py_client.await_block()
 
 
 if __name__ == '__main__':
