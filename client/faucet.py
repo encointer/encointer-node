@@ -2,7 +2,7 @@ import flask
 from flask import request, jsonify
 import subprocess
 from time import sleep
-from client import Client
+from py_client.client import Client
 
 
 app = flask.Flask(__name__)

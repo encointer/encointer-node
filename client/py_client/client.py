@@ -1,7 +1,7 @@
 import subprocess
 import requests
 
-from .scheduler import CeremonyPhase
+from py_client.scheduler import CeremonyPhase
 
 
 class Client:
