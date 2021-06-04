@@ -13,7 +13,7 @@ CLI = ['../target/release/encointer-client-notee', '-p', '9944']
 
 
 def faucet(accounts, client=Client()): 
-    for x in range(0, 10):  # try 10 times
+    for x in range(0, 180):  # try 10 times
         print(x)
         try:
             subprocess.check_output(CLI + ['faucet'] + accounts, timeout=2)  # call faucet
@@ -25,6 +25,7 @@ def faucet(accounts, client=Client()):
             print(e.output)
         except subprocess.TimeoutExpired as e:
             print(e.output)
+        sleep(1)
     print('failed')
     return False
 
