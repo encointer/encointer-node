@@ -13,10 +13,10 @@ CLI = ['../target/release/encointer-client-notee', '-p', '9944']
 
 
 def faucet(accounts, client=Client()): 
-    for x in range(0, 180):  # try 10 times
+    for x in range(0, 180):  # try 100 times
         print(x)
         try:
-            subprocess.check_output(CLI + ['faucet'] + accounts, timeout=2)  # call faucet
+            ret = subprocess.run(CLI + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE).stdout
             client.await_block()  # wait for transaction to complete
             bal = client.balance(accounts[0])
             if bal > 0:  # check if transaction was successful

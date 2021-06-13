@@ -52,7 +52,7 @@ class Client:
             ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
-    def new_community(self, specfile, sender='//Bob'):
+    def new_community(self, specfile, sender):
         ret = subprocess.run(self.cli + ["new-community", specfile, sender], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 

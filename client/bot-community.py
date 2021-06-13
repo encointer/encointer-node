@@ -42,7 +42,7 @@ def init(client: str, port: str):
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
     print("generated community spec: ", specfile)
-    cid = client.new_community(specfile)
+    cid = client.new_community(specfile, b[0])
     print("created community with cid: ", cid)
     f = open("cid.txt", "w")
     f.write(cid)
