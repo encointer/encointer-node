@@ -40,9 +40,9 @@ class Client:
     def create_accounts(self, amount):
         return [self.new_account() for _ in range(0, amount)]
 
-    def faucet(self, accounts, faucet_api='http://localhost:5000/api'):
+    def faucet(self, accounts, faucet_url='http://localhost:5000/api'):
         payload = {'accounts': accounts}
-        requests.get(faucet_api, params=payload)
+        requests.get(faucet_url, params=payload)
 
     def balance(self, account, cid=None):
         if not cid:
@@ -98,3 +98,7 @@ class Client:
     def list_attestees(self, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
+
+    def send_heartbeat(self, cid, heartbeat_url='http://localhost:5000/api'):
+        payload = {'cid': cid}
+        requests.get(heartbeat_url, params=payload)

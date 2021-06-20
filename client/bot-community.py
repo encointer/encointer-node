@@ -103,6 +103,7 @@ def run(client: str, port: int):
         for meetup in meetups:
             perform_meetup(client, meetup, cid)
         client.await_block()
+    client.send_heartbeat(cid)
 
 
 def benchmark(client: str, port: int):
@@ -110,9 +111,9 @@ def benchmark(client: str, port: int):
     print("will grow population forever")
     while True:
         run(client, port)
-        py_client.await_block()
-#        py_client.next_phase()
-#        py_client.await_block()
+        phase = py_client.get_phase()
+        while phase == py_client.get_phase():
+            py_client.await_block()
 
 
 if __name__ == '__main__':
