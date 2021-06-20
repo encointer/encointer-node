@@ -104,14 +104,14 @@ def run(client: str, port: int):
             perform_meetup(client, meetup, cid)
         client.await_block()
     client.send_heartbeat(cid)
+    return phase
 
 
 def benchmark(client: str, port: int):
     py_client = Client(rust_client=client, port=port)
     print("will grow population forever")
     while True:
-        run(client, port)
-        phase = py_client.get_phase()
+        phase = run(client, port)
         while phase == py_client.get_phase():
             py_client.await_block()
 

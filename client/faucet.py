@@ -4,6 +4,8 @@ import flask
 from flask import request, jsonify
 import subprocess
 from time import sleep
+import binascii
+import base58
 from py_client.client import Client
 
 
@@ -61,7 +63,7 @@ def faucet_service():
 def heartbeat():
     try:
         query_parameters = request.args
-        cid = query_parameters.getlist('cid')[0]
+        cid = '0x' + binascii.hexlify(base58.b58decode(query_parameters.getlist('cid')[0])).decode('utf-8')
         print(cid)
         if cid not in ACK_COMMUNITIES:
             ACK_COMMUNITIES.append(cid)
