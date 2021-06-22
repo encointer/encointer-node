@@ -50,6 +50,7 @@ pub use encointer_primitives::scheduler::CeremonyPhaseType;
 pub use encointer_primitives::balances::{BalanceType, BalanceEntry, Demurrage};
 pub use encointer_primitives::communities::CommunityIdentifier;
 pub use encointer_primitives::common::PalletString;
+pub use encointer_primitives::bazaar::{BusinessIdentifier, BusinessData, OfferingData};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -511,6 +512,16 @@ impl_runtime_apis! {
 
 		fn get_name(cid: &CommunityIdentifier) -> Option<PalletString> {
 			EncointerCommunities::get_name(cid)
+		}
+	}
+
+	impl encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {
+        fn get_offerings(business: &BusinessIdentifier<AccountId>) -> Vec<OfferingData>{
+			EncointerBazaar::get_offerings(business)
+		}
+
+        fn get_businesses(community: &CommunityIdentifier) -> Vec<(AccountId, BusinessData)>{
+			EncointerBazaar::get_businesses(community)
 		}
 	}
 
