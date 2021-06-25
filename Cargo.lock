@@ -1455,6 +1455,7 @@ dependencies = [
  "pallet-balances",
  "pallet-encointer-balances",
  "pallet-encointer-bazaar",
+ "pallet-encointer-bazaar-rpc-runtime-api",
  "pallet-encointer-ceremonies",
  "pallet-encointer-communities",
  "pallet-encointer-communities-rpc-runtime-api",
@@ -4164,6 +4165,16 @@ dependencies = [
  "pallet-encointer-communities",
  "parity-scale-codec 2.1.1",
  "sp-io",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-encointer-bazaar-rpc-runtime-api"
+version = "0.1.0"
+dependencies = [
+ "encointer-primitives",
+ "frame-support",
+ "sp-api",
  "sp-std",
 ]
 
@@ -9207,3 +9218,7 @@ dependencies = [
  "cc",
  "libc",
 ]
+
+[[patch.unused]]
+name = "pallet-encointer-bazaar-rpc"
+version = "0.1.0"

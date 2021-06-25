@@ -45,6 +45,12 @@ git = "https://github.com/encointer/pallets"
 branch = "master"
 package = "pallet-encointer-bazaar"
 
+[dependencies.encointer-bazaar-rpc-runtime-api]
+default-features = false
+git = "https://github.com/encointer/pallets"
+branch = "master"
+package = "pallet-encointer-bazaar-rpc-runtime-api"
+
 [dependencies.encointer-primitives]
 default-features = false
 git = "https://github.com/encointer/pallets"
@@ -128,6 +134,7 @@ std = [
 	"encointer-communities/std",
     "encointer-communities-rpc-runtime-api/std",
 	"encointer-bazaar/std",
+    "encointer-bazaar-rpc-runtime-api/std",
     "encointer-primitives/std",
     "fixed/std"    
 ]

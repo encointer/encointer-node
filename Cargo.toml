@@ -17,6 +17,8 @@ members = [
 #pallet-encointer-balances = { path = "../pallets/balances" }
 #pallet-encointer-scheduler = { path = "../pallets/scheduler" }
 #pallet-encointer-bazaar = { path = "../pallets/bazaar" }
+#pallet-encointer-bazaar-rpc = { path = "../pallets/bazaar/rpc" }
+#pallet-encointer-bazaar-rpc-runtime-api = { path = "../pallets/bazaar/rpc/runtime-api" }
 #encointer-primitives = { path = "../pallets/primitives" }
 #[patch."https://github.com/scs/pallet-substratee-registry.git"]
 #pallet-substratee-registry = { path = "../pallet-substratee-registry" }
