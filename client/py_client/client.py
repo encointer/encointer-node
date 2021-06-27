@@ -99,6 +99,3 @@ class Client:
         ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
-    def send_heartbeat(self, cid, heartbeat_url='http://localhost:5000/heartbeat'):
-        payload = {'cid': cid}
-        requests.get(heartbeat_url, params=payload)

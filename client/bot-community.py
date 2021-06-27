@@ -103,7 +103,6 @@ def run(client: str, port: int):
         for meetup in meetups:
             perform_meetup(client, meetup, cid)
         client.await_block()
-    client.send_heartbeat(cid)
     return phase
 
 
