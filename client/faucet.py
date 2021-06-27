@@ -4,8 +4,6 @@ import flask
 from flask import request, jsonify
 import subprocess
 from time import sleep
-import binascii
-import base58
 from py_client.client import Client
 
 
