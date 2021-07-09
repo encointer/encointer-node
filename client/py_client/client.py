@@ -40,9 +40,13 @@ class Client:
     def create_accounts(self, amount):
         return [self.new_account() for _ in range(0, amount)]
 
-    def faucet(self, accounts, faucet_url='http://localhost:5000/api'):
-        payload = {'accounts': accounts}
-        requests.get(faucet_url, params=payload)
+    def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
+        if is_faucet:
+            subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+        else:
+            payload = {'accounts': accounts}
+            requests.get(faucet_url, params=payload)
+
 
     def balance(self, account, cid=None):
         if not cid:

@@ -1,5 +1,4 @@
 import sys
-
 import flask
 from flask import request, jsonify
 import subprocess
@@ -9,16 +8,13 @@ from py_client.client import Client
 
 app = flask.Flask(__name__)
 app.config['DEBUG'] = True
-
-
-CLI = ['../target/release/encointer-client-notee', '-p', '9944']
 CLIENT = Client()
 
 
 def faucet(accounts):
     for x in range(0, 180):  # try 100 times
         try:
-            ret = subprocess.run(CLI + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE).stdout
+            CLIENT.faucet(accounts, is_faucet=True)
             CLIENT.await_block()  # wait for transaction to complete
             for acc in accounts:
                 if CLIENT.balance(acc) == 0:
