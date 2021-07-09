@@ -8,13 +8,17 @@ global COUNT
 
 def subscription_handler(event_count, update_nr, subscription_id):
     global COUNT
+    print(event_count, COUNT)
     if COUNT > 10:
         return update_nr
     elif event_count.value == 1:
         COUNT += 1
+    else:
+        COUNT = 0
 
 
 if __name__ == '__main__':
+    COUNT = 0
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = substrateinterface.SubstrateInterface(
@@ -26,5 +30,6 @@ if __name__ == '__main__':
     client = Client()
     while True:
         result = substrate.query("System", "EventCount", subscription_handler=subscription_handler)
+        print('NEXT PHASE!')
         client.next_phase()
         COUNT = 0
