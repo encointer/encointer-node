@@ -12,3 +12,16 @@ def purge_prompt(path: str, file_description: str):
             print(f'Purged the {path}.')
         else:
             print(f'Leaving {path} as is.')
+
+
+def write_cid(cid: str):
+    f = open('cid.txt', 'w')
+    f.write(cid)
+    f.close()
+
+
+def read_cid():
+    f = open('cid.txt', 'r')
+    cid = f.read()
+    f.close()
+    return cid

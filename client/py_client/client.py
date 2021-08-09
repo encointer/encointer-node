@@ -96,3 +96,11 @@ class Client:
     def list_attestees(self, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
+
+    def create_business(self, account, cid, ipfs_cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "create-business", account, ipfs_cid], stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
+    def update_business(self, account, cid, ipfs_cd):
+        ret = subprocess.run(self.cli + ["--cid", cid, "update-business", account, ipfs_cd], stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
