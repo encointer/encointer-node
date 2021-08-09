@@ -332,7 +332,7 @@ fn main() {
         // start encointer stuff
         .add_cmd(
             Command::new("new-community")
-                .description("register new community")
+                .description("Register new community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -565,8 +565,8 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("register-participant")
-                .description("register encointer ceremony participant for supplied community")
+            Command::new("Register-participant")
+                .description("Register encointer ceremony participant for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
@@ -645,7 +645,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("attest-claims")
-                .description("register encointer ceremony claim of attendances for supplied community")
+                .description("Register encointer ceremony claim of attendances for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
@@ -709,36 +709,28 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("register-business")
-                .description("register a community business on behalf of the account")
+            Command::new("create-business")
+                .description("Register a community business on behalf of the account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .account_arg()
                         .ipfs_cid_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let business_owner = matches.account_arg()
-                        .map(get_pair_from_str).unwrap();
-
-                    let api = get_chain_api(matches)
-                        .set_signer(business_owner.clone().into());
-                    let cid = verify_cid(&api,
-                                         matches
-                                             .cid_arg()
-                                             .expect("please supply argument --cid"),
-                    );
-                    let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
-
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-                        api.clone(),
-                        "EncointerBazaar",
-                        "create_business",
-                        cid,
-                        ipfs_cid
-                    );
-                    // send and watch extrinsic until finalized
-                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
+                    register_or_update_business(&matches, &BazaarBusinessCalls::CreateBusiness).unwrap();
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("update-business")
+                .description("Update an already existing community business on behalf of the account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    register_or_update_business(&matches, &BazaarBusinessCalls::UpdateBusiness).unwrap();
                     Ok(())
                 }),
         )
@@ -1164,4 +1156,42 @@ fn apply_demurrage(
 	);
 	let exp_result: BalanceType = exp(exponent).unwrap();
 	entry.principal.checked_mul(exp_result).unwrap()
+}
+
+fn register_or_update_business(
+	matches: &ArgMatches<'_>,
+	business_call: &BazaarBusinessCalls,
+) -> Result<(), ()> {
+	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
+
+	let api = get_chain_api(matches).set_signer(business_owner.clone().into());
+	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
+	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
+
+	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+		api.clone(),
+		"EncointerBazaar",
+		&business_call.to_string(),
+		cid,
+		ipfs_cid
+	);
+	// send and watch extrinsic until finalized
+	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
+	Ok(())
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum BazaarBusinessCalls {
+	CreateBusiness,
+	UpdateBusiness,
+}
+
+impl ToString for BazaarBusinessCalls {
+	fn to_string(&self) -> String {
+		match self {
+			BazaarBusinessCalls::CreateBusiness => "create_business".to_string(),
+			BazaarBusinessCalls::UpdateBusiness => "update_business".to_string(),
+		}
+	}
 }
