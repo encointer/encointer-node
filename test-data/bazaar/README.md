@@ -1,0 +1,1 @@
+Contains random generated businesses and offerings to be uploaded to ipfs.
