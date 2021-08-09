@@ -718,7 +718,7 @@ fn main() {
                         .ipfs_cid_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    register_or_update_business(&matches, &BazaarBusinessCalls::CreateBusiness).unwrap();
+                    send_bazaar_xt(&matches, &BazaarCalls::CreateBusiness).unwrap();
                     Ok(())
                 }),
         )
@@ -731,7 +731,20 @@ fn main() {
                         .ipfs_cid_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    register_or_update_business(&matches, &BazaarBusinessCalls::UpdateBusiness).unwrap();
+                    send_bazaar_xt(&matches, &BazaarCalls::UpdateBusiness).unwrap();
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("create-offering")
+                .description("Create an offering for the business belonging to account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    send_bazaar_xt(&matches, &BazaarCalls::CreateOffering).unwrap();
                     Ok(())
                 }),
         )
@@ -1270,10 +1283,7 @@ fn apply_demurrage(
 	entry.principal.checked_mul(exp_result).unwrap()
 }
 
-fn register_or_update_business(
-	matches: &ArgMatches<'_>,
-	business_call: &BazaarBusinessCalls,
-) -> Result<(), ()> {
+fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Result<(), ()> {
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
 	let api = get_chain_api(matches).set_signer(business_owner.clone().into());
@@ -1294,16 +1304,18 @@ fn register_or_update_business(
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum BazaarBusinessCalls {
+enum BazaarCalls {
 	CreateBusiness,
 	UpdateBusiness,
+	CreateOffering,
 }
 
-impl ToString for BazaarBusinessCalls {
+impl ToString for BazaarCalls {
 	fn to_string(&self) -> String {
 		match self {
-			BazaarBusinessCalls::CreateBusiness => "create_business".to_string(),
-			BazaarBusinessCalls::UpdateBusiness => "update_business".to_string(),
+			BazaarCalls::CreateBusiness => "create_business".to_string(),
+			BazaarCalls::UpdateBusiness => "update_business".to_string(),
+			BazaarCalls::CreateOffering => "create_offerings".to_string(),
 		}
 	}
 }
