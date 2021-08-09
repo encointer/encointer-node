@@ -708,6 +708,40 @@ fn main() {
                     Ok(())
                 }),
         )
+        .add_cmd(
+            Command::new("register-business")
+                .description("register a community business on behalf of the account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let business_owner = matches.account_arg()
+                        .map(get_pair_from_str).unwrap();
+
+                    let api = get_chain_api(matches)
+                        .set_signer(business_owner.clone().into());
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid"),
+                    );
+                    let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
+
+                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                        api.clone(),
+                        "EncointerBazaar",
+                        "create_business",
+                        cid,
+                        ipfs_cid
+                    );
+                    // send and watch extrinsic until finalized
+                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
+                    Ok(())
+                }),
+        )
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");
