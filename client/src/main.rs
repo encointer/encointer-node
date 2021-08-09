@@ -1315,7 +1315,7 @@ impl ToString for BazaarCalls {
 		match self {
 			BazaarCalls::CreateBusiness => "create_business".to_string(),
 			BazaarCalls::UpdateBusiness => "update_business".to_string(),
-			BazaarCalls::CreateOffering => "create_offerings".to_string(),
+			BazaarCalls::CreateOffering => "create_offering".to_string(),
 		}
 	}
 }
