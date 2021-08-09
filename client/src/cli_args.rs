@@ -45,7 +45,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 
 	fn optional_cid_arg(self) -> Self {
 		self.arg(
-			Arg::with_name("cid")
+			Arg::with_name(CID_ARG)
 				.short("c")
 				.long("cid")
 				.global(true)
