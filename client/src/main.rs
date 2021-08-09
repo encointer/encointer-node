@@ -625,20 +625,14 @@ fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .setting(AppSettings::AllowLeadingHyphen)
                         .account_arg()
-                        .arg(
-                            Arg::with_name("ceremony-index")
-                                .takes_value(true)
-                                .allow_hyphen_values(true)
-                                .default_value("-1")
-                                .help("If positive, absolute index. If negative, current_index -i. 0 is not allowed"),
-                    )
+                        .ceremony_index_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
 
-                    let index: i32 = matches.value_of("ceremony-index").unwrap().parse().unwrap();
+                    let index: i32 = matches.ceremony_index_arg().unwrap().parse().unwrap();
                     let cindex = match index {
                         i32::MIN..=-1 => get_ceremony_index(&api) - index.abs() as u32,
                         1..=i32::MAX => index as u32,
@@ -664,18 +658,12 @@ fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
-                    .arg(
-                        Arg::with_name("claims")
-                            .takes_value(true)
-                            .required(true)
-                            .multiple(true)
-                            .min_values(2)
-                    )
+                    .claims_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let who = get_pair_from_str(arg_who);
-                    let claims_arg: Vec<_> = matches.values_of("claims").unwrap().collect();
+                    let claims_arg: Vec<_> = matches.claims_arg().unwrap();
                     let mut claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = vec![];
                     for arg in claims_arg.iter() {
                         let w = ClaimOfAttendance::decode(&mut &hex::decode(arg).unwrap()[..]).unwrap();
