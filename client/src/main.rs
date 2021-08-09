@@ -349,12 +349,7 @@ fn main() {
                             .required(true)
                             .help("enhanced geojson file that specifies a community"),
                     )
-                    .arg(
-                        Arg::with_name("signer")
-                            .takes_value(true)
-                            .required(true)
-                            .help("a bootstrapper account to sign the registration extrinsic"),
-                    )
+                    .signer_arg("a bootstrapper account to sign the registration extrinsic")
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let p_arg = matches.value_of("signer").unwrap();
