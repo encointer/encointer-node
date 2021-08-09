@@ -49,6 +49,7 @@ use encointer_node_notee_runtime::{
 };
 use encointer_primitives::{
 	balances::Demurrage,
+	bazaar::{BusinessData, OfferingData},
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
@@ -60,7 +61,7 @@ use encointer_primitives::{
 };
 use fixed::{traits::LossyInto, transcendental::exp};
 use geojson::GeoJson;
-use serde_json::json;
+use serde_json::{json, to_value};
 use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline,
@@ -734,6 +735,74 @@ fn main() {
                     Ok(())
                 }),
         )
+        .add_cmd(
+            Command::new("list-businesses")
+                .description("List businesses for a community")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid")
+                    );
+                    let businesses = get_businesses(&api, cid).unwrap();
+                    println!("number of businesses:  {}", businesses.len());
+                    for n in businesses.iter() {
+                        println!("{:?}", n);
+                    }
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("list-offerings")
+                .description("List offerings for a community")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid")
+                    );
+                    let offerings = get_offerings(&api, cid).unwrap();
+                    println!("number of offerings:  {}", offerings.len());
+                    for n in offerings.iter() {
+                        println!("{:?}", n);
+                    }
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("list-business-offerings")
+                .description("List offerings for a business")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let ipfs_cid = matches.ipfs_cid_arg().unwrap();
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid")
+                    );
+                    let offerings = get_offerings_for_business(&api, cid, ipfs_cid).unwrap();
+                    println!("number of offerings:  {}", offerings.len());
+                    for n in offerings.iter() {
+                        println!("{:?}", n);
+                    }
+                    Ok(())
+                }),
+        )
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");
@@ -1062,6 +1131,55 @@ fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
 	let n = api.get_request(req.to_string()).unwrap().expect(
 		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
 	);
+	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_businesses(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
+	let req = json!({
+		"method": "bazaar_getBusinesses",
+		"params": vec![cid],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.to_string())
+		.unwrap()
+		.expect("Could not find any businesses...");
+	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+	let req = json!({
+		"method": "bazaar_getOfferings",
+		"params": vec![cid],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.to_string())
+		.unwrap()
+		.expect("Could not find any business offerings...");
+	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_offerings_for_business(
+	api: &Api<sr25519::Pair>,
+	cid: CommunityIdentifier,
+	ipfs_cid: &str,
+) -> Option<Vec<BusinessData>> {
+	let req = json!({
+		"method": "bazaar_getOfferingsForBusiness",
+		"params": vec![to_value(cid).unwrap(), to_value(ipfs_cid).unwrap()],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.to_string())
+		.unwrap()
+		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
