@@ -2,7 +2,7 @@ import subprocess
 import re
 import warnings
 
-ICONS_PATH = '../assets/icons'
+ICONS_PATH = '../test-data/icons'
 
 class Ipfs:
     """ Minimal wrapper for the ipfs cli """
