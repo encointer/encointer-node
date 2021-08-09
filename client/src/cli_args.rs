@@ -2,12 +2,14 @@ use clap::{App, Arg, ArgMatches};
 
 const ACCOUNT_ARG: &'static str = "accountid";
 const SIGNER_ARG: &'static str = "signer";
+const CID_ARG: &'static str = "cid";
 const CLAIMS_ARG: &'static str = "claims";
 const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
 	fn signer_arg(self, help: &'b str) -> Self;
+	fn optional_cid_arg(self) -> Self;
 	fn claims_arg(self) -> Self;
 	fn ceremony_index_arg(self) -> Self;
 }
@@ -15,6 +17,7 @@ pub trait EncointerArgs<'b> {
 pub trait EncointerArgsExtractor {
 	fn account_arg(&self) -> Option<&str>;
 	fn signer_arg(&self) -> Option<&str>;
+	fn cid_arg(&self) -> Option<&str>;
 	fn claims_arg(&self) -> Option<Vec<&str>>;
 	fn ceremony_index_arg(&self) -> Option<&str>;
 }
@@ -37,6 +40,18 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.required(true)
 				.value_name("SS58")
 				.help(help),
+		)
+	}
+
+	fn optional_cid_arg(self) -> Self {
+		self.arg(
+			Arg::with_name("cid")
+				.short("c")
+				.long("cid")
+				.global(true)
+				.takes_value(true)
+				.value_name("STRING")
+				.help("community identifier, base58 encoded"),
 		)
 	}
 
@@ -70,6 +85,10 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn signer_arg(&self) -> Option<&str> {
 		self.value_of(SIGNER_ARG)
+	}
+
+	fn cid_arg(&self) -> Option<&str> {
+		self.value_of(CID_ARG)
 	}
 
 	fn claims_arg(&self) -> Option<Vec<&str>> {

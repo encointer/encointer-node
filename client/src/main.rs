@@ -101,15 +101,7 @@ fn main() {
                     .default_value("9944")
                     .help("node port"),
             )
-            .arg(
-                Arg::with_name("cid")
-                    .short("c")
-                    .long("cid")
-                    .global(true)
-                    .takes_value(true)
-                    .value_name("STRING")
-                    .help("community identifier, base58 encoded"),
-                )
+            .optional_cid_arg()
             .name("encointer-client-notee")
             .version(VERSION)
             .author("Encointer Association <info@encointer.org>")
@@ -222,7 +214,7 @@ fn main() {
                     let api = get_chain_api(matches);
                     let account = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(account);
-                    match matches.value_of("cid") {
+                    match matches.cid_arg() {
                         Some(cid_str) => {
                             let cid = verify_cid(&api, cid_str);
                             let bn = get_block_number(&api);
@@ -281,7 +273,7 @@ fn main() {
                     info!("from ss58 is {}", from.public().to_ss58check());
                     info!("to ss58 is {}", to.to_ss58check());
                     let _api = api.set_signer(sr25519_core::Pair::from(from));
-                    let tx_hash = match matches.value_of("cid") {
+                    let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
                             let cid = verify_cid(&_api, cid_str);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
@@ -479,8 +471,7 @@ fn main() {
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
                     let cid = verify_cid(&api,
-                        matches
-                            .value_of("cid")
+                        matches.cid_arg()
                             .expect("please supply argument --cid"),
                     );
                     println!(
@@ -505,7 +496,7 @@ fn main() {
                     let cindex = get_ceremony_index(&api);
                     let cid = verify_cid(&api,
                         matches
-                            .value_of("cid")
+                            .cid_arg()
                             .expect("please supply argument --cid"),
                     );
                     println!(
@@ -541,7 +532,7 @@ fn main() {
                     let cindex = get_ceremony_index(&api);
                     let cid = verify_cid(&api,
                         matches
-                            .value_of("cid")
+                            .cid_arg()
                             .expect("please supply argument --cid"),
                     );
                     println!(
@@ -588,7 +579,7 @@ fn main() {
                     let cindex = get_ceremony_index(&api);
                     let cid = verify_cid(&api,
                         matches
-                            .value_of("cid")
+                            .cid_arg()
                             .expect("please supply argument --cid"),
                     );
                     let rep = get_reputation(&api, &accountid, cid, cindex -1);
@@ -641,7 +632,7 @@ fn main() {
 
                     let cid = verify_cid(
                         &api,
-                     matches.value_of("cid").expect("please supply argument --cid"),
+                     matches.cid_arg().expect("please supply argument --cid"),
                     );
 
                     debug!("Getting proof for ceremony index: {:?}", cindex);
@@ -704,7 +695,7 @@ fn main() {
                     let api = get_chain_api(matches);
                     let cid = verify_cid(&api,
                         matches
-                            .value_of("cid")
+                            .cid_arg()
                             .expect("please supply argument --cid"),
                     );
                     let n_participants = matches
