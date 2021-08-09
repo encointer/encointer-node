@@ -744,7 +744,7 @@ fn main() {
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
-                    let businesses = get_from_chain_with_cid(
+                    let businesses = extract_and_execute(
                         &matches, |api, cid| get_businesses(&api, cid).unwrap()
                     );
 
@@ -763,7 +763,7 @@ fn main() {
                         .account_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let offerings = get_from_chain_with_cid(
+                    let offerings = extract_and_execute(
                         &matches, |api, cid| get_offerings(&api, cid).unwrap()
                     );
 
@@ -785,7 +785,7 @@ fn main() {
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let ipfs_cid = matches.ipfs_cid_arg().unwrap();
 
-                    let offerings = get_from_chain_with_cid(
+                    let offerings = extract_and_execute(
                         &matches, |api, cid| get_offerings_for_business(&api, cid, ipfs_cid).unwrap()
                     );
 
@@ -913,13 +913,14 @@ fn listen(matches: &ArgMatches<'_>) {
 	}
 }
 
-fn get_from_chain_with_cid<T>(
+/// Extracts api and cid from `matches` and execute the given `closure` with them.
+fn extract_and_execute<T>(
 	matches: &ArgMatches<'_>,
-	getter: impl FnOnce(&Api<sr25519::Pair>, CommunityIdentifier) -> T,
+	closure: impl FnOnce(&Api<sr25519::Pair>, CommunityIdentifier) -> T,
 ) -> T {
 	let api = get_chain_api(matches);
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
-	getter(&api, cid)
+	closure(&api, cid)
 }
 
 fn get_cid(cid: &str) -> CommunityIdentifier {
