@@ -77,10 +77,10 @@ if __name__ == '__main__':
     for i in range(len(business_ipfs_cids)):
         c = business_ipfs_cids[i]
         owner = shop_owners[i]
-        print(f'registering business: {c} on-chain for community: {cid}')
+        print(f'registering business:')
         print(f'    cid:            {cid}')
         print(f'    owner:          {owner}')
-        print(f'    business url:   {c}')
+        print(f'    business url:   {c}\n')
 
         print(client.create_business(owner, cid, c))
         client.await_block()
@@ -91,10 +91,10 @@ if __name__ == '__main__':
     for c in offerings_ipfs_cids:
         owner = shop_owners[0]
 
-        print(f'registering offering: {c} on-chain for community: {cid}')
+        print(f'registering offering:')
         print(f'    cid:            {cid}')
         print(f'    owner:          {owner}')
-        print(f'    offering url:   {c}')
+        print(f'    offering url:   {c}\n')
 
         print(client.create_offering(shop_owners[0], cid, c))
         client.await_block()
