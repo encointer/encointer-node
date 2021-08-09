@@ -52,7 +52,7 @@ def update_spec_with_cid(file, cid):
 
 
 def main(client=Client()):
-    cid = client.new_community('test-locations-mediterranean.json')
+    cid = client.new_community('../test-data/test-locations-mediterranean.json')
     print(f'Registered community with cid: {cid}')
 
     print('Uploading icons to ipfs')
