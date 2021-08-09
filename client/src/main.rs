@@ -19,6 +19,8 @@
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
+mod cli_args;
+
 #[macro_use]
 extern crate clap;
 extern crate env_logger;
@@ -40,6 +42,7 @@ use sp_runtime::{
 	MultiSignature,
 };
 
+use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -213,17 +216,11 @@ fn main() {
                 .description("query on-chain balance for AccountId. If --cid is supplied, returns balance in that community. Otherwise balance of native ERT token")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("AccountId")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("SS58")
-                            .help("AccountId in ss58check format"),
-                    )
+                    .account_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
-                    let account = matches.value_of("AccountId").unwrap();
+                    let account = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(account);
                     match matches.value_of("cid") {
                         Some(cid_str) => {
@@ -586,16 +583,10 @@ fn main() {
                 .description("register encointer ceremony participant for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("accountid")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("SS58")
-                            .help("AccountId in ss58check format"),
-                    )
+                    .account_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let arg_who = matches.value_of("accountid").unwrap();
+                    let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let signer = get_pair_from_str(arg_who);
                     let api = get_chain_api(matches);
@@ -638,13 +629,7 @@ fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .setting(AppSettings::AllowLeadingHyphen)
-                        .arg(
-                            Arg::with_name("accountid")
-                                .takes_value(true)
-                                .required(true)
-                                .value_name("SS58")
-                                .help("AccountId in ss58check format"),
-                        )
+                        .account_arg()
                         .arg(
                             Arg::with_name("ceremony-index")
                                 .takes_value(true)
@@ -654,7 +639,7 @@ fn main() {
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let arg_who = matches.value_of("accountid").unwrap();
+                    let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
 
@@ -683,13 +668,7 @@ fn main() {
                 .description("register encointer ceremony claim of attendances for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("accountid")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("SS58")
-                            .help("AccountId in ss58check format"),
-                    )
+                    .account_arg()
                     .arg(
                         Arg::with_name("claims")
                             .takes_value(true)
@@ -699,7 +678,7 @@ fn main() {
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let arg_who = matches.value_of("accountid").unwrap();
+                    let arg_who = matches.account_arg().unwrap();
                     let who = get_pair_from_str(arg_who);
                     let claims_arg: Vec<_> = matches.values_of("claims").unwrap().collect();
                     let mut claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = vec![];
@@ -726,13 +705,7 @@ fn main() {
                 .description("create a fresh claim of attendance for account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("accountid")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("ACCOUNT")
-                            .help("AccountId in ss58check format"),
-                    )
+                    .account_arg()
                     .arg(
                         Arg::with_name("vote")
                             .takes_value(true)
@@ -743,7 +716,7 @@ fn main() {
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     debug!("{:?}", matches);
-                    let arg_who = matches.value_of("accountid").unwrap();
+                    let arg_who = matches.account_arg().unwrap();
                     let claimant = get_pair_from_str(arg_who);
                     let api = get_chain_api(matches);
                     let cid = verify_cid(&api,
