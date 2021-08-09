@@ -1,56 +1,58 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use sp_std::prelude::*;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
-	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
-	transaction_validity::{TransactionValidity, TransactionSource},
-};
-use sp_runtime::traits::{
-	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, NumberFor,
+use pallet_grandpa::{
+	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
-use pallet_grandpa::fg_primitives;
-use sp_version::RuntimeVersion;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_runtime::{
+	create_runtime_str, generic, impl_opaque_keys,
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
+	transaction_validity::{TransactionSource, TransactionValidity},
+	ApplyExtrinsicResult, MultiSignature,
+};
+use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use pallet_timestamp::Call as TimestampCall;
-pub use pallet_balances::Call as BalancesCall;
-pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
-	construct_runtime, parameter_types, StorageValue,
+	construct_runtime, parameter_types,
 	traits::{KeyOwnerProofSystem, Randomness},
 	weights::{
-		Weight, IdentityFee,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		IdentityFee, Weight,
 	},
+	StorageValue,
 };
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{Perbill, Permill};
 
-
-pub use encointer_scheduler::Call as EncointerSchedulerCall;
-pub use encointer_ceremonies::Call as EncointerCeremoniesCall;
-pub use encointer_communities::Call as EncointerCommunitiesCall;
 pub use encointer_balances::Call as EncointerBalancesCall;
 pub use encointer_bazaar::Call as EncointerBazaarCall;
+pub use encointer_ceremonies::Call as EncointerCeremoniesCall;
+pub use encointer_communities::Call as EncointerCommunitiesCall;
+pub use encointer_scheduler::Call as EncointerSchedulerCall;
 
-pub use encointer_primitives::scheduler::CeremonyPhaseType;
-pub use encointer_primitives::balances::{BalanceType, BalanceEntry, Demurrage};
-pub use encointer_primitives::communities::CommunityIdentifier;
-pub use encointer_primitives::common::PalletString;
-pub use encointer_primitives::bazaar::{BusinessIdentifier, BusinessData, OfferingData};
+pub use encointer_primitives::{
+	balances::{BalanceEntry, BalanceType, Demurrage},
+	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
+	common::PalletString,
+	communities::CommunityIdentifier,
+	scheduler::CeremonyPhaseType,
+};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -111,24 +113,24 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("encointer-node-notee"),
 
 	/// `authoring_version` is the version of the authorship interface. An authoring node
-    /// will not attempt to author blocks unless this is equal to its native runtime.
+	/// will not attempt to author blocks unless this is equal to its native runtime.
 	authoring_version: 0,
 
 	/// Version of the runtime specification. A full-node will not attempt to use its native
-    /// runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
-    /// `spec_version` and `authoring_version` are the same between Wasm and native.
+	/// runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
+	/// `spec_version` and `authoring_version` are the same between Wasm and native.
 	spec_version: 8,
 
 	/// Version of the implementation of the specification. Nodes are free to ignore this; it
-    /// serves only as an indication that the code is different; as long as the other two versions
-    /// are the same then while the actual code may be different, it is nonetheless required to
-    /// do the same thing.
-    /// Non-consensus-breaking optimizations are about the only changes that could be made which
-    /// would result in only the `impl_version` changing.
+	/// serves only as an indication that the code is different; as long as the other two versions
+	/// are the same then while the actual code may be different, it is nonetheless required to
+	/// do the same thing.
+	/// Non-consensus-breaking optimizations are about the only changes that could be made which
+	/// would result in only the `impl_version` changing.
 	impl_version: 0,
-	
+
 	apis: RUNTIME_API_VERSIONS,
-	
+
 	/// All existing dispatches are fully compatible when this number doesn't change. If this
 	/// number changes, then `spec_version` must change, also.
 	///
@@ -153,10 +155,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -316,11 +315,11 @@ impl encointer_communities::Config for Runtime {
 }
 
 impl encointer_balances::Config for Runtime {
-	type Event = Event; 
+	type Event = Event;
 }
 
 impl encointer_bazaar::Config for Runtime {
-	type Event = Event; 
+	type Event = Event;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -364,7 +363,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -516,11 +515,11 @@ impl_runtime_apis! {
 	}
 
 	impl encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {
-        fn get_offerings(business: &BusinessIdentifier<AccountId>) -> Vec<OfferingData>{
+		fn get_offerings(business: &BusinessIdentifier<AccountId>) -> Vec<OfferingData>{
 			EncointerBazaar::get_offerings(business)
 		}
 
-        fn get_businesses(community: &CommunityIdentifier) -> Vec<(AccountId, BusinessData)>{
+		fn get_businesses(community: &CommunityIdentifier) -> Vec<(AccountId, BusinessData)>{
 			EncointerBazaar::get_businesses(community)
 		}
 	}
