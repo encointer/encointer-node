@@ -113,7 +113,7 @@ def perform_meetup(client: Client, meetup, cid):
 
 def run(client: str, port: int):
     client = Client(rust_client=client, port=port)
-    f = read_cid()
+    cid = read_cid()
     phase = client.get_phase()
     print(f'phase is {phase}')
     accounts = client.list_accounts()
