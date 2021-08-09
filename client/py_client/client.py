@@ -98,9 +98,16 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "create-business", account, ipfs_cid], stdout=subprocess.PIPE)
+        ret = subprocess.run(self.cli + ["--cid", cid, "create-business", account, "--ipfs-cid", ipfs_cid],
+                             stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def update_business(self, account, cid, ipfs_cd):
-        ret = subprocess.run(self.cli + ["--cid", cid, "update-business", account, ipfs_cd], stdout=subprocess.PIPE)
+        ret = subprocess.run(self.cli + ["--cid", cid, "update-business", account, "--ipfs-cid", ipfs_cd],
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
+    def create_offering(self, account, cid, ipfs_cd):
+        ret = subprocess.run(self.cli + ["--cid", cid, "create-offering", account, "--ipfs-cid", ipfs_cd],
+                             stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
