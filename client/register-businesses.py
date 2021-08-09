@@ -17,7 +17,7 @@ OFFERINGS_PATH = '../test-data/bazaar/offerings'
 
 
 def create_businesses(amount: int):
-    purge_business_prompt()
+    purge_prompt(BUSINESS_PATH, 'businesses')
 
     for i in range(amount):
         b = random_business()
@@ -26,11 +26,12 @@ def create_businesses(amount: int):
         with open(f_name, 'w') as outfile:
             json.dump(b, outfile, indent=2)
 
-def create_offerings(amount: int):
-    purge_business_prompt()
+
+def create_offerings(community_identifier: str, amount: int):
+    purge_prompt(OFFERINGS_PATH, 'offerings')
 
     for i in range(amount):
-        o = random_offering()
+        o = random_offering(community_identifier)
         f_name = f'{OFFERINGS_PATH}/{o["name"]}_{i}.json'
         print(f'Dumping offerings {o} to file')
         with open(f_name, 'w') as outfile:
@@ -57,12 +58,8 @@ def random_offering(community_identifier):
     }
 
 
-def purge_business_prompt():
-    purge_prompt(BUSINESS_PATH, 'businesses')
-
-
-def purge_offerings_prompt():
-    purge_prompt(BUSINESS_PATH, 'offerings')
+def shop_owners():
+    return ['//Alice', '//Bob']
 
 
 if __name__ == '__main__':
@@ -71,22 +68,33 @@ if __name__ == '__main__':
 
     print(f"Starting script with client '{args.client}' on port {args.port}")
     client = Client(rust_client=args.client, port=args.port)
-    shop_owner = '//Alice'
+    shop_owners = shop_owners()
     cid = read_cid()
 
-    create_businesses(5)
+    create_businesses(2)
     business_ipfs_cids = upload_files_to_ipfs(glob.glob(BUSINESS_PATH + '/*'))
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
-    for c in business_ipfs_cids:
-        print(f'registering business {c} on-chain for community: {cid}')
-        print(client.create_business(shop_owner, cid, c))
+    for i in range(len(business_ipfs_cids)):
+        c = business_ipfs_cids[i]
+        owner = shop_owners[i]
+        print(f'registering business: {c} on-chain for community: {cid}')
+        print(f'    cid:            {cid}')
+        print(f'    owner:          {owner}')
+        print(f'    business url:   {c}')
+
+        print(client.create_business(owner, cid, c))
         client.await_block()
 
-    create_offerings(5)
+    create_offerings(cid, 5)
     offerings_ipfs_cids = upload_files_to_ipfs(glob.glob(OFFERINGS_PATH + '/*'))
-    print(f'Uploaded offerings to ipfs: ipfs_cids: {business_ipfs_cids}')
+    print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
-        print(f'registering offerings {c} on-chain for community: {cid}')
-        print(client.create_offering(shop_owner, cid, c))
-        client.await_block()
+        owner = shop_owners[0]
 
+        print(f'registering offering: {c} on-chain for community: {cid}')
+        print(f'    cid:            {cid}')
+        print(f'    owner:          {owner}')
+        print(f'    offering url:   {c}')
+
+        print(client.create_offering(shop_owners[0], cid, c))
+        client.await_block()
