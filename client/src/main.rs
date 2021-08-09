@@ -738,10 +738,6 @@ fn main() {
         .add_cmd(
             Command::new("list-businesses")
                 .description("List businesses for a community")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                        .account_arg()
-                })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
                     let businesses = extract_and_execute(
@@ -758,10 +754,6 @@ fn main() {
         .add_cmd(
             Command::new("list-offerings")
                 .description("List offerings for a community")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                        .account_arg()
-                })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let offerings = extract_and_execute(
                         &matches, |api, cid| get_offerings(&api, cid).unwrap()
@@ -779,7 +771,6 @@ fn main() {
                 .description("List offerings for a business")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .account_arg()
                         .ipfs_cid_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
