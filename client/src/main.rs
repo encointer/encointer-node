@@ -26,46 +26,47 @@ extern crate log;
 
 use sp_application_crypto::{ed25519, sr25519};
 use sp_keyring::AccountKeyring;
-use std::path::PathBuf;
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use base58::{FromBase58, ToBase58};
 
-use clap::{Arg, ArgMatches, AppSettings};
+use clap::{AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
-use codec::{Decode, Encode, Compact};
+use codec::{Compact, Decode, Encode};
 use log::*;
 use sp_core::{crypto::Ss58Codec, hashing::blake2_256, sr25519 as sr25519_core, Pair};
 use sp_runtime::{
-    traits::{IdentifyAccount, Verify},
-    MultiSignature,
+	traits::{IdentifyAccount, Verify},
+	MultiSignature,
 };
 
-use std::sync::mpsc::channel;
+use encointer_node_notee_runtime::{
+	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
+	ONE_DAY,
+};
+use encointer_primitives::{
+	balances::Demurrage,
+	ceremonies::{
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
+		ParticipantIndexType, ProofOfAttendance, Reputation,
+	},
+	communities::{
+		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
+	},
+	scheduler::{CeremonyIndexType, CeremonyPhaseType},
+};
+use fixed::{traits::LossyInto, transcendental::exp};
 use geojson::GeoJson;
-use serde_json::{json};
-use std::fs;
+use serde_json::json;
+use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
-    compose_call,
-    compose_extrinsic,
-    compose_extrinsic_offline,
-    extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
-    node_metadata::Metadata, Api, XtStatus,
-    utils::FromHexString
+	compose_call, compose_extrinsic, compose_extrinsic_offline,
+	extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
+	node_metadata::Metadata,
+	utils::FromHexString,
+	Api, XtStatus,
 };
-use substrate_client_keystore::{LocalKeystore, KeystoreExt};
-use encointer_node_notee_runtime::{AccountId, Event, Hash, Signature, Moment, ONE_DAY, BalanceType, BalanceEntry, BlockNumber, Header};
-use encointer_primitives::ceremonies::{
-    AttestationIndexType, ClaimOfAttendance,
-    CommunityCeremony, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation
-};
-use encointer_primitives::scheduler::{CeremonyIndexType, CeremonyPhaseType};
-use encointer_primitives::communities::{CidName, CommunityIdentifier, Location, Degree, CommunityMetadata, NominalIncome};
-use encointer_primitives::balances::Demurrage;
-use fixed::transcendental::exp;
-use fixed::traits::LossyInto;
-use std::convert::TryInto;
-use std::str::FromStr;
+use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 type AccountPublic = <Signature as Verify>::Signer;
 const KEYSTORE_PATH: &str = "my_keystore";
@@ -73,9 +74,9 @@ const PREFUNDING_AMOUNT: u128 = 100_000_000_000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    env_logger::init();
+	env_logger::init();
 
-    let _ = Commander::new()
+	let _ = Commander::new()
         .options(|app| {
             app.arg(
                 Arg::with_name("node-url")
@@ -105,7 +106,7 @@ fn main() {
                     .takes_value(true)
                     .value_name("STRING")
                     .help("community identifier, base58 encoded"),
-            )            
+                )
             .name("encointer-client-notee")
             .version(VERSION)
             .author("Encointer Association <info@encointer.org>")
@@ -232,7 +233,7 @@ fn main() {
                             let balance = if let Some(entry) = api
                                 .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, None).unwrap() {
                                     apply_demurrage(entry, bn, dr)
-                            } else { BalanceType::from_num(0) }; 
+                            } else { BalanceType::from_num(0) };
                             println!("{}", balance);
                         }
                         None => {
@@ -302,7 +303,7 @@ fn main() {
                             let amount = u128::from_str_radix(matches.value_of("amount").unwrap(), 10)
                                 .expect("amount can be converted to u128");
                             let xt = _api.balance_transfer(
-                                GenericAddress::Id(to.clone()), 
+                                GenericAddress::Id(to.clone()),
                                 amount
                             );
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
@@ -500,7 +501,7 @@ fn main() {
                     for p in 1..pcount + 1 {
                         let accountid = get_participant(&api, (cid, cindex), p).unwrap();
                         println!("ParticipantRegistry[{}, {}] = {}", cindex, p, accountid);
-                    }                    
+                    }
                     Ok(())
                 }),
         )
@@ -536,7 +537,7 @@ fn main() {
                             }
                             None => println!("MeetupRegistry[{}, {}] EMPTY", cindex, m),
                         }
-                    }    
+                    }
                     Ok(())
                 }),
         )
@@ -559,7 +560,6 @@ fn main() {
                     let wcount = get_attestee_count(&api, (cid, cindex));
                     println!("number of attestees:  {}", wcount);
                     let pcount = get_participant_count(&api, (cid, cindex));
-            
                     let mut participants_windex = HashMap::new();
                     for p in 1..pcount + 1 {
                         let accountid =
@@ -770,404 +770,417 @@ fn main() {
 }
 
 fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair> {
-    let url = format!(
-        "{}:{}",
-        matches.value_of("node-url").unwrap(),
-        matches.value_of("node-port").unwrap()
-    );
-    info!("connecting to {}", url);
-    Api::<sr25519::Pair>::new(url).unwrap()
+	let url = format!(
+		"{}:{}",
+		matches.value_of("node-url").unwrap(),
+		matches.value_of("node-port").unwrap()
+	);
+	info!("connecting to {}", url);
+	Api::<sr25519::Pair>::new(url).unwrap()
 }
 
 fn listen(matches: &ArgMatches<'_>) {
-    let api = get_chain_api(matches);
-    info!("Subscribing to events");
-    let (events_in, events_out) = channel();
-    let mut count = 0u32;
-    let mut blocks = 0u32;
-    api.subscribe_events(events_in.clone()).unwrap();
-    loop {
-        if matches.is_present("events")
-            && count >= value_t!(matches.value_of("events"), u32).unwrap()
-        {
-            return;
-        };
-        if matches.is_present("blocks")
-            && blocks >= 1 + value_t!(matches.value_of("blocks"), u32).unwrap()
-        {
-            return;
-        };
-        let event_str = events_out.recv().unwrap();
-        let _unhex = Vec::from_hex(event_str).unwrap();
-        let mut _er_enc = _unhex.as_slice();
-        let _events = Vec::<frame_system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
-        blocks += 1;
-        match _events {
-            Ok(evts) => {
-                for evr in &evts {
-                    debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
-                    match &evr.event {
-                        Event::encointer_ceremonies(ee) => {
-                            count += 1;
-                            println!(">>>>>>>>>> ceremony event: {:?}", ee);
-                            match &ee {
-                                encointer_ceremonies::RawEvent::ParticipantRegistered(
-                                    accountid,
-                                ) => {
-                                    println!(
-                                        "Participant registered for ceremony: {:?}",
-                                        accountid
-                                    );
-                                }
-                            }
-                        }, 
-                        Event::encointer_scheduler(ee) => {
-                            count += 1;
-                            println!(">>>>>>>>>> scheduler event: {:?}", ee);
-                            match &ee {
-                                encointer_scheduler::Event::PhaseChangedTo(phase) => {
-                                    println!("Phase changed to: {:?}", phase);
-                                }
-                            }
-                        }
-                        Event::encointer_communities(ee) => {
-                            count += 1;
-                            println!(">>>>>>>>>> community event: {:?}", ee);
-                            match &ee {
-                                encointer_communities::RawEvent::CommunityRegistered(account, cid) => {
-                                    println!("Community registered: by {}, cid: {:?}", account, cid);
-                                },
-                                encointer_communities::RawEvent::MetadataUpdated(cid) => {
-                                    println!("Community metadata updated cid: {:?}", cid);
-                                },
-                                encointer_communities::RawEvent::NominalIncomeUpdated(cid, income) => {
-                                    println!("Community metadata updated cid: {:?}, value: {:?}", cid, income);
-                                },
-                                encointer_communities::RawEvent::DemurrageUpdated(cid, demurrage) => {
-                                    println!("Community metadata updated cid: {:?}, value: {:?}", cid, demurrage );
-                                }
-                            }
-                        },
-                        Event::encointer_balances(ee) => {
-                            count += 1;
-                            println!(">>>>>>>>>> encointer balances event: {:?}", ee);
-                        },
-                        _ => debug!("ignoring unsupported module event: {:?}", evr.event),
-                    }
-                }
-            }
-            Err(_) => error!("couldn't decode event record list"),
-        }
-    }
+	let api = get_chain_api(matches);
+	info!("Subscribing to events");
+	let (events_in, events_out) = channel();
+	let mut count = 0u32;
+	let mut blocks = 0u32;
+	api.subscribe_events(events_in.clone()).unwrap();
+	loop {
+		if matches.is_present("events") &&
+			count >= value_t!(matches.value_of("events"), u32).unwrap()
+		{
+			return
+		};
+		if matches.is_present("blocks") &&
+			blocks >= 1 + value_t!(matches.value_of("blocks"), u32).unwrap()
+		{
+			return
+		};
+		let event_str = events_out.recv().unwrap();
+		let _unhex = Vec::from_hex(event_str).unwrap();
+		let mut _er_enc = _unhex.as_slice();
+		let _events = Vec::<frame_system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
+		blocks += 1;
+		match _events {
+			Ok(evts) =>
+				for evr in &evts {
+					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
+					match &evr.event {
+						Event::encointer_ceremonies(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> ceremony event: {:?}", ee);
+							match &ee {
+								encointer_ceremonies::RawEvent::ParticipantRegistered(
+									accountid,
+								) => {
+									println!(
+										"Participant registered for ceremony: {:?}",
+										accountid
+									);
+								},
+							}
+						},
+						Event::encointer_scheduler(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> scheduler event: {:?}", ee);
+							match &ee {
+								encointer_scheduler::Event::PhaseChangedTo(phase) => {
+									println!("Phase changed to: {:?}", phase);
+								},
+							}
+						},
+						Event::encointer_communities(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> community event: {:?}", ee);
+							match &ee {
+								encointer_communities::RawEvent::CommunityRegistered(
+									account,
+									cid,
+								) => {
+									println!(
+										"Community registered: by {}, cid: {:?}",
+										account, cid
+									);
+								},
+								encointer_communities::RawEvent::MetadataUpdated(cid) => {
+									println!("Community metadata updated cid: {:?}", cid);
+								},
+								encointer_communities::RawEvent::NominalIncomeUpdated(
+									cid,
+									income,
+								) => {
+									println!(
+										"Community metadata updated cid: {:?}, value: {:?}",
+										cid, income
+									);
+								},
+								encointer_communities::RawEvent::DemurrageUpdated(
+									cid,
+									demurrage,
+								) => {
+									println!(
+										"Community metadata updated cid: {:?}, value: {:?}",
+										cid, demurrage
+									);
+								},
+							}
+						},
+						Event::encointer_balances(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
+						},
+						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
+					}
+				},
+			Err(_) => error!("couldn't decode event record list"),
+		}
+	}
 }
 
 fn get_cid(cid: &str) -> CommunityIdentifier {
-    CommunityIdentifier::decode(&mut &cid.from_base58()
-        .expect("cid must be base58 encoded")[..])
-        .expect("failed to decode cid")
+	CommunityIdentifier::decode(&mut &cid.from_base58().expect("cid must be base58 encoded")[..])
+		.expect("failed to decode cid")
 }
 
 fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CommunityIdentifier {
-    let cids = get_community_identifiers(&api).expect("no community registered");
-    let cid = get_cid(cid);
-    if !cids.contains(&cid) {
-        panic!("cid {} does not exist on chain", cid.encode().to_base58());
-    }
-    cid
+	let cids = get_community_identifiers(&api).expect("no community registered");
+	let cid = get_cid(cid);
+	if !cids.contains(&cid) {
+		panic!("cid {} does not exist on chain", cid.encode().to_base58());
+	}
+	cid
 }
 
 fn get_accountid_from_str(account: &str) -> AccountId {
-    info!("getting AccountId from -{}-", account);
-    match &account[..2] {
-        "//" => AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
-            .into_account(),
-        _ => AccountPublic::from(sr25519::Public::from_ss58check(account).unwrap()).into_account(),
-    }
+	info!("getting AccountId from -{}-", account);
+	match &account[..2] {
+		"//" => AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
+			.into_account(),
+		_ => AccountPublic::from(sr25519::Public::from_ss58check(account).unwrap()).into_account(),
+	}
 }
 
 // get a pair either form keyring (well known keys) or from the store
 fn get_pair_from_str(account: &str) -> sr25519::AppPair {
-    info!("getting pair for {}", account);
-    match &account[..2] {
-        "//" => sr25519::AppPair::from_string(account, None).unwrap(),
-        _ => {
-            info!("fetching from keystore at {}", &KEYSTORE_PATH);
-            // open store without password protection
-            let store =
-                LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).expect("store should exist");
-            info!("store opened");
-            let pair = store.key_pair::<sr25519::AppPair>(
-                    &sr25519::Public::from_ss58check(account).unwrap().into(),
-                )
-                .unwrap();
-            drop(store);
-            pair.unwrap()
-        }
-    }
+	info!("getting pair for {}", account);
+	match &account[..2] {
+		"//" => sr25519::AppPair::from_string(account, None).unwrap(),
+		_ => {
+			info!("fetching from keystore at {}", &KEYSTORE_PATH);
+			// open store without password protection
+			let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
+				.expect("store should exist");
+			info!("store opened");
+			let pair = store
+				.key_pair::<sr25519::AppPair>(
+					&sr25519::Public::from_ss58check(account).unwrap().into(),
+				)
+				.unwrap();
+			drop(store);
+			pair.unwrap()
+		},
+	}
 }
 
 fn get_block_number(api: &Api<sr25519::Pair>) -> BlockNumber {
-    let hdr: Header = api.get_header(None).unwrap().unwrap();
-    debug!("decoded: {:?}", hdr);
-    //let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
-    hdr.number
+	let hdr: Header = api.get_header(None).unwrap().unwrap();
+	debug!("decoded: {:?}", hdr);
+	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
+	hdr.number
 }
 
 fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Demurrage {
-    let mut d: Option<Demurrage> = api
-        .get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
-        .unwrap();
+	let mut d: Option<Demurrage> = api
+		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
+		.unwrap();
 
-    if d.is_none() {
-        d = api.get_storage_value("EncointerBalances", "DemurragePerBlockDefault", None)
-            .unwrap();
-    }
+	if d.is_none() {
+		d = api
+			.get_storage_value("EncointerBalances", "DemurragePerBlockDefault", None)
+			.unwrap();
+	}
 
-    debug!("Fetched demurrage per block {:?}", &d);
-    d.unwrap()
+	debug!("Fetched demurrage per block {:?}", &d);
+	d.unwrap()
 }
 
 fn get_ceremony_index(api: &Api<sr25519::Pair>) -> CeremonyIndexType {
-    api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
-        .unwrap().unwrap()
+	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
+		.unwrap()
+		.unwrap()
 }
 
 fn get_current_phase(api: &Api<sr25519::Pair>) -> CeremonyPhaseType {
-    api.get_storage_value("EncointerScheduler", "CurrentPhase", None).unwrap()
-        .or(Some(CeremonyPhaseType::default()))
-        .unwrap()
+	api.get_storage_value("EncointerScheduler", "CurrentPhase", None)
+		.unwrap()
+		.or(Some(CeremonyPhaseType::default()))
+		.unwrap()
 }
 
 fn get_meetup_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> MeetupIndexType {
-    api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None).unwrap()
-        .or(Some(0))
-        .unwrap()
+	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
+		.unwrap()
+		.or(Some(0))
+		.unwrap()
 }
 
 fn get_participant_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
-    api.get_storage_map(
-        "EncointerCeremonies",
-        "ParticipantCount",
-        key,
-        None
-    ).unwrap().or(Some(0)).unwrap()
+	api.get_storage_map("EncointerCeremonies", "ParticipantCount", key, None)
+		.unwrap()
+		.or(Some(0))
+		.unwrap()
 }
 
 fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
-    api.get_storage_map(
-            "EncointerCeremonies",
-            "AttestationCount",
-            key,
-            None
-    ).unwrap().or(Some(0)).unwrap()
+	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
+		.unwrap()
+		.or(Some(0))
+		.unwrap()
 }
 
 fn get_participant(
-    api: &Api<sr25519::Pair>,
-    key: CommunityCeremony,
-    pindex: ParticipantIndexType,
+	api: &Api<sr25519::Pair>,
+	key: CommunityCeremony,
+	pindex: ParticipantIndexType,
 ) -> Option<AccountId> {
-    api.get_storage_double_map(
-        "EncointerCeremonies",
-        "ParticipantRegistry",
-        key,
-        pindex,
-        None
-    ).unwrap()
+	api.get_storage_double_map("EncointerCeremonies", "ParticipantRegistry", key, pindex, None)
+		.unwrap()
 }
 
 fn get_meetup_index_for(
-    api: &Api<sr25519::Pair>,
-    key: CommunityCeremony,
-    account: &AccountId,
+	api: &Api<sr25519::Pair>,
+	key: CommunityCeremony,
+	account: &AccountId,
 ) -> Option<MeetupIndexType> {
-    api.get_storage_double_map(
-        "EncointerCeremonies",
-        "MeetupIndex",
-        key,
-        account.clone(),
-        None
-    ).unwrap()
+	api.get_storage_double_map("EncointerCeremonies", "MeetupIndex", key, account.clone(), None)
+		.unwrap()
 }
 
 fn get_meetup_participants(
-    api: &Api<sr25519::Pair>,
-    key: CommunityCeremony,
-    mindex: MeetupIndexType,
+	api: &Api<sr25519::Pair>,
+	key: CommunityCeremony,
+	mindex: MeetupIndexType,
 ) -> Option<Vec<AccountId>> {
-    api.get_storage_double_map(
-        "EncointerCeremonies",
-        "MeetupRegistry",
-        key,
-        mindex,
-        None
-    ).unwrap()
+	api.get_storage_double_map("EncointerCeremonies", "MeetupRegistry", key, mindex, None)
+		.unwrap()
 }
 
 fn get_attestees(
-    api: &Api<sr25519::Pair>,
-    key: CommunityCeremony,
-    windex: ParticipantIndexType,
+	api: &Api<sr25519::Pair>,
+	key: CommunityCeremony,
+	windex: ParticipantIndexType,
 ) -> Option<Vec<AccountId>> {
-    api.get_storage_double_map(
-        "EncointerCeremonies",
-        "AttestationRegistry",
-        key,
-        windex,
-        None
-    ).unwrap()
+	api.get_storage_double_map("EncointerCeremonies", "AttestationRegistry", key, windex, None)
+		.unwrap()
 }
 
 fn get_participant_attestation_index(
-    api: &Api<sr25519::Pair>,
-    key: CommunityCeremony,
-    accountid: &AccountId,
+	api: &Api<sr25519::Pair>,
+	key: CommunityCeremony,
+	accountid: &AccountId,
 ) -> Option<ParticipantIndexType> {
-    api.get_storage_double_map(
-        "EncointerCeremonies",
-        "AttestationIndex",
-        key,
-        accountid,
-        None
-    ).unwrap()
+	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, None)
+		.unwrap()
 }
 
 fn new_claim_for(
-    api: &Api<sr25519::Pair>,
-    claimant: &sr25519::Pair,
-    cid: CommunityIdentifier,
-    n_participants: u32,
+	api: &Api<sr25519::Pair>,
+	claimant: &sr25519::Pair,
+	cid: CommunityIdentifier,
+	n_participants: u32,
 ) -> Vec<u8> {
-    let cindex = get_ceremony_index(api);
-    let mindex = get_meetup_index_for(api, (cid, cindex), &claimant.public().into())
-        .expect("participant must be assigned to meetup to generate a claim");
+	let cindex = get_ceremony_index(api);
+	let mindex = get_meetup_index_for(api, (cid, cindex), &claimant.public().into())
+		.expect("participant must be assigned to meetup to generate a claim");
 
-    // implicitly assume that participant meet at the right place at the right time
-    let mloc = get_meetup_location(api, cid, mindex).unwrap();
-    let mtime = get_meetup_time(api, cid, mindex).unwrap();
+	// implicitly assume that participant meet at the right place at the right time
+	let mloc = get_meetup_location(api, cid, mindex).unwrap();
+	let mtime = get_meetup_time(api, cid, mindex).unwrap();
 
-    let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> = ClaimOfAttendance::new_unsigned(
-        claimant.public().into(),
-        cindex,
-        cid,
-        mindex,
-        mloc,
-        mtime,
-        n_participants,
-    ).sign(claimant);
-    claim.encode()
+	let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> =
+		ClaimOfAttendance::new_unsigned(
+			claimant.public().into(),
+			cindex,
+			cid,
+			mindex,
+			mloc,
+			mtime,
+			n_participants,
+		)
+		.sign(claimant);
+	claim.encode()
 }
 
 fn get_community_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CommunityIdentifier>> {
-    api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None).unwrap()
+	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
+		.unwrap()
 }
 
-fn get_community_locations(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<Location>> {
-    api.get_storage_map(
-        "EncointerCommunities",
-        "Locations",
-        cid,
-        None
-    ).unwrap()
+fn get_community_locations(
+	api: &Api<sr25519::Pair>,
+	cid: CommunityIdentifier,
+) -> Option<Vec<Location>> {
+	api.get_storage_map("EncointerCommunities", "Locations", cid, None).unwrap()
 }
 
-fn get_meetup_location(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, mindex: MeetupIndexType) -> Option<Location> {
-    let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
-    let lidx = (mindex -1) as usize;
-    if lidx >= locations.len() {
-        return None 
-    } 
-    Some(locations[lidx])
+fn get_meetup_location(
+	api: &Api<sr25519::Pair>,
+	cid: CommunityIdentifier,
+	mindex: MeetupIndexType,
+) -> Option<Location> {
+	let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
+	let lidx = (mindex - 1) as usize;
+	if lidx >= locations.len() {
+		return None
+	}
+	Some(locations[lidx])
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
 fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
-    let req = json!({
-        "method": "communities_getAll",
-        "params": [],
-        "jsonrpc": "2.0",
-        "id": "1",
-    });
+	let req = json!({
+		"method": "communities_getAll",
+		"params": [],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
 
-    let n = api.get_request(req.to_string()).unwrap()
-        .expect("No communities returned. Are you running the node with `--enable-offchain-indexing true`?");
-    Some(serde_json::from_str(&n).unwrap())
+	let n = api.get_request(req.to_string()).unwrap().expect(
+		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
+	);
+	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_meetup_time(api: &Api<sr25519::Pair>, cid: CommunityIdentifier, mindex: MeetupIndexType) -> Option<Moment> {
-    let mlocation = get_meetup_location(api, cid, mindex).unwrap();
-    let mlon: f64 = mlocation.lon.lossy_into();
+fn get_meetup_time(
+	api: &Api<sr25519::Pair>,
+	cid: CommunityIdentifier,
+	mindex: MeetupIndexType,
+) -> Option<Moment> {
+	let mlocation = get_meetup_location(api, cid, mindex).unwrap();
+	let mlon: f64 = mlocation.lon.lossy_into();
 
-    let next_phase_timestamp: Moment = api.get_storage_value(
-        "EncointerScheduler",
-        "NextPhaseTimestamp",
-        None
-    ).unwrap().unwrap();
+	let next_phase_timestamp: Moment = api
+		.get_storage_value("EncointerScheduler", "NextPhaseTimestamp", None)
+		.unwrap()
+		.unwrap();
 
-    let attesting_start = match get_current_phase(api) {
-        CeremonyPhaseType::ASSIGNING => next_phase_timestamp, // - next_phase_timestamp.rem(ONE_DAY),
-        CeremonyPhaseType::ATTESTING => {
-            let attesting_duration: Moment = api.get_storage_map(
-                "EncointerScheduler",
-                "PhaseDurations",
-                CeremonyPhaseType::ATTESTING,
-                None
-            ).unwrap().unwrap();
-            next_phase_timestamp - attesting_duration //- next_phase_timestamp.rem(ONE_DAY)
-        },
-        CeremonyPhaseType::REGISTERING => panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location.")
-    };
-    let mtime = (
-        (attesting_start + ONE_DAY/2) as i64
-        - (mlon * (ONE_DAY as f64) / 360.0) as i64
-        ) as Moment; 
-    debug!("meetup time at lon {}: {:?}", mlon, mtime);
-    Some(mtime)
+	let attesting_start = match get_current_phase(api) {
+		CeremonyPhaseType::ASSIGNING => next_phase_timestamp, // - next_phase_timestamp.rem(ONE_DAY),
+		CeremonyPhaseType::ATTESTING => {
+			let attesting_duration: Moment = api
+				.get_storage_map(
+					"EncointerScheduler",
+					"PhaseDurations",
+					CeremonyPhaseType::ATTESTING,
+					None,
+				)
+				.unwrap()
+				.unwrap();
+			next_phase_timestamp - attesting_duration //- next_phase_timestamp.rem(ONE_DAY)
+		},
+		CeremonyPhaseType::REGISTERING =>
+			panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location."),
+	};
+	let mtime = ((attesting_start + ONE_DAY / 2) as i64 - (mlon * (ONE_DAY as f64) / 360.0) as i64)
+		as Moment;
+	debug!("meetup time at lon {}: {:?}", mlon, mtime);
+	Some(mtime)
 }
 
 fn prove_attendance(
-    prover: AccountId,
-    cid: CommunityIdentifier,
-    cindex: CeremonyIndexType,
-    attendee_str: &str,
+	prover: AccountId,
+	cid: CommunityIdentifier,
+	cindex: CeremonyIndexType,
+	attendee_str: &str,
 ) -> ProofOfAttendance<Signature, AccountId> {
-    let msg = (prover.clone(), cindex);
-    let attendee = get_pair_from_str(attendee_str);
-    let attendeeid = get_accountid_from_str(attendee_str);
-    debug!("generating proof of attendance for {} and cindex: {}", prover, cindex);
-    debug!("signature payload is {:x?}", msg.encode());
-    ProofOfAttendance {
-        prover_public: prover,
-        community_identifier: cid,
-        ceremony_index: cindex,
-        attendee_public: attendeeid,
-        attendee_signature: Signature::from(sr25519_core::Signature::from(
-            attendee.sign(&msg.encode()),
-        )),
-    }
+	let msg = (prover.clone(), cindex);
+	let attendee = get_pair_from_str(attendee_str);
+	let attendeeid = get_accountid_from_str(attendee_str);
+	debug!("generating proof of attendance for {} and cindex: {}", prover, cindex);
+	debug!("signature payload is {:x?}", msg.encode());
+	ProofOfAttendance {
+		prover_public: prover,
+		community_identifier: cid,
+		ceremony_index: cindex,
+		attendee_public: attendeeid,
+		attendee_signature: Signature::from(sr25519_core::Signature::from(
+			attendee.sign(&msg.encode()),
+		)),
+	}
 }
 
 fn get_reputation(
-    api: &Api<sr25519::Pair>, 
-    prover: &AccountId,
-    cid: CommunityIdentifier,
-    cindex: CeremonyIndexType,    
+	api: &Api<sr25519::Pair>,
+	prover: &AccountId,
+	cid: CommunityIdentifier,
+	cindex: CeremonyIndexType,
 ) -> Reputation {
-    api.get_storage_double_map(
-        "EncointerCeremonies",
-        "ParticipantReputation",
-        (cid, cindex),
-        prover.clone(),
-        None
-    ).unwrap().or(Some(Reputation::Unverified)).unwrap()   
+	api.get_storage_double_map(
+		"EncointerCeremonies",
+		"ParticipantReputation",
+		(cid, cindex),
+		prover.clone(),
+		None,
+	)
+	.unwrap()
+	.or(Some(Reputation::Unverified))
+	.unwrap()
 }
 
-fn apply_demurrage(entry: BalanceEntry<BlockNumber>, current_block: BlockNumber, demurrage_per_block: BalanceType) -> BalanceType {
-    let elapsed_time_block_number = current_block.checked_sub(entry.last_update).unwrap();
-    let elapsed_time_u32: u32 = elapsed_time_block_number.try_into().unwrap();
-    let elapsed_time = BalanceType::from_num(elapsed_time_u32);
-    let exponent : BalanceType = -demurrage_per_block * elapsed_time;
-    debug!("demurrage per block {}, current_block {}, last {}, elapsed_blocks {}", demurrage_per_block, current_block, entry.last_update, elapsed_time);
-    let exp_result : BalanceType = exp(exponent).unwrap();
-    entry.principal.checked_mul(exp_result).unwrap()
+fn apply_demurrage(
+	entry: BalanceEntry<BlockNumber>,
+	current_block: BlockNumber,
+	demurrage_per_block: BalanceType,
+) -> BalanceType {
+	let elapsed_time_block_number = current_block.checked_sub(entry.last_update).unwrap();
+	let elapsed_time_u32: u32 = elapsed_time_block_number.try_into().unwrap();
+	let elapsed_time = BalanceType::from_num(elapsed_time_u32);
+	let exponent: BalanceType = -demurrage_per_block * elapsed_time;
+	debug!(
+		"demurrage per block {}, current_block {}, last {}, elapsed_blocks {}",
+		demurrage_per_block, current_block, entry.last_update, elapsed_time
+	);
+	let exp_result: BalanceType = exp(exponent).unwrap();
+	entry.principal.checked_mul(exp_result).unwrap()
 }
