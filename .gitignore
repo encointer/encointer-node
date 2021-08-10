@@ -18,5 +18,5 @@
 **/__pycache__/
 
 # generated files by scripts
-/test-data/bazaar/businesses
-/test-data/bazaar/offerings
+/test-data/bazaar/businesses/*.json
+/test-data/bazaar/offerings/*.json
