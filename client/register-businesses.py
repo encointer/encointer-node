@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     print(f"Starting script with client '{args.client}' on port {args.port}")
     client = Client(rust_client=args.client, port=args.port)
-    shop_owners = shop_owners()
+    owners = shop_owners()
     cid = read_cid()
 
     create_businesses(2)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
         c = business_ipfs_cids[bi]
-        owner = shop_owners[bi]
+        owner = owners[bi]
         print(f'registering business:')
         print(f'    cid:            {cid}')
         print(f'    owner:          {owner}')
@@ -92,12 +92,17 @@ if __name__ == '__main__':
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
         # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`
-        owner = shop_owners[0]
+        owner = owners[0]
 
         print(f'registering offering:')
         print(f'    cid:            {cid}')
         print(f'    owner:          {owner}')
         print(f'    offering url:   {c}\n')
 
-        print(client.create_offering(shop_owners[0], cid, c))
+        print(client.create_offering(owners[0], cid, c))
         client.await_block()
+
+    # Todo: parse the results and evaluate them. Then we can use this script in integration tests
+    print(client.list_businesses(cid))
+    print(client.list_offerings(cid))
+    print(client.list_offerings_for_business(cid, owners[0]))

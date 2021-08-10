@@ -49,7 +49,7 @@ use encointer_node_notee_runtime::{
 };
 use encointer_primitives::{
 	balances::Demurrage,
-	bazaar::{BusinessData, OfferingData},
+	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
@@ -756,11 +756,8 @@ fn main() {
                     let businesses = extract_and_execute(
                         &matches, |api, cid| get_businesses(&api, cid).unwrap()
                     );
-
-                    println!("number of businesses:  {}", businesses.len());
-                    for n in businesses.iter() {
-                        println!("{:?}", n);
-                    }
+                    // only print plain businesses to be able to parse them in python scripts
+                    println!("{:?}", businesses);
                     Ok(())
                 }),
         )
@@ -771,11 +768,8 @@ fn main() {
                     let offerings = extract_and_execute(
                         &matches, |api, cid| get_offerings(&api, cid).unwrap()
                     );
-
-                    println!("number of offerings:  {}", offerings.len());
-                    for n in offerings.iter() {
-                        println!("{:?}", n);
-                    }
+                    // only print plain offerings to be able to parse them in python scripts
+                    println!("{:?}", offerings);
                     Ok(())
                 }),
         )
@@ -784,19 +778,16 @@ fn main() {
                 .description("List offerings for a business")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .ipfs_cid_arg()
+                        .account_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let ipfs_cid = matches.ipfs_cid_arg().unwrap();
+                    let account = matches.account_arg().map(get_accountid_from_str).unwrap();
 
                     let offerings = extract_and_execute(
-                        &matches, |api, cid| get_offerings_for_business(&api, cid, ipfs_cid).unwrap()
+                        &matches, |api, cid| get_offerings_for_business(&api, cid, account).unwrap()
                     );
-
-                    println!("number of offerings:  {}", offerings.len());
-                    for n in offerings.iter() {
-                        println!("{:?}", n);
-                    }
+                    // only print plain offerings to be able to parse them in python scripts
+                    println!("{:?}", offerings);
                     Ok(())
                 }),
         )
@@ -1174,11 +1165,13 @@ fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<V
 fn get_offerings_for_business(
 	api: &Api<sr25519::Pair>,
 	cid: CommunityIdentifier,
-	ipfs_cid: &str,
-) -> Option<Vec<BusinessData>> {
+	account_id: AccountId,
+) -> Option<Vec<OfferingData>> {
+	let b_id = BusinessIdentifier::new(cid, account_id);
+
 	let req = json!({
 		"method": "bazaar_getOfferingsForBusiness",
-		"params": vec![to_value(cid).unwrap(), to_value(ipfs_cid).unwrap()],
+		"params": vec![to_value(b_id).unwrap()],
 		"jsonrpc": "2.0",
 		"id": "1",
 	});

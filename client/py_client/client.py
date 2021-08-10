@@ -111,3 +111,18 @@ class Client:
         ret = subprocess.run(self.cli + ["--cid", cid, "create-offering", account, "--ipfs-cid", ipfs_cd],
                              stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
+
+    def list_businesses(self, cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "list-businesses"],
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
+    def list_offerings(self, cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "list-offerings"],
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
+    def list_offerings_for_business(self, cid, account):
+        ret = subprocess.run(self.cli + ["--cid", cid, "list-business-offerings", account],
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
