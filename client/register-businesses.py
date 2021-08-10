@@ -17,6 +17,12 @@ OFFERINGS_PATH = '../test-data/bazaar/offerings'
 
 
 def create_businesses(amount: int):
+    """
+    Create some businesses and dump them to the test-data dir.
+
+    :param amount:
+    :return:
+    """
     purge_prompt(BUSINESS_PATH, 'businesses')
 
     for i in range(amount):
@@ -28,6 +34,13 @@ def create_businesses(amount: int):
 
 
 def create_offerings(community_identifier: str, amount: int):
+    """
+    Create some offerings and dump them to the test-data dir.
+
+    :param community_identifier:
+    :param amount:
+    :return:
+    """
     purge_prompt(OFFERINGS_PATH, 'offerings')
 
     for i in range(amount):
@@ -37,12 +50,14 @@ def create_offerings(community_identifier: str, amount: int):
         with open(f_name, 'w') as outfile:
             json.dump(o, outfile, indent=2)
 
-
-def upload_files_to_ipfs(paths):
-    return [Ipfs.add_recursive(f) for f in paths]
-
-
 def random_business():
+    """
+        Create a random business.
+
+    Note:   This `Business` format is not definite, but it does not matter for simple testing as we upload the only
+            the ipfs_cid.
+    :return:
+    """
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
@@ -51,6 +66,14 @@ def random_business():
 
 
 def random_offering(community_identifier):
+    """
+    Create a random offering.
+
+    Note:   This `Offering` format is not definite, but it does not matter for simple testing as we upload the only
+            the ipfs_cid.
+    :param community_identifier:
+    :return:
+    """
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
@@ -70,10 +93,13 @@ if __name__ == '__main__':
     print(f"Starting script with client '{args.client}' on port {args.port}")
     client = Client(rust_client=args.client, port=args.port)
     owners = shop_owners()
+
+    # As we try to read to the cid here, we must have called `./bootstrap_demo_community.py init` before calling this
+    # script
     cid = read_cid()
 
     create_businesses(2)
-    business_ipfs_cids = upload_files_to_ipfs(glob.glob(BUSINESS_PATH + '/*'))
+    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESS_PATH + '/*'))
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
@@ -88,7 +114,7 @@ if __name__ == '__main__':
         client.await_block()
 
     create_offerings(cid, 5)
-    offerings_ipfs_cids = upload_files_to_ipfs(glob.glob(OFFERINGS_PATH + '/*'))
+    offerings_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(OFFERINGS_PATH + '/*'))
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
         # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`

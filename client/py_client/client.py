@@ -103,6 +103,7 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def update_business(self, account, cid, ipfs_cd):
+        """ Update has not been tested """
         ret = subprocess.run(self.cli + ["--cid", cid, "update-business", account, "--ipfs-cid", ipfs_cd],
                              stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
