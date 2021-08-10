@@ -22,7 +22,7 @@ def create_businesses(amount: int):
     for i in range(amount):
         b = random_business()
         f_name = f'{BUSINESS_PATH}/{b["name"]}_{i}.json'
-        print(f'Dumping business {b} to file')
+        print(f'Dumping business {b} to {f_name}')
         with open(f_name, 'w') as outfile:
             json.dump(b, outfile, indent=2)
 
@@ -33,7 +33,7 @@ def create_offerings(community_identifier: str, amount: int):
     for i in range(amount):
         o = random_offering(community_identifier)
         f_name = f'{OFFERINGS_PATH}/{o["name"]}_{i}.json'
-        print(f'Dumping offerings {o} to file')
+        print(f'Dumping offerings {o} to {f_name}')
         with open(f_name, 'w') as outfile:
             json.dump(o, outfile, indent=2)
 
@@ -54,7 +54,8 @@ def random_offering(community_identifier):
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
-        "community": community_identifier
+        "community": community_identifier,
+        "image_cid": "Defau1tCidThat1s46Characters1nLength1111111111"
     }
 
 
@@ -74,9 +75,10 @@ if __name__ == '__main__':
     create_businesses(2)
     business_ipfs_cids = upload_files_to_ipfs(glob.glob(BUSINESS_PATH + '/*'))
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
-    for i in range(len(business_ipfs_cids)):
-        c = business_ipfs_cids[i]
-        owner = shop_owners[i]
+    for bi in range(len(business_ipfs_cids)):
+        # upload with different owners to test rpc `bazaar_getBusinesses`
+        c = business_ipfs_cids[bi]
+        owner = shop_owners[bi]
         print(f'registering business:')
         print(f'    cid:            {cid}')
         print(f'    owner:          {owner}')
@@ -89,6 +91,7 @@ if __name__ == '__main__':
     offerings_ipfs_cids = upload_files_to_ipfs(glob.glob(OFFERINGS_PATH + '/*'))
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
+        # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`
         owner = shop_owners[0]
 
         print(f'registering offering:')
