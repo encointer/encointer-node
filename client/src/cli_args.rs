@@ -78,6 +78,8 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	}
 }
 
+--
+
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	fn account_arg(&self) -> Option<&str> {
 		self.value_of(ACCOUNT_ARG)
