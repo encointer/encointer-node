@@ -566,7 +566,7 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("Register-participant")
+            Command::new("register-participant")
                 .description("Register encointer ceremony participant for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
