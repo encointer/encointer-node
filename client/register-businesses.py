@@ -10,7 +10,7 @@ from wonderwords import RandomSentence
 from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.ipfs import Ipfs
-from py_client.helpers import purge_prompt, read_cid
+from py_client.helpers import purge_prompt, read_cid, mkdir_p
 
 BUSINESSES_PATH = '../test-data/bazaar/businesses'
 OFFERINGS_PATH = '../test-data/bazaar/offerings'
@@ -24,6 +24,7 @@ def create_businesses(amount: int):
     :return:
     """
     purge_prompt(BUSINESSES_PATH, 'businesses')
+    mkdir_p(BUSINESSES_PATH)
 
     for i in range(amount):
         b = random_business()
@@ -42,6 +43,7 @@ def create_offerings(community_identifier: str, amount: int):
     :return:
     """
     purge_prompt(OFFERINGS_PATH, 'offerings')
+    mkdir_p(OFFERINGS_PATH)
 
     for i in range(amount):
         o = random_offering(community_identifier)
@@ -49,6 +51,7 @@ def create_offerings(community_identifier: str, amount: int):
         print(f'Dumping offerings {o} to {f_name}')
         with open(f_name, 'w') as outfile:
             json.dump(o, outfile, indent=2)
+
 
 def random_business():
     """
@@ -102,7 +105,7 @@ if __name__ == '__main__':
     cid = read_cid()
 
     create_businesses(2)
-    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESSES_PATH + '/*'))
+    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESSES_PATH + '/*.json'))
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
@@ -117,7 +120,7 @@ if __name__ == '__main__':
         client.await_block()
 
     create_offerings(cid, 5)
-    offerings_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(OFFERINGS_PATH + '/*'))
+    offerings_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(OFFERINGS_PATH + '/*.json'))
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
         # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`

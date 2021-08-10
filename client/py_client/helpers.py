@@ -1,5 +1,6 @@
 import glob
 import os
+import subprocess
 
 
 def purge_prompt(path: str, file_description: str):
@@ -25,3 +26,8 @@ def read_cid():
     cid = f.read()
     f.close()
     return cid
+
+
+def mkdir_p(path):
+    """ Surprisingly, there is no simple function in python to create a dir if it does not exist."""
+    return subprocess.run(['mkdir', '-p', path])
