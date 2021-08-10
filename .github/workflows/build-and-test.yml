@@ -53,7 +53,7 @@ jobs:
           ~/.cargo/git
           target
           enclave/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
 
     - name: cargo test
       run: cargo test --all
@@ -75,7 +75,7 @@ jobs:
           ~/.cargo/git
           target
           enclave/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
 
     - name: cargo clippy client
       run: cargo clippy -p encointer-client-notee
