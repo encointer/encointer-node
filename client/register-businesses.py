@@ -12,7 +12,7 @@ from py_client.client import Client
 from py_client.ipfs import Ipfs
 from py_client.helpers import purge_prompt, read_cid
 
-BUSINESS_PATH = '../test-data/bazaar/businesses'
+BUSINESSES_PATH = '../test-data/bazaar/businesses'
 OFFERINGS_PATH = '../test-data/bazaar/offerings'
 
 
@@ -23,11 +23,11 @@ def create_businesses(amount: int):
     :param amount:
     :return:
     """
-    purge_prompt(BUSINESS_PATH, 'businesses')
+    purge_prompt(BUSINESSES_PATH, 'businesses')
 
     for i in range(amount):
         b = random_business()
-        f_name = f'{BUSINESS_PATH}/{b["name"]}_{i}.json'
+        f_name = f'{BUSINESSES_PATH}/{b["name"]}_{i}.json'
         print(f'Dumping business {b} to {f_name}')
         with open(f_name, 'w') as outfile:
             json.dump(b, outfile, indent=2)
@@ -54,7 +54,7 @@ def random_business():
     """
         Create a random business.
 
-    Note:   This `Business` format is not definite, but it does not matter for simple testing as we upload the only
+    Note:   This `Business` format is not definite, but it does not matter for simple testing as we upload only
             the ipfs_cid.
     :return:
     """
@@ -69,7 +69,7 @@ def random_offering(community_identifier):
     """
     Create a random offering.
 
-    Note:   This `Offering` format is not definite, but it does not matter for simple testing as we upload the only
+    Note:   This `Offering` format is not definite, but it does not matter for simple testing as we upload only
             the ipfs_cid.
     :param community_identifier:
     :return:
@@ -83,6 +83,9 @@ def random_offering(community_identifier):
 
 
 def shop_owners():
+    """
+        Note: Only `//Alice` and `//Bob` have funds. Other accounts need to fauceted as in the other scripts.
+    """
     return ['//Alice', '//Bob']
 
 
@@ -99,7 +102,7 @@ if __name__ == '__main__':
     cid = read_cid()
 
     create_businesses(2)
-    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESS_PATH + '/*'))
+    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESSES_PATH + '/*'))
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
