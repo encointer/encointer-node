@@ -114,9 +114,7 @@ jobs:
       with:
         python-version: 3.7
     - name: install py dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install geojson pyproj RandomWords
+      run: ./scripts/install_python_deps.sh
 
     - name: Set up ipfs
       uses: ibnesayeed/setup-ipfs@master
@@ -153,9 +151,7 @@ jobs:
         with:
           python-version: 3.7
       - name: install py dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install geojson pyproj RandomWords
+        run: ./scripts/install_python_deps.sh
 
       - name: Set up ipfs
         uses: ibnesayeed/setup-ipfs@master
