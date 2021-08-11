@@ -49,6 +49,7 @@ use encointer_node_notee_runtime::{
 };
 use encointer_primitives::{
 	balances::Demurrage,
+	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
@@ -60,7 +61,7 @@ use encointer_primitives::{
 };
 use fixed::{traits::LossyInto, transcendental::exp};
 use geojson::GeoJson;
-use serde_json::json;
+use serde_json::{json, to_value};
 use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline,
@@ -332,7 +333,7 @@ fn main() {
         // start encointer stuff
         .add_cmd(
             Command::new("new-community")
-                .description("register new community")
+                .description("Register new community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .arg(
@@ -566,7 +567,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("register-participant")
-                .description("register encointer ceremony participant for supplied community")
+                .description("Register encointer ceremony participant for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
@@ -645,7 +646,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("attest-claims")
-                .description("register encointer ceremony claim of attendances for supplied community")
+                .description("Register encointer ceremony claim of attendances for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
@@ -705,6 +706,88 @@ fn main() {
                         .unwrap();
                     let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
                     println!("{}", hex::encode(claim));
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("create-business")
+                .description("Register a community business on behalf of the account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    send_bazaar_xt(&matches, &BazaarCalls::CreateBusiness).unwrap();
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("update-business")
+                .description("Update an already existing community business on behalf of the account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    send_bazaar_xt(&matches, &BazaarCalls::UpdateBusiness).unwrap();
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("create-offering")
+                .description("Create an offering for the business belonging to account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .ipfs_cid_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    send_bazaar_xt(&matches, &BazaarCalls::CreateOffering).unwrap();
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("list-businesses")
+                .description("List businesses for a community")
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+
+                    let businesses = extract_and_execute(
+                        &matches, |api, cid| get_businesses(&api, cid).unwrap()
+                    );
+                    // only print plain businesses to be able to parse them in python scripts
+                    println!("{:?}", businesses);
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("list-offerings")
+                .description("List offerings for a community")
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let offerings = extract_and_execute(
+                        &matches, |api, cid| get_offerings(&api, cid).unwrap()
+                    );
+                    // only print plain offerings to be able to parse them in python scripts
+                    println!("{:?}", offerings);
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("list-business-offerings")
+                .description("List offerings for a business")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let account = matches.account_arg().map(get_accountid_from_str).unwrap();
+
+                    let offerings = extract_and_execute(
+                        &matches, |api, cid| get_offerings_for_business(&api, cid, account).unwrap()
+                    );
+                    // only print plain offerings to be able to parse them in python scripts
+                    println!("{:?}", offerings);
                     Ok(())
                 }),
         )
@@ -823,6 +906,16 @@ fn listen(matches: &ArgMatches<'_>) {
 			Err(_) => error!("couldn't decode event record list"),
 		}
 	}
+}
+
+/// Extracts api and cid from `matches` and execute the given `closure` with them.
+fn extract_and_execute<T>(
+	matches: &ArgMatches<'_>,
+	closure: impl FnOnce(&Api<sr25519::Pair>, CommunityIdentifier) -> T,
+) -> T {
+	let api = get_chain_api(matches);
+	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
+	closure(&api, cid)
 }
 
 fn get_cid(cid: &str) -> CommunityIdentifier {
@@ -1039,6 +1132,57 @@ fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
 	Some(serde_json::from_str(&n).unwrap())
 }
 
+fn get_businesses(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
+	let req = json!({
+		"method": "bazaar_getBusinesses",
+		"params": vec![cid],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.to_string())
+		.unwrap()
+		.expect("Could not find any businesses...");
+	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+	let req = json!({
+		"method": "bazaar_getOfferings",
+		"params": vec![cid],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.to_string())
+		.unwrap()
+		.expect("Could not find any business offerings...");
+	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_offerings_for_business(
+	api: &Api<sr25519::Pair>,
+	cid: CommunityIdentifier,
+	account_id: AccountId,
+) -> Option<Vec<OfferingData>> {
+	let b_id = BusinessIdentifier::new(cid, account_id);
+
+	let req = json!({
+		"method": "bazaar_getOfferingsForBusiness",
+		"params": vec![to_value(b_id).unwrap()],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.to_string())
+		.unwrap()
+		.expect("Could not find any business offerings...");
+	Some(serde_json::from_str(&n).unwrap())
+}
+
 fn get_meetup_time(
 	api: &Api<sr25519::Pair>,
 	cid: CommunityIdentifier,
@@ -1130,4 +1274,41 @@ fn apply_demurrage(
 	);
 	let exp_result: BalanceType = exp(exponent).unwrap();
 	entry.principal.checked_mul(exp_result).unwrap()
+}
+
+fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Result<(), ()> {
+	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
+
+	let api = get_chain_api(matches).set_signer(business_owner.clone().into());
+	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
+	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
+
+	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+		api.clone(),
+		"EncointerBazaar",
+		&business_call.to_string(),
+		cid,
+		ipfs_cid
+	);
+	// send and watch extrinsic until finalized
+	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
+	Ok(())
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum BazaarCalls {
+	CreateBusiness,
+	UpdateBusiness,
+	CreateOffering,
+}
+
+impl ToString for BazaarCalls {
+	fn to_string(&self) -> String {
+		match self {
+			BazaarCalls::CreateBusiness => "create_business".to_string(),
+			BazaarCalls::UpdateBusiness => "update_business".to_string(),
+			BazaarCalls::CreateOffering => "create_offering".to_string(),
+		}
+	}
 }

@@ -23,6 +23,7 @@ account2 = '//Bob'
 account3 = '//Charlie'
 accounts = [account1, account2, account3]
 
+TEST_DATA_DIR = '../test-data/'
 SPEC_FILE = 'test-locations-mediterranean.json'
 
 
@@ -52,13 +53,15 @@ def update_spec_with_cid(file, cid):
 
 
 def main(client=Client()):
-    cid = client.new_community('test-locations-mediterranean.json')
+    spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'
+
+    cid = client.new_community(spec_file_path)
     print(f'Registered community with cid: {cid}')
 
     print('Uploading icons to ipfs')
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
-    update_spec_with_cid(SPEC_FILE, ipfs_cid)
+    update_spec_with_cid(spec_file_path, ipfs_cid)
 
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.REGISTERING)

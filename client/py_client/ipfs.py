@@ -2,7 +2,8 @@ import subprocess
 import re
 import warnings
 
-ICONS_PATH = '../assets/icons'
+ICONS_PATH = '../test-data/icons'
+
 
 class Ipfs:
     """ Minimal wrapper for the ipfs cli """
@@ -24,3 +25,7 @@ class Ipfs:
             warnings.warn('No cid returned. Something happened. stderr: ')
             warnings.warn(str(ret.stderr))
             return ''
+
+    @staticmethod
+    def add_recursive_multiple(paths):
+        return [Ipfs.add_recursive(f) for f in paths]

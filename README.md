@@ -38,6 +38,7 @@ export RUST_LOG=INFO,parity_ws=WARN,encointer=debug
 ```
 
 Offchain-indexing is needed for the custom rpc `communities_getAll`. If you don't want it, omit the flag.
+`--rpc-methods unsafe` is needed for the bazaar's business and offering aggregation rpcs.
 
 Additional CLI usage options are available and may be shown by running `./target/release/encointer-node-notee --help`.
 

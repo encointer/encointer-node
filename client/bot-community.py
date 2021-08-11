@@ -26,6 +26,7 @@ import geojson
 from random_words import RandomWords
 from math import floor
 
+from py_client.helpers import purge_prompt, read_cid, write_cid
 from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -57,15 +58,7 @@ def init_bootstrappers(client=Client()):
 
 
 def purge_keystore_prompt():
-    accounts = glob.glob(KEYSTORE_PATH + '/*')
-    if accounts:
-        print(f'Keystore already contains {len(accounts)} accounts.')
-        should_clear = input('Do you want to purge the keystore? [y, n]')
-        if should_clear == 'y':
-            [os.remove(f) for f in accounts]
-            print('Purged the keystore.')
-        else:
-            print('Leaving keystore as is.')
+    purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
 def init(client: str, port: str):
@@ -79,9 +72,7 @@ def init(client: str, port: str):
     print(f'generated community spec: {specfile}')
     cid = client.new_community(specfile)
     print(f'created community with cid: {cid}')
-    f = open('cid.txt', 'w')
-    f.write(cid)
-    f.close()
+    write_cid(cid)
 
 
 def register_participants(client: Client, accounts, cid):
@@ -122,9 +113,7 @@ def perform_meetup(client: Client, meetup, cid):
 
 def run(client: str, port: int):
     client = Client(rust_client=client, port=port)
-    f = open('cid.txt', 'r')
-    cid = f.read()
-    print(f'cid is {cid}')
+    cid = read_cid()
     phase = client.get_phase()
     print(f'phase is {phase}')
     accounts = client.list_accounts()
