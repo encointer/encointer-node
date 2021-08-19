@@ -1488,7 +1488,7 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "0.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "parity-scale-codec 2.1.1",
  "serde",
@@ -4137,7 +4137,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "0.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4158,7 +4158,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "0.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4202,7 +4202,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "0.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4223,9 +4223,10 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "0.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -4240,7 +4241,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4258,7 +4259,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
  "sp-api",
@@ -4268,7 +4269,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "0.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#cfd318ef91d18059ad61881fe2bdae69e42252ae"
+source = "git+https://github.com/encointer/pallets?branch=master#7e7a06cc21bb585d597f5d0f8cf5b1275003f3b4"
 dependencies = [
  "encointer-primitives",
  "frame-support",

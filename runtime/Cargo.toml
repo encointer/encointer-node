@@ -147,4 +147,5 @@ runtime-benchmarks = [
     "pallet-balances/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "sp-runtime/runtime-benchmarks",
+    "encointer-communities/runtime-benchmarks"
 ]
