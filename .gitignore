@@ -15,6 +15,7 @@
 /client/bot-stats.csv
 /client/cid.txt
 /client/communityspec.json
+/client/config.py
 **/__pycache__/
 
 # generated files by scripts

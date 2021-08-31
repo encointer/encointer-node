@@ -93,7 +93,8 @@ def shop_owners():
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(prog='bootstrap-demo-community', parents=[simple_parser()])
+    p = argparse.ArgumentParser(
+        prog='register-businesses', parents=[simple_parser()])
     args = p.parse_args()
 
     print(f"Starting script with client '{args.client}' on port {args.port}")
@@ -105,8 +106,15 @@ if __name__ == '__main__':
     cid = read_cid()
 
     create_businesses(2)
-    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESSES_PATH + '/*.json'))
+
+    business_ipfs_cids = Ipfs.add_recursive_multiple(
+        glob.glob(BUSINESSES_PATH + '/*.json'))
+    if args.ipfs_api_key:
+        business_ipfs_cids_remote = Ipfs.add_recursive_multiple_remote(
+            glob.glob(BUSINESSES_PATH + '/*.json'), args.ipfs_api_key)
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
+    print(
+        f'Uploaded businesses to REMOTE ipfs: ipfs_cids: {business_ipfs_cids_remote}')
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
         c = business_ipfs_cids[bi]
@@ -120,7 +128,8 @@ if __name__ == '__main__':
         client.await_block()
 
     create_offerings(cid, 5)
-    offerings_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(OFFERINGS_PATH + '/*.json'))
+    offerings_ipfs_cids = Ipfs.add_recursive_multiple(
+        glob.glob(OFFERINGS_PATH + '/*.json'))
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
         # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`

@@ -7,7 +7,7 @@ you may need to install a few packages first
    pip3 install randomwords geojson pyproj
 
 then start a node with
-   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true
+   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
 and init and grow a community
    ./bot-community.py --port 9945 init
@@ -35,7 +35,7 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
-
+IPFS_API_KEY = ''
 
 def random_community_spec(bootstrappers, ipfs_cid):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
@@ -61,11 +61,14 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str):
+def init(client: str, port: str, ipfs_api_key: str):
     purge_keystore_prompt()
-
+    print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
+    if ipfs_api_key != '':
+        ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key)
+        print('ICONS_PATH: ', ICONS_PATH)
     print('initializing community')
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
@@ -148,7 +151,6 @@ if __name__ == '__main__':
     parser_a = subparsers.add_parser('init', help='a help')
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
-
     kwargs = vars(parser.parse_args())
     try:
         globals()[kwargs.pop('subparser')](**kwargs)

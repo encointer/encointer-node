@@ -3,7 +3,7 @@
 Demonstrate the bootstrapping of an Encointer community on a *dev* chain.
 
 start node with
-  ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true
+  ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
 then run this script
   ./bootstrap_demo_community.py --port 9945
