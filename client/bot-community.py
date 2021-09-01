@@ -35,7 +35,6 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
-IPFS_API_KEY = ''
 
 def random_community_spec(bootstrappers, ipfs_cid):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
@@ -114,7 +113,7 @@ def perform_meetup(client: Client, meetup, cid):
         client.attest_claims(attestor, attestees_claims)
 
 
-def run(client: str, port: int):
+def run(client: str, port: int, ipfs_api_key: str):
     client = Client(rust_client=client, port=port)
     cid = read_cid()
     phase = client.get_phase()
@@ -132,11 +131,11 @@ def run(client: str, port: int):
         client.await_block()
 
 
-def benchmark(client: str, port: int):
+def benchmark(client: str, port: int, ipfs_api_key: str):
     py_client = Client(rust_client=client, port=port)
     print('will grow population forever')
     while True:
-        run(client, port)
+        run(client, port, ipfs_api_key)
         py_client.await_block()
         py_client.next_phase()
         py_client.await_block()
