@@ -67,7 +67,6 @@ def init(client: str, port: str, ipfs_api_key: str):
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     if ipfs_api_key != '':
         ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key)
-        print('ICONS_PATH: ', ICONS_PATH)
     print('initializing community')
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
