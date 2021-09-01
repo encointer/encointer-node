@@ -198,5 +198,5 @@ jobs:
       - name: register businesses
         run: |
           cd client
-          python bot-community.py --ips-api-key ${{ secrets.IPFS_API_KEY }} init
-          python register-businesses.py --ips-api-key ${{ secrets.IPFS_API_KEY }}
+          python bot-community.py --ipfs-api-key ${{ secrets.IPFS_API_KEY }} init
+          python register-businesses.py --ipfs-api-key ${{ secrets.IPFS_API_KEY }}
