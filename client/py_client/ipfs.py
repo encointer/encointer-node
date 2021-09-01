@@ -41,7 +41,7 @@ class Ipfs:
     def add_recursive_remote(path_to_files, IPFS_API_KEY):
         if IPFS_API_KEY != '':
             ret = subprocess.run(
-                ["curl", "-X", "POST", "-F", f"file=@{path_to_files}", IPFS_API_KEY, "https://ipfs.infura.io:5001/api/v0/add"], stdout=subprocess.PIPE)
+                ["curl", "-X", "POST", "-F", f"file=@{path_to_files}", IPFS_API_KEY, "https://ipfs.infura.io:5001/api/v0/add?recursive&wrap-with-directory&quiter"], stdout=subprocess.PIPE)
         elif local_ipfs_key != None:
             ret = subprocess.run(
                 ["curl", "-X", "POST", "-F", f"file=@{path_to_files}", local_ipfs_key, "https://ipfs.infura.io:5001/api/v0/add"], stdout=subprocess.PIPE)

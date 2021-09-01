@@ -63,7 +63,7 @@ def purge_keystore_prompt():
 
 def init(client: str, port: str, ipfs_api_key: str):
     purge_keystore_prompt()
-    print("ipfs_api_key_in_init_argument", ipfs_api_key)
+    # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     if ipfs_api_key != '':
