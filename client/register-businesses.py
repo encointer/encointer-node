@@ -112,11 +112,10 @@ if __name__ == '__main__':
     business_ipfs_cids = Ipfs.add_recursive_multiple(
         glob.glob(BUSINESSES_PATH + '/*.json'))
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
-    if args.ipfs_api_key:
-        print("args.ipfs_api_key", args.ipfs_api_key)
+    if args.ipfs_add_url:
+        # print("args.ipfs_api_key", args.ipfs_api_key)
         business_ipfs_cids_remote = Ipfs.add_recursive_multiple_remote(glob.glob(BUSINESSES_PATH + '/*.json'), args.ipfs_api_key, args.ipfs_add_url)
-        print(
-            f'Uploaded businesses to REMOTE ipfs: ipfs_cids: {business_ipfs_cids_remote}')
+        print(f'Uploaded businesses to REMOTE ipfs: ipfs_cids: {business_ipfs_cids_remote}')
 
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`

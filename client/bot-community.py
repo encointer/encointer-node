@@ -65,8 +65,11 @@ def init(client: str, port: str, ipfs_api_key: str, ipfs_add_url: str):
     # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
-    if ipfs_api_key:
-        ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key, ipfs_add_url)
+    if ipfs_add_url:
+        if ipfs_api_key:
+            ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key, ipfs_add_url)
+        else: 
+            ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_add_url)
     print('initializing community')
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)

@@ -16,17 +16,20 @@ class Ipfs:
     def add_recursive_multiple(paths):
         return [Ipfs.add_recursive(f) for f in paths]
 
-    # doesn't work yet, for the remote folder adding with infura, only files
     @staticmethod
     def add_recursive_remote(path_to_files, ipfs_api_key, ipfs_add_url):
-        if ipfs_api_key:
-            ret = subprocess.run(["curl", "-X", "POST", "-F", f"file=@{path_to_files}", ipfs_api_key, ipfs_add_url], stdout=subprocess.PIPE)
-            return take_only_last_cid(ret)
-        else:
-            warnings.warn('No IPFS_API_KEY entered. Please add using the --ipfs-api-key option. stderr: ')
-            # warnings.warn(str(ret.stderr))
-            return ''
+        ret = subprocess.run(["curl", "-X", "POST", "-F", f"file=@{path_to_files}", "-u", ipfs_api_key, ipfs_add_url], stdout=subprocess.PIPE)
+        return take_only_last_cid(ret)
+    
+    @staticmethod
+    def add_recursive_remote_without_key(path_to_files, ipfs_add_url):
+        ret = subprocess.run(["curl", "-X", "POST", "-F", f"file=@{path_to_files}", ipfs_add_url], stdout=subprocess.PIPE)
+        return take_only_last_cid(ret)
 
     @staticmethod
     def add_recursive_multiple_remote(paths, ipfs_api_key, ipfs_add_url):
         return [Ipfs.add_recursive_remote(f, ipfs_api_key, ipfs_add_url) for f in paths]
+    
+    @staticmethod
+    def add_recursive_multiple_remote_without_key(paths, ipfs_add_url):
+        return [Ipfs.add_recursive_remote(f, ipfs_add_url) for f in paths]
