@@ -198,5 +198,5 @@ jobs:
       - name: register businesses
         run: |
           cd client
-          python bot-community.py init --ipfs-api-key ${{ secrets.IPFS_API_KEY }} --ipfs-add-url {{env.INFURA_ADD_URL}}
-          python register-businesses.py --ipfs-api-key ${{ secrets.IPFS_API_KEY }} --ipfs-add-url {{env.INFURA_ADD_URL}}
+          python bot-community.py init --ipfs-api-key ${{ secrets.IPFS_API_KEY }} --ipfs-add-url {{ env.INFURA_ADD_URL }}
+          python register-businesses.py --ipfs-api-key ${{ secrets.IPFS_API_KEY }} --ipfs-add-url {{ env.INFURA_ADD_URL }}
