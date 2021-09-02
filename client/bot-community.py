@@ -26,7 +26,7 @@ import geojson
 from random_words import RandomWords
 from math import floor
 
-from py_client.helpers import purge_prompt, read_cid, write_cid
+from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder
 from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -67,7 +67,9 @@ def init(client: str, port: str, ipfs_api_key: str, ipfs_add_url: str):
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     if ipfs_add_url:
         if ipfs_api_key:
-            ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key, ipfs_add_url)
+            root_dir = os.path.realpath(ICONS_PATH)
+            zipped_folder = zip_folder("icons",root_dir)
+            ipfs_cid_remote = Ipfs.add_recursive_remote(zipped_folder, ipfs_api_key, ipfs_add_url)
         else: 
             ipfs_cid_remote = Ipfs.add_recursive_remote_without_key(ICONS_PATH, ipfs_add_url)
     print('initializing community')

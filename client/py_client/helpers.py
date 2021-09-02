@@ -2,8 +2,14 @@ import glob
 import os
 import subprocess
 import re
+import shutil
+from os import path
 
+st = '/home/ev/encointer/encointer-node/test-data/icons'
 
+def zip_folder(name: str, folder_abs_path: str):
+    return shutil.make_archive(f"{name}","zip", st)
+    
 def purge_prompt(path: str, file_description: str):
     files = glob.glob(path + '/*')
     if files:
@@ -49,3 +55,6 @@ def take_only_last_cid(ret_cids):
             warnings.warn('No cid returned. Something happened. stderr: ')
             warnings.warn(str(ret_cids.stderr))
             return ''
+
+if __name__ == '__main__':
+    zip_folder("hello",st)
