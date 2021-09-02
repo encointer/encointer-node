@@ -147,6 +147,7 @@ if __name__ == '__main__':
     # Note: the function args' names `client` and `port` must match the cli's args' names.
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
+    parser_a.add_argument('--ipfs-api-key', dest='ipfs_api_key', help=f'required api key to store files on remote ipfs node')
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
     kwargs = vars(parser.parse_args())

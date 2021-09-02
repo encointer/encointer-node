@@ -18,6 +18,4 @@ def simple_parser(add_help=False):
     p.add_argument('--port',
                    default=9944,
                    help='Port of the node (default=9944).')
-    p.add_argument('--ipfs-api-key', dest='ipfs_api_key',
-                   help=f'required api key to store files on remote ipfs node')
     return p
