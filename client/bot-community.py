@@ -60,13 +60,13 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str, ipfs_api_key: str):
+def init(client: str, port: str, ipfs_api_key: str, ipfs_add_url: str):
     purge_keystore_prompt()
     # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
     if ipfs_api_key:
-        ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key)
+        ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key, ipfs_add_url)
     print('initializing community')
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
@@ -148,6 +148,7 @@ if __name__ == '__main__':
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
     parser_a.add_argument('--ipfs-api-key', dest='ipfs_api_key', help=f'required api key to store files on remote ipfs node')
+    parser_a.add_argument('--ipfs-add-url', dest='ipfs_add_url', help=f'api url to add a file to remote node')
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
     kwargs = vars(parser.parse_args())
