@@ -34,6 +34,7 @@ def mkdir_p(path):
     return subprocess.run(['mkdir', '-p', path])
 
 
+# this method takes the last content identifier, which is the one of the whole folder, for a file, there is only one cid so it works, too. 
 def take_only_last_cid(ret_cids):
         # last line contains the directory cid
         last = ret_cids.stdout.splitlines()[-1]
