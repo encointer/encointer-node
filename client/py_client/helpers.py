@@ -5,11 +5,9 @@ import re
 import shutil
 from os import path
 
-st = '/home/ev/encointer/encointer-node/test-data/icons'
-
 def zip_folder(name: str, folder_abs_path: str):
-    return shutil.make_archive(f"{name}","zip", st)
-    
+    return shutil.make_archive(f"{name}","zip", folder_abs_path)
+
 def purge_prompt(path: str, file_description: str):
     files = glob.glob(path + '/*')
     if files:
