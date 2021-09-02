@@ -65,7 +65,7 @@ def init(client: str, port: str, ipfs_api_key: str):
     # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
     ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
-    if ipfs_api_key != '':
+    if ipfs_api_key:
         ipfs_cid_remote = Ipfs.add_recursive_remote(ICONS_PATH, ipfs_api_key)
     print('initializing community')
     b = init_bootstrappers(client)
@@ -112,7 +112,7 @@ def perform_meetup(client: Client, meetup, cid):
         client.attest_claims(attestor, attestees_claims)
 
 
-def run(client: str, port: int, ipfs_api_key: str):
+def run(client: str, port: int):
     client = Client(rust_client=client, port=port)
     cid = read_cid()
     phase = client.get_phase()
@@ -130,11 +130,11 @@ def run(client: str, port: int, ipfs_api_key: str):
         client.await_block()
 
 
-def benchmark(client: str, port: int, ipfs_api_key: str):
+def benchmark(client: str, port: int):
     py_client = Client(rust_client=client, port=port)
     print('will grow population forever')
     while True:
-        run(client, port, ipfs_api_key)
+        run(client, port)
         py_client.await_block()
         py_client.next_phase()
         py_client.await_block()

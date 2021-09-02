@@ -19,7 +19,7 @@ class Ipfs:
     # doesn't work yet, for the remote folder adding with infura, only files
     @staticmethod
     def add_recursive_remote(path_to_files, IPFS_API_KEY):
-        if IPFS_API_KEY != '':
+        if IPFS_API_KEY:
             ret = subprocess.run(["curl", "-X", "POST", "-F", f"file=@{path_to_files}", IPFS_API_KEY, "https://ipfs.infura.io:5001/api/v0/add?recursive&wrap-with-directory&quiter"], stdout=subprocess.PIPE)
             return take_only_last_cid(ret)
         else:
