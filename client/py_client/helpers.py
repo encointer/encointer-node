@@ -53,6 +53,3 @@ def take_only_last_cid(ret_cids):
             warnings.warn('No cid returned. Something happened. stderr: ')
             warnings.warn(str(ret_cids.stderr))
             return ''
-
-if __name__ == '__main__':
-    zip_folder("hello",st)
