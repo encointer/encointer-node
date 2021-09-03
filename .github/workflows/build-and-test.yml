@@ -10,7 +10,8 @@ on:
 #    - cron:  '42 3 * * *'
 env:
   CARGO_TERM_COLOR: always
-  INFURA_ADD_URL: "https://ipfs.infura.io:5001/api/v0/add"
+  IPFS_ADD_URL: "https://ipfs.infura.io:5001/api/v0/add"
+  IPFS_API_KEY: ${{ secrets.IPFS_API_KEY }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -198,5 +199,5 @@ jobs:
       - name: register businesses
         run: |
           cd client
-          python bot-community.py init --ipfs-api-key ${{ secrets.IPFS_API_KEY }} --ipfs-add-url ${{ env.INFURA_ADD_URL }}
-          python register-businesses.py --ipfs-api-key ${{ secrets.IPFS_API_KEY }} --ipfs-add-url ${{ env.INFURA_ADD_URL }}
+          python bot-community.py init
+          python register-businesses.py

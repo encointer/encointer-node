@@ -60,20 +60,21 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str, ipfs_api_key: str, ipfs_add_url: str):
+def init(client: str, port: str, ipfs_local):
     purge_keystore_prompt()
     # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
-    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
-    if ipfs_add_url:
-        if ipfs_api_key:
-            root_dir = os.path.realpath(ICONS_PATH)
-            zipped_folder = zip_folder("icons",root_dir)
-            ipfs_cid_remote = Ipfs.add_recursive_remote(zipped_folder, ipfs_api_key, ipfs_add_url)
-        else: 
-            ipfs_cid_remote = Ipfs.add_recursive_remote_without_key(ICONS_PATH, ipfs_add_url)
+    root_dir = os.path.realpath(ICONS_PATH)
+    zipped_folder = zip_folder("icons",root_dir)
+    ipfs_cid = ''
+    if(ipfs_local):
+        ipfs_cid = Ipfs.add(zipped_folder)
+    else:
+        ipfs_api_key = os.environ['IPFS_API_KEY']
+        ipfs_add_url = os.environ['IPFS_ADD_URL']
+        ipfs_cid = Ipfs.add_remote(zipped_folder, ipfs_api_key, ipfs_add_url)
     print('initializing community')
-    b = init_bootstrappers(client)
+    b = init_bootstrappers(client) 
     specfile = random_community_spec(b, ipfs_cid)
     print(f'generated community spec: {specfile}')
     cid = client.new_community(specfile)
@@ -148,12 +149,10 @@ def benchmark(client: str, port: int):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
     subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
-
     # Note: the function args' names `client` and `port` must match the cli's args' names.
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
-    parser_a.add_argument('--ipfs-api-key', dest='ipfs_api_key', help=f'required api key to store files on remote ipfs node')
-    parser_a.add_argument('--ipfs-add-url', dest='ipfs_add_url', help=f'api url to add a file to remote node')
+    parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="just a flag argument")
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
     kwargs = vars(parser.parse_args())

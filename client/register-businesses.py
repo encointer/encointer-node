@@ -3,6 +3,7 @@ import argparse
 import glob
 import json
 import random
+import os 
 
 from random_words import RandomWords
 from wonderwords import RandomSentence
@@ -95,8 +96,7 @@ def shop_owners():
 if __name__ == '__main__':
     p = argparse.ArgumentParser(
         prog='register-businesses', parents=[simple_parser()])
-    p.add_argument('--ipfs-api-key', dest='ipfs_api_key', help=f'api key to store files on remote ipfs node')
-    p.add_argument('--ipfs-add-url', dest='ipfs_add_url', help=f'api url to add a file to remote node')
+    p.add_argument('--ipfs-local', '-l', action='store_true')
     args = p.parse_args()
 
     print(f"Starting script with client '{args.client}' on port {args.port}")
@@ -108,17 +108,20 @@ if __name__ == '__main__':
     cid = read_cid()
 
     create_businesses(2)
+    business_ipfs_cids = []
+    ipfs_api_key = ''
+    ipfs_add_url = ''
+    
+    if args.ipfs_local:
+        business_ipfs_cids = Ipfs.add_multiple(glob.glob(BUSINESSES_PATH + '/*.json'))
+        print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
+    else: 
+        # print("args.ipfs_api_key", args.ipfs_api_key)
+        ipfs_api_key = os.environ['IPFS_API_KEY']
+        ipfs_add_url = os.environ['IPFS_ADD_URL']
+        business_ipfs_cids = Ipfs.add_multiple_remote(glob.glob(BUSINESSES_PATH + '/*.json'), ipfs_api_key, ipfs_add_url)
+        print(f'Uploaded businesses to REMOTE ipfs: ipfs_cids: {business_ipfs_cids}')
 
-    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESSES_PATH + '/*.json'))
-    print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
-    if args.ipfs_add_url:
-        if args.ipfs_api_key:
-            # print("args.ipfs_api_key", args.ipfs_api_key)
-            business_ipfs_cids_remote = Ipfs.add_recursive_multiple_remote(glob.glob(BUSINESSES_PATH + '/*.json'), args.ipfs_api_key, args.ipfs_add_url)
-            print(f'Uploaded businesses to REMOTE ipfs: ipfs_cids: {business_ipfs_cids_remote}')
-        else: 
-            business_ipfs_cids_remote = Ipfs.add_recursive_multiple_remote_without_key(glob.glob(BUSINESSES_PATH + '/*.json'), args.ipfs_add_url)
-            print(f'Uploaded businesses to REMOTE ipfs: ipfs_cids: {business_ipfs_cids_remote}')
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
         c = business_ipfs_cids[bi]
@@ -132,11 +135,12 @@ if __name__ == '__main__':
         client.await_block()
 
     create_offerings(cid, 5)
-    offerings_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(OFFERINGS_PATH + '/*.json'))
-    print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
-    if args.ipfs_api_key:
-        offerings_ipfs_cids_remote = Ipfs.add_recursive_multiple_remote(glob.glob(OFFERINGS_PATH + '/*.json'), args.ipfs_api_key, args.ipfs_add_url)
-        print(f'Uploaded offerings to REMOTE ipfs: ipfs_cids: {offerings_ipfs_cids_remote}')
+    if args.ipfs_local:
+        offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'))
+        print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
+    else:
+        offerings_ipfs_cids = Ipfs.add_multiple_remote(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_api_key, ipfs_add_url)
+        print(f'Uploaded offerings to REMOTE ipfs: ipfs_cids: {offerings_ipfs_cids}')
     for c in offerings_ipfs_cids:
         # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`
         owner = owners[0]
