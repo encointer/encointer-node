@@ -95,8 +95,8 @@ def shop_owners():
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(
-        prog='register-businesses', parents=[simple_parser()])
-    p.add_argument('--ipfs-local', '-l', action='store_true')
+    prog='register-businesses', parents=[simple_parser()])
+    p.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
     args = p.parse_args()
 
     print(f"Starting script with client '{args.client}' on port {args.port}")

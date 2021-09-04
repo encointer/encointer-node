@@ -152,7 +152,7 @@ if __name__ == '__main__':
     # Note: the function args' names `client` and `port` must match the cli's args' names.
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
-    parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="just a flag argument")
+    parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
     kwargs = vars(parser.parse_args())
