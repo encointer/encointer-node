@@ -59,7 +59,7 @@ def main(client=Client()):
     print(f'Registered community with cid: {cid}')
 
     print('Uploading icons to ipfs')
-    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
+    ipfs_cid = Ipfs.add(ICONS_PATH)
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
     update_spec_with_cid(spec_file_path, ipfs_cid)
 
