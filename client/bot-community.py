@@ -66,15 +66,9 @@ def init(client: str, port: str, ipfs_local):
     client = Client(rust_client=client, port=port)
     root_dir = os.path.realpath(ICONS_PATH)
     zipped_folder = zip_folder("icons",root_dir)
-    ipfs_cid = ''
-    if(ipfs_local):
-        ipfs_cid = Ipfs.add(zipped_folder)
-    else:
-        ipfs_api_key = os.environ['IPFS_API_KEY']
-        ipfs_add_url = os.environ['IPFS_ADD_URL']
-        ipfs_cid = Ipfs.add_remote(zipped_folder, ipfs_api_key, ipfs_add_url)
+    ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
     print('initializing community')
-    b = init_bootstrappers(client) 
+    b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
     print(f'generated community spec: {specfile}')
     cid = client.new_community(specfile)
