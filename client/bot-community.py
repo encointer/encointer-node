@@ -7,7 +7,7 @@ you may need to install a few packages first
    pip3 install randomwords geojson pyproj
 
 then start a node with
-   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true
+   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
 and init and grow a community
    ./bot-community.py --port 9945 init
@@ -26,7 +26,7 @@ import geojson
 from random_words import RandomWords
 from math import floor
 
-from py_client.helpers import purge_prompt, read_cid, write_cid
+from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder
 from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -35,7 +35,6 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
-
 
 def random_community_spec(bootstrappers, ipfs_cid):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
@@ -61,11 +60,13 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str):
+def init(client: str, port: str, ipfs_local):
     purge_keystore_prompt()
-
+    # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = Client(rust_client=client, port=port)
-    ipfs_cid = Ipfs.add_recursive(ICONS_PATH)
+    root_dir = os.path.realpath(ICONS_PATH)
+    zipped_folder = zip_folder("icons",root_dir)
+    ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
     print('initializing community')
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
@@ -142,13 +143,12 @@ def benchmark(client: str, port: int):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
     subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
-
     # Note: the function args' names `client` and `port` must match the cli's args' names.
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
+    parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
-
     kwargs = vars(parser.parse_args())
     try:
         globals()[kwargs.pop('subparser')](**kwargs)

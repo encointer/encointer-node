@@ -1,7 +1,12 @@
 import glob
 import os
 import subprocess
+import re
+import shutil
+from os import path
 
+def zip_folder(name: str, folder_abs_path: str):
+    return shutil.make_archive(f"{name}","zip", folder_abs_path)
 
 def purge_prompt(path: str, file_description: str):
     files = glob.glob(path + '/*')
@@ -31,3 +36,20 @@ def read_cid():
 def mkdir_p(path):
     """ Surprisingly, there is no simple function in python to create a dir if it does not exist."""
     return subprocess.run(['mkdir', '-p', path])
+
+
+# this method takes the last content identifier, which is the one of the whole folder, for a file, there is only one cid so it works, too. 
+def take_only_last_cid(ret_cids):
+        # last line contains the directory cid
+        last = ret_cids.stdout.splitlines()[-1]
+        p = re.compile('Qm\\w*')
+        cids = p.findall(str(last))
+    
+        if cids:
+            print()
+            print(cids)
+            return cids[0]
+        else:
+            warnings.warn('No cid returned. Something happened. stderr: ')
+            warnings.warn(str(ret_cids.stderr))
+            return ''
