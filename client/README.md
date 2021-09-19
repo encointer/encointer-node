@@ -17,4 +17,4 @@ Includes
 > encointer-client 127.0.0.1:9979 sign_claim 5EqvwjCA8mH6x9gWbSmcQhxDkYHJcUfwjaHHn9q1hBrKLL65 7af690ced4cd1e84a857d047b4fc93f3b4801f9a94c9a4d568a01bc435f5bae903000000000000000000000003000000
 ```
 
-Find a full ceremony cycle demo [here](./demo_poc1.sh)
+Find a full ceremony cycle demo [here](./bootstrap_demo_community.py)

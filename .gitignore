@@ -15,3 +15,9 @@
 /client/bot-stats.csv
 /client/cid.txt
 /client/communityspec.json
+
+**/__pycache__/
+
+# generated files by scripts
+/test-data/bazaar/businesses/*.json
+/test-data/bazaar/offerings/*.json
