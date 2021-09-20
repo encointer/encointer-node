@@ -2,4 +2,4 @@
 set -euo pipefail
 
 python -m pip install --upgrade pip
-pip install geojson pyproj RandomWords wonderwords
+pip install geojson pyproj RandomWords wonderwords request flask jsonify
