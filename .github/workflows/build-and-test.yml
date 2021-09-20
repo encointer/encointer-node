@@ -126,8 +126,8 @@ jobs:
     - name: start faucet service
       run: |
         cd client
-        python faucet.py
-        
+        python faucet.py &
+
     - name: bootstrap community
       run: |
         cd client
@@ -166,7 +166,7 @@ jobs:
     - name: start faucet service
       run: |
         cd client
-        python faucet.py
+        python faucet.py &
     - name: grow community
       run: |
         cd client
