@@ -112,6 +112,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+    - name: install py dependencies
+      run: ./scripts/install_python_deps.sh
 
     - name: Set up ipfs
       uses: ibnesayeed/setup-ipfs@master
@@ -157,7 +159,10 @@ jobs:
 
     - name: start dev node
       run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
-
+    - name: start faucet service
+      run: |
+        cd client
+        python faucet.py
     - name: grow community
       run: |
         cd client
@@ -194,6 +199,10 @@ jobs:
 
       - name: start dev node
         run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
+      - name: start faucet service
+        run: |
+          cd client
+          python faucet.py
 
       # note: this test can currently not fail. Need to update the register-business for that
       - name: register businesses
