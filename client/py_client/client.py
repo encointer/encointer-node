@@ -1,6 +1,7 @@
 import subprocess
+import requests
 
-from .scheduler import CeremonyPhase
+from py_client.scheduler import CeremonyPhase
 
 
 class Client:
@@ -39,8 +40,13 @@ class Client:
     def create_accounts(self, amount):
         return [self.new_account() for _ in range(0, amount)]
 
-    def faucet(self, accounts):
-        subprocess.run(self.cli + ["faucet"] + accounts, stdout=subprocess.PIPE)
+    def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
+        if is_faucet:
+            subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+        else:
+            payload = {'accounts': accounts}
+            requests.get(faucet_url, params=payload)
+
 
     def balance(self, account, cid=None):
         if not cid:
@@ -50,7 +56,7 @@ class Client:
             ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
-    def new_community(self, specfile, sender='//Alice'):
+    def new_community(self, specfile, sender):
         ret = subprocess.run(self.cli + ["new-community", specfile, sender], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
@@ -127,3 +133,4 @@ class Client:
         ret = subprocess.run(self.cli + ["--cid", cid, "list-business-offerings", account],
                              stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
+

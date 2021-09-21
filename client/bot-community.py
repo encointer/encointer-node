@@ -71,7 +71,7 @@ def init(client: str, port: str, ipfs_local):
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
     print(f'generated community spec: {specfile}')
-    cid = client.new_community(specfile)
+    cid = client.new_community(specfile, b[0])
     print(f'created community with cid: {cid}')
     write_cid(cid)
 
@@ -128,16 +128,16 @@ def run(client: str, port: int):
         for meetup in meetups:
             perform_meetup(client, meetup, cid)
         client.await_block()
+    return phase
 
 
 def benchmark(client: str, port: int):
     py_client = Client(rust_client=client, port=port)
     print('will grow population forever')
     while True:
-        run(client, port)
-        py_client.await_block()
-        py_client.next_phase()
-        py_client.await_block()
+        phase = run(client, port)
+        while phase == py_client.get_phase():
+            py_client.await_block()
 
 
 if __name__ == '__main__':
