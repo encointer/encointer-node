@@ -4112,7 +4112,6 @@ dependencies = [
  "parity-scale-codec 2.2.0",
  "serde",
  "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
  "substrate-fixed",
@@ -4128,7 +4127,6 @@ dependencies = [
  "log",
  "pallet-encointer-communities",
  "parity-scale-codec 2.2.0",
- "sp-io",
  "sp-std",
 ]
 
@@ -4137,13 +4135,14 @@ name = "pallet-encointer-bazaar-rpc"
 version = "0.1.0"
 dependencies = [
  "encointer-primitives",
- "jsonrpc-core 15.1.0",
- "jsonrpc-core-client 15.1.0",
- "jsonrpc-derive 15.1.0",
+ "jsonrpc-core 18.0.0",
+ "jsonrpc-core-client 18.0.0",
+ "jsonrpc-derive 18.0.0",
  "log",
  "pallet-encointer-bazaar-rpc-runtime-api",
  "parking_lot 0.11.1",
  "sc-rpc",
+ "sc-rpc-api",
  "sp-api",
  "sp-blockchain",
  "sp-runtime",
@@ -4174,7 +4173,6 @@ dependencies = [
  "parity-scale-codec 2.2.0",
  "serde",
  "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -7924,7 +7922,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
  "cfg-if 1.0.0",
- "rand 0.6.5",
+ "rand 0.8.4",
  "static_assertions",
 ]
 
