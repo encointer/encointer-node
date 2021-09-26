@@ -66,9 +66,10 @@ use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline,
 	extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
-	node_metadata::Metadata,
+	Metadata,
 	utils::FromHexString,
 	Api, XtStatus,
+    rpc::WsRpcClient,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -429,7 +430,7 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
 
-                    // >>>> add some debug info as well     
+                    // >>>> add some debug info as well
                     let bn = get_block_number(&api);
                     info!("block number: {}", bn);
                     let cindex = get_ceremony_index(&api);
@@ -508,9 +509,9 @@ fn main() {
                     let mcount = get_meetup_count(&api, (cid, cindex));
                     println!("number of meetups assigned:  {}", mcount);
                     for m in 1..=mcount {
-                        println!("MeetupRegistry[{}, {}] location is {:?}", 
+                        println!("MeetupRegistry[{}, {}] location is {:?}",
                             cindex, m, get_meetup_location(&api, cid, m));
-                        println!("MeetupRegistry[{}, {}] meeting time is {:?}", 
+                        println!("MeetupRegistry[{}, {}] meeting time is {:?}",
                             cindex, m, get_meetup_time(&api, cid, m));
                         match get_meetup_participants(&api, (cid, cindex), m) {
                             Some(participants) => {
@@ -799,14 +800,15 @@ fn main() {
         .run();
 }
 
-fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair> {
+fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
 	let url = format!(
 		"{}:{}",
 		matches.value_of("node-url").unwrap(),
 		matches.value_of("node-port").unwrap()
 	);
 	info!("connecting to {}", url);
-	Api::<sr25519::Pair>::new(url).unwrap()
+    let client = WsRpcClient::new(&url);
+	Api::<sr25519::Pair, _>::new(client).unwrap()
 }
 
 fn listen(matches: &ArgMatches<'_>) {
@@ -837,7 +839,7 @@ fn listen(matches: &ArgMatches<'_>) {
 				for evr in &evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
-						Event::encointer_ceremonies(ee) => {
+						Event::EncointerCeremonies(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
@@ -851,7 +853,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								},
 							}
 						},
-						Event::encointer_scheduler(ee) => {
+						Event::EncointerScheduler(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> scheduler event: {:?}", ee);
 							match &ee {
@@ -860,7 +862,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								},
 							}
 						},
-						Event::encointer_communities(ee) => {
+						Event::EncointerCommunities(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
@@ -896,7 +898,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								},
 							}
 						},
-						Event::encointer_balances(ee) => {
+						Event::EncointerBalances(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
 						},
@@ -911,7 +913,7 @@ fn listen(matches: &ArgMatches<'_>) {
 /// Extracts api and cid from `matches` and execute the given `closure` with them.
 fn extract_and_execute<T>(
 	matches: &ArgMatches<'_>,
-	closure: impl FnOnce(&Api<sr25519::Pair>, CommunityIdentifier) -> T,
+	closure: impl FnOnce(&Api<sr25519::Pair, WsRpcClient>, CommunityIdentifier) -> T,
 ) -> T {
 	let api = get_chain_api(matches);
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
@@ -923,7 +925,7 @@ fn get_cid(cid: &str) -> CommunityIdentifier {
 		.expect("failed to decode cid")
 }
 
-fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CommunityIdentifier {
+fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIdentifier {
 	let cids = get_community_identifiers(&api).expect("no community registered");
 	let cid = get_cid(cid);
 	if !cids.contains(&cid) {
@@ -963,14 +965,14 @@ fn get_pair_from_str(account: &str) -> sr25519::AppPair {
 	}
 }
 
-fn get_block_number(api: &Api<sr25519::Pair>) -> BlockNumber {
+fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
 	let hdr: Header = api.get_header(None).unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
 	hdr.number
 }
 
-fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Demurrage {
+fn get_demurrage_per_block(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Demurrage {
 	let mut d: Option<Demurrage> = api
 		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
 		.unwrap();
@@ -985,34 +987,34 @@ fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -
 	d.unwrap()
 }
 
-fn get_ceremony_index(api: &Api<sr25519::Pair>) -> CeremonyIndexType {
+fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexType {
 	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
 		.unwrap()
 		.unwrap()
 }
 
-fn get_current_phase(api: &Api<sr25519::Pair>) -> CeremonyPhaseType {
+fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType {
 	api.get_storage_value("EncointerScheduler", "CurrentPhase", None)
 		.unwrap()
 		.or(Some(CeremonyPhaseType::default()))
 		.unwrap()
 }
 
-fn get_meetup_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> MeetupIndexType {
+fn get_meetup_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> MeetupIndexType {
 	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
 		.unwrap()
 		.or(Some(0))
 		.unwrap()
 }
 
-fn get_participant_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_participant_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "ParticipantCount", key, None)
 		.unwrap()
 		.or(Some(0))
 		.unwrap()
 }
 
-fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_attestee_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
@@ -1020,7 +1022,7 @@ fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> Parti
 }
 
 fn get_participant(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	pindex: ParticipantIndexType,
 ) -> Option<AccountId> {
@@ -1029,7 +1031,7 @@ fn get_participant(
 }
 
 fn get_meetup_index_for(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	account: &AccountId,
 ) -> Option<MeetupIndexType> {
@@ -1038,7 +1040,7 @@ fn get_meetup_index_for(
 }
 
 fn get_meetup_participants(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	mindex: MeetupIndexType,
 ) -> Option<Vec<AccountId>> {
@@ -1047,7 +1049,7 @@ fn get_meetup_participants(
 }
 
 fn get_attestees(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	windex: ParticipantIndexType,
 ) -> Option<Vec<AccountId>> {
@@ -1056,7 +1058,7 @@ fn get_attestees(
 }
 
 fn get_participant_attestation_index(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	accountid: &AccountId,
 ) -> Option<ParticipantIndexType> {
@@ -1065,7 +1067,7 @@ fn get_participant_attestation_index(
 }
 
 fn new_claim_for(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	claimant: &sr25519::Pair,
 	cid: CommunityIdentifier,
 	n_participants: u32,
@@ -1092,20 +1094,20 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CommunityIdentifier>> {
+fn get_community_identifiers(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
 }
 
 fn get_community_locations(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Option<Vec<Location>> {
 	api.get_storage_map("EncointerCommunities", "Locations", cid, None).unwrap()
 }
 
 fn get_meetup_location(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	mindex: MeetupIndexType,
 ) -> Option<Location> {
@@ -1118,7 +1120,7 @@ fn get_meetup_location(
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
-fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
+fn get_cid_names(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CidName>> {
 	let req = json!({
 		"method": "communities_getAll",
 		"params": [],
@@ -1126,13 +1128,13 @@ fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
 		"id": "1",
 	});
 
-	let n = api.get_request(req.to_string()).unwrap().expect(
+	let n = api.get_request(req.into()).unwrap().expect(
 		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
 	);
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_businesses(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
+fn get_businesses(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
 	let req = json!({
 		"method": "bazaar_getBusinesses",
 		"params": vec![cid],
@@ -1141,13 +1143,13 @@ fn get_businesses(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<
 	});
 
 	let n = api
-		.get_request(req.to_string())
+		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any businesses...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+fn get_offerings(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
 	let req = json!({
 		"method": "bazaar_getOfferings",
 		"params": vec![cid],
@@ -1156,14 +1158,14 @@ fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<V
 	});
 
 	let n = api
-		.get_request(req.to_string())
+		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_offerings_for_business(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	account_id: AccountId,
 ) -> Option<Vec<OfferingData>> {
@@ -1177,14 +1179,14 @@ fn get_offerings_for_business(
 	});
 
 	let n = api
-		.get_request(req.to_string())
+		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_meetup_time(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	mindex: MeetupIndexType,
 ) -> Option<Moment> {
@@ -1242,7 +1244,7 @@ fn prove_attendance(
 }
 
 fn get_reputation(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	prover: &AccountId,
 	cid: CommunityIdentifier,
 	cindex: CeremonyIndexType,
