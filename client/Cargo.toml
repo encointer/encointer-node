@@ -3,7 +3,7 @@ name = "encointer-client-notee"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2018"
 #keep with node version
-version = "0.6.0"
+version = "0.6.1"
 
 [dependencies]
 log = "0.4"
