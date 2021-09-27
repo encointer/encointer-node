@@ -519,6 +519,26 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl encointer_communities_rpc_runtime_api::CommunitiesApi<Block> for Runtime {
+		fn get_cids() -> Vec<CommunityIdentifier> {
+			EncointerCommunities::get_cids()
+		}
+
+		fn get_name(cid: &CommunityIdentifier) -> Option<PalletString> {
+			EncointerCommunities::get_name(cid)
+		}
+	}
+
+	impl encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {
+		fn get_offerings(business: &BusinessIdentifier<AccountId>) -> Vec<OfferingData>{
+			EncointerBazaar::get_offerings(business)
+		}
+
+		fn get_businesses(community: &CommunityIdentifier) -> Vec<(AccountId, BusinessData)>{
+			EncointerBazaar::get_businesses(community)
+		}
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
