@@ -175,6 +175,9 @@ fn main() {
                         .set_signer(AccountKeyring::Alice.pair());
                     let accounts: Vec<_> = matches.values_of("accounts").unwrap().collect();
 
+                    let existential_deposit = api.get_existential_deposit().unwrap();
+                    info!("Existential deposit is = {:?}", existential_deposit);
+
                     let mut nonce = api.get_nonce().unwrap();
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
@@ -388,7 +391,7 @@ fn main() {
 
                     info!("Metadata: {:?}", meta);
 
-                    let cid = blake2_256(&(loc.clone(), bootstrappers.clone()).encode());
+                    let cid = blake2_256(&(loc[0].clone(), bootstrappers.clone()).encode());
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
@@ -399,7 +402,7 @@ fn main() {
                         _api.clone(),
                         "EncointerCommunities",
                         "new_community",
-                        loc,
+                        loc[0],
                         bootstrappers,
                         meta,
                         None::<Demurrage>,
@@ -407,6 +410,34 @@ fn main() {
                     );
                     let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+                    let mut nonce = _api.get_nonce().unwrap();
+                    // only the first meetup location has been registered now. register all others one-by-one
+                    loc.remove(0);
+                    for l in loc.into_iter() {
+                        let call = compose_call!(
+                            _api.metadata,
+                            "EncointerCommunities",
+                            "add_location",
+                            cid,
+                            l
+                        );
+                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
+                            _api.clone().signer.unwrap(),
+                            call.clone(),
+                            nonce,
+                            Era::Immortal,
+                            api.genesis_hash,
+                            api.genesis_hash,
+                            api.runtime_version.spec_version,
+                            api.runtime_version.transaction_version
+                        );
+                        // send and watch extrinsic until finalized
+                        info!("   Registering location {:?}", l);
+                        let _blockh = _api
+                            .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
+                            .unwrap();
+                        nonce += 1;
+                    }
                     println!("{}", cid.to_base58());
                     Ok(())
                 }),
@@ -419,7 +450,7 @@ fn main() {
                     let names = get_cid_names(&api).unwrap();
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
-                        println!("{:?}", n);
+                        println!("{}: {}", n.cid.encode().to_base58(), n.name );
                     }
                     Ok(())
                 }),
