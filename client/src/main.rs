@@ -19,6 +19,8 @@
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
+#![feature(array_methods)]
+
 mod cli_args;
 
 #[macro_use]
@@ -75,8 +77,10 @@ use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 type AccountPublic = <Signature as Verify>::Signer;
 const KEYSTORE_PATH: &str = "my_keystore";
-const PREFUNDING_AMOUNT: u128 = 100_000_000_000;
+const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+
 
 fn main() {
 	env_logger::init();
@@ -179,6 +183,8 @@ fn main() {
                     info!("Existential deposit is = {:?}", existential_deposit);
 
                     let mut nonce = api.get_nonce().unwrap();
+
+                    let amount = reasonable_native_balance(&api);
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
                         let call = compose_call!(
@@ -186,7 +192,7 @@ fn main() {
                             "Balances",
                             "transfer",
                             GenericAddress::Id(to.clone()),
-                            Compact(PREFUNDING_AMOUNT)
+                            Compact(amount)
                         );
                         let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
                             api.clone().signer.unwrap(),
@@ -198,8 +204,9 @@ fn main() {
                             api.runtime_version.spec_version,
                             api.runtime_version.transaction_version
                         );
+                        ensure_payment(&api, &xt.hex_encode());
                         // send and watch extrinsic until finalized
-                        println!("Faucet drips to {} (Alice's nonce={})", to, nonce);
+                        println!("Faucet drips {} to {} (Alice's nonce={})", amount, to, nonce);
                         let _blockh = api
                             .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
                             .unwrap();
@@ -291,6 +298,7 @@ fn main() {
                                 cid,
                                 amount
                             );
+                            ensure_payment(&_api, &xt.hex_encode());
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {
@@ -300,6 +308,7 @@ fn main() {
                                 GenericAddress::Id(to.clone()),
                                 amount
                             );
+                            ensure_payment(&_api, &xt.hex_encode());
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         }
                     };
@@ -408,11 +417,13 @@ fn main() {
                         None::<Demurrage>,
                         None::<NominalIncome>
                     );
+                    ensure_payment(&_api, &xt.hex_encode());
                     let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     let mut nonce = _api.get_nonce().unwrap();
                     // only the first meetup location has been registered now. register all others one-by-one
                     loc.remove(0);
+                    let last = nonce + loc.len() as u32 -1 ;
                     for l in loc.into_iter() {
                         let call = compose_call!(
                             _api.metadata,
@@ -431,7 +442,10 @@ fn main() {
                             api.runtime_version.spec_version,
                             api.runtime_version.transaction_version
                         );
-                        // send and watch extrinsic until finalized
+                        if nonce == last {
+                            // only check once at the end
+                            ensure_payment(&_api, &xt.hex_encode());
+                        }
                         info!("   Registering location {:?}", l);
                         let _blockh = _api
                             .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
@@ -450,7 +464,8 @@ fn main() {
                     let names = get_cid_names(&api).unwrap();
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
-                        println!("{}: {}", n.cid.encode().to_base58(), n.name );
+                        let loc = get_community_locations(&api, n.cid).unwrap();
+                        println!("{}: {} locations: {}", n.cid.encode().to_base58(), n.name, loc.len());
                     }
                     Ok(())
                 }),
@@ -488,7 +503,7 @@ fn main() {
 
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "EncointerScheduler", "next_phase");
-
+                    ensure_payment(&api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     let phase = get_current_phase(&api);
@@ -625,8 +640,8 @@ fn main() {
                     };
                     debug!("proof: {:x?}", proof.encode());
                     if get_current_phase(&api) != CeremonyPhaseType::REGISTERING {
-                        println!("wrong ceremony phase for registering participant");
-                        return Ok(())
+                        error!("wrong ceremony phase for registering participant");
+                        std::process::exit(50);
                     }
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
@@ -636,9 +651,10 @@ fn main() {
                         cid,
                         proof
                     );
+                    ensure_payment(&_api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Registration sent for {}. status: 'ready'", arg_who);
+                    info!("Registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
         )
@@ -702,6 +718,7 @@ fn main() {
                         "attest_claims",
                         claims.clone()
                     );
+                    ensure_payment(&api, &xt.hex_encode());
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
                     println!("Claims sent by {}. status: 'ready'", arg_who);
                     Ok(())
@@ -841,6 +858,40 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
     let client = WsRpcClient::new(&url);
 	Api::<sr25519::Pair, _>::new(client).unwrap()
 }
+
+fn reasonable_native_balance(api: &Api<sr25519::Pair, WsRpcClient>) -> u128 {
+    let xt = api.balance_transfer(
+        GenericAddress::Id(AccountKeyring::Alice.into()),
+        9999
+    );
+    let fee = api.get_fee_details(&xt.hex_encode(), None)
+        .unwrap().unwrap()
+        .inclusion_fee.unwrap()
+        .base_fee;
+    let ed = api.get_existential_deposit().unwrap();
+    return ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
+}
+
+fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
+    let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
+        Some(bal) => bal.free,
+        None => {
+            error!("account does not exist on chain");
+            std::process::exit(51);
+        }
+    };
+    let fee = api.get_fee_details(xt, None)
+        .unwrap().unwrap()
+        .inclusion_fee.unwrap()
+        .base_fee;
+    let ed = api.get_existential_deposit().unwrap();
+    if signer_balance < fee + ed {
+        error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
+        std::process::exit(51);
+    }
+    debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
+}
+
 
 fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches);
@@ -1134,7 +1185,21 @@ fn get_community_locations(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Option<Vec<Location>> {
-	api.get_storage_map("EncointerCommunities", "Locations", cid, None).unwrap()
+    let req = json!({
+		"method": "communities_getLocations",
+		"params": vec![cid],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+    let n = api
+        .get_request(req.into())
+        .unwrap()
+        .expect("Could not find any locations for that cid...");
+    // we only need this mapping because serde can't serialize i128
+    // https://github.com/paritytech/substrate/issues/4641
+    let locations : Vec<[u8; 32]> = serde_json::from_str(&n).unwrap();
+    Some(locations.iter().map(|l| Location::decode(&mut l.as_slice()).unwrap()).collect())
 }
 
 fn get_meetup_location(
@@ -1323,6 +1388,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 		cid,
 		ipfs_cid
 	);
+    ensure_payment(&api, &xt.hex_encode());
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());

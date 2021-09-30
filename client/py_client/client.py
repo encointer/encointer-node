@@ -3,6 +3,29 @@ import requests
 
 from py_client.scheduler import CeremonyPhase
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class ExtrinsicWrongPhase(Error):
+    """"it is not the right ceremony phase for this extrinsic"""
+    pass
+
+class ExtrinsicFeePaymentImpossible(Error):
+    """Signer can't pay fees. Either because account does not exist or the balance is too low"""
+    pass
+
+class UnknownError(Error):
+    pass
+
+def ensure_clean_exit(returncode):
+    if returncode == 0:
+        return
+    if returncode == 50:
+        raise ExtrinsicWrongPhase
+    if returncode == 51:
+        raise ExtrinsicFeePaymentImpossible
+    raise UnknownError
 
 class Client:
     def __init__(self,
@@ -12,7 +35,8 @@ class Client:
         self.cli = [rust_client, '-p', str(port)]
 
     def next_phase(self):
-        subprocess.run(self.cli + ["next-phase"])
+        ret = subprocess.run(self.cli + ["next-phase"])
+        ensure_clean_exit(ret.returncode)
 
     def get_phase(self):
         ret = subprocess.run(self.cli + ["get-phase"], stdout=subprocess.PIPE)
@@ -43,6 +67,7 @@ class Client:
     def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
         if is_faucet:
             subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+            ensure_clean_exit(ret.returncode)
         else:
             payload = {'accounts': accounts}
             requests.get(faucet_url, params=payload)
@@ -58,6 +83,7 @@ class Client:
 
     def new_community(self, specfile, sender):
         ret = subprocess.run(self.cli + ["new-community", specfile, sender], stdout=subprocess.PIPE)
+        ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def list_communities(self):
@@ -73,7 +99,7 @@ class Client:
 
     def register_participant(self, account, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
-        # print(ret.stdout.decode("utf-8"))
+        ensure_clean_exit(ret.returncode)
 
     def new_claim(self, account, vote, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "new-claim", account, str(vote)], stdout=subprocess.PIPE)
@@ -97,7 +123,7 @@ class Client:
 
     def attest_claims(self, account, claims):
         ret = subprocess.run(self.cli + ["attest-claims", account] + claims, stdout=subprocess.PIPE)
-        # print(ret.stdout.decode("utf-8"))
+        ensure_clean_exit(ret.returncode)
 
     def list_attestees(self, cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
@@ -106,17 +132,20 @@ class Client:
     def create_business(self, account, cid, ipfs_cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "create-business", account, "--ipfs-cid", ipfs_cid],
                              stdout=subprocess.PIPE)
+        ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def update_business(self, account, cid, ipfs_cd):
         """ Update has not been tested """
         ret = subprocess.run(self.cli + ["--cid", cid, "update-business", account, "--ipfs-cid", ipfs_cd],
                              stdout=subprocess.PIPE)
+        ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def create_offering(self, account, cid, ipfs_cd):
         ret = subprocess.run(self.cli + ["--cid", cid, "create-offering", account, "--ipfs-cid", ipfs_cd],
                              stdout=subprocess.PIPE)
+        ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def list_businesses(self, cid):
