@@ -73,7 +73,7 @@ def main(ipfs_local, client=Client()):
 
     # charlie has no genesis funds
     print('Faucet is dripping to Charlie...')
-    client.faucet([account3])
+    client.faucet([account3], is_faucet = True)
 
     blocks_to_wait = 3
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
@@ -93,6 +93,7 @@ def main(ipfs_local, client=Client()):
     print(client.list_meetups(cid))
     client.next_phase()
 
+    print(f'Performing meetups for cid {cid}')
     perform_meetup(client, cid)
 
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")

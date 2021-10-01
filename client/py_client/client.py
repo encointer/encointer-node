@@ -72,7 +72,9 @@ class Client:
 
     def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
         if is_faucet:
+            self.await_block(1)
             ret = subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+            print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret.returncode)
         else:
             payload = {'accounts': accounts}

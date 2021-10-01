@@ -23,7 +23,7 @@ Find a full ceremony cycle demo [here](./bootstrap_demo_community.py)
 
 start encointer blockchain in dev mode
 ```bash
-./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true
+./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true -lencointer=debug
 ```
 
 start faucet service
