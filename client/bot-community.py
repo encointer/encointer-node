@@ -44,7 +44,7 @@ def random_community_spec(bootstrappers, ipfs_cid):
     name = '#' + '-'.join(RandomWords().random_words(count=1))
     symbol = name[1:4].upper()
     meta = meta_json(name, symbol, ipfs_cid)
-
+    print(f'CommunityMetadata {meta}')
     return generate_community_spec(meta, locations, bootstrappers)
 
 
