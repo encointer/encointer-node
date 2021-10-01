@@ -18,3 +18,40 @@ Includes
 ```
 
 Find a full ceremony cycle demo [here](./bootstrap_demo_community.py)
+
+# run a local bot community benchmark
+
+start encointer blockchain in dev mode
+```bash
+./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true
+```
+
+start faucet service
+```bash
+cd client
+./faucet.py
+```
+
+initialize bot community
+```bash
+cd client
+./bot-community.py init
+```
+
+start phase controller service (fast forwards phase after N idle blocks)
+```bash
+cd client
+./phase.py
+```
+
+listen to chain events for debugging (i.e. see failed extrinsics)
+```bash
+RUST_LOG=encointer_client_notee=info ./target/release/encointer-client-notee listen
+```
+
+benchmark bot community
+```bash
+cd client
+./bot-community.py init
+```
+

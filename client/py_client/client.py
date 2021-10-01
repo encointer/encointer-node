@@ -15,6 +15,10 @@ class ExtrinsicFeePaymentImpossible(Error):
     """Signer can't pay fees. Either because account does not exist or the balance is too low"""
     pass
 
+class ParticipantAlreadyLinked(Error):
+    """Can't register participant. reputation has already been linked"""
+    pass
+
 class UnknownError(Error):
     pass
 
@@ -25,6 +29,8 @@ def ensure_clean_exit(returncode):
         raise ExtrinsicWrongPhase
     if returncode == 51:
         raise ExtrinsicFeePaymentImpossible
+    if returncode == 52:
+        raise ParticipantAlreadyLinked
     raise UnknownError
 
 class Client:
@@ -66,7 +72,7 @@ class Client:
 
     def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
         if is_faucet:
-            subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+            ret = subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
             ensure_clean_exit(ret.returncode)
         else:
             payload = {'accounts': accounts}

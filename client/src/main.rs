@@ -478,7 +478,7 @@ fn main() {
 
                     // >>>> add some debug info as well
                     let bn = get_block_number(&api);
-                    info!("block number: {}", bn);
+                    debug!("block number: {}", bn);
                     let cindex = get_ceremony_index(&api);
                     info!("ceremony index: {}", cindex);
                     let tnext: Moment = api.get_storage_value(
@@ -486,7 +486,7 @@ fn main() {
                         "NextPhaseTimestamp",
                         None
                     ).unwrap().unwrap();
-                    info!("next phase timestamp: {}", tnext);
+                    debug!("next phase timestamp: {}", tnext);
                     // <<<<
 
                     let phase = get_current_phase(&api);
@@ -636,7 +636,10 @@ fn main() {
                         Reputation::Unverified => None,
                         Reputation::UnverifiedReputable => None, // this should never by the case during REGISTERING!
                         Reputation::VerifiedUnlinked => Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
-                        Reputation::VerifiedLinked => panic!("reputation of {} has already been linked! Not registering again", accountid),
+                        Reputation::VerifiedLinked => {
+                            error!("reputation of {} has already been linked! Not registering again", accountid);
+                            std::process::exit(52);
+                        },
                     };
                     debug!("proof: {:x?}", proof.encode());
                     if get_current_phase(&api) != CeremonyPhaseType::REGISTERING {
@@ -854,7 +857,7 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
 		matches.value_of("node-url").unwrap(),
 		matches.value_of("node-port").unwrap()
 	);
-	info!("connecting to {}", url);
+	debug!("connecting to {}", url);
     let client = WsRpcClient::new(&url);
 	Api::<sr25519::Pair, _>::new(client).unwrap()
 }
@@ -882,8 +885,8 @@ fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
     };
     let fee = api.get_fee_details(xt, None)
         .unwrap().unwrap()
-        .inclusion_fee.unwrap()
-        .base_fee;
+        .inclusion_fee
+        .map_or_else(|| 0, | details | details.base_fee);
     let ed = api.get_existential_deposit().unwrap();
     if signer_balance < fee + ed {
         error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
@@ -895,7 +898,7 @@ fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
 
 fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches);
-	info!("Subscribing to events");
+	debug!("Subscribing to events");
 	let (events_in, events_out) = channel();
 	let mut count = 0u32;
 	let mut blocks = 0u32;
@@ -923,7 +926,7 @@ fn listen(matches: &ArgMatches<'_>) {
 					match &evr.event {
 						Event::EncointerCeremonies(ee) => {
 							count += 1;
-							println!(">>>>>>>>>> ceremony event: {:?}", ee);
+							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
 								encointer_ceremonies::RawEvent::ParticipantRegistered(
 									accountid,
@@ -937,7 +940,7 @@ fn listen(matches: &ArgMatches<'_>) {
 						},
 						Event::EncointerScheduler(ee) => {
 							count += 1;
-							println!(">>>>>>>>>> scheduler event: {:?}", ee);
+							info!(">>>>>>>>>> scheduler event: {:?}", ee);
 							match &ee {
 								encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
@@ -946,7 +949,7 @@ fn listen(matches: &ArgMatches<'_>) {
 						},
 						Event::EncointerCommunities(ee) => {
 							count += 1;
-							println!(">>>>>>>>>> community event: {:?}", ee);
+							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
 								encointer_communities::RawEvent::CommunityRegistered(
 									account,
@@ -984,6 +987,17 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
 						},
+                        Event::System(ee) => {
+                            match ee {
+                                frame_system::Event::ExtrinsicFailed(err, info) => {
+                                    error!("ExtrinsicFailed: {:?} {:?}", err, info);
+                                }
+                                frame_system::Event::ExtrinsicSuccess(info) => {
+                                    println!("ExtrinsicSuccess: {:?}", info);
+                                }
+                                _ => debug!("ignoring unsupported system Event"),
+                            }
+                        }
 						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
 					}
 				},
@@ -1017,7 +1031,7 @@ fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIden
 }
 
 fn get_accountid_from_str(account: &str) -> AccountId {
-	info!("getting AccountId from -{}-", account);
+	debug!("getting AccountId from -{}-", account);
 	match &account[..2] {
 		"//" => AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
 			.into_account(),
@@ -1027,15 +1041,15 @@ fn get_accountid_from_str(account: &str) -> AccountId {
 
 // get a pair either form keyring (well known keys) or from the store
 fn get_pair_from_str(account: &str) -> sr25519::AppPair {
-	info!("getting pair for {}", account);
+	debug!("getting pair for {}", account);
 	match &account[..2] {
 		"//" => sr25519::AppPair::from_string(account, None).unwrap(),
 		_ => {
-			info!("fetching from keystore at {}", &KEYSTORE_PATH);
+			debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 			// open store without password protection
 			let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
 				.expect("store should exist");
-			info!("store opened");
+			trace!("store opened");
 			let pair = store
 				.key_pair::<sr25519::AppPair>(
 					&sr25519::Public::from_ss58check(account).unwrap().into(),

@@ -28,7 +28,7 @@ from math import floor
 
 from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder
 from py_client.arg_parser import simple_parser
-from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError
+from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, ParticipantAlreadyLinked
 from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
 
@@ -102,8 +102,12 @@ def register_participants(client: Client, accounts, cid):
             client.register_participant(p, cid)
         except ExtrinsicFeePaymentImpossible:
             need_refunding.append(p)
-    print(f'the following accounts are out of funds and will be refunded {need_refunding}')
-    client.faucet(need_refunding)
+        except ParticipantAlreadyLinked:
+            pass
+
+    if len(need_refunding) > 0:
+        print(f'the following accounts are out of funds and will be refunded {need_refunding}')
+        client.faucet(need_refunding)
 
 def perform_meetup(client: Client, meetup, cid):
     n = len(meetup)
@@ -127,6 +131,10 @@ def run(client: str, port: int):
     if phase == 'REGISTERING':
         register_participants(client, accounts, cid)
         client.await_block()
+    if phase == "ASSIGNING":
+        meetups = client.list_meetups(cid);
+        meetup_sizes = list(map(lambda x: len(x), meetups))
+        print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
     if phase == 'ATTESTING':
         meetups = client.list_meetups(cid)
         print(f'****** Performing {len(meetups)} meetups')
