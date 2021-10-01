@@ -55,3 +55,22 @@ cd client
 ./bot-community.py init
 ```
 
+if you'd like to test bazaar with dummy businesses and offerings too, you need to provide IPFS.
+
+either through infura:
+
+```
+export IPFS_ADD_URL=https://ipfs.infura.io:5001/api/v0/add
+export IPFS_API_KEY=<user>:<password>
+./bot-communities.py init
+./register-businesses.py
+```
+
+or locally:
+
+```
+# you may need to run 'ipfs init'
+ipfs daemon
+./bot-communities.py init --ipfs-local
+./register-businesses.py  --ipfs-local
+```
