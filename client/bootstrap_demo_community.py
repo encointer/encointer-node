@@ -58,7 +58,10 @@ def main(ipfs_local, client=Client()):
     spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'
 
     cid = client.new_community(spec_file_path, account1)
-    print(f'Registered community with cid: {cid}')
+    if len(cid) > 10:
+        print(f'Registered community with cid: {cid}')
+    else:
+        exit(1)
 
     print('Uploading icons to ipfs')
     root_dir = os.path.realpath(ICONS_PATH)
