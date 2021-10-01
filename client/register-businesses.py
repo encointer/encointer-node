@@ -15,6 +15,8 @@ from py_client.helpers import purge_prompt, read_cid, mkdir_p
 BUSINESSES_PATH = '../test-data/bazaar/businesses'
 OFFERINGS_PATH = '../test-data/bazaar/offerings'
 
+ICON_PATH = '../test-data/icons/community_icon.png'
+
 
 def create_businesses(amount: int):
     """
@@ -59,12 +61,16 @@ def random_business():
 
     Note:   This `Business` format is not definite, but it does not matter for simple testing as we upload only
             the ipfs_cid.
+            Later, the Icon should be a user specified one, this is just for testing
     :return:
     """
+    print("adding business image to remote: ")
+    image_cid = Ipfs.add(ICON_PATH)
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
-        "description": s.sentence()
+        "description": s.sentence(),
+        "image_cid": image_cid
     }
 
 
@@ -77,11 +83,13 @@ def random_offering(community_identifier):
     :param community_identifier:
     :return:
     """
+    print("adding offering image to remote: ")
+    image_cid = Ipfs.add(ICON_PATH)
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
         "community": community_identifier,
-        "image_cid": "Defau1tCidThat1s46Characters1nLength1111111111"
+        "image_cid": image_cid
     }
 
 
@@ -93,7 +101,9 @@ def shop_owners():
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(prog='bootstrap-demo-community', parents=[simple_parser()])
+    p = argparse.ArgumentParser(
+    prog='register-businesses', parents=[simple_parser()])
+    p.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
     args = p.parse_args()
 
     print(f"Starting script with client '{args.client}' on port {args.port}")
@@ -105,8 +115,9 @@ if __name__ == '__main__':
     cid = read_cid()
 
     create_businesses(2)
-    business_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(BUSINESSES_PATH + '/*.json'))
+    business_ipfs_cids = Ipfs.add_multiple(glob.glob(BUSINESSES_PATH + '/*.json'),args.ipfs_local)
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
+
     for bi in range(len(business_ipfs_cids)):
         # upload with different owners to test rpc `bazaar_getBusinesses`
         c = business_ipfs_cids[bi]
@@ -120,8 +131,10 @@ if __name__ == '__main__':
         client.await_block()
 
     create_offerings(cid, 5)
-    offerings_ipfs_cids = Ipfs.add_recursive_multiple(glob.glob(OFFERINGS_PATH + '/*.json'))
+
+    offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'), args.ipfs_local)
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
+
     for c in offerings_ipfs_cids:
         # always upload to the same owner to test rpc `bazaar_getOfferingsForBusiness`
         owner = owners[0]
