@@ -80,7 +80,11 @@ const KEYSTORE_PATH: &str = "my_keystore";
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-
+mod exit_code {
+    pub const WRONG_PHASE: i32 = 50;
+    pub const FEE_PAYMENT_FAILED: i32 = 51;
+    pub const INVALID_REPUTATION: i32 = 52;
+}
 
 fn main() {
 	env_logger::init();
@@ -638,13 +642,13 @@ fn main() {
                         Reputation::VerifiedUnlinked => Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
                         Reputation::VerifiedLinked => {
                             error!("reputation of {} has already been linked! Not registering again", accountid);
-                            std::process::exit(52);
+                            std::process::exit(exit_code::INVALID_REPUTATION);
                         },
                     };
                     debug!("proof: {:x?}", proof.encode());
                     if get_current_phase(&api) != CeremonyPhaseType::REGISTERING {
                         error!("wrong ceremony phase for registering participant");
-                        std::process::exit(50);
+                        std::process::exit(exit_code::WRONG_PHASE);
                     }
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
@@ -880,7 +884,7 @@ fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
         Some(bal) => bal.free,
         None => {
             error!("account does not exist on chain");
-            std::process::exit(51);
+            std::process::exit(exit_code::FEE_PAYMENT_FAILED);
         }
     };
     let fee = api.get_fee_details(xt, None)
@@ -890,7 +894,7 @@ fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
     let ed = api.get_existential_deposit().unwrap();
     if signer_balance < fee + ed {
         error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
-        std::process::exit(51);
+        std::process::exit(exit_code::FEE_PAYMENT_FAILED);
     }
     debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
 }
@@ -987,6 +991,10 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
 						},
+                        Event::EncointerBazaar(ee) => {
+                            count += 1;
+                            println!(">>>>>>>>>> encointer bazaar event: {:?}", ee);
+                        }
                         Event::System(ee) => {
                             match ee {
                                 frame_system::Event::ExtrinsicFailed(err, info) => {
