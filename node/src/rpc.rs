@@ -10,10 +10,10 @@ use std::sync::Arc;
 use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, Index};
 use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
 pub use sc_rpc_api::DenyUnsafe;
+use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_transaction_pool::TransactionPool;
 
 /// Full client dependencies.
 ///
