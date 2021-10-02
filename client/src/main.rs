@@ -475,6 +475,27 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("list-locations")
+                .description("list all meetup locations for a community")
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid"),
+                    );
+                    println!(
+                        "listing locations for cid {}",
+                        cid.encode().to_base58()
+                    );
+                    let loc = get_community_locations(&api, cid).unwrap();
+                    for l in loc.iter() {
+                        println!("lat: {} lon: {}", l.lat, l.lon);
+                    }
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("get-phase")
                 .description("read current ceremony phase from chain")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
@@ -1183,7 +1204,7 @@ fn new_claim_for(
 	// implicitly assume that participant meet at the right place at the right time
 	let mloc = get_meetup_location(api, cid, mindex).unwrap();
 	let mtime = get_meetup_time(api, cid, mindex).unwrap();
-
+    info!("creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}", claimant.public().to_ss58check(), mindex, mloc.lat, mloc.lon, mtime, cindex );
 	let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> =
 		ClaimOfAttendance::new_unsigned(
 			claimant.public().into(),

@@ -41,7 +41,7 @@ def random_community_spec(bootstrappers, ipfs_cid):
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print(f'created {len(locations)} random locations around {point}.')
 
-    name = '#' + '-'.join(RandomWords().random_words(count=1))
+    name = 'bot' + '-'.join(RandomWords().random_words(count=1))
     symbol = name[1:4].upper()
     meta = meta_json(name, symbol, ipfs_cid)
     print(f'CommunityMetadata {meta}')
