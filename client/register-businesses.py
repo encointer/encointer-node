@@ -16,6 +16,7 @@ from py_client.helpers import purge_prompt, read_cid, mkdir_p
 BUSINESSES_PATH = '../test-data/bazaar/businesses'
 OFFERINGS_PATH = '../test-data/bazaar/offerings'
 
+ICON_PATH = '../test-data/icons/community_icon.png'
 
 def create_businesses(amount: int):
     """
@@ -60,12 +61,16 @@ def random_business():
 
     Note:   This `Business` format is not definite, but it does not matter for simple testing as we upload only
             the ipfs_cid.
+            Later, the Icon should be a user specified one, this is just for testing
     :return:
     """
+    print("adding business image to remote: ")
+    image_cid = Ipfs.add(ICON_PATH)
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
-        "description": s.sentence()
+        "description": s.sentence(),
+        "image_cid": image_cid
     }
 
 
@@ -78,11 +83,13 @@ def random_offering(community_identifier):
     :param community_identifier:
     :return:
     """
+    print("adding offering image to remote: ")
+    image_cid = Ipfs.add(ICON_PATH)
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
         "community": community_identifier,
-        "image_cid": "Defau1tCidThat1s46Characters1nLength1111111111"
+        "image_cid": image_cid
     }
 
 
