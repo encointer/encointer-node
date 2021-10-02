@@ -22,7 +22,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
+use codec::Encode;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
@@ -50,9 +50,11 @@ pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	common::PalletString,
-	communities::CommunityIdentifier,
+	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
+
+use encointer_communities_rpc_runtime_api::LocationSerialized;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -527,6 +529,18 @@ impl_runtime_apis! {
 		fn get_name(cid: &CommunityIdentifier) -> Option<PalletString> {
 			EncointerCommunities::get_name(cid)
 		}
+
+		fn get_locations(cid: &CommunityIdentifier) -> Vec<LocationSerialized> {
+			let loc = EncointerCommunities::get_locations(cid);
+			// we only need this because serde can't serialize i128
+			// https://github.com/paritytech/substrate/issues/4641
+			loc.iter().map(|l| {
+                        let mut ls = LocationSerialized::default();
+                        ls.copy_from_slice( &l.encode()[0..32]);
+                        ls
+			}).collect()
+		}
+
 	}
 
 	impl encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {

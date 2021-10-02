@@ -58,7 +58,10 @@ def main(ipfs_local, client=Client()):
     spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'
 
     cid = client.new_community(spec_file_path, account1)
-    print(f'Registered community with cid: {cid}')
+    if len(cid) > 10:
+        print(f'Registered community with cid: {cid}')
+    else:
+        exit(1)
 
     print('Uploading icons to ipfs')
     root_dir = os.path.realpath(ICONS_PATH)
@@ -73,7 +76,7 @@ def main(ipfs_local, client=Client()):
 
     # charlie has no genesis funds
     print('Faucet is dripping to Charlie...')
-    client.faucet([account3])
+    client.faucet([account3], is_faucet = True)
 
     blocks_to_wait = 3
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
@@ -93,6 +96,7 @@ def main(ipfs_local, client=Client()):
     print(client.list_meetups(cid))
     client.next_phase()
 
+    print(f'Performing meetups for cid {cid}')
     perform_meetup(client, cid)
 
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")

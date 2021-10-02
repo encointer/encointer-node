@@ -9,6 +9,8 @@
 # The cache for docker container dependency
 .cargo
 
+.idea
+
 # The cache for chain data in container
 .local
 /client/my_keystore/

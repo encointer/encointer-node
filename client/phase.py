@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""
+encointer ceremony phase controller
+
+Will observe the blockchain events and forward the ceremony phase whenever N blocks were idle
+
+useful for benchmarking bot communities in a local setup
+"""
+
 import subprocess
 import substrateinterface
 import json
@@ -8,7 +17,7 @@ global COUNT
 
 def subscription_handler(event_count, update_nr, subscription_id):
     global COUNT
-    print(event_count, COUNT)
+    print(f'events: {event_count}, idle blocks {COUNT}')
     if COUNT > 10:
         return update_nr
     elif event_count.value == 1:

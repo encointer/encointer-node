@@ -123,10 +123,6 @@ jobs:
     - name: start dev node
       run:
         ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
-    - name: start faucet service
-      run: |
-        cd client
-        python faucet.py &
 
     - name: bootstrap community
       run: |

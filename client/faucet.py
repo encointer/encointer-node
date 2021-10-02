@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""
+start a http service that acts as a faucet.
+
+test with
+curl -X GET http://localhost:5000/api?accounts=5GpStrTKCVJNfhF8qUrQaKCQxHLnpVXmjM1nmw9LLv3rZYRF
+
+"""
+
 import sys
 import flask
 from flask import request, jsonify
@@ -32,10 +41,14 @@ def faucet(accounts):
 @app.route('/api', methods=['GET'])
 def faucet_service():
     query_parameters = request.args
+    print(f'request args {query_parameters}')
     accounts = query_parameters.getlist('accounts')
-    res = faucet(accounts)
-    return jsonify(success=res)
-
+    print(f'got request to fund {accounts}')
+    if len(accounts) > 0:
+        res = faucet(accounts)
+        return jsonify(success=res)
+    else:
+        return "no accounts provided to drip to\n"
 
 app.run()
 
