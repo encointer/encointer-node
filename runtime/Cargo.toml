@@ -7,7 +7,7 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "0.4.8"
+version = "0.7.9"
 
 [dependencies.encointer-scheduler]
 default-features = false
@@ -64,46 +64,48 @@ package = "substrate-fixed"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { features = ["derive"], optional = true, version = "1.0.101" }
 
-pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-offchain = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-session = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-transaction-pool = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-version = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-aura = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-balances = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+frame-support = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-grandpa = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-randomness-collective-flip = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-sudo = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-transaction-payment = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+frame-executive = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-block-builder = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-consensus-aura = { version = "0.10.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-core = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-inherents = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-offchain = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-runtime = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-session = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-std = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-transaction-pool = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-version = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 
 # Used for the node's RPCs
-frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+frame-system-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 
 # Used for runtime benchmarking
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master"}
-frame-system-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master"}
+frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 hex-literal = { version = "0.3.1", optional = true }
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
+substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 
 [features]
 default = ["std"]
 std = [
     "codec/std",
+    "scale-info/std",
     "serde",
     "frame-executive/std",
     "frame-support/std",
@@ -136,7 +138,7 @@ std = [
 	"encointer-bazaar/std",
     "encointer-bazaar-rpc-runtime-api/std",
     "encointer-primitives/std",
-    "fixed/std"    
+    "fixed/std"
 ]
 runtime-benchmarks = [
     "frame-benchmarking",
@@ -147,4 +149,5 @@ runtime-benchmarks = [
     "pallet-balances/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "sp-runtime/runtime-benchmarks",
+    "encointer-communities/runtime-benchmarks"
 ]

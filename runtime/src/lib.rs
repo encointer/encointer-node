@@ -22,7 +22,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
+use codec::Encode;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
@@ -50,9 +50,11 @@ pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	common::PalletString,
-	communities::CommunityIdentifier,
+	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
+
+use encointer_communities_rpc_runtime_api::LocationSerialized;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -119,7 +121,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	/// Version of the runtime specification. A full-node will not attempt to use its native
 	/// runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	/// `spec_version` and `authoring_version` are the same between Wasm and native.
-	spec_version: 8,
+	spec_version: 9,
 
 	/// Version of the implementation of the specification. Nodes are free to ignore this; it
 	/// serves only as an indication that the code is different; as long as the other two versions
@@ -175,7 +177,7 @@ parameter_types! {
 
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = ();
+	type BaseCallFilter = frame_support::traits::Everything;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = BlockWeights;
 	/// The maximum length of a block (in bytes).
@@ -224,8 +226,16 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = ();
 }
 
+impl pallet_randomness_collective_flip::Config for Runtime {}
+
+parameter_types! {
+	pub const MaxAuthorities: u32 = 32;
+}
+
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
+	type DisabledValidators = ();
+	type MaxAuthorities = MaxAuthorities;
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -266,6 +276,8 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -307,7 +319,7 @@ impl encointer_ceremonies::Config for Runtime {
 	type Signature = MultiSignature;
 	// Note: in production networks it is advised to use babes randomness source.
 	// But we have low security requirements here, so it should be fine.
-	type RandomnessSource = pallet_randomness_collective_flip::Module<Runtime>;
+	type RandomnessSource = pallet_randomness_collective_flip::Pallet<Runtime>;
 }
 
 impl encointer_communities::Config for Runtime {
@@ -330,7 +342,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Aura: pallet_aura::{Pallet, Config<T>},
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
@@ -424,8 +436,9 @@ impl_runtime_apis! {
 		fn validate_transaction(
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx)
+			Executive::validate_transaction(source, tx, block_hash)
 		}
 	}
 
@@ -441,7 +454,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities()
+			Aura::authorities().into_inner()
 		}
 	}
 
@@ -460,6 +473,10 @@ impl_runtime_apis! {
 	impl fg_primitives::GrandpaApi<Block> for Runtime {
 		fn grandpa_authorities() -> GrandpaAuthorityList {
 			Grandpa::grandpa_authorities()
+		}
+
+		fn current_set_id() -> fg_primitives::SetId {
+			Grandpa::current_set_id()
 		}
 
 		fn submit_report_equivocation_unsigned_extrinsic(
@@ -512,6 +529,18 @@ impl_runtime_apis! {
 		fn get_name(cid: &CommunityIdentifier) -> Option<PalletString> {
 			EncointerCommunities::get_name(cid)
 		}
+
+		fn get_locations(cid: &CommunityIdentifier) -> Vec<LocationSerialized> {
+			let loc = EncointerCommunities::get_locations(cid);
+			// we only need this because serde can't serialize i128
+			// https://github.com/paritytech/substrate/issues/4641
+			loc.iter().map(|l| {
+                        let mut ls = LocationSerialized::default();
+                        ls.copy_from_slice( &l.encode()[0..32]);
+                        ls
+			}).collect()
+		}
+
 	}
 
 	impl encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {
@@ -526,6 +555,26 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+			use frame_system_benchmarking::Pallet as SystemBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_balances, Balances);
+			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			list_benchmark!(list, extra, encointer_communities, EncointerCommunities);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
@@ -553,6 +602,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			add_benchmark!(params, batches, encointer_communities, EncointerCommunities);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

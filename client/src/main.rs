@@ -19,6 +19,8 @@
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
+#![feature(array_methods)]
+
 mod cli_args;
 
 #[macro_use]
@@ -66,16 +68,23 @@ use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline,
 	extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
-	node_metadata::Metadata,
+	Metadata,
 	utils::FromHexString,
 	Api, XtStatus,
+    rpc::WsRpcClient,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 type AccountPublic = <Signature as Verify>::Signer;
 const KEYSTORE_PATH: &str = "my_keystore";
-const PREFUNDING_AMOUNT: u128 = 100_000_000_000;
+const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+mod exit_code {
+    pub const WRONG_PHASE: i32 = 50;
+    pub const FEE_PAYMENT_FAILED: i32 = 51;
+    pub const INVALID_REPUTATION: i32 = 52;
+}
 
 fn main() {
 	env_logger::init();
@@ -174,7 +183,12 @@ fn main() {
                         .set_signer(AccountKeyring::Alice.pair());
                     let accounts: Vec<_> = matches.values_of("accounts").unwrap().collect();
 
+                    let existential_deposit = api.get_existential_deposit().unwrap();
+                    info!("Existential deposit is = {:?}", existential_deposit);
+
                     let mut nonce = api.get_nonce().unwrap();
+
+                    let amount = reasonable_native_balance(&api);
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
                         let call = compose_call!(
@@ -182,7 +196,7 @@ fn main() {
                             "Balances",
                             "transfer",
                             GenericAddress::Id(to.clone()),
-                            Compact(PREFUNDING_AMOUNT)
+                            Compact(amount)
                         );
                         let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
                             api.clone().signer.unwrap(),
@@ -194,8 +208,9 @@ fn main() {
                             api.runtime_version.spec_version,
                             api.runtime_version.transaction_version
                         );
+                        ensure_payment(&api, &xt.hex_encode());
                         // send and watch extrinsic until finalized
-                        println!("Faucet drips to {} (Alice's nonce={})", to, nonce);
+                        println!("Faucet drips {} to {} (Alice's nonce={})", amount, to, nonce);
                         let _blockh = api
                             .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
                             .unwrap();
@@ -287,6 +302,7 @@ fn main() {
                                 cid,
                                 amount
                             );
+                            ensure_payment(&_api, &xt.hex_encode());
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {
@@ -296,6 +312,7 @@ fn main() {
                                 GenericAddress::Id(to.clone()),
                                 amount
                             );
+                            ensure_payment(&_api, &xt.hex_encode());
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         }
                     };
@@ -387,7 +404,7 @@ fn main() {
 
                     info!("Metadata: {:?}", meta);
 
-                    let cid = blake2_256(&(loc.clone(), bootstrappers.clone()).encode());
+                    let cid = blake2_256(&(loc[0].clone(), bootstrappers.clone()).encode());
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
@@ -398,14 +415,47 @@ fn main() {
                         _api.clone(),
                         "EncointerCommunities",
                         "new_community",
-                        loc,
+                        loc[0],
                         bootstrappers,
                         meta,
                         None::<Demurrage>,
                         None::<NominalIncome>
                     );
+                    ensure_payment(&_api, &xt.hex_encode());
                     let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+                    let mut nonce = _api.get_nonce().unwrap();
+                    // only the first meetup location has been registered now. register all others one-by-one
+                    loc.remove(0);
+                    let last = nonce + loc.len() as u32 -1 ;
+                    for l in loc.into_iter() {
+                        let call = compose_call!(
+                            _api.metadata,
+                            "EncointerCommunities",
+                            "add_location",
+                            cid,
+                            l
+                        );
+                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
+                            _api.clone().signer.unwrap(),
+                            call.clone(),
+                            nonce,
+                            Era::Immortal,
+                            api.genesis_hash,
+                            api.genesis_hash,
+                            api.runtime_version.spec_version,
+                            api.runtime_version.transaction_version
+                        );
+                        if nonce == last {
+                            // only check once at the end
+                            ensure_payment(&_api, &xt.hex_encode());
+                        }
+                        info!("   Registering location {:?}", l);
+                        let _blockh = _api
+                            .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
+                            .unwrap();
+                        nonce += 1;
+                    }
                     println!("{}", cid.to_base58());
                     Ok(())
                 }),
@@ -418,7 +468,29 @@ fn main() {
                     let names = get_cid_names(&api).unwrap();
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
-                        println!("{:?}", n);
+                        let loc = get_community_locations(&api, n.cid).unwrap();
+                        println!("{}: {} locations: {}", n.cid.encode().to_base58(), n.name, loc.len());
+                    }
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("list-locations")
+                .description("list all meetup locations for a community")
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid"),
+                    );
+                    println!(
+                        "listing locations for cid {}",
+                        cid.encode().to_base58()
+                    );
+                    let loc = get_community_locations(&api, cid).unwrap();
+                    for l in loc.iter() {
+                        println!("lat: {} lon: {}", l.lat, l.lon);
                     }
                     Ok(())
                 }),
@@ -429,9 +501,9 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
 
-                    // >>>> add some debug info as well     
+                    // >>>> add some debug info as well
                     let bn = get_block_number(&api);
-                    info!("block number: {}", bn);
+                    debug!("block number: {}", bn);
                     let cindex = get_ceremony_index(&api);
                     info!("ceremony index: {}", cindex);
                     let tnext: Moment = api.get_storage_value(
@@ -439,7 +511,7 @@ fn main() {
                         "NextPhaseTimestamp",
                         None
                     ).unwrap().unwrap();
-                    info!("next phase timestamp: {}", tnext);
+                    debug!("next phase timestamp: {}", tnext);
                     // <<<<
 
                     let phase = get_current_phase(&api);
@@ -456,7 +528,7 @@ fn main() {
 
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "EncointerScheduler", "next_phase");
-
+                    ensure_payment(&api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     let phase = get_current_phase(&api);
@@ -508,9 +580,9 @@ fn main() {
                     let mcount = get_meetup_count(&api, (cid, cindex));
                     println!("number of meetups assigned:  {}", mcount);
                     for m in 1..=mcount {
-                        println!("MeetupRegistry[{}, {}] location is {:?}", 
+                        println!("MeetupRegistry[{}, {}] location is {:?}",
                             cindex, m, get_meetup_location(&api, cid, m));
-                        println!("MeetupRegistry[{}, {}] meeting time is {:?}", 
+                        println!("MeetupRegistry[{}, {}] meeting time is {:?}",
                             cindex, m, get_meetup_time(&api, cid, m));
                         match get_meetup_participants(&api, (cid, cindex), m) {
                             Some(participants) => {
@@ -589,12 +661,15 @@ fn main() {
                         Reputation::Unverified => None,
                         Reputation::UnverifiedReputable => None, // this should never by the case during REGISTERING!
                         Reputation::VerifiedUnlinked => Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
-                        Reputation::VerifiedLinked => panic!("reputation of {} has already been linked! Not registering again", accountid),
+                        Reputation::VerifiedLinked => {
+                            error!("reputation of {} has already been linked! Not registering again", accountid);
+                            std::process::exit(exit_code::INVALID_REPUTATION);
+                        },
                     };
                     debug!("proof: {:x?}", proof.encode());
                     if get_current_phase(&api) != CeremonyPhaseType::REGISTERING {
-                        println!("wrong ceremony phase for registering participant");
-                        return Ok(())
+                        error!("wrong ceremony phase for registering participant");
+                        std::process::exit(exit_code::WRONG_PHASE);
                     }
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
@@ -604,9 +679,10 @@ fn main() {
                         cid,
                         proof
                     );
+                    ensure_payment(&_api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Registration sent for {}. status: 'ready'", arg_who);
+                    info!("Registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
         )
@@ -670,6 +746,7 @@ fn main() {
                         "attest_claims",
                         claims.clone()
                     );
+                    ensure_payment(&api, &xt.hex_encode());
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
                     println!("Claims sent by {}. status: 'ready'", arg_who);
                     Ok(())
@@ -799,19 +876,54 @@ fn main() {
         .run();
 }
 
-fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair> {
+fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
 	let url = format!(
 		"{}:{}",
 		matches.value_of("node-url").unwrap(),
 		matches.value_of("node-port").unwrap()
 	);
-	info!("connecting to {}", url);
-	Api::<sr25519::Pair>::new(url).unwrap()
+	debug!("connecting to {}", url);
+    let client = WsRpcClient::new(&url);
+	Api::<sr25519::Pair, _>::new(client).unwrap()
 }
+
+fn reasonable_native_balance(api: &Api<sr25519::Pair, WsRpcClient>) -> u128 {
+    let xt = api.balance_transfer(
+        GenericAddress::Id(AccountKeyring::Alice.into()),
+        9999
+    );
+    let fee = api.get_fee_details(&xt.hex_encode(), None)
+        .unwrap().unwrap()
+        .inclusion_fee.unwrap()
+        .base_fee;
+    let ed = api.get_existential_deposit().unwrap();
+    return ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
+}
+
+fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
+    let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
+        Some(bal) => bal.free,
+        None => {
+            error!("account does not exist on chain");
+            std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+        }
+    };
+    let fee = api.get_fee_details(xt, None)
+        .unwrap().unwrap()
+        .inclusion_fee
+        .map_or_else(|| 0, | details | details.base_fee);
+    let ed = api.get_existential_deposit().unwrap();
+    if signer_balance < fee + ed {
+        error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
+        std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+    }
+    debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
+}
+
 
 fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches);
-	info!("Subscribing to events");
+	debug!("Subscribing to events");
 	let (events_in, events_out) = channel();
 	let mut count = 0u32;
 	let mut blocks = 0u32;
@@ -837,9 +949,9 @@ fn listen(matches: &ArgMatches<'_>) {
 				for evr in &evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
-						Event::encointer_ceremonies(ee) => {
+						Event::EncointerCeremonies(ee) => {
 							count += 1;
-							println!(">>>>>>>>>> ceremony event: {:?}", ee);
+							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
 								encointer_ceremonies::RawEvent::ParticipantRegistered(
 									accountid,
@@ -851,18 +963,18 @@ fn listen(matches: &ArgMatches<'_>) {
 								},
 							}
 						},
-						Event::encointer_scheduler(ee) => {
+						Event::EncointerScheduler(ee) => {
 							count += 1;
-							println!(">>>>>>>>>> scheduler event: {:?}", ee);
+							info!(">>>>>>>>>> scheduler event: {:?}", ee);
 							match &ee {
 								encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
 								},
 							}
 						},
-						Event::encointer_communities(ee) => {
+						Event::EncointerCommunities(ee) => {
 							count += 1;
-							println!(">>>>>>>>>> community event: {:?}", ee);
+							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
 								encointer_communities::RawEvent::CommunityRegistered(
 									account,
@@ -896,10 +1008,25 @@ fn listen(matches: &ArgMatches<'_>) {
 								},
 							}
 						},
-						Event::encointer_balances(ee) => {
+						Event::EncointerBalances(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
 						},
+                        Event::EncointerBazaar(ee) => {
+                            count += 1;
+                            println!(">>>>>>>>>> encointer bazaar event: {:?}", ee);
+                        }
+                        Event::System(ee) => {
+                            match ee {
+                                frame_system::Event::ExtrinsicFailed(err, info) => {
+                                    error!("ExtrinsicFailed: {:?} {:?}", err, info);
+                                }
+                                frame_system::Event::ExtrinsicSuccess(info) => {
+                                    println!("ExtrinsicSuccess: {:?}", info);
+                                }
+                                _ => debug!("ignoring unsupported system Event"),
+                            }
+                        }
 						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
 					}
 				},
@@ -911,7 +1038,7 @@ fn listen(matches: &ArgMatches<'_>) {
 /// Extracts api and cid from `matches` and execute the given `closure` with them.
 fn extract_and_execute<T>(
 	matches: &ArgMatches<'_>,
-	closure: impl FnOnce(&Api<sr25519::Pair>, CommunityIdentifier) -> T,
+	closure: impl FnOnce(&Api<sr25519::Pair, WsRpcClient>, CommunityIdentifier) -> T,
 ) -> T {
 	let api = get_chain_api(matches);
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
@@ -923,7 +1050,7 @@ fn get_cid(cid: &str) -> CommunityIdentifier {
 		.expect("failed to decode cid")
 }
 
-fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CommunityIdentifier {
+fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIdentifier {
 	let cids = get_community_identifiers(&api).expect("no community registered");
 	let cid = get_cid(cid);
 	if !cids.contains(&cid) {
@@ -933,7 +1060,7 @@ fn verify_cid(api: &Api<sr25519::Pair>, cid: &str) -> CommunityIdentifier {
 }
 
 fn get_accountid_from_str(account: &str) -> AccountId {
-	info!("getting AccountId from -{}-", account);
+	debug!("getting AccountId from -{}-", account);
 	match &account[..2] {
 		"//" => AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
 			.into_account(),
@@ -943,15 +1070,15 @@ fn get_accountid_from_str(account: &str) -> AccountId {
 
 // get a pair either form keyring (well known keys) or from the store
 fn get_pair_from_str(account: &str) -> sr25519::AppPair {
-	info!("getting pair for {}", account);
+	debug!("getting pair for {}", account);
 	match &account[..2] {
 		"//" => sr25519::AppPair::from_string(account, None).unwrap(),
 		_ => {
-			info!("fetching from keystore at {}", &KEYSTORE_PATH);
+			debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 			// open store without password protection
 			let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
 				.expect("store should exist");
-			info!("store opened");
+			trace!("store opened");
 			let pair = store
 				.key_pair::<sr25519::AppPair>(
 					&sr25519::Public::from_ss58check(account).unwrap().into(),
@@ -963,14 +1090,14 @@ fn get_pair_from_str(account: &str) -> sr25519::AppPair {
 	}
 }
 
-fn get_block_number(api: &Api<sr25519::Pair>) -> BlockNumber {
+fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
 	let hdr: Header = api.get_header(None).unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
 	hdr.number
 }
 
-fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Demurrage {
+fn get_demurrage_per_block(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Demurrage {
 	let mut d: Option<Demurrage> = api
 		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
 		.unwrap();
@@ -985,34 +1112,34 @@ fn get_demurrage_per_block(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -
 	d.unwrap()
 }
 
-fn get_ceremony_index(api: &Api<sr25519::Pair>) -> CeremonyIndexType {
+fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexType {
 	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
 		.unwrap()
 		.unwrap()
 }
 
-fn get_current_phase(api: &Api<sr25519::Pair>) -> CeremonyPhaseType {
+fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType {
 	api.get_storage_value("EncointerScheduler", "CurrentPhase", None)
 		.unwrap()
 		.or(Some(CeremonyPhaseType::default()))
 		.unwrap()
 }
 
-fn get_meetup_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> MeetupIndexType {
+fn get_meetup_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> MeetupIndexType {
 	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
 		.unwrap()
 		.or(Some(0))
 		.unwrap()
 }
 
-fn get_participant_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_participant_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "ParticipantCount", key, None)
 		.unwrap()
 		.or(Some(0))
 		.unwrap()
 }
 
-fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_attestee_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
@@ -1020,7 +1147,7 @@ fn get_attestee_count(api: &Api<sr25519::Pair>, key: CommunityCeremony) -> Parti
 }
 
 fn get_participant(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	pindex: ParticipantIndexType,
 ) -> Option<AccountId> {
@@ -1029,7 +1156,7 @@ fn get_participant(
 }
 
 fn get_meetup_index_for(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	account: &AccountId,
 ) -> Option<MeetupIndexType> {
@@ -1038,7 +1165,7 @@ fn get_meetup_index_for(
 }
 
 fn get_meetup_participants(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	mindex: MeetupIndexType,
 ) -> Option<Vec<AccountId>> {
@@ -1047,7 +1174,7 @@ fn get_meetup_participants(
 }
 
 fn get_attestees(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	windex: ParticipantIndexType,
 ) -> Option<Vec<AccountId>> {
@@ -1056,7 +1183,7 @@ fn get_attestees(
 }
 
 fn get_participant_attestation_index(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	accountid: &AccountId,
 ) -> Option<ParticipantIndexType> {
@@ -1065,7 +1192,7 @@ fn get_participant_attestation_index(
 }
 
 fn new_claim_for(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	claimant: &sr25519::Pair,
 	cid: CommunityIdentifier,
 	n_participants: u32,
@@ -1077,7 +1204,7 @@ fn new_claim_for(
 	// implicitly assume that participant meet at the right place at the right time
 	let mloc = get_meetup_location(api, cid, mindex).unwrap();
 	let mtime = get_meetup_time(api, cid, mindex).unwrap();
-
+    info!("creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}", claimant.public().to_ss58check(), mindex, mloc.lat, mloc.lon, mtime, cindex );
 	let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> =
 		ClaimOfAttendance::new_unsigned(
 			claimant.public().into(),
@@ -1092,20 +1219,34 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(api: &Api<sr25519::Pair>) -> Option<Vec<CommunityIdentifier>> {
+fn get_community_identifiers(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
 }
 
 fn get_community_locations(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Option<Vec<Location>> {
-	api.get_storage_map("EncointerCommunities", "Locations", cid, None).unwrap()
+    let req = json!({
+		"method": "communities_getLocations",
+		"params": vec![cid],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+    let n = api
+        .get_request(req.into())
+        .unwrap()
+        .expect("Could not find any locations for that cid...");
+    // we only need this mapping because serde can't serialize i128
+    // https://github.com/paritytech/substrate/issues/4641
+    let locations : Vec<[u8; 32]> = serde_json::from_str(&n).unwrap();
+    Some(locations.iter().map(|l| Location::decode(&mut l.as_slice()).unwrap()).collect())
 }
 
 fn get_meetup_location(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	mindex: MeetupIndexType,
 ) -> Option<Location> {
@@ -1118,7 +1259,7 @@ fn get_meetup_location(
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
-fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
+fn get_cid_names(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CidName>> {
 	let req = json!({
 		"method": "communities_getAll",
 		"params": [],
@@ -1126,13 +1267,13 @@ fn get_cid_names(api: &Api<sr25519::Pair>) -> Option<Vec<CidName>> {
 		"id": "1",
 	});
 
-	let n = api.get_request(req.to_string()).unwrap().expect(
+	let n = api.get_request(req.into()).unwrap().expect(
 		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
 	);
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_businesses(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
+fn get_businesses(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
 	let req = json!({
 		"method": "bazaar_getBusinesses",
 		"params": vec![cid],
@@ -1141,13 +1282,13 @@ fn get_businesses(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<
 	});
 
 	let n = api
-		.get_request(req.to_string())
+		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any businesses...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+fn get_offerings(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
 	let req = json!({
 		"method": "bazaar_getOfferings",
 		"params": vec![cid],
@@ -1156,14 +1297,14 @@ fn get_offerings(api: &Api<sr25519::Pair>, cid: CommunityIdentifier) -> Option<V
 	});
 
 	let n = api
-		.get_request(req.to_string())
+		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_offerings_for_business(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	account_id: AccountId,
 ) -> Option<Vec<OfferingData>> {
@@ -1177,14 +1318,14 @@ fn get_offerings_for_business(
 	});
 
 	let n = api
-		.get_request(req.to_string())
+		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_meetup_time(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	mindex: MeetupIndexType,
 ) -> Option<Moment> {
@@ -1242,7 +1383,7 @@ fn prove_attendance(
 }
 
 fn get_reputation(
-	api: &Api<sr25519::Pair>,
+	api: &Api<sr25519::Pair, WsRpcClient>,
 	prover: &AccountId,
 	cid: CommunityIdentifier,
 	cindex: CeremonyIndexType,
@@ -1290,6 +1431,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 		cid,
 		ipfs_cid
 	);
+    ensure_payment(&api, &xt.hex_encode());
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
