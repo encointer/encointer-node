@@ -65,7 +65,7 @@ def random_business():
     :return:
     """
     print("adding business image to remote: ")
-    image_cid = Ipfs.add(ICON_PATH)
+    image_cid = Ipfs.add(ICON_PATH, args.ipfs_local)
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
@@ -84,7 +84,7 @@ def random_offering(community_identifier):
     :return:
     """
     print("adding offering image to remote: ")
-    image_cid = Ipfs.add(ICON_PATH)
+    image_cid = Ipfs.add(ICON_PATH, args.ipfs_local)
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
