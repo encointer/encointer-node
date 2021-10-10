@@ -107,7 +107,7 @@ if __name__ == '__main__':
     p.add_argument('--chain-local', '-c', action='store_true', help="set this option to use the local ipfs daemon")
     args = p.parse_args()
 
-    print(f"Starting script with client '{args.client}' on port {args.port}")
+    # print(f"Starting script with client '{args.client}' on port {args.port}")
     if(args.chain_local):
         print("registering on local chain")
         client = Client(rust_client=args.client, port=args.port)
