@@ -35,10 +35,16 @@ def ensure_clean_exit(returncode):
 
 class Client:
     def __init__(self,
+                 node_url=None,
                  rust_client="../target/release/encointer-client-notee",
                  port=9944
                  ):
-        self.cli = [rust_client, '-p', str(port)]
+        if node_url:
+            print("node_url is true, node_url is:", node_url)
+            self.cli = [rust_client, '-u', node_url, '-p', str(443)]
+        else:
+            print("node_url is false, node_url is:", node_url)
+            self.cli = [rust_client, '-p', str(port)]
 
     def next_phase(self):
         ret = subprocess.run(self.cli + ["next-phase"])

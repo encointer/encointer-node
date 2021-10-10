@@ -12,7 +12,7 @@ then start a node with
 and init and grow a community
    ./bot-community.py --port 9945 init
    ./bot-community.py --port 9945 benchmark
-
+   
 on testnet Gesell, run this script once per ceremony phase (after calling `init` first)
    ./bot-community.py --port 9945 run
 
@@ -60,11 +60,16 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str, ipfs_local):
-    purge_keystore_prompt()
+def init(client: str, port: str, ipfs_local: str, chain_local: str):
     # print("ipfs_api_key_in_init_argument", ipfs_api_key)
-    client = Client(rust_client=client, port=port)
+    if (chain_local):
+        client = Client(rust_client=client, port=port)
+    else:
+        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=port )
+    purge_keystore_prompt()
+
     root_dir = os.path.realpath(ICONS_PATH)
+
     zipped_folder = zip_folder("icons",root_dir)
     ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
     print('initializing community')
@@ -160,6 +165,7 @@ if __name__ == '__main__':
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
     parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
+    parser_a.add_argument('--chain-local', '-g', action='store_true', help="set this option to use the local chain")
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
     kwargs = vars(parser.parse_args())
