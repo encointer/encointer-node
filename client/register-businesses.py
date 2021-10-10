@@ -104,10 +104,16 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(
     prog='register-businesses', parents=[simple_parser()])
     p.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
+    p.add_argument('--chain-local', '-c', action='store_true', help="set this option to use the local ipfs daemon")
     args = p.parse_args()
 
     print(f"Starting script with client '{args.client}' on port {args.port}")
-    client = Client(rust_client=args.client, port=args.port)
+    if(args.chain_local):
+        print("registering on local chain")
+        client = Client(rust_client=args.client, port=args.port)
+    else:
+        print("registering on remote chain")
+        client = Client(rust_client=args.client, node_url='wss://gesell.encointer.org')
     owners = shop_owners()
 
     # As we try to read to the cid here, we must have called `./bootstrap_demo_community.py init` before calling this
