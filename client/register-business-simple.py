@@ -97,7 +97,7 @@ def register_offering(name: str, price: int, owner, chain_local, ipfs_l):
     if ipfs_l == 'y':
         ipfs_local = True
 
-    offering_json = create_offering(name, price, ipfs_local)
+    offering_json = create_offering(name, price, cid, ipfs_local)
 
     f_name = f'{OFFERINGS_PATH}/{offering_json["name"]}.json'
     print(f'Dumping offerings {offering_json} to {f_name}')
