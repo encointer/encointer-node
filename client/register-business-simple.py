@@ -46,6 +46,7 @@ def register_business(name: str, description: str, owner, chain_local, ipfs_l):
         client = Client(node_url='wss://gesell.encointer.org')
 
     cid = read_cid()
+    ipfs_local = False
     if ipfs_l == 'y': ipfs_local = True
     business_json = create_business(name, description, ipfs_local)
     f_name = f'{BUSINESSES_PATH}/{business_json["name"]}.json'
@@ -120,12 +121,13 @@ if __name__ == '__main__':
     owner = input("Enter name of the owner:")
 
     register_business(b_name,b_descr,owner,chain_local,ipfs_local)
-    print(f"business{b_name} is being registered on node")
+    print(f"business {b_name} is being registered on node")
     offering = input("Do you want to register an offering? [y, n]")
     if(offering == 'y'):
         o_name = input("Enter a name for your offering:")
         o_price = input("Enter a price for your offering:")
         register_offering(o_name, o_price, owner,chain_local,ipfs_local)
+        print(f"offering {o_name} is being registered on node")
 
     # parser = argparse.ArgumentParser(prog='register-business-simple', parents=[simple_parser()])
     # subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
