@@ -72,7 +72,7 @@ def init(client: str, port: str, ipfs_local: str, chain_local: str):
     zipped_folder = zip_folder("icons",root_dir)
     try:
         ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
-    except():
+    except:
         print("add image to ipfs failed")
     print('initializing community')
     b = init_bootstrappers(client)
