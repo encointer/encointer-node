@@ -41,7 +41,7 @@ class Client:
                  ):
         if node_url:
             print("node_url is true, node_url is:", node_url)
-            self.cli = [rust_client, '-u', node_url, '-p', str(443)]
+            self.cli = [rust_client, '-u', node_url, '-p', str(port)]
         else:
             print("node_url is false, node_url is:", node_url)
             self.cli = [rust_client, '-p', str(port)]

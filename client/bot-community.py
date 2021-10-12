@@ -48,7 +48,7 @@ def random_community_spec(bootstrappers, ipfs_cid):
     return generate_community_spec(meta, locations, bootstrappers)
 
 
-def init_bootstrappers(client=Client()):
+def init_bootstrappers(client: Client):
     bootstrappers = client.create_accounts(10)
     print('created bootstrappers: ' + ' '.join(bootstrappers))
     client.faucet(bootstrappers)
@@ -60,12 +60,9 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str, ipfs_local: str, chain_local: str):
+def init(client: str, port: str, ipfs_local: str, node_url: str):
     # print("ipfs_api_key_in_init_argument", ipfs_api_key)
-    if (chain_local):
-        client = Client(rust_client=client, port=port)
-    else:
-        client = Client(rust_client=client, node_url='wss://gesell.encointer.org')
+    client = setLocalOrRemoteChain(client, node_url, port)
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ICONS_PATH)
@@ -81,6 +78,14 @@ def init(client: str, port: str, ipfs_local: str, chain_local: str):
     cid = client.new_community(specfile, b[0])
     print(f'created community with cid: {cid}')
     write_cid(cid)
+
+
+def setLocalOrRemoteChain(client, node_url, port):
+    if (node_url == None):
+        client = Client(rust_client=client, port=port)
+    else:
+        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+    return client
 
 
 def register_participants(client: Client, accounts, cid):
@@ -128,8 +133,8 @@ def perform_meetup(client: Client, meetup, cid):
         client.attest_claims(attestor, attestees_claims)
 
 
-def run(client: str, port: int):
-    client = Client(rust_client=client, port=port)
+def run(client: str, port: int, node_url: str):
+    client = setLocalOrRemoteChain(client,port,node_url)
     cid = read_cid()
     phase = client.get_phase()
     print(f'phase is {phase}')
@@ -151,8 +156,8 @@ def run(client: str, port: int):
     return phase
 
 
-def benchmark(client: str, port: int):
-    py_client = Client(rust_client=client, port=port)
+def benchmark(client: str, port: int, node_url: str):
+    py_client = setLocalOrRemoteChain(client,node_url,port)
     print('will grow population forever')
     while True:
         phase = run(client, port)
@@ -167,7 +172,6 @@ if __name__ == '__main__':
     # Otherwise, the the values can't be extracted from the `**kwargs`.
     parser_a = subparsers.add_parser('init', help='a help')
     parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
-    parser_a.add_argument('--chain-local', '-c', action='store_true', help="set this option to use the local chain")
     parser_b = subparsers.add_parser('run', help='b help')
     parser_c = subparsers.add_parser('benchmark', help='b help')
     kwargs = vars(parser.parse_args())
