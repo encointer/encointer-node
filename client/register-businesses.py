@@ -107,10 +107,8 @@ if __name__ == '__main__':
     args = p.parse_args()
     # print(f"Starting script with client '{args.client}' on port {args.port}")
     if(args.node_url == None):
-        print("registering on local chain")
         client = Client(rust_client=args.client, port=args.port)
     else:
-        print("registering on remote chain")
         client = Client(rust_client=args.client, node_url='wss://gesell.encointer.org', port=443)
     owners = shop_owners()
 

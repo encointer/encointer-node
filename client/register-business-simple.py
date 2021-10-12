@@ -37,17 +37,16 @@ def create_business(name: str, description: str, ipfs_local):
 
 
 
-def register_business(name: str, description: str, owner, chain_local, ipfs_l):
+def register_business(name: str, description: str, owner, chain_local: bool, ipfs_local: bool):
     if chain_local:
         print("registering on local chain")
         client = Client()
     else:
         print("registering on remote chain")
-        client = Client(node_url='wss://gesell.encointer.org')
+        client = Client(node_url='wss://gesell.encointer.org', port=443)
 
     cid = read_cid()
-    ipfs_local = False
-    if ipfs_l == 'y': ipfs_local = True
+    print("the cid is: ", cid);
     business_json = create_business(name, description, ipfs_local)
     f_name = f'{BUSINESSES_PATH}/{business_json["name"]}.json'
     print(f'Dumping business {business_json} to {f_name}')
@@ -85,7 +84,7 @@ def create_offering(name: str, price: int, community_identifier, ipfs_local):
 
 
 
-def register_offering(name: str, price: int, owner, chain_local, ipfs_l):
+def register_offering(name: str, price: int, owner, chain_local: bool, ipfs_local: bool):
     if chain_local:
         print("registering on local chain")
         client = Client()
@@ -94,9 +93,6 @@ def register_offering(name: str, price: int, owner, chain_local, ipfs_l):
         client = Client(node_url='wss://gesell.encointer.org')
 
     cid = read_cid()
-    ipfs_local = False
-    if ipfs_l == 'y':
-        ipfs_local = True
 
     offering_json = create_offering(name, price, cid, ipfs_local)
 
@@ -116,27 +112,26 @@ if __name__ == '__main__':
     print(b_name)
     b_descr = input("Enter a description for your business:")
     print(b_descr)
-    ipfs_local = input("Do you want to use local ipfs? [y, n]")
-    chain_local = input("Do you want to use local chain? [y, n]")
+    ipfs_local = ''
+    chain_local = ''
+    while((ipfs_local != 'y') & (ipfs_local != 'n')):
+        ipfs_local = input("Do you want to use local ipfs? [y, n]")
+        ipfs_local_bool = False
+        if ipfs_local == 'y': ipfs_local_bool = True
+    while((chain_local != 'y') & (chain_local != 'n')):
+        chain_local = input("Do you want to use local chain? [y, n]")
+        chain_local_bool = False
+        if chain_local == 'y': chain_local_bool = True
     owner = input("Enter name of the owner:")
-
-    register_business(b_name,b_descr,owner,chain_local,ipfs_local)
+    register_business(b_name,b_descr,owner,chain_local_bool,ipfs_local_bool)
     print(f"business {b_name} is being registered on node")
-    offering = input("Do you want to register an offering? [y, n]")
+    offering = ''
+    while((offering != 'y') & (offering != 'n')):
+        offering = input("Do you want to register an offering? [y, n]")
     if(offering == 'y'):
         o_name = input("Enter a name for your offering:")
         o_price = input("Enter a price for your offering:")
-        register_offering(o_name, o_price, owner,chain_local,ipfs_local)
+        register_offering(o_name, o_price, owner,chain_local_bool,ipfs_local_bool)
         print(f"offering {o_name} is being registered on node")
-
-    # parser = argparse.ArgumentParser(prog='register-business-simple', parents=[simple_parser()])
-    # subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
-    # parser_a = subparsers.add_parser('register_business', help='a help')
-    # parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
-    # parser_a.add_argument('--chain-local', '-c', action='store_true', help="set this option to use the local ipfs daemon")
-    # args = parser_a.parse_args()
-    # kwargs = vars(parser.parse_args())
-    # try:
-    #     globals()[kwargs.pop('subparser')](**kwargs)
-    # except KeyError:
-    #     parser.print_help()
+    if (offering == 'n'):
+        print("bye")

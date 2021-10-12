@@ -61,7 +61,6 @@ def purge_keystore_prompt():
 
 
 def init(client: str, port: str, ipfs_local: str, node_url: str):
-    # print("ipfs_api_key_in_init_argument", ipfs_api_key)
     client = setLocalOrRemoteChain(client, node_url, port)
     purge_keystore_prompt()
 
@@ -86,7 +85,6 @@ def setLocalOrRemoteChain(client, node_url, port):
     else:
         client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
     return client
-
 
 def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
