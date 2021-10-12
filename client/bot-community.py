@@ -61,7 +61,7 @@ def purge_keystore_prompt():
 
 
 def init(client: str, port: str, ipfs_local: str, node_url: str):
-    client = setLocalOrRemoteChain(client, node_url, port)
+    client = setLocalOrRemoteChain(client, port, node_url)
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ICONS_PATH)
@@ -79,7 +79,7 @@ def init(client: str, port: str, ipfs_local: str, node_url: str):
     write_cid(cid)
 
 
-def setLocalOrRemoteChain(client, node_url, port):
+def setLocalOrRemoteChain(client: str, port: str, node_url: str):
     if (node_url == None):
         client = Client(rust_client=client, port=port)
     else:
@@ -154,11 +154,11 @@ def run(client: str, port: int, node_url: str):
     return phase
 
 
-def benchmark(client: str, port: int, node_url: str):
-    py_client = setLocalOrRemoteChain(client,node_url,port)
+def benchmark(client: str, port: str, node_url: str):
+    py_client = setLocalOrRemoteChain(client,port,node_url)
     print('will grow population forever')
     while True:
-        phase = run(client, port)
+        phase = run(client, port, node_url)
         while phase == py_client.get_phase():
             py_client.await_block()
 
