@@ -24,8 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: init-rust-target
-      run: rustup target add wasm32-unknown-unknown
+
+      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+    - name: Setup Rust toolchain
+      run: rustup show
 
     - name: Cache Rust Dependecies
       uses: actions/cache@v2
@@ -55,8 +58,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: init-rust-target
-      run: rustup target add wasm32-unknown-unknown
+
+      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+    - name: Setup Rust toolchain
+      run: rustup show
 
     - name: Cache Rust Dependecies
       uses: actions/cache@v2
