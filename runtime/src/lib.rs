@@ -6,6 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use codec::Encode;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -22,7 +23,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use codec::Encode;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
@@ -535,9 +535,9 @@ impl_runtime_apis! {
 			// we only need this because serde can't serialize i128
 			// https://github.com/paritytech/substrate/issues/4641
 			loc.iter().map(|l| {
-                        let mut ls = LocationSerialized::default();
-                        ls.copy_from_slice( &l.encode()[0..32]);
-                        ls
+						let mut ls = LocationSerialized::default();
+						ls.copy_from_slice( &l.encode()[0..32]);
+						ls
 			}).collect()
 		}
 

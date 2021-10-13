@@ -68,10 +68,9 @@ use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline,
 	extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
-	Metadata,
+	rpc::WsRpcClient,
 	utils::FromHexString,
-	Api, XtStatus,
-    rpc::WsRpcClient,
+	Api, Metadata, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -81,9 +80,9 @@ const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 mod exit_code {
-    pub const WRONG_PHASE: i32 = 50;
-    pub const FEE_PAYMENT_FAILED: i32 = 51;
-    pub const INVALID_REPUTATION: i32 = 52;
+	pub const WRONG_PHASE: i32 = 50;
+	pub const FEE_PAYMENT_FAILED: i32 = 51;
+	pub const INVALID_REPUTATION: i32 = 52;
 }
 
 fn main() {
@@ -883,43 +882,44 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
 		matches.value_of("node-port").unwrap()
 	);
 	debug!("connecting to {}", url);
-    let client = WsRpcClient::new(&url);
+	let client = WsRpcClient::new(&url);
 	Api::<sr25519::Pair, _>::new(client).unwrap()
 }
 
 fn reasonable_native_balance(api: &Api<sr25519::Pair, WsRpcClient>) -> u128 {
-    let xt = api.balance_transfer(
-        GenericAddress::Id(AccountKeyring::Alice.into()),
-        9999
-    );
-    let fee = api.get_fee_details(&xt.hex_encode(), None)
-        .unwrap().unwrap()
-        .inclusion_fee.unwrap()
-        .base_fee;
-    let ed = api.get_existential_deposit().unwrap();
-    return ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
+	let xt = api.balance_transfer(GenericAddress::Id(AccountKeyring::Alice.into()), 9999);
+	let fee = api
+		.get_fee_details(&xt.hex_encode(), None)
+		.unwrap()
+		.unwrap()
+		.inclusion_fee
+		.unwrap()
+		.base_fee;
+	let ed = api.get_existential_deposit().unwrap();
+	return ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
 }
 
 fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
-    let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
-        Some(bal) => bal.free,
-        None => {
-            error!("account does not exist on chain");
-            std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-        }
-    };
-    let fee = api.get_fee_details(xt, None)
-        .unwrap().unwrap()
-        .inclusion_fee
-        .map_or_else(|| 0, | details | details.base_fee);
-    let ed = api.get_existential_deposit().unwrap();
-    if signer_balance < fee + ed {
-        error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
-        std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-    }
-    debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
+	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
+		Some(bal) => bal.free,
+		None => {
+			error!("account does not exist on chain");
+			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+		},
+	};
+	let fee = api
+		.get_fee_details(xt, None)
+		.unwrap()
+		.unwrap()
+		.inclusion_fee
+		.map_or_else(|| 0, |details| details.base_fee);
+	let ed = api.get_existential_deposit().unwrap();
+	if signer_balance < fee + ed {
+		error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
+		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+	}
+	debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
 }
-
 
 fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches);
@@ -1012,21 +1012,19 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
 						},
-                        Event::EncointerBazaar(ee) => {
-                            count += 1;
-                            println!(">>>>>>>>>> encointer bazaar event: {:?}", ee);
-                        }
-                        Event::System(ee) => {
-                            match ee {
-                                frame_system::Event::ExtrinsicFailed(err, info) => {
-                                    error!("ExtrinsicFailed: {:?} {:?}", err, info);
-                                }
-                                frame_system::Event::ExtrinsicSuccess(info) => {
-                                    println!("ExtrinsicSuccess: {:?}", info);
-                                }
-                                _ => debug!("ignoring unsupported system Event"),
-                            }
-                        }
+						Event::EncointerBazaar(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> encointer bazaar event: {:?}", ee);
+						},
+						Event::System(ee) => match ee {
+							frame_system::Event::ExtrinsicFailed(err, info) => {
+								error!("ExtrinsicFailed: {:?} {:?}", err, info);
+							},
+							frame_system::Event::ExtrinsicSuccess(info) => {
+								println!("ExtrinsicSuccess: {:?}", info);
+							},
+							_ => debug!("ignoring unsupported system Event"),
+						},
 						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
 					}
 				},
@@ -1097,7 +1095,10 @@ fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
 	hdr.number
 }
 
-fn get_demurrage_per_block(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Demurrage {
+fn get_demurrage_per_block(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	cid: CommunityIdentifier,
+) -> Demurrage {
 	let mut d: Option<Demurrage> = api
 		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
 		.unwrap();
@@ -1125,21 +1126,30 @@ fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType
 		.unwrap()
 }
 
-fn get_meetup_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> MeetupIndexType {
+fn get_meetup_count(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	key: CommunityCeremony,
+) -> MeetupIndexType {
 	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
 		.unwrap()
 		.or(Some(0))
 		.unwrap()
 }
 
-fn get_participant_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_participant_count(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	key: CommunityCeremony,
+) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "ParticipantCount", key, None)
 		.unwrap()
 		.or(Some(0))
 		.unwrap()
 }
 
-fn get_attestee_count(api: &Api<sr25519::Pair, WsRpcClient>, key: CommunityCeremony) -> ParticipantIndexType {
+fn get_attestee_count(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	key: CommunityCeremony,
+) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
@@ -1204,7 +1214,15 @@ fn new_claim_for(
 	// implicitly assume that participant meet at the right place at the right time
 	let mloc = get_meetup_location(api, cid, mindex).unwrap();
 	let mtime = get_meetup_time(api, cid, mindex).unwrap();
-    info!("creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}", claimant.public().to_ss58check(), mindex, mloc.lat, mloc.lon, mtime, cindex );
+	info!(
+		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
+		claimant.public().to_ss58check(),
+		mindex,
+		mloc.lat,
+		mloc.lon,
+		mtime,
+		cindex
+	);
 	let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> =
 		ClaimOfAttendance::new_unsigned(
 			claimant.public().into(),
@@ -1219,7 +1237,9 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CommunityIdentifier>> {
+fn get_community_identifiers(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
 }
@@ -1228,21 +1248,21 @@ fn get_community_locations(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Option<Vec<Location>> {
-    let req = json!({
+	let req = json!({
 		"method": "communities_getLocations",
 		"params": vec![cid],
 		"jsonrpc": "2.0",
 		"id": "1",
 	});
 
-    let n = api
-        .get_request(req.into())
-        .unwrap()
-        .expect("Could not find any locations for that cid...");
-    // we only need this mapping because serde can't serialize i128
-    // https://github.com/paritytech/substrate/issues/4641
-    let locations : Vec<[u8; 32]> = serde_json::from_str(&n).unwrap();
-    Some(locations.iter().map(|l| Location::decode(&mut l.as_slice()).unwrap()).collect())
+	let n = api
+		.get_request(req.into())
+		.unwrap()
+		.expect("Could not find any locations for that cid...");
+	// we only need this mapping because serde can't serialize i128
+	// https://github.com/paritytech/substrate/issues/4641
+	let locations: Vec<[u8; 32]> = serde_json::from_str(&n).unwrap();
+	Some(locations.iter().map(|l| Location::decode(&mut l.as_slice()).unwrap()).collect())
 }
 
 fn get_meetup_location(
@@ -1273,7 +1293,10 @@ fn get_cid_names(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CidName>> 
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_businesses(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
+fn get_businesses(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	cid: CommunityIdentifier,
+) -> Option<Vec<BusinessData>> {
 	let req = json!({
 		"method": "bazaar_getBusinesses",
 		"params": vec![cid],
@@ -1281,14 +1304,14 @@ fn get_businesses(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifie
 		"id": "1",
 	});
 
-	let n = api
-		.get_request(req.into())
-		.unwrap()
-		.expect("Could not find any businesses...");
+	let n = api.get_request(req.into()).unwrap().expect("Could not find any businesses...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_offerings(api: &Api<sr25519::Pair, WsRpcClient>, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+fn get_offerings(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	cid: CommunityIdentifier,
+) -> Option<Vec<OfferingData>> {
 	let req = json!({
 		"method": "bazaar_getOfferings",
 		"params": vec![cid],
@@ -1431,7 +1454,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 		cid,
 		ipfs_cid
 	);
-    ensure_payment(&api, &xt.hex_encode());
+	ensure_payment(&api, &xt.hex_encode());
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
