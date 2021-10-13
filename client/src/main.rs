@@ -686,6 +686,23 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("endorse-newcomer")
+                .description("Endorse a newcomer with a bootstrapper account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .bootstrapper_arg()
+                        .endorsee_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+
+                    extract_and_execute(
+                        &matches, |mut api, cid| endorse_newcomer(&mut api, cid, &matches)
+                    ).unwrap();
+
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("get-proof-of-attendance")
                 .description("creates a proof of ProofOfAttendances for an <account> for the given ceremony index")
                 .options(|app| {
@@ -1036,11 +1053,11 @@ fn listen(matches: &ArgMatches<'_>) {
 /// Extracts api and cid from `matches` and execute the given `closure` with them.
 fn extract_and_execute<T>(
 	matches: &ArgMatches<'_>,
-	closure: impl FnOnce(&Api<sr25519::Pair, WsRpcClient>, CommunityIdentifier) -> T,
+	closure: impl FnOnce(Api<sr25519::Pair, WsRpcClient>, CommunityIdentifier) -> T,
 ) -> T {
 	let api = get_chain_api(matches);
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
-	closure(&api, cid)
+	closure(api, cid)
 }
 
 fn get_cid(cid: &str) -> CommunityIdentifier {
@@ -1458,6 +1475,29 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
+	Ok(())
+}
+
+fn endorse_newcomer(
+	api: &mut Api<sr25519::Pair, WsRpcClient>,
+	cid: CommunityIdentifier,
+	matches: &ArgMatches<'_>,
+) -> Result<(), ()> {
+	let bootstrapper = matches.account_arg().map(get_pair_from_str).unwrap();
+	let newbie = matches.endorsee_arg().map(get_accountid_from_str).unwrap();
+
+	api.signer = Some(bootstrapper.into());
+
+	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+		api.clone(),
+		"EncointerCeremonies",
+		"endorse_newcomer",
+		cid,
+		newbie.clone()
+	);
+	// send and watch extrinsic until finalized
+	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+	println!("Endorsing newbie {}. xt-status: 'ready'", newbie);
 	Ok(())
 }
 
