@@ -33,6 +33,9 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
+NUMBER_OF_ENDORSMENTS_PER_REGISTRATION = 2
+NUMBER_OF_ENDORSMENTS_PER_BOOTSTRAPPER = 50
+
 
 
 @click.group()
@@ -137,21 +140,39 @@ def purge_keystore_prompt():
 
 def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
+    bootstrapper_alice_burned = client.get_burned_bootstrapper_newbie_tickets(cid,"//Alice")
+    bootstrapper_alice_burned = [int(s) for s in bootstrapper_alice_burned.split() if s.isdigit()]
     total = sum(bal)
     print(f'****** money supply is {total}')
     f = open('bot-stats.csv', 'a')
     f.write(f'{len(accounts)}, {total}\n')
     f.close()
     if total > 0:
-        n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
-        print(f'*** adding {n_newbies} newbies')
-        if n_newbies > 0:
-            newbies = []
-            for n in range(0, n_newbies):
-                newbies.append(client.new_account())
-            client.faucet(newbies)
-            client.await_block()
-            accounts = client.list_accounts()
+        if bootstrapper_alice_burned[0] <= 50:
+            print(f"burned tickets by Alice: {bootstrapper_alice_burned[0]}")
+            n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts)) + NUMBER_OF_ENDORSMENTS_PER_REGISTRATION
+            print(f'*** adding {n_newbies} newbies')
+            if n_newbies > 0:
+                newbies = []
+                for n in range(0, n_newbies):
+                    newbies.append(client.new_account())
+                endorsees = []
+                for m in range(0, NUMBER_OF_ENDORSMENTS_PER_REGISTRATION):
+                    endorsees.append(newbies[m])
+                client.endorse_newcomers(cid, '//Alice', endorsees)
+                client.faucet(newbies)
+                client.await_block()
+                accounts = client.list_accounts()
+        else:
+            n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
+            print(f'*** adding {n_newbies} newbies')
+            if n_newbies > 0:
+                newbies = []
+                for n in range(0, n_newbies):
+                    newbies.append(client.new_account())
+                client.faucet(newbies)
+                client.await_block()
+                accounts = client.list_accounts()
 
     print(f'registering {len(accounts)} participants')
     need_refunding = []

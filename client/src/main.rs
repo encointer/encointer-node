@@ -695,7 +695,24 @@ fn main() {
                     extract_and_execute(
                         &matches, |mut api, cid| endorse_newcomer(&mut api, cid, &matches)
                     ).unwrap();
-
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("get-burned-bootstrapper-newbie-tickets")
+                .description("get BurnedBootstrapperNewbieTickets")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .bootstrapper_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let cid = verify_cid(&api,
+                        matches.cid_arg()
+                            .expect("please supply argument --cid"),
+                    );
+                    let burned_bootstrapper_newbie_tickets = get_burned_bootstrapper_newbie_tickets(&api, cid, &matches);
+                    println!("burned_bootstrapper_newbie_tickets = {}", burned_bootstrapper_newbie_tickets);
                     Ok(())
                 }),
         )
@@ -1503,6 +1520,23 @@ fn endorse_newcomer(
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 	println!("Endorsing newbie {}. xt-status: 'ready'", newbie);
 	Ok(())
+}
+
+fn get_burned_bootstrapper_newbie_tickets(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	cid: CommunityIdentifier,
+	matches: &ArgMatches<'_>,
+) -> u8 {
+	let bootstrapper = matches.bootstrapper_arg().map(get_accountid_from_str).unwrap();
+	api.get_storage_double_map(
+		"EncointerCeremonies",
+		"BurnedBootstrapperNewbieTickets",
+		cid,
+		bootstrapper,
+		None,
+	)
+	.unwrap()
+	.unwrap_or(0)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
