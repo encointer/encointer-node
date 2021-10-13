@@ -6,6 +6,7 @@ const CID_ARG: &'static str = "cid";
 const CLAIMS_ARG: &'static str = "claims";
 const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
 const IPFS_CID_ARG: &'static str = "ceremony-index";
+const ENDORSEE_ARG: &'static str = "endorsee";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -14,6 +15,7 @@ pub trait EncointerArgs<'b> {
 	fn claims_arg(self) -> Self;
 	fn ceremony_index_arg(self) -> Self;
 	fn ipfs_cid_arg(self) -> Self;
+	fn endorsee_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -23,6 +25,7 @@ pub trait EncointerArgsExtractor {
 	fn claims_arg(&self) -> Option<Vec<&str>>;
 	fn ceremony_index_arg(&self) -> Option<&str>;
 	fn ipfs_cid_arg(&self) -> Option<&str>;
+	fn endorsee_arg(&self) -> Option<&str>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -90,6 +93,17 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("ipfs content identifier, base58 encoded"),
 		)
 	}
+
+	fn endorsee_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(ENDORSEE_ARG)
+				.long("endorsee")
+				.required(true)
+				.takes_value(true)
+				.value_name("STRING")
+				.help("account to be endorsed"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -115,5 +129,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn ipfs_cid_arg(&self) -> Option<&str> {
 		self.value_of(IPFS_CID_ARG)
+	}
+
+	fn endorsee_arg(&self) -> Option<&str> {
+		self.value_of(ENDORSEE_ARG)
 	}
 }
