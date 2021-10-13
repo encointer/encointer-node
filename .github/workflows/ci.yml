@@ -74,30 +74,36 @@ jobs:
         cargo clean -p encointer-client-notee
         cargo test --all
 
-  clippy:
-    runs-on: ubuntu-latest
+  check:
+    name: Rust check ${{ matrix.check }} (${{ matrix.rust-target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        rust: [ stable ]
+        rust-target: [ x86_64-unknown-linux-gnu ]
+        check: [ fmt --all -- --check, clippy -p encointer-client-notee ]
+    env:
+      RUST_BACKTRACE: full
+      RUSTV: ${{ matrix.rust }}
+      TARGET: ${{ matrix.rust-target }}
     steps:
-    - uses: actions/checkout@v2
-    - name: init-rust
-      run: |
-        rustup component add clippy
-        rustup target add wasm32-unknown-unknown
+      - uses: actions/checkout@v2
 
-    - name: Cache Rust Dependecies
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-          enclave/target
-        key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
+      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: rustup show
 
-    - name: cargo clippy client
-      run:  |
-        cargo clean -p encointer-node-notee
-        cargo clean -p encointer-client-notee
-        cargo clippy -p encointer-client-notee
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.rust-target }}-${{ matrix.check }}
+
+      - name: ${{ matrix.check }}
+        run: |
+          cargo clean -p encointer-node-notee
+          cargo clean -p encointer-client-notee
+          cargo ${{ matrix.check }}
 
   test-bootstrapping:
     runs-on: ubuntu-latest
