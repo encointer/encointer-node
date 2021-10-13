@@ -15,6 +15,7 @@ pub trait EncointerArgs<'b> {
 	fn claims_arg(self) -> Self;
 	fn ceremony_index_arg(self) -> Self;
 	fn ipfs_cid_arg(self) -> Self;
+	fn bootstrapper_arg(self) -> Self;
 	fn endorsee_arg(self) -> Self;
 }
 
@@ -25,6 +26,7 @@ pub trait EncointerArgsExtractor {
 	fn claims_arg(&self) -> Option<Vec<&str>>;
 	fn ceremony_index_arg(&self) -> Option<&str>;
 	fn ipfs_cid_arg(&self) -> Option<&str>;
+	fn bootstrapper_arg(&self) -> Option<&str>;
 	fn endorsee_arg(&self) -> Option<&str>;
 }
 
@@ -94,6 +96,10 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 		)
 	}
 
+	fn bootstrapper_arg(self) -> Self {
+		self.account_arg().help("bootstrapper account in ss58check format")
+	}
+
 	fn endorsee_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(ENDORSEE_ARG)
@@ -129,6 +135,10 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn ipfs_cid_arg(&self) -> Option<&str> {
 		self.value_of(IPFS_CID_ARG)
+	}
+
+	fn bootstrapper_arg(&self) -> Option<&str> {
+		self.account_arg()
 	}
 
 	fn endorsee_arg(&self) -> Option<&str> {

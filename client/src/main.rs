@@ -687,17 +687,17 @@ fn main() {
         )
         .add_cmd(
             Command::new("endorse-newcomer")
-                .description("Update an already existing community business on behalf of the account")
+                .description("Endorse a newcomer with a bootstrapper account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .account_arg()
+                        .account_arg()// must be bootstrapper
                         .endorsee_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
                     extract_and_execute(
-                        &matches, |mut api, cid| endorse_newcomer(&mut api, cid, &matches).unwrap()
-                    );
+                        &matches, |mut api, cid| endorse_newcomer(&mut api, cid, &matches)
+                    ).unwrap();
 
                     Ok(())
                 }),
