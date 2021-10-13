@@ -690,7 +690,7 @@ fn main() {
                 .description("Endorse a newcomer with a bootstrapper account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .account_arg()// must be bootstrapper
+                        .bootstrapper_arg()
                         .endorsee_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
