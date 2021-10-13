@@ -1483,15 +1483,10 @@ fn endorse_newcomer(
 	cid: CommunityIdentifier,
 	matches: &ArgMatches<'_>,
 ) -> Result<(), ()> {
-	let bootstrapper =
-		matches.account_arg().map(get_pair_from_str).expect("supply account to send xt");
+	let bootstrapper = matches.account_arg().map(get_pair_from_str).unwrap();
+	let newbie = matches.endorsee_arg().map(get_accountid_from_str).unwrap();
 
 	api.signer = Some(bootstrapper.into());
-
-	let newbie = matches
-		.endorsee_arg()
-		.map(get_accountid_from_str)
-		.expect("please supply argument --endorsee");
 
 	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
 		api.clone(),
