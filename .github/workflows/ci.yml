@@ -13,6 +13,13 @@ env:
   IPFS_ADD_URL: "https://ipfs.infura.io:5001/api/v0/add"
   IPFS_API_KEY: ${{ secrets.IPFS_API_KEY }}
 jobs:
+  cancel_previous_runs:
+    name: Cancel Previous Runs
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ secrets.GITHUB_TOKEN }}
   build:
     runs-on: ubuntu-latest
     steps:
