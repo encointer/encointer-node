@@ -1,7 +1,11 @@
 import argparse
+import os
 
-DEFAULT_CLIENT = '../target/release/encointer-client-notee'
-
+try:
+    DEFAULT_CLIENT = os.environ['ENCOINTER_CLIENT']
+except:
+    print("didn't find ENCOINTER_CLIENT in env variables, setting client to ../target/release/encointer-client-notee")
+    DEFAULT_CLIENT = '../target/release/encointer-client-notee'
 
 def simple_parser(add_help=False):
     """ Create a simple parser that adds [client] and [port] arguments.
