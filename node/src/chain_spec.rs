@@ -2,20 +2,22 @@ use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, Demurrage,
 	EncointerBalancesConfig, EncointerCeremoniesConfig, EncointerCommunitiesConfig,
 	EncointerSchedulerConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-	WASM_BINARY,
+	WASM_BINARY, TreasuryPalletId
 };
 use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::traits::{IdentifyAccount, Verify, AccountIdConversion};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub const TREASURY_FUNDING_PERCENT: u128 = 100;
+pub const ENDOWED_FUNDING: u128 = 1 << 60;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -37,6 +39,11 @@ where
 /// Generate an Aura authority key.
 pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
+}
+
+///Get the account id for the treasury
+pub fn treasury_account_id() -> AccountId {
+	TreasuryPalletId::get().into_account()
 }
 
 fn properties() -> Option<Properties> {
@@ -72,6 +79,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					treasury_account_id(),
 				],
 				true,
 			)
@@ -119,6 +127,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+					treasury_account_id(),
 				],
 				true,
 			)
@@ -144,6 +153,7 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
+	let treasury_funding = (endowed_accounts.len() as u128 - 1u128)* ENDOWED_FUNDING * TREASURY_FUNDING_PERCENT /100u128;
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -151,8 +161,15 @@ fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
-			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			// Configure endowed accounts with initial balance of ENDOWED_FUNDING and allocate the treasury TREASURY_FUNDING_PERCENT of total supply .
+			balances: endowed_accounts.iter().cloned().map(|k| {
+				if k == treasury_account_id()
+				{
+					(k, treasury_funding)
+				} else {
+					(k, ENDOWED_FUNDING)
+				}
+			}).collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
@@ -187,5 +204,6 @@ fn testnet_genesis(
 				0x0000000000000000000001E3F0A8A973_i128,
 			),
 		},
+		treasury: Default::default(),
 	}
 }
