@@ -3,7 +3,7 @@ import warnings
 import os
 from .helpers import take_only_last_cid
 
-ICONS_PATH = '../test-data/icons'
+ICONS_PATH = './test-data/icons'
 use_ipfs_gateway = True
 try:
     ipfs_api_key = os.environ['IPFS_API_KEY']

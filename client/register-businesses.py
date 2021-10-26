@@ -13,10 +13,10 @@ from py_client.client import Client
 from py_client.ipfs import Ipfs
 from py_client.helpers import purge_prompt, read_cid, mkdir_p
 
-BUSINESSES_PATH = '../test-data/bazaar/businesses'
-OFFERINGS_PATH = '../test-data/bazaar/offerings'
+BUSINESSES_PATH = './test-data/bazaar/businesses'
+OFFERINGS_PATH = './test-data/bazaar/offerings'
 
-ICON_PATH = '../test-data/icons/community_icon.png'
+ICON_PATH = './test-data/icons/community_icon.png'
 
 def create_businesses(amount: int):
     """
