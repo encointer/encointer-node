@@ -8,9 +8,11 @@ useful for benchmarking bot communities in a local setup
 """
 
 import subprocess
+import argparse
 import substrateinterface
 import json
 from py_client.client import Client
+from py_client.arg_parser import simple_parser
 
 global COUNT
 
@@ -27,16 +29,25 @@ def subscription_handler(event_count, update_nr, subscription_id):
 
 
 if __name__ == '__main__':
+    p = argparse.ArgumentParser(
+    prog='register-businesses', parents=[simple_parser()])
+    args = p.parse_args()
+    # print(f"Starting script with client '{args.client}' on port {args.port}")
+    localhost = None
+    if(args.node_url == None):
+        client = Client(rust_client=args.client, port=args.port)
+        localhost = "ws://127.0.0.1"
+    else:
+        client = Client(rust_client=args.client, node_url='wss://gesell.encointer.org', port=443)
     COUNT = 0
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = substrateinterface.SubstrateInterface(
-        url="ws://127.0.0.1:9944",
+        url=  f"ws://127.0.0.1:{args.port}" if localhost != None else f"{args.node_url}:{443}",
         ss58_format=42,
         type_registry_preset='substrate-node-template',
         type_registry=custom_type_registry
     )
-    client = Client()
     while True:
         result = substrate.query("System", "EventCount", subscription_handler=subscription_handler)
         print('NEXT PHASE!')
