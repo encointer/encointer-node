@@ -42,10 +42,16 @@ def ensure_clean_exit(returncode):
 
 class Client:
     def __init__(self,
+                 node_url=None,
                  rust_client=DEFAULT_CLIENT,
                  port=9944
                  ):
-        self.cli = [rust_client, '-p', str(port)]
+        if node_url:
+            print("connecting to remote chain: ", node_url)
+            self.cli = [rust_client, '-u', node_url, '-p', str(port)]
+        else:
+            print("connecting to local chain")
+            self.cli = [rust_client, '-p', str(port)]
 
     def next_phase(self):
         ret = subprocess.run(self.cli + ["next-phase"])

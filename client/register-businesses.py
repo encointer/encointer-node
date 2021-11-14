@@ -65,7 +65,7 @@ def random_business():
     :return:
     """
     print("adding business image to remote: ")
-    image_cid = Ipfs.add(ICON_PATH)
+    image_cid = Ipfs.add(ICON_PATH, args.ipfs_local)
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
@@ -84,7 +84,7 @@ def random_offering(community_identifier):
     :return:
     """
     print("adding offering image to remote: ")
-    image_cid = Ipfs.add(ICON_PATH)
+    image_cid = Ipfs.add(ICON_PATH, args.ipfs_local)
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
@@ -105,9 +105,11 @@ if __name__ == '__main__':
     prog='register-businesses', parents=[simple_parser()])
     p.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
     args = p.parse_args()
-
-    print(f"Starting script with client '{args.client}' on port {args.port}")
-    client = Client(rust_client=args.client, port=args.port)
+    # print(f"Starting script with client '{args.client}' on port {args.port}")
+    if(args.node_url == None):
+        client = Client(rust_client=args.client, port=args.port)
+    else:
+        client = Client(rust_client=args.client, node_url='wss://gesell.encointer.org', port=443)
     owners = shop_owners()
 
     # As we try to read to the cid here, we must have called `./bootstrap_demo_community.py init` before calling this

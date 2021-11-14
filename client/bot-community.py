@@ -12,7 +12,7 @@ then start a node with
 and init and grow a community
    ./bot-community.py --port 9945 init
    ./bot-community.py --port 9945 benchmark
-
+   
 on testnet Gesell, run this script once per ceremony phase (after calling `init` first)
    ./bot-community.py --port 9945 run
 
@@ -48,7 +48,7 @@ def random_community_spec(bootstrappers, ipfs_cid):
     return generate_community_spec(meta, locations, bootstrappers)
 
 
-def init_bootstrappers(client=Client()):
+def init_bootstrappers(client: Client):
     bootstrappers = client.create_accounts(10)
     print('created bootstrappers: ' + ' '.join(bootstrappers))
     client.faucet(bootstrappers)
@@ -60,13 +60,16 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def init(client: str, port: str, ipfs_local):
+def init(client: str, port: str, ipfs_local: str, node_url: str):
+    client = setLocalOrRemoteChain(client, port, node_url)
     purge_keystore_prompt()
-    # print("ipfs_api_key_in_init_argument", ipfs_api_key)
-    client = Client(rust_client=client, port=port)
+
     root_dir = os.path.realpath(ICONS_PATH)
     zipped_folder = zip_folder("icons",root_dir)
-    ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
+    try:
+        ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
+    except:
+        print("add image to ipfs failed")
     print('initializing community')
     b = init_bootstrappers(client)
     specfile = random_community_spec(b, ipfs_cid)
@@ -75,6 +78,13 @@ def init(client: str, port: str, ipfs_local):
     print(f'created community with cid: {cid}')
     write_cid(cid)
 
+
+def setLocalOrRemoteChain(client: str, port: str, node_url: str):
+    if (node_url == None):
+        client = Client(rust_client=client, port=port)
+    else:
+        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+    return client
 
 def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
@@ -121,8 +131,8 @@ def perform_meetup(client: Client, meetup, cid):
         client.attest_claims(attestor, attestees_claims)
 
 
-def run(client: str, port: int):
-    client = Client(rust_client=client, port=port)
+def run(client: str, port: int, node_url: str):
+    client = setLocalOrRemoteChain(client,port,node_url)
     cid = read_cid()
     phase = client.get_phase()
     print(f'phase is {phase}')
@@ -144,11 +154,11 @@ def run(client: str, port: int):
     return phase
 
 
-def benchmark(client: str, port: int):
-    py_client = Client(rust_client=client, port=port)
+def benchmark(client: str, port: str, node_url: str):
+    py_client = setLocalOrRemoteChain(client,port,node_url)
     print('will grow population forever')
     while True:
-        phase = run(client, port)
+        phase = run(client, port, node_url)
         while phase == py_client.get_phase():
             py_client.await_block()
 

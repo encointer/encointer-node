@@ -22,4 +22,7 @@ def simple_parser(add_help=False):
     p.add_argument('--port',
                    default=9944,
                    help='Port of the node (default=9944).')
+    p.add_argument('--node_url',
+                   default=None,
+                   help='url of remote chain')
     return p

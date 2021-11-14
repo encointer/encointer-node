@@ -3,7 +3,7 @@ Interact with the encointer chain from the command line
 
 Includes
 * keystore (incompatible with polkadot js app json)
-* basic balancce transfer
+* basic balance transfer
 * all encointer-specific calls
 
 ## examples
