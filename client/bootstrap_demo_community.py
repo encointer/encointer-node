@@ -25,7 +25,7 @@ account2 = '//Bob'
 account3 = '//Charlie'
 accounts = [account1, account2, account3]
 
-TEST_DATA_DIR = '../test-data/'
+TEST_DATA_DIR = './test-data/'
 SPEC_FILE = 'test-locations-mediterranean.json'
 
 
