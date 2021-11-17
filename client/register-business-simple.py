@@ -8,9 +8,9 @@ from py_client.client import Client
 from py_client.ipfs import Ipfs
 from py_client.helpers import read_cid
 
-ICON_PATH = '../test-data/icons/community_icon.png'
-BUSINESSES_PATH = '../test-data/bazaar/businesses'
-OFFERINGS_PATH = '../test-data/bazaar/offerings'
+ICON_PATH = './test-data/icons/community_icon.png'
+BUSINESSES_PATH = './test-data/bazaar/businesses'
+OFFERINGS_PATH = './test-data/bazaar/offerings'
 
 # Before running this script, make sure, that a community is registered on the chain (for example by running bot-community.py init)
 
