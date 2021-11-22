@@ -38,7 +38,7 @@ use clap::{AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use codec::{Compact, Decode, Encode};
 use log::*;
-use sp_core::{crypto::Ss58Codec, hashing::blake2_256, sr25519 as sr25519_core, Pair};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_runtime::{
 	traits::{IdentifyAccount, Verify},
 	MultiSignature,
@@ -400,7 +400,7 @@ fn main() {
 
                     info!("Metadata: {:?}", meta);
 
-                    let cid = blake2_256(&(loc[0].clone(), bootstrappers.clone()).encode());
+                    let cid = CommunityIdentifier::new(loc[0], bootstrappers.clone()).unwrap();
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
@@ -452,7 +452,7 @@ fn main() {
                             .unwrap();
                         nonce += 1;
                     }
-                    println!("{}", cid.to_base58());
+                    println!("{}", cid);
                     Ok(())
                 }),
         )
@@ -465,7 +465,7 @@ fn main() {
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
                         let loc = get_community_locations(&api, n.cid).unwrap();
-                        println!("{}: {} locations: {}", n.cid.encode().to_base58(), n.name, loc.len());
+                        println!("{}: {} locations: {}", n.cid, n.name, loc.len());
                     }
                     Ok(())
                 }),
@@ -1057,16 +1057,23 @@ fn extract_and_execute<T>(
 	closure(api, cid)
 }
 
+// Todo: replace with `from_str` method introduced in https://github.com/encointer/pallets/pull/81
 fn get_cid(cid: &str) -> CommunityIdentifier {
-	CommunityIdentifier::decode(&mut &cid.from_base58().expect("cid must be base58 encoded")[..])
-		.expect("failed to decode cid")
+	let mut geohash: [u8; 5] = [0u8; 5];
+	let mut digest: [u8; 4] = [0u8; 4];
+
+	geohash.clone_from_slice(&cid[..5].as_bytes());
+	digest.clone_from_slice(&cid[5..].from_base58().expect("cid must be base58 encoded"));
+
+	// this is needed because the `CommunityIdentifier`s fields are private
+	CommunityIdentifier::decode(&mut &[&geohash[..], &digest[..]].concat()[..]).unwrap()
 }
 
 fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIdentifier {
 	let cids = get_community_identifiers(&api).expect("no community registered");
 	let cid = get_cid(cid);
 	if !cids.contains(&cid) {
-		panic!("cid {} does not exist on chain", cid.encode().to_base58());
+		panic!("cid {} does not exist on chain", cid);
 	}
 	cid
 }
