@@ -66,11 +66,8 @@ use geojson::GeoJson;
 use serde_json::{json, to_value};
 use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
-	compose_call, compose_extrinsic, compose_extrinsic_offline,
-	extrinsic::xt_primitives::{GenericAddress, UncheckedExtrinsicV4},
-	rpc::WsRpcClient,
-	utils::FromHexString,
-	Api, Metadata, XtStatus,
+	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
+	utils::FromHexString, Api, GenericAddress, Metadata, UncheckedExtrinsicV4, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
