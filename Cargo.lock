@@ -1414,7 +1414,7 @@ dependencies = [
  "substrate-api-client",
  "substrate-bip39",
  "substrate-client-keystore",
- "substrate-fixed 0.5.6",
+ "substrate-fixed",
  "substrate-frame-rpc-system",
  "tiny-bip39 0.6.2",
 ]
@@ -1504,7 +1504,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "substrate-fixed 0.5.6",
+ "substrate-fixed",
  "substrate-wasm-builder",
 ]
 
@@ -1525,7 +1525,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "substrate-fixed 0.5.7",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -2163,7 +2163,7 @@ source = "git+https://github.com/encointer/geohash?branch=master#7cf5425b8bffcc8
 dependencies = [
  "parity-scale-codec 2.3.1",
  "scale-info",
- "substrate-fixed 0.5.7",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -4227,7 +4227,7 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
- "substrate-fixed 0.5.7",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -4311,7 +4311,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "substrate-fixed 0.5.7",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -7696,15 +7696,6 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "sp-keystore",
-]
-
-[[package]]
-name = "substrate-fixed"
-version = "0.5.6"
-source = "git+https://github.com/encointer/substrate-fixed?tag=v0.5.6#b33d186888c60f38adafcfc0ec3a21aab263aef1"
-dependencies = [
- "parity-scale-codec 2.3.1",
- "typenum 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

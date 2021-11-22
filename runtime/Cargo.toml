@@ -59,7 +59,7 @@ branch = "master"
 [dependencies.fixed]
 default-features = false
 git = "https://github.com/encointer/substrate-fixed"
-tag = "v0.5.6"
+tag = "v0.5.7"
 package = "substrate-fixed"
 
 [dependencies]
