@@ -1454,7 +1454,6 @@ dependencies = [
  "sp-consensus-aura",
  "sp-core",
  "sp-finality-grandpa",
- "sp-inherents",
  "sp-runtime",
  "sp-timestamp",
  "structopt",
@@ -1484,7 +1483,6 @@ dependencies = [
  "pallet-encointer-communities-rpc-runtime-api",
  "pallet-encointer-scheduler",
  "pallet-grandpa",
- "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-timestamp",
@@ -4379,20 +4377,6 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-proxy"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=master#c0da7c3d47def8600c9d3ef55617790d81b7d8bb"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec 2.3.1",
- "scale-info",
- "sp-io",
- "sp-runtime",
  "sp-std",
 ]
 
