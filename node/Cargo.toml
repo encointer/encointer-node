@@ -2,7 +2,7 @@
 authors = ["encointer.org <alain@encointer.org>"]
 build = "build.rs"
 description = "Encointer Node noTEE"
-edition = "2018"
+edition = "2021"
 homepage = "https://encointer.org"
 license = "GPL-3.0"
 name = "encointer-node-notee"
