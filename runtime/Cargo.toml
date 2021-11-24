@@ -59,7 +59,7 @@ branch = "master"
 [dependencies.fixed]
 default-features = false
 git = "https://github.com/encointer/substrate-fixed"
-tag = "v0.5.6"
+tag = "v0.5.7"
 package = "substrate-fixed"
 
 [dependencies]
@@ -96,7 +96,7 @@ pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0-dev", default-fe
 # Used for runtime benchmarking
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master"}
 frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-hex-literal = { version = "0.3.1", optional = true }
+hex-literal = { version = "0.3.4", optional = true }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }

@@ -82,7 +82,7 @@ def main(ipfs_local, client=Client()):
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
-    print('Registering Participants...')
+    print(f'Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
     blocks_to_wait = 3

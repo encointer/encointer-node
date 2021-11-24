@@ -148,7 +148,6 @@ fn testnet_genesis(
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
@@ -164,6 +163,7 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		},
+		transaction_payment: Default::default(),
 		encointer_scheduler: EncointerSchedulerConfig {
 			current_phase: CeremonyPhaseType::REGISTERING,
 			current_ceremony_index: 1,

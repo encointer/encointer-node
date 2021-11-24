@@ -20,7 +20,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 substrate-build-script-utils = "3.0.0"
 
 [dependencies]
-structopt = "0.3.8"
+structopt = "0.3.25"
 log = "0.4.14"
 
 sc-cli = { version = "0.10.0-dev", features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
@@ -29,7 +29,6 @@ sc-executor = { version = "0.10.0-dev", features = ["wasmtime"], git = "https://
 sc-service = { version = "0.10.0-dev", features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-telemetry = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-keystore = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
-sp-inherents = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-transaction-pool = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-transaction-pool-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-consensus-aura = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
