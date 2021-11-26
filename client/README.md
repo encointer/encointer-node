@@ -49,15 +49,21 @@ listen to chain events for debugging (i.e. see failed extrinsics)
 RUST_LOG=encointer_client_notee=info ./target/release/encointer-client-notee listen
 ```
 
+run a single cycle
+```bash
+cd client
+./bot-community.py run
+```
+
 benchmark bot community
 ```bash
 cd client
-./bot-community.py init
+./bot-community.py benchmark
 ```
 
 if you'd like to test bazaar with dummy businesses and offerings too, you need to provide IPFS.
 
-either through infura:
+either through infura
 
 ```
 export IPFS_ADD_URL=https://ipfs.infura.io:5001/api/v0/add
@@ -66,7 +72,7 @@ export IPFS_API_KEY=<user>:<password>
 ./register-businesses.py
 ```
 
-or locally:
+or locally
 
 ```
 # you may need to run 'ipfs init'
@@ -74,3 +80,17 @@ ipfs daemon
 ./bot-communities.py init --ipfs-local
 ./register-businesses.py  --ipfs-local
 ```
+
+In IPFS, the community icons and data of businesses and offerings are stored.
+## Notes
+
+The cli provides helpful information for the ordering of options and commands. <br>
+You can use a custom chain client by providing the option before the command
+```
+./bot-communities.py --client ./path/to/custom/client init
+```
+You can also connect to a remote chain
+```
+./bot-communities.py init --node_url wss://remote.node.org
+```
+For now, the node_url is hardcoded to 'wss://gesell.encointer.org' despite which value you enter. This will be changed in the future when more remote chains will be available. 
