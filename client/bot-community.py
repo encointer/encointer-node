@@ -21,6 +21,7 @@ import argparse
 import glob
 import os
 
+import click
 import geojson
 
 from random_words import RandomWords
@@ -35,6 +36,102 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
+
+
+@click.group()
+@click.pass_context
+def cli(ctx):
+    ctx.obj['client'] = Client()
+
+
+@cli.command()
+@click.option('--port', default='9944', help='port for the client to communicate with node')
+@click.option('-l', '--ipfs_local', is_flag=True, help='ipfs local node or remote')
+@click.option('--node_url', default=None, help='if set, remote gesell node is used with port 443')
+@click.pass_context
+def init2(ctx, port: str, ipfs_local: bool, node_url: str):
+    client_cli = ctx.obj['client'].cli[0]
+    client = setLocalOrRemoteChain(client_cli, port, node_url)
+    purge_keystore_prompt()
+
+    root_dir = os.path.realpath(ICONS_PATH)
+    zipped_folder = zip_folder("icons", root_dir)
+    try:
+        ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
+    except:
+        print("add image to ipfs failed")
+    print('initializing community')
+    b = init_bootstrappers(client)
+    specfile = random_community_spec(b, ipfs_cid)
+    print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
+    cid = client.new_community(specfile, b[0])
+    print(f'created community with cid: {cid}')
+    write_cid(cid)
+
+
+@cli.command()
+@click.option('--port', default='9944', help='port for the client to communicate with node')
+@click.option('--node_url', default=None, help='if set, remote gesell node is used with port 443')
+@click.option('--cid',
+              default='41eSfKJrhrR6CYxPfUbwAN18R77WbxXoViRWQMAF4hJB',
+              help='community identifier base58 encoded. Default is Mediterranean test currency')
+@click.pass_context
+def run2(client: str, port: int, node_url: str):
+    client = setLocalOrRemoteChain(client,port,node_url)
+    cid = read_cid()
+    phase = client.get_phase()
+    print(f'phase is {phase}')
+    accounts = client.list_accounts()
+    print(f'number of known accounts: {len(accounts)}')
+    if phase == 'REGISTERING':
+        register_participants(client, accounts, cid)
+        client.await_block()
+    if phase == "ASSIGNING":
+        meetups = client.list_meetups(cid);
+        meetup_sizes = list(map(lambda x: len(x), meetups))
+        print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
+    if phase == 'ATTESTING':
+        meetups = client.list_meetups(cid)
+        print(f'****** Performing {len(meetups)} meetups')
+        for meetup in meetups:
+            perform_meetup(client, meetup, cid)
+        client.await_block()
+    return phase
+
+
+@cli.command()
+@click.option('--port', default='9944', help='port for the client to communicate with node')
+@click.option('--node_url', default=None, help='if set, remote gesell node is used with port 443')
+@click.option('--cid',
+              default='41eSfKJrhrR6CYxPfUbwAN18R77WbxXoViRWQMAF4hJB',
+              help='community identifier base58 encoded. Default is Mediterranean test currency')
+@click.pass_context
+def benchmark2(client: str, port: str, node_url: str):
+    py_client = setLocalOrRemoteChain(client,port,node_url)
+    print('will grow population forever')
+    while True:
+        phase = run(client, port, node_url)
+        while phase == py_client.get_phase():
+            py_client.await_block()
+
+
+def init(client: str, port: str, ipfs_local: str, node_url: str):
+    client = setLocalOrRemoteChain(client, port, node_url)
+    purge_keystore_prompt()
+
+    root_dir = os.path.realpath(ICONS_PATH)
+    zipped_folder = zip_folder("icons", root_dir)
+    try:
+        ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
+    except:
+        print("add image to ipfs failed")
+    print('initializing community')
+    b = init_bootstrappers(client)
+    specfile = random_community_spec(b, ipfs_cid)
+    print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
+    cid = client.new_community(specfile, b[0])
+    print(f'created community with cid: {cid}')
+    write_cid(cid)
 
 def random_community_spec(bootstrappers, ipfs_cid):
     point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
@@ -58,25 +155,6 @@ def init_bootstrappers(client: Client):
 
 def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
-
-
-def init(client: str, port: str, ipfs_local: str, node_url: str):
-    client = setLocalOrRemoteChain(client, port, node_url)
-    purge_keystore_prompt()
-
-    root_dir = os.path.realpath(ICONS_PATH)
-    zipped_folder = zip_folder("icons",root_dir)
-    try:
-        ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
-    except:
-        print("add image to ipfs failed")
-    print('initializing community')
-    b = init_bootstrappers(client)
-    specfile = random_community_spec(b, ipfs_cid)
-    print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
-    cid = client.new_community(specfile, b[0])
-    print(f'created community with cid: {cid}')
-    write_cid(cid)
 
 
 def setLocalOrRemoteChain(client: str, port: str, node_url: str):
@@ -164,16 +242,17 @@ def benchmark(client: str, port: str, node_url: str):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
-    subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
-    # Note: the function args' names `client` and `port` must match the cli's args' names.
-    # Otherwise, the the values can't be extracted from the `**kwargs`.
-    parser_a = subparsers.add_parser('init', help='a help')
-    parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
-    parser_b = subparsers.add_parser('run', help='b help')
-    parser_c = subparsers.add_parser('benchmark', help='b help')
-    kwargs = vars(parser.parse_args())
-    try:
-        globals()[kwargs.pop('subparser')](**kwargs)
-    except KeyError:
-        parser.print_help()
+    cli(obj={})
+    # parser = argparse.ArgumentParser(prog='bot-community', parents=[simple_parser()])
+    # subparsers = parser.add_subparsers(dest='subparser', help='sub-command help')
+    # # Note: the function args' names `client` and `port` must match the cli's args' names.
+    # # Otherwise, the the values can't be extracted from the `**kwargs`.
+    # parser_a = subparsers.add_parser('init', help='a help')
+    # parser_a.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
+    # parser_b = subparsers.add_parser('run', help='b help')
+    # parser_c = subparsers.add_parser('benchmark', help='b help')
+    # kwargs = vars(parser.parse_args())
+    # try:
+    #     globals()[kwargs.pop('subparser')](**kwargs)
+    # except KeyError:
+    #     parser.print_help()
