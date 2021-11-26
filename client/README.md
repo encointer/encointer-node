@@ -69,7 +69,7 @@ either through infura
 export IPFS_ADD_URL=https://ipfs.infura.io:5001/api/v0/add
 export IPFS_API_KEY=<user>:<password>
 ./bot-communities.py init
-./register-businesses.py
+./register-businesses.py register
 ```
 
 or locally
@@ -77,20 +77,23 @@ or locally
 ```
 # you may need to run 'ipfs init'
 ipfs daemon
-./bot-communities.py init --ipfs-local
-./register-businesses.py  --ipfs-local
+./bot-communities.py --ipfs-local init 
+./register-businesses.py --ipfs-local register
 ```
 
 In IPFS, the community icons and data of businesses and offerings are stored.
 ## Notes
 
 The cli provides helpful information for the ordering of options and commands. <br>
-You can use a custom chain client by providing the option before the command
+The following options exist:
+* <kbd>--client</kbd> --> (string) path/to/chain/client
+* <kbd>--port</kbd> --> (string) specify port for the chain client
+* <kbd>-l,--ipfs_local</kbd> --> (bool) choose local ipfs node
+* <kbd>--node_url</kbd> --> (string) choose local ipfs node
+
+A possible call would look like
+
 ```
-./bot-communities.py --client ./path/to/custom/client init
+./bot-communities.py --client ./path/to/custom/client --port 123 -l --node_url wss://gesell.encointer.org init
 ```
-You can also connect to a remote chain
-```
-./bot-communities.py init --node_url wss://remote.node.org
-```
-For now, the node_url is hardcoded to 'wss://gesell.encointer.org' despite which value you enter. This will be changed in the future when more remote chains will be available. 
+For now, the node_url is hardcoded to 'wss://gesell.encointer.org' and port 443 is automatically set despite which value you enter. This will be changed in the future when more remote chains will be available. 
