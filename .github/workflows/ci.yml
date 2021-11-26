@@ -229,4 +229,4 @@ jobs:
         run: |
           cd client
           python bot-community.py init
-          python register-businesses.py
+          python register-businesses.py register
