@@ -37,24 +37,29 @@ MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
 @click.group()
 @click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
-@click.pass_context
-def cli(ctx, client):
-    ctx.obj = client
-
-
-@cli.command()
 @click.option('--port', default='9944', help='port for the client to communicate with chain')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
 @click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
+@click.pass_context
+def cli(ctx, client, port, ipfs_local, node_url):
+    ctx.ensure_object(dict)
+    cl = set_local_or_remote_chain(client, port, node_url)
+    ctx.obj['client'] = cl
+    ctx.obj['port'] = port
+    ctx.obj['ipfs_local'] = ipfs_local
+    ctx.obj['node_url'] = node_url
+
+
+@cli.command()
 @click.pass_obj
-def init(client: str, port: str, ipfs_local: bool, node_url: str):
-    client = set_local_or_remote_chain(client, port, node_url)
+def init(ctx):
+    client = ctx['client']
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ICONS_PATH)
     zipped_folder = zip_folder("icons", root_dir)
     try:
-        ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
+        ipfs_cid = Ipfs.add(zipped_folder, ctx['ipfs_local'])
     except:
         print("add image to ipfs failed")
     print('initializing community')
@@ -67,15 +72,13 @@ def init(client: str, port: str, ipfs_local: bool, node_url: str):
 
 
 @cli.command()
-@click.option('--port', default='9944', help='port for the client to communicate with chain')
-@click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
 @click.pass_obj
-def run(client: str, port: int, node_url: str):
-    return run_no_annotators(client, port, node_url)
+def run(ctx):
+    return run_no_annotators(ctx['client'])
 
 
-def run_no_annotators(client: str, port: int, node_url: str):
-    client = set_local_or_remote_chain(client, port, node_url)
+def run_no_annotators(client: Client):
+    client = client
     cid = read_cid()
     phase = client.get_phase()
     print(f'phase is {phase}')
@@ -97,14 +100,12 @@ def run_no_annotators(client: str, port: int, node_url: str):
     return phase
 
 @cli.command()
-@click.option('--port', default='9944', help='port for the client to communicate with chain')
-@click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
 @click.pass_obj
-def benchmark(client: str, port: str, node_url: str):
-    py_client = set_local_or_remote_chain(client, port, node_url)
+def benchmark(ctx):
+    py_client = ctx['client']
     print('will grow population forever')
     while True:
-        phase = run_no_annotators(client, port, node_url)
+        phase = run_no_annotators(py_client)
         while phase == py_client.get_phase():
             py_client.await_block()
 
@@ -180,4 +181,4 @@ def perform_meetup(client: Client, meetup, cid):
 
 
 if __name__ == '__main__':
-    cli()
+    cli(obj={})
