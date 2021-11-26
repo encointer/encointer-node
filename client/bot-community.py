@@ -25,7 +25,7 @@ import geojson
 from random_words import RandomWords
 from math import floor
 
-from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder
+from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder, set_local_or_remote_chain
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, ParticipantAlreadyLinked
 from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
@@ -40,7 +40,6 @@ MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 @click.pass_context
 def cli(ctx, client):
     ctx.obj = client
-    pass
 
 
 @cli.command()
@@ -132,14 +131,6 @@ def init_bootstrappers(client: Client):
 
 def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
-
-
-def set_local_or_remote_chain(client: str, port: str, node_url: str):
-    if (node_url == None):
-        client = Client(rust_client=client, port=port)
-    else:
-        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
-    return client
 
 
 def register_participants(client: Client, accounts, cid):
