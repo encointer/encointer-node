@@ -69,7 +69,7 @@ either through infura
 export IPFS_ADD_URL=https://ipfs.infura.io:5001/api/v0/add
 export IPFS_API_KEY=<user>:<password>
 ./bot-communities.py init
-./register-businesses.py register
+./register-businesses.py
 ```
 
 or locally
@@ -78,10 +78,19 @@ or locally
 # you may need to run 'ipfs init'
 ipfs daemon
 ./bot-communities.py --ipfs-local init 
-./register-businesses.py --ipfs-local register
+./register-businesses.py --ipfs-local
 ```
 
 In IPFS, the community icons and data of businesses and offerings are stored.
+
+You can cat/get the data stored in ipfs locally:
+```
+ipfs cat CONTENT_IDENTIFIER
+```
+Or if it was stored remotely (on Infura):
+```
+curl -X POST "https://ipfs.infura.io:5001/api/v0/cat?arg=QmaS7notdEkVmFvL2E19r8bpcVjdgjEV3gu6C2jYqUS1UB" 
+```
 ## Notes
 
 The cli provides helpful information for the ordering of options and commands. <br>
