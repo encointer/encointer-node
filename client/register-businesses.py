@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
-import argparse
 import glob
 import json
 import random
-import os
 
 import click
 
 from random_words import RandomWords
 from wonderwords import RandomSentence
 
-from py_client.arg_parser import simple_parser
-from py_client.client import Client
 from py_client.ipfs import Ipfs
 from py_client.helpers import purge_prompt, read_cid, mkdir_p, set_local_or_remote_chain
 
