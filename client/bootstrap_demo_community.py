@@ -10,11 +10,10 @@ then run this script
 
 """
 
-import argparse
 import json
 import os
+import click
 
-from py_client.arg_parser import simple_parser
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -54,7 +53,12 @@ def update_spec_with_cid(file, cid):
         spec_json.truncate()
 
 
-def main(ipfs_local, client=Client()):
+@click.command()
+@click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
+@click.option('--port', default='9944', help='port for the client to communicate with chain')
+@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
+def main(ipfs_local, client, port):
+    client = Client(rust_client=client, port=port)
     spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'
 
     cid = client.new_community(spec_file_path, account1)
@@ -117,11 +121,4 @@ def main(ipfs_local, client=Client()):
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(prog='bootstrap-demo-community', parents=[simple_parser()])
-    p.add_argument('--ipfs-local', '-l', action='store_true', help="set this option to use the local ipfs daemon")
-
-    args = p.parse_args()
-
-    print(f"Starting script with client '{args.client}' on port {args.port}")
-
-    main(args.ipfs_local, Client(rust_client=args.client, port=args.port))
+    main()
