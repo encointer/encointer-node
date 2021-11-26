@@ -16,32 +16,22 @@ OFFERINGS_PATH = './test-data/bazaar/offerings'
 
 ICON_PATH = './test-data/icons/community_icon.png'
 
-@click.group()
+
+@click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
 @click.option('--port', default='9944', help='port for the client to communicate with chain')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
 @click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
-@click.pass_context
-def cli(ctx, client, port, ipfs_local, node_url):
-    ctx.ensure_object(dict)
-    cl = set_local_or_remote_chain(client, port, node_url)
-    ctx.obj['client'] = cl
-    ctx.obj['port'] = port
-    ctx.obj['ipfs_local'] = ipfs_local
-    ctx.obj['node_url'] = node_url
-
-@cli.command()
-@click.pass_obj
-def register(ctx):
-    client = ctx['client']
+def register(client, port, ipfs_local, node_url):
+    client = set_local_or_remote_chain(client, port, node_url)
     owners = shop_owners()
 
     # As we try to read to the cid here, we must have called `./bootstrap_demo_community.py init` before calling this
     # script
     cid = read_cid()
 
-    create_businesses(2, ctx['ipfs_local'])
-    business_ipfs_cids = Ipfs.add_multiple(glob.glob(BUSINESSES_PATH + '/*.json'), ctx['ipfs_local'])
+    create_businesses(2, ipfs_local)
+    business_ipfs_cids = Ipfs.add_multiple(glob.glob(BUSINESSES_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
 
     for bi in range(len(business_ipfs_cids)):
@@ -56,9 +46,9 @@ def register(ctx):
         print(client.create_business(owner, cid, c))
         client.await_block()
 
-    create_offerings(cid, 5, ctx['ipfs_local'])
+    create_offerings(cid, 5, ipfs_local)
 
-    offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'), ctx['ipfs_local'])
+    offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
 
     for c in offerings_ipfs_cids:
@@ -161,4 +151,4 @@ def shop_owners():
 
 
 if __name__ == '__main__':
-    cli(obj={})
+    register()
