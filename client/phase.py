@@ -8,13 +8,10 @@ useful for benchmarking bot communities in a local setup
 """
 
 import subprocess
-import argparse
+import click
 import substrateinterface
 import json
 from py_client.client import Client
-from py_client.arg_parser import simple_parser
-
-global COUNT
 
 
 def subscription_handler(event_count, update_nr, subscription_id):
@@ -34,16 +31,16 @@ if __name__ == '__main__':
     args = p.parse_args()
     # print(f"Starting script with client '{args.client}' on port {args.port}")
     localhost = None
-    if(args.node_url == None):
-        client = Client(rust_client=args.client, port=args.port)
+    if node_url is None:
+        client = Client(rust_client=client, port=port)
         localhost = "ws://127.0.0.1"
     else:
-        client = Client(rust_client=args.client, node_url='wss://gesell.encointer.org', port=443)
-    COUNT = 0
+        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+    global COUNT
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = substrateinterface.SubstrateInterface(
-        url=  f"ws://127.0.0.1:{args.port}" if localhost != None else f"{args.node_url}:{443}",
+        url=  f"ws://127.0.0.1:{port}" if localhost is not None else f"{node_url}:{443}",
         ss58_format=42,
         type_registry_preset='substrate-node-template',
         type_registry=custom_type_registry
@@ -53,3 +50,18 @@ if __name__ == '__main__':
         print('NEXT PHASE!')
         client.next_phase()
         COUNT = 0
+
+
+def subscription_handler(event_count, update_nr, subscription_id):
+    global COUNT
+    print(f'events: {event_count}, idle blocks {COUNT}')
+    if COUNT > 10:
+        return update_nr
+    elif event_count.value == 1:
+        COUNT += 1
+    else:
+        COUNT = 0
+
+
+if __name__ == '__main__':
+    main()
