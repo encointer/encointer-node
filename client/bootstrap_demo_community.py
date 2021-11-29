@@ -56,7 +56,7 @@ def update_spec_with_cid(file, cid):
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
+@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 def main(ipfs_local, client, port):
     client = Client(rust_client=client, port=port)
     spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'

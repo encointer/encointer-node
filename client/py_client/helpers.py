@@ -61,5 +61,8 @@ def set_local_or_remote_chain(client: str, port: str, node_url: str):
     if node_url is None:
         client = Client(rust_client=client, port=port)
     else:
-        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+        if node_url == "gesell":
+            client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+        else:
+            raise Exception("You need to choose a valid remote chain")
     return client

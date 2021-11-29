@@ -21,10 +21,10 @@ global IPFS_LOCAL
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
-@click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
-def register(client, port, ipfs_local, node_url):
-    client = set_local_or_remote_chain(client, port, node_url)
+@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell, gesell-dot, gesell-ksm, cantillon-dot, cantillon-ksm.')
+def register(client, port, ipfs_local, remote_chain):
+    client = set_local_or_remote_chain(client, port, remote_chain)
     global IPFS_LOCAL
     IPFS_LOCAL = ipfs_local
     owners = shop_owners()

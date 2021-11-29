@@ -39,15 +39,15 @@ MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
-@click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell, gesell-dot, gesell-ksm, cantillon-dot, cantillon-ksm')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, node_url):
+def cli(ctx, client, port, ipfs_local, remote_chain):
     ctx.ensure_object(dict)
-    cl = set_local_or_remote_chain(client, port, node_url)
+    cl = set_local_or_remote_chain(client, port, remote_chain)
     ctx.obj['client'] = cl
     ctx.obj['port'] = port
     ctx.obj['ipfs_local'] = ipfs_local
-    ctx.obj['node_url'] = node_url
+    ctx.obj['remote_chain'] = remote_chain
 
 
 @cli.command()

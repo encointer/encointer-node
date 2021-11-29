@@ -12,27 +12,24 @@ import click
 import substrateinterface
 import json
 from py_client.client import Client
+from py_client.helpers import set_local_or_remote_chain
 
 global COUNT
 COUNT = 0
 
 
 @click.command()
-@click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell, gesell-dot, gesell-ksm, cantillon-dot, cantillon-ksm')
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-def main(node_url, client, port):
+def main(remote_chain, client, port):
     localhost = None
-    if node_url is None:
-        client = Client(rust_client=client, port=port)
-        localhost = "ws://127.0.0.1"
-    else:
-        client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+    client = set_local_or_remote_chain(client, port, remote_chain)
     global COUNT
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = substrateinterface.SubstrateInterface(
-        url=  f"ws://127.0.0.1:{port}" if localhost is not None else f"{node_url}:{443}",
+        url=  f"ws://127.0.0.1:{port}" if localhost is not None else f"{remote_chain}:{443}",
         ss58_format=42,
         type_registry_preset='substrate-node-template',
         type_registry=custom_type_registry
