@@ -19,8 +19,8 @@ ICON_PATH = './test-data/icons/community_icon.png'
 global IPFS_LOCAL
 
 @click.command()
-@click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
-@click.option('--port', default='9944', help='port for the client to communicate with chain')
+@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
 @click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
 def register(client, port, ipfs_local, node_url):

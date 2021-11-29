@@ -49,7 +49,7 @@ listen to chain events for debugging (i.e. see failed extrinsics)
 RUST_LOG=encointer_client_notee=info ./target/release/encointer-client-notee listen
 ```
 
-run a single cycle
+run a single phase
 ```bash
 cd client
 ./bot-community.py run
@@ -85,24 +85,12 @@ In IPFS, the community icons and data of businesses and offerings are stored.
 
 You can cat/get the data stored in ipfs locally:
 ```
-ipfs cat CONTENT_IDENTIFIER
+ipfs cat <CONTENT_IDENTIFIER>
 ```
 Or if it was stored remotely (on Infura):
 ```
-curl -X POST "https://ipfs.infura.io:5001/api/v0/cat?arg=QmaS7notdEkVmFvL2E19r8bpcVjdgjEV3gu6C2jYqUS1UB" 
+curl -X POST "https://ipfs.infura.io:5001/api/v0/cat?arg=<CONTENT_IDENTIFIER>" 
 ```
 ## Notes
 
-The cli provides helpful information for the ordering of options and commands. <br>
-The following options exist:
-* <kbd>--client</kbd> --> (string) path/to/chain/client
-* <kbd>--port</kbd> --> (string) specify port for the chain client
-* <kbd>-l,--ipfs_local</kbd> --> (bool) choose local ipfs node
-* <kbd>--node_url</kbd> --> (string) choose local ipfs node
-
-A possible call would look like
-
-```
-./bot-communities.py --client ./path/to/custom/client --port 123 -l --node_url wss://gesell.encointer.org init
-```
 For now, the node_url is hardcoded to 'wss://gesell.encointer.org' and port 443 is automatically set despite which value you enter. This will be changed in the future when more remote chains will be available. 

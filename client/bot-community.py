@@ -36,8 +36,8 @@ MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 
 
 @click.group()
-@click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
-@click.option('--port', default='9944', help='port for the client to communicate with chain')
+@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
 @click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
 @click.pass_context
@@ -74,10 +74,10 @@ def init(ctx):
 @cli.command()
 @click.pass_obj
 def run(ctx):
-    return run_no_annotators(ctx['client'])
+    return execute_current_phase(ctx['client'])
 
 
-def run_no_annotators(client: Client):
+def execute_current_phase(client: Client):
     client = client
     cid = read_cid()
     phase = client.get_phase()
@@ -106,7 +106,7 @@ def benchmark(ctx):
     py_client = ctx['client']
     print('will grow population forever')
     while True:
-        phase = run_no_annotators(py_client)
+        phase = execute_current_phase(py_client)
         while phase == py_client.get_phase():
             py_client.await_block()
 

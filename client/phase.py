@@ -19,8 +19,8 @@ COUNT = 0
 
 @click.command()
 @click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
-@click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
-@click.option('--port', default='9944', help='port for the client to communicate with chain')
+@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--port', default='9944', help='ws-port of the chain.')
 def main(node_url, client, port):
     localhost = None
     if node_url is None:
