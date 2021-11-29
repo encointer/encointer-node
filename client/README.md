@@ -91,6 +91,3 @@ Or if it was stored remotely (on Infura):
 ```
 curl -X POST "https://ipfs.infura.io:5001/api/v0/cat?arg=<CONTENT_IDENTIFIER>" 
 ```
-## Notes
-
-For now, the node_url is hardcoded to 'wss://gesell.encointer.org' and port 443 is automatically set despite which value you enter. This will be changed in the future when more remote chains will be available. 
