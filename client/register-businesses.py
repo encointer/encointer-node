@@ -83,7 +83,7 @@ def create_businesses(amount: int):
     mkdir_p(BUSINESSES_PATH)
 
     for i in range(amount):
-        b = random_business(IPFS_LOCAL)
+        b = random_business()
         f_name = f'{BUSINESSES_PATH}/{b["name"]}_{i}.json'
         print(f'Dumping business {b} to {f_name}')
         with open(f_name, 'w') as outfile:
@@ -102,7 +102,7 @@ def create_offerings(community_identifier: str, amount: int):
     mkdir_p(OFFERINGS_PATH)
 
     for i in range(amount):
-        o = random_offering(community_identifier, IPFS_LOCAL)
+        o = random_offering(community_identifier)
         f_name = f'{OFFERINGS_PATH}/{o["name"]}_{i}.json'
         print(f'Dumping offerings {o} to {f_name}')
         with open(f_name, 'w') as outfile:
