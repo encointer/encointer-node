@@ -58,7 +58,7 @@ def take_only_last_cid(ret_cids):
 
 
 def set_local_or_remote_chain(client: str, port: str, node_url: str):
-    if (node_url == None):
+    if node_url is None:
         client = Client(rust_client=client, port=port)
     else:
         client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)

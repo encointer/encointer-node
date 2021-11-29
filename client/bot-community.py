@@ -99,6 +99,7 @@ def run_no_annotators(client: Client):
         client.await_block()
     return phase
 
+
 @cli.command()
 @click.pass_obj
 def benchmark(ctx):
