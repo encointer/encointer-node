@@ -16,6 +16,7 @@ OFFERINGS_PATH = './test-data/bazaar/offerings'
 
 ICON_PATH = './test-data/icons/community_icon.png'
 
+global IPFS_LOCAL
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='the client to communicate with the chain')
@@ -24,13 +25,15 @@ ICON_PATH = './test-data/icons/community_icon.png'
 @click.option('--node_url', default=None, help='if set, remote chain is used with port 443, no need to manually set port, it will be ignored')
 def register(client, port, ipfs_local, node_url):
     client = set_local_or_remote_chain(client, port, node_url)
+    global IPFS_LOCAL
+    IPFS_LOCAL = ipfs_local
     owners = shop_owners()
 
     # As we try to read to the cid here, we must have called `./bootstrap_demo_community.py init` before calling this
     # script
     cid = read_cid()
 
-    create_businesses(2, ipfs_local)
+    create_businesses(2)
     business_ipfs_cids = Ipfs.add_multiple(glob.glob(BUSINESSES_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
 
@@ -46,7 +49,7 @@ def register(client, port, ipfs_local, node_url):
         print(client.create_business(owner, cid, c))
         client.await_block()
 
-    create_offerings(cid, 5, ipfs_local)
+    create_offerings(cid, 5)
 
     offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
@@ -68,7 +71,8 @@ def register(client, port, ipfs_local, node_url):
     print(client.list_offerings(cid))
     print(client.list_offerings_for_business(cid, owners[0]))
 
-def create_businesses(amount: int, ipfs_local):
+
+def create_businesses(amount: int):
     """
     Create some businesses and dump them to the test-data dir.
 
@@ -79,14 +83,14 @@ def create_businesses(amount: int, ipfs_local):
     mkdir_p(BUSINESSES_PATH)
 
     for i in range(amount):
-        b = random_business(ipfs_local)
+        b = random_business(IPFS_LOCAL)
         f_name = f'{BUSINESSES_PATH}/{b["name"]}_{i}.json'
         print(f'Dumping business {b} to {f_name}')
         with open(f_name, 'w') as outfile:
             json.dump(b, outfile, indent=2)
 
 
-def create_offerings(community_identifier: str, amount: int, ipfs_local):
+def create_offerings(community_identifier: str, amount: int):
     """
     Create some offerings and dump them to the test-data dir.
 
@@ -98,14 +102,14 @@ def create_offerings(community_identifier: str, amount: int, ipfs_local):
     mkdir_p(OFFERINGS_PATH)
 
     for i in range(amount):
-        o = random_offering(community_identifier, ipfs_local)
+        o = random_offering(community_identifier, IPFS_LOCAL)
         f_name = f'{OFFERINGS_PATH}/{o["name"]}_{i}.json'
         print(f'Dumping offerings {o} to {f_name}')
         with open(f_name, 'w') as outfile:
             json.dump(o, outfile, indent=2)
 
 
-def random_business(ipfs_local):
+def random_business():
     """
         Create a random business.
 
@@ -115,7 +119,7 @@ def random_business(ipfs_local):
     :return:
     """
     print("adding business image to remote: ")
-    image_cid = Ipfs.add(ICON_PATH, ipfs_local)
+    image_cid = Ipfs.add(ICON_PATH, IPFS_LOCAL)
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
@@ -124,7 +128,7 @@ def random_business(ipfs_local):
     }
 
 
-def random_offering(community_identifier, ipfs_local):
+def random_offering(community_identifier):
     """
     Create a random offering.
 
@@ -134,7 +138,7 @@ def random_offering(community_identifier, ipfs_local):
     :return:
     """
     print("adding offering image to remote: ")
-    image_cid = Ipfs.add(ICON_PATH, ipfs_local)
+    image_cid = Ipfs.add(ICON_PATH, IPFS_LOCAL)
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
