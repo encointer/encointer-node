@@ -119,7 +119,6 @@ def random_business():
     :return:
     """
     print("adding business image to remote: ")
-    print(f"IPFS IS: {IPFS_LOCAL}")
     image_cid = Ipfs.add(ICON_PATH, IPFS_LOCAL)
     s = RandomSentence()
     return {
