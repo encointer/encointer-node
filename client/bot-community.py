@@ -73,11 +73,11 @@ def init(ctx):
 
 @cli.command()
 @click.pass_obj
-def run(ctx):
-    return run_without_annotators(ctx['client'])
+def execute_current_phase(ctx):
+    return _execute_current_phase(ctx['client'])
 
 
-def run_without_annotators(client: Client):
+def _execute_current_phase(client: Client):
     client = client
     cid = read_cid()
     phase = client.get_phase()
@@ -106,7 +106,7 @@ def benchmark(ctx):
     py_client = ctx['client']
     print('will grow population forever')
     while True:
-        phase = run_without_annotators(py_client)
+        phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
             py_client.await_block()
 
