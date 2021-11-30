@@ -38,8 +38,8 @@ MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
 @click.group()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used')
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell, gesell-dot, gesell-ksm, cantillon-dot, cantillon-ksm')
+@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
 @click.pass_context
 def cli(ctx, client, port, ipfs_local, remote_chain):
     ctx.ensure_object(dict)
@@ -74,10 +74,10 @@ def init(ctx):
 @cli.command()
 @click.pass_obj
 def run(ctx):
-    return execute_current_phase(ctx['client'])
+    return run_without_annotators(ctx['client'])
 
 
-def execute_current_phase(client: Client):
+def run_without_annotators(client: Client):
     client = client
     cid = read_cid()
     phase = client.get_phase()
@@ -106,7 +106,7 @@ def benchmark(ctx):
     py_client = ctx['client']
     print('will grow population forever')
     while True:
-        phase = execute_current_phase(py_client)
+        phase = run_without_annotators(py_client)
         while phase == py_client.get_phase():
             py_client.await_block()
 

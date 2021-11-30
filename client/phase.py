@@ -19,7 +19,7 @@ COUNT = 0
 
 
 @click.command()
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell, gesell-dot, gesell-ksm, cantillon-dot, cantillon-ksm')
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 def main(remote_chain, client, port):
@@ -29,7 +29,7 @@ def main(remote_chain, client, port):
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = substrateinterface.SubstrateInterface(
-        url=  f"ws://127.0.0.1:{port}" if localhost is not None else f"{remote_chain}:{443}",
+        url= f"wss://gesell.encointer.org:{443}" if localhost is not None else f"ws://127.0.0.1:{port}",
         ss58_format=42,
         type_registry_preset='substrate-node-template',
         type_registry=custom_type_registry

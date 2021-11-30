@@ -22,8 +22,8 @@ global IPFS_LOCAL
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell, gesell-dot, gesell-ksm, cantillon-dot, cantillon-ksm.')
-def register(client, port, ipfs_local, remote_chain):
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
+def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
     client = set_local_or_remote_chain(client, port, remote_chain)
     global IPFS_LOCAL
     IPFS_LOCAL = ipfs_local
@@ -119,6 +119,7 @@ def random_business():
     :return:
     """
     print("adding business image to remote: ")
+    print(f"IPFS IS: {IPFS_LOCAL}")
     image_cid = Ipfs.add(ICON_PATH, IPFS_LOCAL)
     s = RandomSentence()
     return {
@@ -155,4 +156,4 @@ def shop_owners():
 
 
 if __name__ == '__main__':
-    register()
+    register_businesses_and_offerings()
