@@ -187,7 +187,7 @@ jobs:
       run: |
         cd client
         python bot-community.py init
-        python bot-community.py run
+        python bot-community.py execute-current-phase
 
   test-bazaar:
     runs-on: ubuntu-latest

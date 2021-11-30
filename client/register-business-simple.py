@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-# import argparse
-# from py_client.arg_parser import simple_parser
 
 import json
-import glob
 from py_client.client import Client
 from py_client.ipfs import Ipfs
 from py_client.helpers import read_cid

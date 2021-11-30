@@ -8,13 +8,37 @@ useful for benchmarking bot communities in a local setup
 """
 
 import subprocess
-import argparse
+import click
 import substrateinterface
 import json
 from py_client.client import Client
-from py_client.arg_parser import simple_parser
+from py_client.helpers import set_local_or_remote_chain
 
 global COUNT
+COUNT = 0
+
+
+@click.command()
+@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
+@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--port', default='9944', help='ws-port of the chain.')
+def main(remote_chain, client, port):
+    localhost = None
+    client = set_local_or_remote_chain(client, port, remote_chain)
+    global COUNT
+    with open('typedefs.json') as f:
+        custom_type_registry = json.load(f)
+    substrate = substrateinterface.SubstrateInterface(
+        url= f"wss://gesell.encointer.org:{443}" if localhost is not None else f"ws://127.0.0.1:{port}",
+        ss58_format=42,
+        type_registry_preset='substrate-node-template',
+        type_registry=custom_type_registry
+    )
+    while True:
+        result = substrate.query("System", "EventCount", subscription_handler=subscription_handler)
+        print('NEXT PHASE!')
+        client.next_phase()
+        COUNT = 0
 
 
 def subscription_handler(event_count, update_nr, subscription_id):
@@ -29,27 +53,4 @@ def subscription_handler(event_count, update_nr, subscription_id):
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(
-    prog='register-businesses', parents=[simple_parser()])
-    args = p.parse_args()
-    # print(f"Starting script with client '{args.client}' on port {args.port}")
-    localhost = None
-    if(args.node_url == None):
-        client = Client(rust_client=args.client, port=args.port)
-        localhost = "ws://127.0.0.1"
-    else:
-        client = Client(rust_client=args.client, node_url='wss://gesell.encointer.org', port=443)
-    COUNT = 0
-    with open('typedefs.json') as f:
-        custom_type_registry = json.load(f)
-    substrate = substrateinterface.SubstrateInterface(
-        url=  f"ws://127.0.0.1:{args.port}" if localhost != None else f"{args.node_url}:{443}",
-        ss58_format=42,
-        type_registry_preset='substrate-node-template',
-        type_registry=custom_type_registry
-    )
-    while True:
-        result = substrate.query("System", "EventCount", subscription_handler=subscription_handler)
-        print('NEXT PHASE!')
-        client.next_phase()
-        COUNT = 0
+    main()

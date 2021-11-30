@@ -5,6 +5,8 @@ import re
 import shutil
 from os import path
 
+from .client import Client
+
 def zip_folder(name: str, folder_abs_path: str):
     return shutil.make_archive(f"{name}","zip", folder_abs_path)
 
@@ -53,3 +55,14 @@ def take_only_last_cid(ret_cids):
             warnings.warn('No cid returned. Something happened. stderr: ')
             warnings.warn(str(ret_cids.stderr))
             return ''
+
+
+def set_local_or_remote_chain(client: str, port: str, node_url: str):
+    if node_url is None:
+        client = Client(rust_client=client, port=port)
+    else:
+        if node_url == "gesell":
+            client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
+        else:
+            raise Exception("You need to choose a valid remote chain")
+    return client
