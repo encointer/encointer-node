@@ -22,6 +22,7 @@
 #![feature(array_methods)]
 
 mod cli_args;
+mod utils;
 
 #[macro_use]
 extern crate clap;
@@ -44,6 +45,7 @@ use sp_runtime::{
 	MultiSignature,
 };
 
+use crate::utils::offline_xt;
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
@@ -67,7 +69,8 @@ use serde_json::{json, to_value};
 use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, Api, GenericAddress, Metadata, UncheckedExtrinsicV4, XtStatus,
+	utils::FromHexString, Api, ApiClientError, GenericAddress, Metadata, UncheckedExtrinsicV4,
+	XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -164,20 +167,12 @@ fn main() {
                 .description("send some bootstrapping funds to supplied account(s)")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("accounts")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("ACCOUNT")
-                            .multiple(true)
-                            .min_values(1)
-                            .help("Account(s) to be funded, ss58check encoded"),
-                    )
+                    .fundees_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
-                    let accounts: Vec<_> = matches.values_of("accounts").unwrap().collect();
+                    let accounts = matches.fundees_arg().unwrap();
 
                     let existential_deposit = api.get_existential_deposit().unwrap();
                     info!("Existential deposit is = {:?}", existential_deposit);
@@ -683,17 +678,17 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("endorse-newcomer")
+            Command::new("endorse-newcomers")
                 .description("Endorse a newcomer with a bootstrapper account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .bootstrapper_arg()
-                        .endorsee_arg()
+                        .endorsees_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
                     extract_and_execute(
-                        &matches, |mut api, cid| endorse_newcomer(&mut api, cid, &matches)
+                        &matches, |mut api, cid| endorse_newcomers(&mut api, cid, &matches)
                     ).unwrap();
                     Ok(())
                 }),
@@ -712,7 +707,8 @@ fn main() {
                             .expect("please supply argument --cid"),
                     );
                     let burned_bootstrapper_newbie_tickets = get_burned_bootstrapper_newbie_tickets(&api, cid, &matches);
-                    println!("burned_bootstrapper_newbie_tickets = {}", burned_bootstrapper_newbie_tickets);
+                    info!("burned_bootstrapper_newbie_tickets = {}", burned_bootstrapper_newbie_tickets);
+                    println!("{}", burned_bootstrapper_newbie_tickets);
                     Ok(())
                 }),
         )
@@ -1499,26 +1495,34 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	Ok(())
 }
 
-fn endorse_newcomer(
+fn endorse_newcomers(
 	api: &mut Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	matches: &ArgMatches<'_>,
-) -> Result<(), ()> {
+) -> Result<(), ApiClientError> {
 	let bootstrapper = matches.account_arg().map(get_pair_from_str).unwrap();
-	let newbie = matches.endorsee_arg().map(get_accountid_from_str).unwrap();
+	let endorsees = matches.endorsees_arg().expect("Please supply at least one endorsee");
 
 	api.signer = Some(bootstrapper.into());
 
-	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-		api.clone(),
-		"EncointerCeremonies",
-		"endorse_newcomer",
-		cid,
-		newbie.clone()
-	);
-	// send and watch extrinsic until finalized
-	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-	println!("Endorsing newbie {}. xt-status: 'ready'", newbie);
+	let mut nonce = api.get_nonce()?;
+
+	for e in endorsees.into_iter() {
+		let endorsee = get_accountid_from_str(e);
+		println!("Endorsing newbie {}. xt-status: 'ready'", endorsee);
+
+		let call =
+			compose_call!(api.metadata, "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
+
+		let xt = offline_xt(&api, call, nonce);
+
+		ensure_payment(&api, &xt.hex_encode());
+
+		let _tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+
+		nonce += 1;
+	}
+
 	Ok(())
 }
 

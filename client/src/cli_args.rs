@@ -6,7 +6,8 @@ const CID_ARG: &'static str = "cid";
 const CLAIMS_ARG: &'static str = "claims";
 const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
 const IPFS_CID_ARG: &'static str = "ceremony-index";
-const ENDORSEE_ARG: &'static str = "endorsee";
+const FUNDEES_ARG: &'static str = "fundees";
+const ENDORSEES_ARG: &'static str = "endorsees";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -16,7 +17,8 @@ pub trait EncointerArgs<'b> {
 	fn ceremony_index_arg(self) -> Self;
 	fn ipfs_cid_arg(self) -> Self;
 	fn bootstrapper_arg(self) -> Self;
-	fn endorsee_arg(self) -> Self;
+	fn fundees_arg(self) -> Self;
+	fn endorsees_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -27,7 +29,8 @@ pub trait EncointerArgsExtractor {
 	fn ceremony_index_arg(&self) -> Option<&str>;
 	fn ipfs_cid_arg(&self) -> Option<&str>;
 	fn bootstrapper_arg(&self) -> Option<&str>;
-	fn endorsee_arg(&self) -> Option<&str>;
+	fn fundees_arg(&self) -> Option<Vec<&str>>;
+	fn endorsees_arg(&self) -> Option<Vec<&str>>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -100,14 +103,27 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 		self.account_arg().help("bootstrapper account in ss58check format")
 	}
 
-	fn endorsee_arg(self) -> Self {
+	fn fundees_arg(self) -> Self {
 		self.arg(
-			Arg::with_name(ENDORSEE_ARG)
-				.long("endorsee")
-				.required(true)
+			Arg::with_name(FUNDEES_ARG)
 				.takes_value(true)
-				.value_name("STRING")
-				.help("account to be endorsed"),
+				.required(true)
+				.value_name("ACCOUNT")
+				.multiple(true)
+				.min_values(1)
+				.help("Account(s) to be funded, ss58check encoded"),
+		)
+	}
+
+	fn endorsees_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(ENDORSEES_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("ACCOUNT")
+				.multiple(true)
+				.min_values(1)
+				.help("Account(s) to be endorsed, ss58check encoded"),
 		)
 	}
 }
@@ -141,7 +157,11 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.account_arg()
 	}
 
-	fn endorsee_arg(&self) -> Option<&str> {
-		self.value_of(ENDORSEE_ARG)
+	fn fundees_arg(&self) -> Option<Vec<&str>> {
+		self.values_of(FUNDEES_ARG).map(|v| v.collect())
+	}
+
+	fn endorsees_arg(&self) -> Option<Vec<&str>> {
+		self.values_of(ENDORSEES_ARG).map(|v| v.collect())
 	}
 }

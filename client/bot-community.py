@@ -140,16 +140,19 @@ def purge_keystore_prompt():
 
 def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
-    bootstrapper_alice_burned = client.get_burned_bootstrapper_newbie_tickets(cid,"//Alice")
-    bootstrapper_alice_burned = [int(s) for s in bootstrapper_alice_burned.split() if s.isdigit()]
+
+    bootstrapper_alice_burned = client.get_burned_bootstrapper_newbie_tickets(cid, "//Alice")
+
+    print(f'Alice\'s burned bootstrapper tickets {bootstrapper_alice_burned}')
+
     total = sum(bal)
     print(f'****** money supply is {total}')
     f = open('bot-stats.csv', 'a')
     f.write(f'{len(accounts)}, {total}\n')
     f.close()
     if total > 0:
-        if bootstrapper_alice_burned[0] <= 50:
-            print(f"burned tickets by Alice: {bootstrapper_alice_burned[0]}")
+        if bootstrapper_alice_burned <= 50:
+
             n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts)) + NUMBER_OF_ENDORSMENTS_PER_REGISTRATION
             print(f'*** adding {n_newbies} newbies')
             if n_newbies > 0:
