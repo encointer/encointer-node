@@ -14,7 +14,7 @@ and init and grow a community
    ./bot-community.py --port 9945 benchmark
    
 on testnet Gesell, execute the current ceremony phase. (it does not advance the phase).
-   ./bot-community.py --port 9945 run
+   ./bot-community.py --port 9945 execute-current-phase
 
 """
 import os
@@ -101,7 +101,7 @@ def _execute_current_phase(client: Client):
         client.await_block()
 
     if phase == "ASSIGNING":
-        meetups = client.list_meetups(cid);
+        meetups = client.list_meetups(cid)
         meetup_sizes = list(map(lambda x: len(x), meetups))
         print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
     if phase == 'ATTESTING':
@@ -129,7 +129,7 @@ def random_community_spec(bootstrappers, ipfs_cid):
     locations = populate_locations(point, NUMBER_OF_LOCATIONS)
     print(f'created {len(locations)} random locations around {point}.')
 
-    name = 'bot' + '-'.join(RandomWords().random_words(count=1))
+    name = 'bot-' + '-'.join(RandomWords().random_words(count=1))
     symbol = name[1:4].upper()
     meta = meta_json(name, symbol, ipfs_cid)
     print(f'CommunityMetadata {meta}')
@@ -175,14 +175,17 @@ def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
     return (endorsers, effective_endorsements)
 
 
-def endorse(client: Client, cid: str, bootstrappers_and_tickets, endorsee_count: int):
+def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, endorsee_count: int):
+    """ Endorse some new accounts. They are not fauceted.
+
+        Tries to endorse up to `endorsee_count` new accounts, but will do fewer if there are not enough bootstrapper
+        newbie tickets left.
+    """
     (endorsers_and_tickets, total_endorsements) = get_endorsers(bootstrappers_and_tickets, endorsee_count)
 
     if total_endorsements == 0:
         print("Can't endorse anymore, all tickets have been spent.")
         return []
-
-    print(f'Got Endorsees: {endorsers_and_tickets}')
 
     endorsees = client.create_accounts(total_endorsements)
 
@@ -192,8 +195,10 @@ def endorse(client: Client, cid: str, bootstrappers_and_tickets, endorsee_count:
         endorser = e[0]
         tickets = e[1]
 
-        print(f'bootstrapper:                   {endorser}')
-        print(f'endorses the following accounts: {endorsees[start:tickets]}')
+        print(f'bootstrapper {endorser} endorses {tickets} accounts.')
+
+        # print(f'bootstrapper:                       {endorser}\n')
+        # print(f'endorses the following accounts:    {endorsees[start:tickets]}')
 
         client.endorse_newcomers(cid, endorser, endorsees[start:tickets])
 
@@ -223,14 +228,14 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
     """ Initializes new community members based on the `current_community_size` and the amount of endorsements we can
         perform.
 
-        :returns funded accounts, ready to be registered for a ceremony.
+        :returns Funded accounts, ready to be registered for a ceremony.
     """
     # transform string to python list
     bootstrappers_with_tickets = ast.literal_eval(client.get_bootstrappers_with_remaining_newbie_tickets(cid))
 
-    print(f'Bootstrappers with remaining tickets {bootstrappers_with_tickets}')
+    print(f'Bootstrappers with remaining newbie tickets {bootstrappers_with_tickets}')
 
-    endorsees = endorse(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION)
+    endorsees = endorse_new_accounts(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION)
 
     print(f'Endorsed accounts: {endorsees}')
 
