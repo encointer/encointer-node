@@ -148,7 +148,7 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
-def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
+def get_endorsement_allocation(bootstrappers_and_tickets, endorsee_count: int):
     """ Returns an endorsement allocation based on the available newbie tickets of the bootstrappers and the total amount
         of endorsements we want to execute.
 
@@ -168,8 +168,8 @@ def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
 
             e_count -= tickets
 
-            if e_count <= 0:
-                break
+        if e_count <= 0:
+            break
 
     return (endorsers, effective_endorsements)
 
@@ -180,7 +180,7 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
         Tries to endorse up to `endorsee_count` new accounts, but will do fewer if there are not enough bootstrapper
         newbie tickets left.
     """
-    (endorsers_and_tickets, total_endorsements) = get_endorsers(bootstrappers_and_tickets, endorsee_count)
+    (endorsers_and_tickets, total_endorsements) = get_endorsement_allocation(bootstrappers_and_tickets, endorsee_count)
 
     if total_endorsements == 0:
         print("Can't endorse anymore, all tickets have been spent.")
@@ -195,7 +195,7 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
         print(f'bootstrapper {endorser} endorses {endorsement_count} accounts.')
 
         # print(f'bootstrapper:                       {endorser}\n')
-        # print(f'endorses the following accounts:    {endorsees[start:tickets]}')
+        # print(f'endorses the following accounts:    {endorsees[start:endorsement_count]}')
 
         client.endorse_newcomers(cid, endorser, endorsees[start:endorsement_count])
 
