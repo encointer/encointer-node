@@ -21,6 +21,7 @@ import os
 
 import click
 import geojson
+import ast
 
 from random_words import RandomWords
 from math import floor
@@ -138,10 +139,65 @@ def purge_keystore_prompt():
     purge_prompt(KEYSTORE_PATH, 'accounts')
 
 
+def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
+    """ Returns a list of endorsers based on the available newbie tickets of the bootstrappers and the total amount
+        of endorsements we want to execute.
+    """
+    endorsers = []
+    e_count = endorsee_count
+    effective_endorsements = 0
+
+    for b_t in bootstrappers_and_tickets:
+        while e_count > 0:
+            bootstrapper = b_t[0]
+            tickets = min(b_t[1], e_count)
+
+            if tickets > 0:
+                endorsers.append((bootstrapper, tickets))
+                effective_endorsements += tickets
+
+            e_count -= tickets
+
+            if e_count >= 0:
+                break
+
+    return (endorsers, effective_endorsements)
+
+
+def endorse(client: Client, cid: str, bootstrappers_and_tickets, endorsee_count: int):
+    (endorsers_and_tickets, total_endorsements) = get_endorsers(bootstrappers_and_tickets, endorsee_count)
+
+    print(f'Got Endorsees: {endorsers_and_tickets}')
+
+    endorsees = client.create_accounts(total_endorsements)
+
+    for e in endorsers_and_tickets:
+        # execute endorsements per bootstrapper
+        start = 0
+        tickets = e[1]
+
+        print(f'e[0]: {e[0]}')
+        print(f'endorsees: {endorsees[start:tickets]}')
+
+        client.endorse_newcomers(cid, e[0], endorsees[start:tickets])
+
+        start += tickets
+
+    return endorsees
+
+
+def get_newbie_amount(current_population: int):
+    return min(
+        floor(current_population / 4.0),
+        MAX_POPULATION - current_population
+    )
+
+
 def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
 
-    bootstrappers_with_tickets = client.get_bootstrappers_with_remaining_newbie_tickets(cid)
+    # transform string to python list
+    bootstrappers_with_tickets = ast.literal_eval(client.get_bootstrappers_with_remaining_newbie_tickets(cid))
 
     print(f'Bootstrappers with remaining tickets {bootstrappers_with_tickets}')
 
@@ -160,33 +216,20 @@ def register_participants(client: Client, accounts, cid):
     f = open('bot-stats.csv', 'a')
     f.write(f'{len(accounts)}, {total}\n')
     f.close()
-    if total > 0:
-        if bootstrappers_with_tickets <= 50:
 
-            # Question: @anizeani: what is this calculation based on?
-            n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts)) + NUMBER_OF_ENDORSMENTS_PER_REGISTRATION
-            print(f'*** adding {n_newbies} newbies')
-            if n_newbies > 0:
-                newbies = []
-                for n in range(0, n_newbies):
-                    newbies.append(client.new_account())
-                endorsees = []
-                for m in range(0, NUMBER_OF_ENDORSMENTS_PER_REGISTRATION):
-                    endorsees.append(newbies[m])
-                client.endorse_newcomers(cid, '//Alice', endorsees)
-                client.faucet(newbies)
-                client.await_block()
-                accounts = client.list_accounts()
-        else:
-            n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts))
-            print(f'*** adding {n_newbies} newbies')
-            if n_newbies > 0:
-                newbies = []
-                for n in range(0, n_newbies):
-                    newbies.append(client.new_account())
-                client.faucet(newbies)
-                client.await_block()
-                accounts = client.list_accounts()
+    endorsees = endorse(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSMENTS_PER_REGISTRATION)
+
+    print(f'Endorsed accounts: {endorsees}')
+
+    newbies = client.create_accounts(get_newbie_amount(len(accounts)))
+
+    new_members = newbies + endorsees
+
+    client.faucet(new_members)
+    client.await_block()
+
+    # updated account list including new members
+    accounts = client.list_accounts()
 
     print(f'registering {len(accounts)} participants')
     need_refunding = []
@@ -202,6 +245,11 @@ def register_participants(client: Client, accounts, cid):
     if len(need_refunding) > 0:
         print(f'the following accounts are out of funds and will be refunded {need_refunding}')
         client.faucet(need_refunding)
+
+        client.await_block()
+
+        for p in need_refunding:
+            client.register_participant(p, cid)
 
 
 def perform_meetup(client: Client, meetup, cid):
