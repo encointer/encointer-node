@@ -6,6 +6,7 @@ const CID_ARG: &'static str = "cid";
 const CLAIMS_ARG: &'static str = "claims";
 const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
 const IPFS_CID_ARG: &'static str = "ceremony-index";
+const BOOTSTRAPPER_ARG: &'static str = "bootstrapper";
 const FUNDEES_ARG: &'static str = "fundees";
 const ENDORSEES_ARG: &'static str = "endorsees";
 
@@ -100,7 +101,13 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	}
 
 	fn bootstrapper_arg(self) -> Self {
-		self.account_arg().help("bootstrapper account in ss58check format")
+		self.arg(
+			Arg::with_name(BOOTSTRAPPER_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("SS58")
+				.help("Bootstrapper in ss58check format"),
+		)
 	}
 
 	fn fundees_arg(self) -> Self {
@@ -108,7 +115,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 			Arg::with_name(FUNDEES_ARG)
 				.takes_value(true)
 				.required(true)
-				.value_name("ACCOUNT")
+				.value_name("FUNDEE")
 				.multiple(true)
 				.min_values(1)
 				.help("Account(s) to be funded, ss58check encoded"),
@@ -120,7 +127,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 			Arg::with_name(ENDORSEES_ARG)
 				.takes_value(true)
 				.required(true)
-				.value_name("ACCOUNT")
+				.value_name("ENDORSEE")
 				.multiple(true)
 				.min_values(1)
 				.help("Account(s) to be endorsed, ss58check encoded"),
@@ -154,7 +161,7 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 
 	fn bootstrapper_arg(&self) -> Option<&str> {
-		self.account_arg()
+		self.value_of(BOOTSTRAPPER_ARG)
 	}
 
 	fn fundees_arg(&self) -> Option<Vec<&str>> {
