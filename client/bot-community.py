@@ -13,7 +13,7 @@ and init and grow a community
    ./bot-community.py --port 9945 init
    ./bot-community.py --port 9945 benchmark
    
-on testnet Gesell, run this script once per ceremony phase (after calling `init` first)
+on testnet Gesell, execute the current ceremony phase. (it does not advance the phase).
    ./bot-community.py --port 9945 run
 
 """
@@ -35,8 +35,8 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
-NUMBER_OF_ENDORSMENTS_PER_REGISTRATION = 2
-NUMBER_OF_ENDORSMENTS_PER_BOOTSTRAPPER = 50
+NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 2
+NUMBER_OF_ENDORSEMENTS_PER_BOOTSTRAPPER = 50
 
 
 @click.group()
@@ -149,8 +149,10 @@ def purge_keystore_prompt():
 
 
 def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
-    """ Returns a list of endorsers based on the available newbie tickets of the bootstrappers and the total amount
+    """ Returns an endorsement allocation based on the available newbie tickets of the bootstrappers and the total amount
         of endorsements we want to execute.
+
+        Also returns the amount of possible endorsements.
     """
     endorsers = []
     e_count = endorsee_count
@@ -176,6 +178,10 @@ def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
 def endorse(client: Client, cid: str, bootstrappers_and_tickets, endorsee_count: int):
     (endorsers_and_tickets, total_endorsements) = get_endorsers(bootstrappers_and_tickets, endorsee_count)
 
+    if total_endorsements == 0:
+        print("Can't endorse anymore, all tickets have been spent.")
+        return []
+
     print(f'Got Endorsees: {endorsers_and_tickets}')
 
     endorsees = client.create_accounts(total_endorsements)
@@ -183,12 +189,13 @@ def endorse(client: Client, cid: str, bootstrappers_and_tickets, endorsee_count:
     for e in endorsers_and_tickets:
         # execute endorsements per bootstrapper
         start = 0
+        endorser = e[0]
         tickets = e[1]
 
-        print(f'e[0]: {e[0]}')
-        print(f'endorsees: {endorsees[start:tickets]}')
+        print(f'bootstrapper:                   {endorser}')
+        print(f'endorses the following accounts: {endorsees[start:tickets]}')
 
-        client.endorse_newcomers(cid, e[0], endorsees[start:tickets])
+        client.endorse_newcomers(cid, endorser, endorsees[start:tickets])
 
         start += tickets
 
@@ -213,12 +220,17 @@ def write_current_stats(client: Client, accounts, cid):
 
 
 def init_new_community_members(client: Client, cid: str, current_community_size: int):
+    """ Initializes new community members based on the `current_community_size` and the amount of endorsements we can
+        perform.
+
+        :returns funded accounts, ready to be registered for a ceremony.
+    """
     # transform string to python list
     bootstrappers_with_tickets = ast.literal_eval(client.get_bootstrappers_with_remaining_newbie_tickets(cid))
 
     print(f'Bootstrappers with remaining tickets {bootstrappers_with_tickets}')
 
-    endorsees = endorse(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSMENTS_PER_REGISTRATION)
+    endorsees = endorse(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION)
 
     print(f'Endorsed accounts: {endorsees}')
 
