@@ -694,21 +694,19 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("get-burned-bootstrapper-newbie-tickets")
-                .description("get BurnedBootstrapperNewbieTickets")
+            Command::new("get-bootstrappers-with-remaining-newbie-tickets")
+                .description("Get the bootstrappers along with the remaining newbie tickets")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .bootstrapper_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let cid = verify_cid(&api,
-                        matches.cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    let burned_bootstrapper_newbie_tickets = get_burned_bootstrapper_newbie_tickets(&api, cid, &matches);
-                    info!("burned_bootstrapper_newbie_tickets = {}", burned_bootstrapper_newbie_tickets);
-                    println!("{}", burned_bootstrapper_newbie_tickets);
+                    let bs_with_tickets : Vec<BootstrapperWithTickets> = extract_and_execute(
+                        &matches, |mut api, cid| get_bootstrappers_with_remaining_newbie_tickets(&mut api, cid)
+                    ).unwrap();
+
+                    info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
+
+                    println!("{:?}", bs_with_tickets);
                     Ok(())
                 }),
         )
@@ -1526,21 +1524,51 @@ fn endorse_newcomers(
 	Ok(())
 }
 
-fn get_burned_bootstrapper_newbie_tickets(
+/// Helper type, which is only needed to print the information nicely.
+#[derive(Debug)]
+struct BootstrapperWithTickets {
+	#[allow(unused)] // because we never read the fields explicitly
+	bootstrapper: AccountId,
+	#[allow(unused)]
+	remaining_newbie_tickets: u8,
+}
+
+fn get_bootstrappers_with_remaining_newbie_tickets(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
-	matches: &ArgMatches<'_>,
-) -> u8 {
-	let bootstrapper = matches.bootstrapper_arg().map(get_accountid_from_str).unwrap();
-	api.get_storage_double_map(
-		"EncointerCeremonies",
-		"BurnedBootstrapperNewbieTickets",
-		cid,
-		bootstrapper,
-		None,
-	)
-	.unwrap()
-	.unwrap_or(0)
+) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
+	// Todo: Get value from node, but we need: https://github.com/encointer/pallets/issues/87
+	let total_newbie_tickets: u8 = 50;
+
+	// prepare closure to make below call more readable.
+	let ticket_query = |bs| -> Result<u8, ApiClientError> {
+		let remaining_tickets = total_newbie_tickets -
+			api.get_storage_double_map(
+				"EncointerCeremonies",
+				"BurnedBootstrapperNewbieTickets",
+				cid,
+				bs,
+				None,
+			)?
+			.unwrap_or(0u8);
+
+		Ok(remaining_tickets)
+	};
+
+	let bootstrappers: Vec<AccountId> = api
+		.get_storage_map("EncointerCommunities", "Bootstrappers", cid, None)?
+		.expect("No bootstrappers found, does the community exist?");
+
+	let mut bs_with_tickets: Vec<BootstrapperWithTickets> = Vec::with_capacity(bootstrappers.len());
+
+	for bs in bootstrappers.into_iter() {
+		bs_with_tickets.push(BootstrapperWithTickets {
+			bootstrapper: bs.clone(),
+			remaining_newbie_tickets: ticket_query(bs)?,
+		});
+	}
+
+	Ok(bs_with_tickets)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
