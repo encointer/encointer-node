@@ -679,7 +679,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("endorse-newcomers")
-                .description("Endorse a newcomer with a bootstrapper account")
+                .description("Endorse newbies with a bootstrapper account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .bootstrapper_arg()
@@ -690,6 +690,7 @@ fn main() {
                     extract_and_execute(
                         &matches, |mut api, cid| endorse_newcomers(&mut api, cid, &matches)
                     ).unwrap();
+
                     Ok(())
                 }),
         )
@@ -1502,7 +1503,7 @@ fn endorse_newcomers(
 	cid: CommunityIdentifier,
 	matches: &ArgMatches<'_>,
 ) -> Result<(), ApiClientError> {
-	let bootstrapper = matches.account_arg().map(get_pair_from_str).unwrap();
+	let bootstrapper = matches.bootstrapper_arg().map(get_pair_from_str).unwrap();
 	let endorsees = matches.endorsees_arg().expect("Please supply at least one endorsee");
 
 	api.signer = Some(bootstrapper.into());
@@ -1511,7 +1512,6 @@ fn endorse_newcomers(
 
 	for e in endorsees.into_iter() {
 		let endorsee = get_accountid_from_str(e);
-		println!("Endorsing newbie {}.", endorsee);
 
 		let call =
 			compose_call!(api.metadata, "EncointerCeremonies", "endorse_newcomer", cid, endorsee);

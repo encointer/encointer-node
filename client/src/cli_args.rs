@@ -125,6 +125,8 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	fn endorsees_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(ENDORSEES_ARG)
+				.short("-e")
+				.long("-endorsees")
 				.takes_value(true)
 				.required(true)
 				.value_name("ENDORSEE")
