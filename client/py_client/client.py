@@ -185,7 +185,7 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def endorse_newcomers(self, cid, endorser, endorsees):
-        ret = subprocess.run(self.cli + ["endorse-newcomers", endorser, "--cid", cid, "--endorsee", endorsees],
+        ret = subprocess.run(self.cli + ["endorse-newcomers", endorser, "--cid", cid, "--endorsees"] + endorsees,
                              stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
