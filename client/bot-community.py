@@ -141,9 +141,19 @@ def purge_keystore_prompt():
 def register_participants(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
 
-    bootstrapper_alice_burned = client.get_burned_bootstrapper_newbie_tickets(cid, "//Alice")
+    bootstrappers_with_tickets = client.get_bootstrappers_with_remaining_newbie_tickets(cid)
 
-    print(f'Alice\'s burned bootstrapper tickets {bootstrapper_alice_burned}')
+    print(f'Bootstrappers with remaining tickets {bootstrappers_with_tickets}')
+
+    # Todo: The below code needs to be adjusted
+    #
+    # 1.    You can't assume alice is a bootstrapper
+    # 2.    All the bootstrappers can endorse, not only alice. So the total amount of endorsements to be performed is:
+    #       bootstrapper_count * newbie_tickets_per_bootstrapper.
+    # 3.    I the rust interface has been adjusted. The above code returns all the bootstrappers, and the amount of
+    #       **remaining** newbie tickets.
+    # 4.    Extract the endorsement-process into separate functions: init_account, init_endorsees
+    # 5.    The `endorse_newcomers` rust function is not yet tested.
 
     total = sum(bal)
     print(f'****** money supply is {total}')
@@ -151,8 +161,9 @@ def register_participants(client: Client, accounts, cid):
     f.write(f'{len(accounts)}, {total}\n')
     f.close()
     if total > 0:
-        if bootstrapper_alice_burned <= 50:
+        if bootstrappers_with_tickets <= 50:
 
+            # Question: @anizeani: what is this calculation based on?
             n_newbies = min(floor(len(accounts) / 4.0), MAX_POPULATION - len(accounts)) + NUMBER_OF_ENDORSMENTS_PER_REGISTRATION
             print(f'*** adding {n_newbies} newbies')
             if n_newbies > 0:
