@@ -13,7 +13,7 @@ and init and grow a community
    ./bot-community.py --port 9945 init
    ./bot-community.py --port 9945 benchmark
    
-on testnet Gesell, execute the current ceremony phase. (it does not advance the phase).
+on testnet Gesell, execute the current ceremony phase (it does not advance the phase).
    ./bot-community.py --port 9945 execute-current-phase
 
 """
@@ -158,10 +158,9 @@ def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
     e_count = endorsee_count
     effective_endorsements = 0
 
-    for b_t in bootstrappers_and_tickets:
+    for bootstrapper, remaining_tickets in bootstrappers_and_tickets:
         while e_count > 0:
-            bootstrapper = b_t[0]
-            tickets = min(b_t[1], e_count)
+            tickets = min(remaining_tickets, e_count)
 
             if tickets > 0:
                 endorsers.append((bootstrapper, tickets))
@@ -169,7 +168,7 @@ def get_endorsers(bootstrappers_and_tickets, endorsee_count: int):
 
             e_count -= tickets
 
-            if e_count >= 0:
+            if e_count <= 0:
                 break
 
     return (endorsers, effective_endorsements)
@@ -189,20 +188,18 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
 
     endorsees = client.create_accounts(total_endorsements)
 
-    for e in endorsers_and_tickets:
+    for endorser, endorsement_count in endorsers_and_tickets:
         # execute endorsements per bootstrapper
         start = 0
-        endorser = e[0]
-        tickets = e[1]
 
-        print(f'bootstrapper {endorser} endorses {tickets} accounts.')
+        print(f'bootstrapper {endorser} endorses {endorsement_count} accounts.')
 
         # print(f'bootstrapper:                       {endorser}\n')
         # print(f'endorses the following accounts:    {endorsees[start:tickets]}')
 
-        client.endorse_newcomers(cid, endorser, endorsees[start:tickets])
+        client.endorse_newcomers(cid, endorser, endorsees[start:endorsement_count])
 
-        start += tickets
+        start += endorsement_count
 
     return endorsees
 
@@ -237,7 +234,7 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
 
     endorsees = endorse_new_accounts(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION)
 
-    print(f'Endorsed accounts: {endorsees}')
+    # print(f'Endorsed accounts: {endorsees}')
 
     newbies = client.create_accounts(get_newbie_amount(current_community_size))
 

@@ -185,8 +185,6 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def endorse_newcomers(self, cid, endorser, endorsees):
-        print(f'endorsees: {endorsees}')
-
         ret = subprocess.run(self.cli +
                              ["endorse-newcomers", "--cid", cid, endorser, "--endorsees"] +
                              endorsees,  # must be separate to append a list of args to the cli
