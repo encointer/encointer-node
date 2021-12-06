@@ -233,16 +233,6 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
 
 
 def register_participants(client: Client, accounts, cid):
-    # Todo: The below code needs to be adjusted
-    #
-    # 1.    You can't assume alice is a bootstrapper
-    # 2.    All the bootstrappers can endorse, not only alice. So the total amount of endorsements to be performed is:
-    #       bootstrapper_count * newbie_tickets_per_bootstrapper.
-    # 3.    I the rust interface has been adjusted. The above code returns all the bootstrappers, and the amount of
-    #       **remaining** newbie tickets.
-    # 4.    Extract the endorsement-process into separate functions: init_account, init_endorsees
-    # 5.    The `endorse_newcomers` rust function is not yet tested.
-
     print(f'registering {len(accounts)} participants')
     need_refunding = []
     for p in accounts:
