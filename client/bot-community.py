@@ -27,7 +27,8 @@ from random_words import RandomWords
 from math import floor
 
 from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder, set_local_or_remote_chain
-from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, ParticipantAlreadyLinked
+from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
+    ParticipantAlreadyLinked
 from py_client.ipfs import Ipfs, ICONS_PATH
 from py_client.communities import populate_locations, generate_community_spec, meta_json
 
@@ -38,9 +39,9 @@ NUMBER_OF_ENDORSMENTS_PER_REGISTRATION = 2
 NUMBER_OF_ENDORSMENTS_PER_BOOTSTRAPPER = 50
 
 
-
 @click.group()
-@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--client', default='../target/release/encointer-client-notee',
+              help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
@@ -89,8 +90,16 @@ def _execute_current_phase(client: Client):
     accounts = client.list_accounts()
     print(f'number of known accounts: {len(accounts)}')
     if phase == 'REGISTERING':
+        write_current_stats(client, accounts, cid)
+
+        init_new_community_members(client, cid, len(accounts))
+
+        # updated account list with new community members
+        accounts = client.list_accounts()
+
         register_participants(client, accounts, cid)
         client.await_block()
+
     if phase == "ASSIGNING":
         meetups = client.list_meetups(cid);
         meetup_sizes = list(map(lambda x: len(x), meetups))
@@ -193,14 +202,37 @@ def get_newbie_amount(current_population: int):
     )
 
 
-def register_participants(client: Client, accounts, cid):
+def write_current_stats(client: Client, accounts, cid):
     bal = [client.balance(a, cid=cid) for a in accounts]
 
+    total = sum(bal)
+    print(f'****** money supply is {total}')
+    f = open('bot-stats.csv', 'a')
+    f.write(f'{len(accounts)}, {total}\n')
+    f.close()
+
+
+def init_new_community_members(client: Client, cid: str, current_community_size: int):
     # transform string to python list
     bootstrappers_with_tickets = ast.literal_eval(client.get_bootstrappers_with_remaining_newbie_tickets(cid))
 
     print(f'Bootstrappers with remaining tickets {bootstrappers_with_tickets}')
 
+    endorsees = endorse(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSMENTS_PER_REGISTRATION)
+
+    print(f'Endorsed accounts: {endorsees}')
+
+    newbies = client.create_accounts(get_newbie_amount(current_community_size))
+
+    new_members = newbies + endorsees
+
+    client.faucet(new_members)
+    client.await_block()
+
+    return new_members
+
+
+def register_participants(client: Client, accounts, cid):
     # Todo: The below code needs to be adjusted
     #
     # 1.    You can't assume alice is a bootstrapper
@@ -210,26 +242,6 @@ def register_participants(client: Client, accounts, cid):
     #       **remaining** newbie tickets.
     # 4.    Extract the endorsement-process into separate functions: init_account, init_endorsees
     # 5.    The `endorse_newcomers` rust function is not yet tested.
-
-    total = sum(bal)
-    print(f'****** money supply is {total}')
-    f = open('bot-stats.csv', 'a')
-    f.write(f'{len(accounts)}, {total}\n')
-    f.close()
-
-    endorsees = endorse(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSMENTS_PER_REGISTRATION)
-
-    print(f'Endorsed accounts: {endorsees}')
-
-    newbies = client.create_accounts(get_newbie_amount(len(accounts)))
-
-    new_members = newbies + endorsees
-
-    client.faucet(new_members)
-    client.await_block()
-
-    # updated account list including new members
-    accounts = client.list_accounts()
 
     print(f'registering {len(accounts)} participants')
     need_refunding = []
