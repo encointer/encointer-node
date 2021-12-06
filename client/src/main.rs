@@ -706,7 +706,11 @@ fn main() {
 
                     info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
 
-                    println!("{:?}", bs_with_tickets);
+                    // transform it to simple tuples, which is easier to parse in python
+                    let bt_vec = bs_with_tickets.into_iter()
+                        .map(|bt| (bt.bootstrapper.to_ss58check(), bt.remaining_newbie_tickets)).collect::<Vec<_>>();
+
+                    println!("{:?}", bt_vec);
                     Ok(())
                 }),
         )
@@ -1527,9 +1531,7 @@ fn endorse_newcomers(
 /// Helper type, which is only needed to print the information nicely.
 #[derive(Debug)]
 struct BootstrapperWithTickets {
-	#[allow(unused)] // because we never read the fields explicitly
 	bootstrapper: AccountId,
-	#[allow(unused)]
 	remaining_newbie_tickets: u8,
 }
 
