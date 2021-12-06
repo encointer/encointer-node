@@ -1507,7 +1507,7 @@ fn endorse_newcomers(
 
 	for e in endorsees.into_iter() {
 		let endorsee = get_accountid_from_str(e);
-		println!("Endorsing newbie {}. xt-status: 'ready'", endorsee);
+		println!("Endorsing newbie {}.", endorsee);
 
 		let call =
 			compose_call!(api.metadata, "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
