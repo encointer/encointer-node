@@ -35,7 +35,7 @@ from py_client.communities import populate_locations, generate_community_spec, m
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
-NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 2
+NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 101
 
 
 @click.group()
@@ -187,16 +187,17 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
 
     endorsees = client.create_accounts(total_endorsements)
 
+    start = 0
     for endorser, endorsement_count in endorsers_and_tickets:
         # execute endorsements per bootstrapper
-        start = 0
+        end = start+endorsement_count
 
         print(f'bootstrapper {endorser} endorses {endorsement_count} accounts.')
 
         # print(f'bootstrapper:                       {endorser}\n')
-        # print(f'endorses the following accounts:    {endorsees[start:endorsement_count]}')
+        # print(f'endorses the following accounts:    {endorsees[start:end]}')
 
-        client.endorse_newcomers(cid, endorser, endorsees[start:endorsement_count])
+        client.endorse_newcomers(cid, endorser, endorsees[start:end])
 
         start += endorsement_count
 
@@ -233,14 +234,22 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
 
     endorsees = endorse_new_accounts(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION)
 
-    # print(f'Endorsed accounts: {endorsees}')
+    print(f'Awaiting endorsement process \n')
+    # We don't need to wait here, but if there are any errors the logs mix with the fauceting, which is confusing.
+    client.await_block()
+
+    print(f'Added endorsees to community: {len(endorsees)}')
 
     newbies = client.create_accounts(get_newbie_amount(current_community_size))
+
+    print(f'Add newbies to community {len(newbies)}')
 
     new_members = newbies + endorsees
 
     client.faucet(new_members)
     client.await_block()
+
+    print(f'Fauceted new community members {len(new_members)}')
 
     return new_members
 
