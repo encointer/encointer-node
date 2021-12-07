@@ -158,14 +158,13 @@ def get_endorsement_allocation(bootstrappers_and_tickets, endorsee_count: int):
     effective_endorsements = 0
 
     for bootstrapper, remaining_tickets in bootstrappers_and_tickets:
-        while e_count > 0:
-            tickets = min(remaining_tickets, e_count)
+        tickets = min(remaining_tickets, e_count)
 
-            if tickets > 0:
-                endorsers.append((bootstrapper, tickets))
-                effective_endorsements += tickets
+        if tickets > 0:
+            endorsers.append((bootstrapper, tickets))
+            effective_endorsements += tickets
 
-            e_count -= tickets
+        e_count -= tickets
 
         if e_count <= 0:
             break
