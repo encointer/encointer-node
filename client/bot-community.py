@@ -73,6 +73,7 @@ def init(ctx):
     cid = client.new_community(specfile, b[0])
     print(f'created community with cid: {cid}')
     write_cid(cid)
+    client.await_block()
 
 
 @cli.command()
