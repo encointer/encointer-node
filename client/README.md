@@ -49,10 +49,10 @@ listen to chain events for debugging (i.e. see failed extrinsics)
 RUST_LOG=encointer_client_notee=info ./target/release/encointer-client-notee listen
 ```
 
-run a single phase
+execute the current phase (without advancing to the next phase)
 ```bash
 cd client
-./bot-community.py run
+./bot-community.py execute-current-phase
 ```
 
 benchmark bot community

@@ -184,3 +184,14 @@ class Client:
                              stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
+    def endorse_newcomers(self, cid, endorser, endorsees):
+        ret = subprocess.run(self.cli +
+                             ["endorse-newcomers", "--cid", cid, endorser, "--endorsees"] +
+                             endorsees,  # must be separate to append a list of args to the cli
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
+    def get_bootstrappers_with_remaining_newbie_tickets(self, cid):
+        ret = subprocess.run(self.cli + ["get-bootstrappers-with-remaining-newbie-tickets", "--cid", cid],
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()

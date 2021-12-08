@@ -22,6 +22,7 @@
 #![feature(array_methods)]
 
 mod cli_args;
+mod utils;
 
 #[macro_use]
 extern crate clap;
@@ -44,6 +45,7 @@ use sp_runtime::{
 	MultiSignature,
 };
 
+use crate::utils::offline_xt;
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
@@ -67,7 +69,8 @@ use serde_json::{json, to_value};
 use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, Api, GenericAddress, Metadata, UncheckedExtrinsicV4, XtStatus,
+	utils::FromHexString, Api, ApiClientError, GenericAddress, Metadata, UncheckedExtrinsicV4,
+	XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -164,20 +167,12 @@ fn main() {
                 .description("send some bootstrapping funds to supplied account(s)")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .arg(
-                        Arg::with_name("accounts")
-                            .takes_value(true)
-                            .required(true)
-                            .value_name("ACCOUNT")
-                            .multiple(true)
-                            .min_values(1)
-                            .help("Account(s) to be funded, ss58check encoded"),
-                    )
+                    .fundees_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
-                    let accounts: Vec<_> = matches.values_of("accounts").unwrap().collect();
+                    let accounts = matches.fundees_arg().unwrap();
 
                     let existential_deposit = api.get_existential_deposit().unwrap();
                     info!("Existential deposit is = {:?}", existential_deposit);
@@ -683,19 +678,40 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("endorse-newcomer")
-                .description("Endorse a newcomer with a bootstrapper account")
+            Command::new("endorse-newcomers")
+                .description("Endorse newbies with a bootstrapper account")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .bootstrapper_arg()
-                        .endorsee_arg()
+                        .endorsees_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
                     extract_and_execute(
-                        &matches, |mut api, cid| endorse_newcomer(&mut api, cid, &matches)
+                        &matches, |mut api, cid| endorse_newcomers(&mut api, cid, &matches)
                     ).unwrap();
 
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("get-bootstrappers-with-remaining-newbie-tickets")
+                .description("Get the bootstrappers along with the remaining newbie tickets")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let bs_with_tickets : Vec<BootstrapperWithTickets> = extract_and_execute(
+                        &matches, |mut api, cid| get_bootstrappers_with_remaining_newbie_tickets(&mut api, cid)
+                    ).unwrap();
+
+                    info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
+
+                    // transform it to simple tuples, which is easier to parse in python
+                    let bt_vec = bs_with_tickets.into_iter()
+                        .map(|bt| (bt.bootstrapper.to_ss58check(), bt.remaining_newbie_tickets)).collect::<Vec<_>>();
+
+                    println!("{:?}", bt_vec);
                     Ok(())
                 }),
         )
@@ -1482,27 +1498,79 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	Ok(())
 }
 
-fn endorse_newcomer(
+fn endorse_newcomers(
 	api: &mut Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	matches: &ArgMatches<'_>,
-) -> Result<(), ()> {
-	let bootstrapper = matches.account_arg().map(get_pair_from_str).unwrap();
-	let newbie = matches.endorsee_arg().map(get_accountid_from_str).unwrap();
+) -> Result<(), ApiClientError> {
+	let bootstrapper = matches.bootstrapper_arg().map(get_pair_from_str).unwrap();
+	let endorsees = matches.endorsees_arg().expect("Please supply at least one endorsee");
 
 	api.signer = Some(bootstrapper.into());
 
-	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-		api.clone(),
-		"EncointerCeremonies",
-		"endorse_newcomer",
-		cid,
-		newbie.clone()
-	);
-	// send and watch extrinsic until finalized
-	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-	println!("Endorsing newbie {}. xt-status: 'ready'", newbie);
+	let mut nonce = api.get_nonce()?;
+
+	for e in endorsees.into_iter() {
+		let endorsee = get_accountid_from_str(e);
+
+		let call =
+			compose_call!(api.metadata, "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
+
+		let xt = offline_xt(&api, call, nonce);
+
+		ensure_payment(&api, &xt.hex_encode());
+
+		let _tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+
+		nonce += 1;
+	}
+
 	Ok(())
+}
+
+/// Helper type, which is only needed to print the information nicely.
+#[derive(Debug)]
+struct BootstrapperWithTickets {
+	bootstrapper: AccountId,
+	remaining_newbie_tickets: u8,
+}
+
+fn get_bootstrappers_with_remaining_newbie_tickets(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	cid: CommunityIdentifier,
+) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
+	// Todo: Get value from node, but we need: https://github.com/encointer/pallets/issues/87
+	let total_newbie_tickets: u8 = 50;
+
+	// prepare closure to make below call more readable.
+	let ticket_query = |bs| -> Result<u8, ApiClientError> {
+		let remaining_tickets = total_newbie_tickets -
+			api.get_storage_double_map(
+				"EncointerCeremonies",
+				"BurnedBootstrapperNewbieTickets",
+				cid,
+				bs,
+				None,
+			)?
+			.unwrap_or(0u8);
+
+		Ok(remaining_tickets)
+	};
+
+	let bootstrappers: Vec<AccountId> = api
+		.get_storage_map("EncointerCommunities", "Bootstrappers", cid, None)?
+		.expect("No bootstrappers found, does the community exist?");
+
+	let mut bs_with_tickets: Vec<BootstrapperWithTickets> = Vec::with_capacity(bootstrappers.len());
+
+	for bs in bootstrappers.into_iter() {
+		bs_with_tickets.push(BootstrapperWithTickets {
+			bootstrapper: bs.clone(),
+			remaining_newbie_tickets: ticket_query(bs)?,
+		});
+	}
+
+	Ok(bs_with_tickets)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

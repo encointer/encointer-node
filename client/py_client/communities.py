@@ -1,9 +1,14 @@
 import geojson
 
-from math import sqrt, floor
+from math import sqrt
 from pyproj import Geod
+from random_words import RandomWords
+
+from py_client.helpers import mkdir_p
 
 geoid = Geod(ellps='WGS84')
+
+COMMUNITY_SPECS_PATH = '.communities'
 
 
 def move_point(point, az, dist):
@@ -27,12 +32,27 @@ def populate_locations(northwest, n, dist=1000):
     return locations
 
 
-def generate_community_spec(meta, locations, bootstrappers):
+def random_community_spec(bootstrappers, ipfs_cid, locations_count):
+    point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
+    locations = populate_locations(point, locations_count)
+    print(f'created {len(locations)} random locations around {point}.')
+
+    name = 'bot-' + '-'.join(RandomWords().random_words(count=1))
+    symbol = name[1:4].upper()
+    meta = meta_json(name, symbol, ipfs_cid)
+    print(f'CommunityMetadata {meta}')
+    return generate_community_spec(meta, bootstrappers, locations)
+
+
+def generate_community_spec(meta, bootstrappers, locations):
     print("Community metadata: " + str(meta))
 
     gj = geojson.FeatureCollection(list(map(lambda x: geojson.Feature(geometry=x), locations)))
     gj['community'] = {'meta': meta, 'bootstrappers': bootstrappers}
-    fname = meta['name'] + '.json'
+    fname = f"{COMMUNITY_SPECS_PATH}/{meta['name']}.json"
+
+    mkdir_p(COMMUNITY_SPECS_PATH)
+
     with open(fname, 'w') as outfile:
         geojson.dump(gj, outfile, indent=2)
     return fname
