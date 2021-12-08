@@ -24,7 +24,7 @@ import ast
 
 from math import floor
 
-from py_client.communities import random_community_spec
+from py_client.communities import random_community_spec, COMMUNITY_SPECS_PATH
 from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder, set_local_or_remote_chain
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
     ParticipantAlreadyLinked
@@ -73,6 +73,10 @@ def init(ctx):
     write_cid(cid)
     client.await_block()
 
+
+@cli.command()
+def purge_communities():
+    purge_prompt(COMMUNITY_SPECS_PATH, 'communities')
 
 @cli.command()
 @click.pass_obj
