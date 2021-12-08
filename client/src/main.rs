@@ -55,7 +55,7 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupLocationIndexType,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
 	communities::{
@@ -1047,11 +1047,14 @@ fn listen(matches: &ArgMatches<'_>) {
 							println!(">>>>>>>>>> encointer bazaar event: {:?}", ee);
 						},
 						Event::System(ee) => match ee {
-							frame_system::Event::ExtrinsicFailed(err, info) => {
-								error!("ExtrinsicFailed: {:?} {:?}", err, info);
+							frame_system::Event::ExtrinsicFailed {
+								dispatch_error,
+								dispatch_info,
+							} => {
+								error!("ExtrinsicFailed: {:?} {:?}", dispatch_error, dispatch_info);
 							},
-							frame_system::Event::ExtrinsicSuccess(info) => {
-								println!("ExtrinsicSuccess: {:?}", info);
+							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
+								println!("ExtrinsicSuccess: {:?}", dispatch_info);
 							},
 							_ => debug!("ignoring unsupported system Event"),
 						},
@@ -1166,7 +1169,7 @@ fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType
 fn get_meetup_count(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
-) -> MeetupIndexType {
+) -> MeetupLocationIndexType {
 	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
 		.unwrap()
 		.or(Some(0))
@@ -1206,15 +1209,21 @@ fn get_meetup_index_for(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	account: &AccountId,
-) -> Option<MeetupIndexType> {
-	api.get_storage_double_map("EncointerCeremonies", "MeetupIndex", key, account.clone(), None)
-		.unwrap()
+) -> Option<MeetupLocationIndexType> {
+	api.get_storage_double_map(
+		"EncointerCeremonies",
+		"MeetupLocationIndex",
+		key,
+		account.clone(),
+		None,
+	)
+	.unwrap()
 }
 
 fn get_meetup_participants(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
-	mindex: MeetupIndexType,
+	mindex: MeetupLocationIndexType,
 ) -> Option<Vec<AccountId>> {
 	api.get_storage_double_map("EncointerCeremonies", "MeetupRegistry", key, mindex, None)
 		.unwrap()
@@ -1305,7 +1314,7 @@ fn get_community_locations(
 fn get_meetup_location(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
-	mindex: MeetupIndexType,
+	mindex: MeetupLocationIndexType,
 ) -> Option<Location> {
 	let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
 	let lidx = (mindex - 1) as usize;
@@ -1387,7 +1396,7 @@ fn get_offerings_for_business(
 fn get_meetup_time(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
-	mindex: MeetupIndexType,
+	mindex: MeetupLocationIndexType,
 ) -> Option<Moment> {
 	let mlocation = get_meetup_location(api, cid, mindex).unwrap();
 	let mlon: f64 = mlocation.lon.lossy_into();
