@@ -20,17 +20,15 @@ on testnet Gesell, execute the current ceremony phase (it does not advance the p
 import os
 
 import click
-import geojson
 import ast
 
-from random_words import RandomWords
 from math import floor
 
+from py_client.communities import random_community_spec
 from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder, set_local_or_remote_chain
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
     ParticipantAlreadyLinked
 from py_client.ipfs import Ipfs, ICONS_PATH
-from py_client.communities import populate_locations, generate_community_spec, meta_json
 
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
@@ -68,7 +66,7 @@ def init(ctx):
         print("add image to ipfs failed")
     print('initializing community')
     b = init_bootstrappers(client)
-    specfile = random_community_spec(b, ipfs_cid)
+    specfile = random_community_spec(b, ipfs_cid, NUMBER_OF_LOCATIONS)
     print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
     cid = client.new_community(specfile, b[0])
     print(f'created community with cid: {cid}')
@@ -122,18 +120,6 @@ def benchmark(ctx):
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
             py_client.await_block()
-
-
-def random_community_spec(bootstrappers, ipfs_cid):
-    point = geojson.utils.generate_random("Point", boundingBox=[-56, 41, -21, 13])
-    locations = populate_locations(point, NUMBER_OF_LOCATIONS)
-    print(f'created {len(locations)} random locations around {point}.')
-
-    name = 'bot-' + '-'.join(RandomWords().random_words(count=1))
-    symbol = name[1:4].upper()
-    meta = meta_json(name, symbol, ipfs_cid)
-    print(f'CommunityMetadata {meta}')
-    return generate_community_spec(meta, locations, bootstrappers)
 
 
 def init_bootstrappers(client: Client):

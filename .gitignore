@@ -17,6 +17,7 @@
 /client/bot-stats.csv
 /client/cid.txt
 /client/communityspec.json
+/client/.communities/
 
 **/__pycache__/
 
