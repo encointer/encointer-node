@@ -55,7 +55,7 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupLocationIndexType,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
 	communities::{
@@ -1169,7 +1169,7 @@ fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType
 fn get_meetup_count(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
-) -> MeetupLocationIndexType {
+) -> MeetupIndexType {
 	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
 		.unwrap()
 		.or(Some(0))
@@ -1209,7 +1209,7 @@ fn get_meetup_index_for(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
 	account: &AccountId,
-) -> Option<MeetupLocationIndexType> {
+) -> Option<MeetupIndexType> {
 	api.get_storage_double_map(
 		"EncointerCeremonies",
 		"MeetupLocationIndex",
@@ -1223,7 +1223,7 @@ fn get_meetup_index_for(
 fn get_meetup_participants(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
-	mindex: MeetupLocationIndexType,
+	mindex: MeetupIndexType,
 ) -> Option<Vec<AccountId>> {
 	api.get_storage_double_map("EncointerCeremonies", "MeetupRegistry", key, mindex, None)
 		.unwrap()
@@ -1312,7 +1312,7 @@ fn get_community_locations(
 fn get_meetup_location(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
-	mindex: MeetupLocationIndexType,
+	mindex: MeetupIndexType,
 ) -> Option<Location> {
 	let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
 	let lidx = (mindex - 1) as usize;
@@ -1394,7 +1394,7 @@ fn get_offerings_for_business(
 fn get_meetup_time(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
-	mindex: MeetupLocationIndexType,
+	mindex: MeetupIndexType,
 ) -> Option<Moment> {
 	let mlocation = get_meetup_location(api, cid, mindex).unwrap();
 	let mlon: f64 = mlocation.lon.lossy_into();
