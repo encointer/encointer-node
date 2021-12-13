@@ -1361,7 +1361,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
 name = "encointer-client-notee"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "base58 0.1.0",
@@ -1400,7 +1400,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "encointer-node-notee-runtime",
  "frame-benchmarking",
@@ -1442,7 +1442,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "0.7.9"
+version = "0.8.9"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
