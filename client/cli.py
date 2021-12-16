@@ -16,8 +16,8 @@ def cli(ctx):
 
 @cli.command()
 @click.option('--cid',
-              default='41eSfKJrhrR6CYxPfUbwAN18R77WbxXoViRWQMAF4hJB',
-              help='community identifier base58 encoded. Default is Mediterranean test currency')
+              default='sqm1v79dF6b',
+              help='CommunityIdentifier. Default is Mediterranean test currency')
 @click.pass_context
 def register_alice_bob_charlie_and_go_to_attesting(ctx, cid: str):
     client = ctx.obj['client']
@@ -29,8 +29,8 @@ def register_alice_bob_charlie_and_go_to_attesting(ctx, cid: str):
 
 @cli.command()
 @click.option('--cid',
-              default='41eSfKJrhrR6CYxPfUbwAN18R77WbxXoViRWQMAF4hJB',
-              help='community identifier base58 encoded. Default is Mediterranean test currency')
+              default='sqm1v79dF6b',
+              help='CommunityIdentifier. Default is Mediterranean test currency')
 @click.pass_context
 def register_alice_bob_charlie_and_go_to_assigning(ctx, cid: str):
     client = ctx.obj['client']
@@ -42,8 +42,8 @@ def register_alice_bob_charlie_and_go_to_assigning(ctx, cid: str):
 
 @cli.command()
 @click.option('--cid',
-              default='41eSfKJrhrR6CYxPfUbwAN18R77WbxXoViRWQMAF4hJB',
-              help='community identifier base58 encoded. Default is Mediterranean test currency')
+              default='sqm1v79dF6b',
+              help='CommunityIdentifier. Default is Mediterranean test currency')
 @click.pass_context
 def register_alice_bob_charlie(ctx, cid: str):
     client = ctx.obj['client']
