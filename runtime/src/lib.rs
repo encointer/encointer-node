@@ -57,8 +57,6 @@ pub use encointer_primitives::{
 	scheduler::CeremonyPhaseType,
 };
 
-use encointer_communities_rpc_runtime_api::LocationSerialized;
-
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -594,15 +592,8 @@ impl_runtime_apis! {
 			EncointerCommunities::get_name(cid)
 		}
 
-		fn get_locations(cid: &CommunityIdentifier) -> Vec<LocationSerialized> {
-			let loc = EncointerCommunities::get_locations(cid);
-			// we only need this because serde can't serialize i128
-			// https://github.com/paritytech/substrate/issues/4641
-			loc.iter().map(|l| {
-						let mut ls = LocationSerialized::default();
-						ls.copy_from_slice( &l.encode()[0..32]);
-						ls
-			}).collect()
+		fn get_locations(cid: &CommunityIdentifier) -> Vec<Location> {
+			EncointerCommunities::get_locations(cid)
 		}
 
 	}

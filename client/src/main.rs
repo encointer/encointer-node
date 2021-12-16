@@ -1305,10 +1305,8 @@ fn get_community_locations(
 		.get_request(req.into())
 		.unwrap()
 		.expect("Could not find any locations for that cid...");
-	// we only need this mapping because serde can't serialize i128
-	// https://github.com/paritytech/substrate/issues/4641
-	let locations: Vec<[u8; 32]> = serde_json::from_str(&n).unwrap();
-	Some(locations.iter().map(|l| Location::decode(&mut l.as_slice()).unwrap()).collect())
+
+	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_meetup_location(
