@@ -12,49 +12,49 @@ version = "0.7.9"
 [dependencies.encointer-scheduler]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-scheduler"
 
 [dependencies.encointer-ceremonies]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-ceremonies"
 
 [dependencies.encointer-communities]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-communities"
 
 [dependencies.encointer-communities-rpc-runtime-api]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-communities-rpc-runtime-api"
 
 [dependencies.encointer-balances]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-balances"
 
 [dependencies.encointer-bazaar]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-bazaar"
 
 [dependencies.encointer-bazaar-rpc-runtime-api]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 package = "pallet-encointer-bazaar-rpc-runtime-api"
 
 [dependencies.encointer-primitives]
 default-features = false
 git = "https://github.com/encointer/pallets"
-branch = "master"
+branch = "v0.7.0"
 
 [dependencies.fixed]
 default-features = false
