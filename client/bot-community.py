@@ -61,7 +61,7 @@ def init(ctx):
     root_dir = os.path.realpath(ICONS_PATH)
     zipped_folder = zip_folder("icons", root_dir)
     try:
-        ipfs_cid = Ipfs.add(zipped_folder, ctx['ipfs_local'])
+        ipfs_cid = Ipfs.add(root_dir, ctx['ipfs_local'])
     except:
         print("add image to ipfs failed")
     print('initializing community')
