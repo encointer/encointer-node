@@ -2,13 +2,10 @@ import glob
 import os
 import subprocess
 import re
-import shutil
 from os import path
 
 from .client import Client
 
-def zip_folder(name: str, folder_abs_path: str):
-    return shutil.make_archive(f"{name}","zip", folder_abs_path)
 
 def purge_prompt(path: str, file_description: str):
     files = glob.glob(path + '/*')

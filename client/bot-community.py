@@ -25,7 +25,7 @@ import ast
 from math import floor
 
 from py_client.communities import random_community_spec, COMMUNITY_SPECS_PATH
-from py_client.helpers import purge_prompt, read_cid, write_cid, zip_folder, set_local_or_remote_chain
+from py_client.helpers import purge_prompt, read_cid, write_cid, set_local_or_remote_chain
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
     ParticipantAlreadyLinked
 from py_client.ipfs import Ipfs, ICONS_PATH
@@ -59,7 +59,6 @@ def init(ctx):
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ICONS_PATH)
-    zipped_folder = zip_folder("icons", root_dir)
     try:
         ipfs_cid = Ipfs.add(root_dir, ctx['ipfs_local'])
     except:

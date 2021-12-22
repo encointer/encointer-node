@@ -17,7 +17,6 @@ import click
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ICONS_PATH
-from py_client.helpers import zip_folder
 
 account1 = '//Alice'
 account2 = '//Bob'
