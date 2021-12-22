@@ -60,7 +60,7 @@ def init(ctx):
 
     root_dir = os.path.realpath(ICONS_PATH)
     try:
-        ipfs_cid = Ipfs.add(root_dir, ctx['ipfs_local'])
+        ipfs_cid = Ipfs.add_recursive(root_dir, ctx['ipfs_local'])
     except:
         print("add image to ipfs failed")
     print('initializing community')

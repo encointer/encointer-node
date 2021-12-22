@@ -23,7 +23,7 @@ def create_business(name: str, description: str, ipfs_local):
 
     print("ipfs_local",ipfs_local)
     try:
-        image_cid = Ipfs.add(ICON_PATH, ipfs_local)
+        image_cid = Ipfs.add_recursive(ICON_PATH, ipfs_local)
     except:
         print("failed to add image to ipfs")
     return {
@@ -50,7 +50,7 @@ def register_business(name: str, description: str, owner, chain_local: bool, ipf
     with open(f_name, 'w') as outfile:
         json.dump(business_json, outfile, indent=2)
     print("f_name, the business_dump_path: ", f_name)
-    ipfs_cid = Ipfs.add(f_name, ipfs_local)
+    ipfs_cid = Ipfs.add_recursive(f_name, ipfs_local)
     print(f'Uploaded business to ipfs: ipfs_cid: {ipfs_cid}')
     print(f"registering business on chain for cid {cid}")
     print(client.create_business(owner, cid, ipfs_cid))
@@ -69,7 +69,7 @@ def create_offering(name: str, price: int, community_identifier, ipfs_local):
     """
     try:
         print("adding offering image to remote: ")
-        image_cid = Ipfs.add(ICON_PATH, ipfs_local)
+        image_cid = Ipfs.add_recursive(ICON_PATH, ipfs_local)
     except:
         print("failed to add image to ipfs")
     return {
@@ -98,7 +98,7 @@ def register_offering(name: str, price: int, owner, chain_local: bool, ipfs_loca
     with open(f_name, 'w') as outfile:
         json.dump(offering_json, outfile, indent=2)
 
-    ipfs_cid = Ipfs.add(f_name, ipfs_local)
+    ipfs_cid = Ipfs.add_recursive(f_name, ipfs_local)
     print(f'Uploaded offering to ipfs: ipfs_cid: {ipfs_cid}')
     print(f"registering offering on chain for cid {cid}")
     print(client.create_offering(owner, cid, ipfs_cid))

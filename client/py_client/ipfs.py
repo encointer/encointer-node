@@ -18,7 +18,7 @@ except:
 class Ipfs:
     """ Minimal wrapper for the ipfs cli """
     @staticmethod
-    def add(path_to_files, local = False):
+    def add_recursive(path_to_files, local = False):
         if not (use_ipfs_gateway or local):
             return "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
         if local:
@@ -43,14 +43,14 @@ class Ipfs:
                 if data["Name"] == "":
                     print("final hash: " + data["Hash"])
                     return data["Hash"]
-            return ""
+            return 'No cid returned'
 
 
     @staticmethod
-    def add_multiple(paths, local = False):
+    def add_multiple_recursive(paths, local = False):
         if not (use_ipfs_gateway or local):
             return ["QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"]
-        return [Ipfs.add(f, local) for f in paths]
+        return [Ipfs.add_recursive(f, local) for f in paths]
 
 
     @staticmethod
