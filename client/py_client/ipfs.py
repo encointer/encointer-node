@@ -23,7 +23,6 @@ class Ipfs:
             return "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
         if local:
             ret = subprocess.run(["ipfs", "add", "-rw", path_to_files], stdout=subprocess.PIPE)
-            print(ret)
             return take_only_last_cid(ret)
         else:
             headers = { }
@@ -43,7 +42,6 @@ class Ipfs:
             response = requests.post('https://ipfs.infura.io:5001/api/v0/add', headers=headers, params=params, files=files, auth=(auth[0], auth[1]))
 
             for line in response.text.split("\n"):
-                # print(line)
                 data = json.loads(line)
                 if os.path.isfile(path_to_files):
                     return data["Name"]
@@ -73,7 +71,6 @@ class Ipfs:
         else:
             rel_path = ''
             rel_path = Path(rel_path)
-            os.path.basename(path_to_files)
             with open(os.path.abspath(path_to_files), 'rb') as file:
                 args += [(rel_path.as_posix(), file.read())]
         return args
