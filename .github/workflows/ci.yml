@@ -41,13 +41,8 @@ jobs:
           enclave/target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    # With incremental compilation this bug occurs sometimes: https://github.com/rust-lang/rust/issues/84970
-    # It can be fixed with a cargo clean of the innermost crate. Hence, we execute this cmd preemptively
     - name: Build
-      run: |
-        cargo clean -p encointer-node-notee
-        cargo clean -p encointer-client-notee
-        cargo build --release
+      run: cargo build --release
     - uses: actions/upload-artifact@v2
       with:
         name: executables
@@ -76,10 +71,7 @@ jobs:
         key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
 
     - name: cargo test
-      run: |
-        cargo clean -p encointer-node-notee
-        cargo clean -p encointer-client-notee
-        cargo test --all
+      run: cargo test --all
 
   check:
     name: Rust check ${{ matrix.check }} (${{ matrix.rust-target }})
@@ -107,10 +99,7 @@ jobs:
           key: ${{ matrix.rust-target }}-${{ matrix.check }}
 
       - name: ${{ matrix.check }}
-        run: |
-          cargo clean -p encointer-node-notee
-          cargo clean -p encointer-client-notee
-          cargo ${{ matrix.check }}
+        run: cargo ${{ matrix.check }}
 
   test-bootstrapping:
     runs-on: ubuntu-latest
