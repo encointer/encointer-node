@@ -1390,7 +1390,6 @@ dependencies = [
  "substrate-api-client",
  "substrate-bip39",
  "substrate-client-keystore",
- "substrate-fixed",
  "substrate-frame-rpc-system",
  "tiny-bip39 0.6.2",
 ]

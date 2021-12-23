@@ -61,9 +61,9 @@ use encointer_primitives::{
 	communities::{
 		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
 	},
+	fixed::{traits::LossyInto, transcendental::exp},
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
-use fixed::{traits::LossyInto, transcendental::exp};
 use geojson::GeoJson;
 use serde_json::{json, to_value};
 use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
@@ -983,7 +983,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
-								encointer_ceremonies::RawEvent::ParticipantRegistered(
+								pallet_encointer_ceremonies::RawEvent::ParticipantRegistered(
 									accountid,
 								) => {
 									println!(
@@ -997,7 +997,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> scheduler event: {:?}", ee);
 							match &ee {
-								encointer_scheduler::Event::PhaseChangedTo(phase) => {
+								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
 								},
 							}
@@ -1006,7 +1006,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
-								encointer_communities::RawEvent::CommunityRegistered(
+								pallet_encointer_communities::RawEvent::CommunityRegistered(
 									account,
 									cid,
 								) => {
@@ -1015,10 +1015,10 @@ fn listen(matches: &ArgMatches<'_>) {
 										account, cid
 									);
 								},
-								encointer_communities::RawEvent::MetadataUpdated(cid) => {
+								pallet_encointer_communities::RawEvent::MetadataUpdated(cid) => {
 									println!("Community metadata updated cid: {:?}", cid);
 								},
-								encointer_communities::RawEvent::NominalIncomeUpdated(
+								pallet_encointer_communities::RawEvent::NominalIncomeUpdated(
 									cid,
 									income,
 								) => {
@@ -1027,7 +1027,7 @@ fn listen(matches: &ArgMatches<'_>) {
 										cid, income
 									);
 								},
-								encointer_communities::RawEvent::DemurrageUpdated(
+								pallet_encointer_communities::RawEvent::DemurrageUpdated(
 									cid,
 									demurrage,
 								) => {
