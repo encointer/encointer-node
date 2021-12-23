@@ -27,21 +27,28 @@ class Ipfs:
             return take_only_last_cid(ret)
         else:
             headers = { }
-            params = (
-                ('pin', 'true'),
-                ('recursive', 'true'),
-                ('wrap-with-directory', 'true'),
-            )
+            params = ()
+            if os.path.isdir(path_to_files):
+                params = (
+                    ('pin', 'true'),
+                    ('recursive', 'true'),
+                    ('wrap-with-directory', 'true'),
+                )
+            else:
+                params = (
+                    ('pin', 'true'),
+                )
             files = Ipfs.generate_file_list(path_to_files)
             auth = ipfs_api_key.split(":")
-
             response = requests.post('https://ipfs.infura.io:5001/api/v0/add', headers=headers, params=params, files=files, auth=(auth[0], auth[1]))
 
             for line in response.text.split("\n"):
-                print(line)
+                # print(line)
                 data = json.loads(line)
+                if os.path.isfile(path_to_files):
+                    return data["Name"]
                 if data["Name"] == "":
-                    print("final hash: " + data["Hash"])
+                    print("hash of wrapping directory: " + data["Hash"])
                     return data["Hash"]
             return 'No cid returned'
 
@@ -56,13 +63,18 @@ class Ipfs:
     @staticmethod
     def generate_file_list(path_to_files):
         args = []
-        for dir_, _, files in os.walk(path_to_files):
-            for file_name in files:
-                rel_path = os.path.relpath(os.path.join(dir_, file_name), str(Path(path_to_files).parent))
-                rel_path = Path(rel_path)
-                with open(os.path.join(dir_, file_name), 'rb') as file:
-                    args += [(rel_path.as_posix(), file.read())]
+        if os.path.isdir(path_to_files):
+            for dir_, _, files in os.walk(path_to_files):
+                for file_name in files:
+                    rel_path = os.path.relpath(os.path.join(dir_, file_name), str(Path(path_to_files).parent))
+                    rel_path = Path(rel_path)
+                    with open(os.path.join(dir_, file_name), 'rb') as file:
+                        args += [(rel_path.as_posix(), file.read())]
+        else:
+            rel_path = ''
+            rel_path = Path(rel_path)
+            os.path.basename(path_to_files)
+            with open(os.path.abspath(path_to_files), 'rb') as file:
+                args += [(rel_path.as_posix(), file.read())]
         return args
-
-
 
