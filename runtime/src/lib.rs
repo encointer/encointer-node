@@ -43,11 +43,11 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-pub use encointer_balances::Call as EncointerBalancesCall;
-pub use encointer_bazaar::Call as EncointerBazaarCall;
-pub use encointer_ceremonies::Call as EncointerCeremoniesCall;
-pub use encointer_communities::Call as EncointerCommunitiesCall;
-pub use encointer_scheduler::Call as EncointerSchedulerCall;
+pub use pallet_encointer_balances::Call as EncointerBalancesCall;
+pub use pallet_encointer_bazaar::Call as EncointerBazaarCall;
+pub use pallet_encointer_ceremonies::Call as EncointerCeremoniesCall;
+pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
+pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
 
 pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
@@ -371,13 +371,13 @@ impl pallet_sudo::Config for Runtime {
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 }
-impl encointer_scheduler::Config for Runtime {
+impl pallet_encointer_scheduler::Config for Runtime {
 	type Event = Event;
-	type OnCeremonyPhaseChange = encointer_ceremonies::Module<Runtime>;
+	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Module<Runtime>;
 	type MomentsPerDay = MomentsPerDay;
 }
 
-impl encointer_ceremonies::Config for Runtime {
+impl pallet_encointer_ceremonies::Config for Runtime {
 	type Event = Event;
 	type Public = <MultiSignature as Verify>::Signer;
 	type Signature = MultiSignature;
@@ -386,15 +386,15 @@ impl encointer_ceremonies::Config for Runtime {
 	type RandomnessSource = pallet_randomness_collective_flip::Pallet<Runtime>;
 }
 
-impl encointer_communities::Config for Runtime {
+impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
 }
 
-impl encointer_balances::Config for Runtime {
+impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
 }
 
-impl encointer_bazaar::Config for Runtime {
+impl pallet_encointer_bazaar::Config for Runtime {
 	type Event = Event;
 }
 
@@ -414,11 +414,11 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Config},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
-		EncointerScheduler: encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event},
-		EncointerCeremonies: encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>},
-		EncointerCommunities: encointer_communities::{Pallet, Call, Storage, Config<T>, Event<T>},
-		EncointerBalances: encointer_balances::{Pallet, Call, Storage, Event<T>, Config},
-		EncointerBazaar: encointer_bazaar::{Pallet, Call, Storage, Event<T>},
+		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event},
+		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>},
+		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config<T>, Event<T>},
+		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>, Config},
+		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -584,7 +584,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl encointer_communities_rpc_runtime_api::CommunitiesApi<Block> for Runtime {
+	impl pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block> for Runtime {
 		fn get_cids() -> Vec<CommunityIdentifier> {
 			EncointerCommunities::get_cids()
 		}
@@ -599,7 +599,7 @@ impl_runtime_apis! {
 
 	}
 
-	impl encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {
+	impl pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId> for Runtime {
 		fn get_offerings(business: &BusinessIdentifier<AccountId>) -> Vec<OfferingData>{
 			EncointerBazaar::get_offerings(business)
 		}
@@ -626,7 +626,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, encointer_communities, EncointerCommunities);
+			list_benchmark!(list, extra, pallet_encointer_communities, EncointerCommunities);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -664,7 +664,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, encointer_communities, EncointerCommunities);
+			add_benchmark!(params, batches, pallet_encointer_communities, EncointerCommunities);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
