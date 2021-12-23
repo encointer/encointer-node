@@ -1201,14 +1201,8 @@ fn get_meetup_index_for(
 	key: CommunityCeremony,
 	account: &AccountId,
 ) -> Option<MeetupIndexType> {
-	api.get_storage_double_map(
-		"EncointerCeremonies",
-		"MeetupLocationIndex",
-		key,
-		account.clone(),
-		None,
-	)
-	.unwrap()
+	api.get_storage_double_map("EncointerCeremonies", "MeetupIndex", key, account.clone(), None)
+		.unwrap()
 }
 
 fn get_meetup_participants(
