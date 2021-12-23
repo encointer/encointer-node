@@ -22,24 +22,12 @@
 mod cli_args;
 mod utils;
 
-use sp_application_crypto::{ed25519, sr25519};
-use sp_keyring::AccountKeyring;
-use std::{collections::HashMap, path::PathBuf};
-
+use crate::utils::offline_xt;
 use base58::{FromBase58, ToBase58};
-
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
-use codec::{Compact, Decode, Encode};
-use log::*;
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	MultiSignature,
-};
-
-use crate::utils::offline_xt;
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
+use codec::{Compact, Decode, Encode};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -58,8 +46,18 @@ use encointer_primitives::{
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
 use geojson::GeoJson;
+use log::*;
 use serde_json::{json, to_value};
-use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
+use sp_application_crypto::{ed25519, sr25519};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use sp_keyring::AccountKeyring;
+use sp_runtime::{
+	traits::{IdentifyAccount, Verify},
+	MultiSignature,
+};
+use std::{
+	collections::HashMap, convert::TryInto, fs, path::PathBuf, str::FromStr, sync::mpsc::channel,
+};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
 	utils::FromHexString, Api, ApiClientError, GenericAddress, Metadata, UncheckedExtrinsicV4,

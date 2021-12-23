@@ -1333,13 +1333,11 @@ dependencies = [
  "geojson",
  "hex",
  "log",
- "pallet-balances",
  "pallet-encointer-balances",
  "pallet-encointer-ceremonies",
  "pallet-encointer-communities",
  "pallet-encointer-scheduler",
  "parity-scale-codec",
- "sc-keystore",
  "serde_json",
  "sp-application-crypto",
  "sp-core",
@@ -1348,7 +1346,6 @@ dependencies = [
  "sp-runtime",
  "substrate-api-client",
  "substrate-client-keystore",
- "substrate-frame-rpc-system",
 ]
 
 [[package]]

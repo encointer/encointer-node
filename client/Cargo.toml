@@ -31,12 +31,9 @@ substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client
 
 # substrate deps
 frame-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-pallet-balances = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sc-keystore = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-application-crypto = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-core = { version = "4.1.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-keyring = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-keystore = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-runtime = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-substrate-frame-rpc-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
 
