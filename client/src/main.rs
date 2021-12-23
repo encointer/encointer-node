@@ -19,15 +19,8 @@
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
-#![feature(array_methods)]
-
 mod cli_args;
 mod utils;
-
-#[macro_use]
-extern crate clap;
-extern crate env_logger;
-extern crate log;
 
 use sp_application_crypto::{ed25519, sr25519};
 use sp_keyring::AccountKeyring;
@@ -35,7 +28,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use base58::{FromBase58, ToBase58};
 
-use clap::{AppSettings, Arg, ArgMatches};
+use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use codec::{Compact, Decode, Encode};
 use log::*;
