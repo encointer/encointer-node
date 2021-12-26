@@ -1,9 +1,7 @@
 [package]
-name = "encointer-client-notee"
-authors = ["encointer.org <alain@encointer.org>"]
+name = "encointer-api-client-extension"
+version = "0.1.0"
 edition = "2021"
-#keep with node version
-version = "0.8.0"
 
 [dependencies]
 base58 = "0.2.0"
@@ -16,11 +14,8 @@ hex = "0.4.3"
 log = "0.4.14"
 serde_json = { version = "1.0.73"}
 
-# local deps
-encointer-node-notee-runtime = { path = "../runtime" }
 # encointer deps
 encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "master" }
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-balances = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-ceremonies = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-communities = { git = "https://github.com/encointer/pallets", branch = "master" }
@@ -29,12 +24,3 @@ pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", bra
 # scs deps
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "master"}
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "master"}
-
-# substrate deps
-frame-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-application-crypto = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-core = { version = "4.1.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-keyring = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-keystore = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-runtime = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }
-

@@ -1323,12 +1323,44 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
+name = "encointer-api-client-extension"
+version = "0.1.0"
+dependencies = [
+ "base58",
+ "clap",
+ "clap-nested",
+ "encointer-primitives",
+ "env_logger 0.9.0",
+ "geojson",
+ "hex",
+ "log",
+ "pallet-encointer-balances",
+ "pallet-encointer-ceremonies",
+ "pallet-encointer-communities",
+ "pallet-encointer-scheduler",
+ "parity-scale-codec",
+ "serde_json",
+ "substrate-api-client",
+ "substrate-client-keystore",
+]
+
+[[package]]
+name = "encointer-ceremonies-assignment"
+version = "0.1.0"
+dependencies = [
+ "encointer-primitives",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "encointer-client-notee"
 version = "0.8.0"
 dependencies = [
  "base58",
  "clap",
  "clap-nested",
+ "encointer-ceremonies-assignment",
  "encointer-node-notee-runtime",
  "encointer-primitives",
  "env_logger 0.9.0",
@@ -1441,7 +1473,6 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "0.8.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "bs58",
  "concat-arrays",
@@ -1505,7 +1536,6 @@ checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 [[package]]
 name = "ep-core"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -4069,7 +4099,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "0.8.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4085,7 +4114,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "0.8.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4100,7 +4128,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4119,7 +4146,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4130,8 +4156,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "0.8.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
+ "encointer-ceremonies-assignment",
  "encointer-primitives",
  "frame-support",
  "frame-system",
@@ -4149,7 +4175,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "0.8.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -4168,7 +4193,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4187,7 +4211,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "sp-api",
@@ -4197,7 +4220,6 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "0.8.0"
-source = "git+https://github.com/encointer/pallets?branch=master#976849b45ba5be04114f62c32c5f8b8fa864103f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
