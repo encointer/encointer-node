@@ -165,9 +165,7 @@ impl CeremoniesApi for Api {
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
 	) -> Result<Vec<AccountId>> {
-		let mut participants = vec![];
 		let meetup_index_zero_based = meetup_index - 1;
-
 		let meetup_count = self.get_meetup_count(community_ceremony)?;
 
 		if meetup_index_zero_based > meetup_count {
@@ -192,12 +190,25 @@ impl CeremoniesApi for Api {
 			assigned.bootstrappers + assigned.reputables,
 		)
 		.into_iter()
-		.map(|p_index| {
-			get_bootstrapper_or_reputable(self, community_ceremony, p_index, &assigned).ok()?
-		})
-		.collect::<Vec<_>>();
+		.filter_map(|p_index| {
+			get_bootstrapper_or_reputable(self, community_ceremony, p_index, &assigned)
+				.ok()
+				.flatten()
+		});
 
-		Ok(participants)
+		let endorsees =
+			assignment_fn_inverse(meetup_index, params.endorsees, meetup_count, assigned.endorsees)
+				.into_iter()
+				.filter(|p| p < &assigned.endorsees)
+				.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
+
+		let newbies =
+			assignment_fn_inverse(meetup_index, params.newbies, meetup_count, assigned.newbies)
+				.into_iter()
+				.filter(|p| p < &assigned.newbies)
+				.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
+
+		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
 	}
 }
 
