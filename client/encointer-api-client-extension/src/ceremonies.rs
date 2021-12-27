@@ -239,7 +239,7 @@ impl CeremoniesApi for Api {
 			assignment_fn_inverse(meetup_index, params.newbies, meetup_count, assigned.newbies)
 				.into_iter()
 				.filter(|p| p < &assigned.newbies)
-				.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
+				.filter_map(|p| self.get_newbie(community_ceremony, &(p + 1)).ok().flatten());
 
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
 	}
