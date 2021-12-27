@@ -23,7 +23,6 @@ mod cli_args;
 mod utils;
 
 use crate::utils::offline_xt;
-use base58::{FromBase58, ToBase58};
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
@@ -467,10 +466,7 @@ fn main() {
                                              .cid_arg()
                                              .expect("please supply argument --cid"),
                     );
-                    println!(
-                        "listing locations for cid {}",
-                        cid.encode().to_base58()
-                    );
+                    println!("listing locations for cid {}", cid);
                     let loc = api.get_locations(cid).unwrap();
                     for l in loc.iter() {
                         println!("lat: {} lon: {}", l.lat, l.lon);
@@ -538,7 +534,7 @@ fn main() {
                             for i in 0..registries.len() {
                                 println!("Querying {}", registries[i]);
 
-                                let count: ParticipantIndexType = count_query(i)?.unwrap();
+                                let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
                                 println!("number of participants assigned:  {}", count);
 
                                 for p_index in 1..count +1 {
@@ -565,11 +561,8 @@ fn main() {
                             .cid_arg()
                             .expect("please supply argument --cid"),
                     );
-                    println!(
-                        "listing meetups for cid {} and ceremony nr {}",
-                        cid.encode().to_base58(),
-                        cindex
-                    );
+                    println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
+
                     let mcount = get_meetup_count(&api, (cid, cindex));
                     println!("number of meetups assigned:  {}", mcount);
                     for m in 1..=mcount {
@@ -601,11 +594,8 @@ fn main() {
                             .cid_arg()
                             .expect("please supply argument --cid"),
                     );
-                    println!(
-                        "listing attestees for cid {} and ceremony nr {}",
-                        cid.encode().to_base58(),
-                        cindex
-                    );
+                    println!("listing attestees for cid {} and ceremony nr {}", cid, cindex);
+
                     let wcount = get_attestee_count(&api, (cid, cindex));
                     println!("number of attestees:  {}", wcount);
                     let pcount = get_participant_count(&api, (cid, cindex));
@@ -1078,21 +1068,9 @@ fn extract_and_execute<T>(
 	closure(api, cid)
 }
 
-// Todo: replace with `from_str` method introduced in https://github.com/encointer/pallets/pull/81
-fn get_cid(cid: &str) -> CommunityIdentifier {
-	let mut geohash: [u8; 5] = [0u8; 5];
-	let mut digest: [u8; 4] = [0u8; 4];
-
-	geohash.clone_from_slice(&cid[..5].as_bytes());
-	digest.clone_from_slice(&cid[5..].from_base58().expect("cid must be base58 encoded"));
-
-	// this is needed because the `CommunityIdentifier`s fields are private
-	CommunityIdentifier::decode(&mut &[&geohash[..], &digest[..]].concat()[..]).unwrap()
-}
-
 fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIdentifier {
 	let cids = get_community_identifiers(&api).expect("no community registered");
-	let cid = get_cid(cid);
+	let cid = CommunityIdentifier::from_str(cid).unwrap();
 	if !cids.contains(&cid) {
 		panic!("cid {} does not exist on chain", cid);
 	}

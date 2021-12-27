@@ -1356,7 +1356,6 @@ dependencies = [
 name = "encointer-client-notee"
 version = "0.8.0"
 dependencies = [
- "base58",
  "clap",
  "clap-nested",
  "encointer-api-client-extension",
