@@ -59,11 +59,11 @@ frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/pari
 # encointer dependencies
 encointer-node-notee-runtime = { path = "../runtime" }
 
-pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "master"}
-pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master"}
+pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "cl/extract-assigment"}
+pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "cl/extract-assigment"}
 
-pallet-encointer-bazaar-rpc = {git = "https://github.com/encointer/pallets", branch = "master"}
-pallet-encointer-bazaar-rpc-runtime-api = {git = "https://github.com/encointer/pallets", branch = "master"}
+pallet-encointer-bazaar-rpc = {git = "https://github.com/encointer/pallets", branch = "cl/extract-assigment"}
+pallet-encointer-bazaar-rpc-runtime-api = {git = "https://github.com/encointer/pallets", branch = "cl/extract-assigment"}
 
 [features]
 default = []

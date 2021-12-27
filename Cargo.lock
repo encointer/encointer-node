@@ -146,9 +146,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.51"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b26702f315f53b6071259e15dd9d64528213b44d61de1ec926eca7715d62203"
+checksum = "84450d0b4a8bd1ba4144ce8ce718fbc5d071358b1e5384bace6536b3d1f2d5b3"
 
 [[package]]
 name = "approx"
@@ -1346,6 +1346,7 @@ dependencies = [
 [[package]]
 name = "encointer-ceremonies-assignment"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "sp-runtime",
@@ -1472,6 +1473,7 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "0.8.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "bs58",
  "concat-arrays",
@@ -1535,6 +1537,7 @@ checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 [[package]]
 name = "ep-core"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -2083,7 +2086,7 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffdf9f34f1447443d37393cc6c2b8313aebddcd96906caf34e54c68d8e57d7bd"
 dependencies = [
- "typenum 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -2092,7 +2095,7 @@ version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "501466ecc8a30d1d3b7fc9229b122b2ce8ed6e9d9223f1138d4babb253e51817"
 dependencies = [
- "typenum 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
  "version_check",
 ]
 
@@ -2910,7 +2913,7 @@ dependencies = [
  "libp2p-yamux",
  "multiaddr",
  "parking_lot",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "smallvec",
  "wasm-timer",
 ]
@@ -2935,7 +2938,7 @@ dependencies = [
  "multihash 0.14.0",
  "multistream-select",
  "parking_lot",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "prost",
  "prost-build",
  "rand 0.8.4",
@@ -3176,7 +3179,7 @@ checksum = "0f1a458bbda880107b5b36fcb9b5a1ef0c329685da0e203ed692a8ebe64cc92c"
 dependencies = [
  "futures 0.3.19",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rand 0.7.3",
  "salsa20",
  "sha3",
@@ -3195,7 +3198,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -3374,7 +3377,7 @@ dependencies = [
  "rand 0.8.4",
  "serde",
  "sha2 0.9.8",
- "typenum 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -3796,7 +3799,7 @@ dependencies = [
  "bytes 1.1.0",
  "futures 0.3.19",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "smallvec",
  "unsigned-varint 0.7.1",
 ]
@@ -3816,7 +3819,7 @@ dependencies = [
  "rand 0.8.4",
  "rand_distr",
  "simba",
- "typenum 1.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "typenum 1.15.0",
 ]
 
 [[package]]
@@ -4098,6 +4101,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "0.8.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4113,6 +4117,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "0.8.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4127,6 +4132,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4145,6 +4151,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc-runtime-api"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4155,6 +4162,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "0.8.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-ceremonies-assignment",
  "encointer-primitives",
@@ -4174,6 +4182,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "0.8.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -4192,6 +4201,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "jsonrpc-core",
@@ -4210,6 +4220,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "sp-api",
@@ -4219,6 +4230,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "0.8.0"
+source = "git+https://github.com/encointer/pallets?branch=cl/extract-assigment#e5970ca68e3a620f94945d157692ebc74796a837"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -4633,27 +4645,27 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "918192b5c59119d51e0cd221f4d49dde9112824ba717369e903c97d076083d0f"
+checksum = "9615c18d31137579e9ff063499264ddc1278e7b1982757ebc111028c4d1dc909"
 dependencies = [
- "pin-project-internal 0.4.28",
+ "pin-project-internal 0.4.29",
 ]
 
 [[package]]
 name = "pin-project"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "576bc800220cc65dac09e99e97b08b358cfab6e17078de8dc5fee223bd2d0c08"
+checksum = "1622113ce508488160cff04e6abc60960e676d330e1ca0f77c0b8df17c81438f"
 dependencies = [
- "pin-project-internal 1.0.8",
+ "pin-project-internal 1.0.9",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3be26700300be6d9d23264c73211d8190e755b6b5ca7a1b28230025511b52a5e"
+checksum = "044964427019eed9d49d9d5bbce6047ef18f37100ea400912a9fa4a3523ab12a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4662,9 +4674,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-internal"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e8fe8163d14ce7f0cdac2e040116f22eac817edabff0be91e8aff7e9accf389"
+checksum = "b95af56fee93df76d721d356ac1ca41fccf168bc448eb14049234df764ba3e76"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4801,9 +4813,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.34"
+version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f84e92c0f7c9d58328b85a78557813e4bd845130db68d7184635344399423b1"
+checksum = "392a54546fda6b7cc663379d0e6ce8b324cf88aecc5a499838e1be9781bdce2e"
 dependencies = [
  "unicode-xid",
 ]
@@ -5307,7 +5319,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4da5fcb054c46f5a5dff833b129285a93d3f0179531735e6c866e8cc307d2020"
 dependencies = [
  "futures 0.3.19",
- "pin-project 0.4.28",
+ "pin-project 0.4.29",
  "static_assertions",
 ]
 
@@ -5767,7 +5779,7 @@ dependencies = [
  "lru 0.7.1",
  "parity-scale-codec",
  "parking_lot",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -5948,7 +5960,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rand 0.7.3",
  "sc-block-builder",
  "sc-chain-spec",
@@ -6019,7 +6031,7 @@ dependencies = [
  "libp2p",
  "log",
  "parking_lot",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rand 0.7.3",
  "serde",
  "serde_json",
@@ -7286,7 +7298,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "typenum 1.14.0 (git+https://github.com/encointer/typenum)",
+ "typenum 1.14.0",
 ]
 
 [[package]]
@@ -7348,9 +7360,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.82"
+version = "1.0.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8daf5dd0bb60cbd4137b1b587d2fc0ae729bc07cf01cd70b36a1ed5ade3b9d59"
+checksum = "ecb2e6da8ee5eb9a61068762a32fa9619cc591ceb055b3687f4cd4051ec2e06b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7611,7 +7623,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
 dependencies = [
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "tracing",
 ]
 
@@ -7738,9 +7750,9 @@ checksum = "5e66dcbec4290c69dd03c57e76c2469ea5c7ce109c6dd4351c13055cf71ea055"
 
 [[package]]
 name = "twox-hash"
-version = "1.6.1"
+version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
+checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
  "cfg-if 1.0.0",
  "rand 0.8.4",
@@ -7750,16 +7762,16 @@ dependencies = [
 [[package]]
 name = "typenum"
 version = "1.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b63708a265f51345575b27fe43f9500ad611579e764c79edbc2037b1121959ec"
-
-[[package]]
-name = "typenum"
-version = "1.14.0"
 source = "git+https://github.com/encointer/typenum#ec35bb80fcfb495de2e1f6966381c3f85e8a6509"
 dependencies = [
  "scale-info",
 ]
+
+[[package]]
+name = "typenum"
+version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "ucd-trie"
@@ -8432,18 +8444,18 @@ dependencies = [
 
 [[package]]
 name = "zstd"
-version = "0.9.0+zstd.1.5.0"
+version = "0.9.1+zstd.1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07749a5dc2cb6b36661290245e350f15ec3bbb304e493db54a1d354480522ccd"
+checksum = "538b8347df9257b7fbce37677ef7535c00a3c7bf1f81023cc328ed7fe4b41de8"
 dependencies = [
  "zstd-safe",
 ]
 
 [[package]]
 name = "zstd-safe"
-version = "4.1.1+zstd.1.5.0"
+version = "4.1.2+zstd.1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91c90f2c593b003603e5e0493c837088df4469da25aafff8bce42ba48caf079"
+checksum = "9fb4cfe2f6e6d35c5d27ecd9d256c4b6f7933c4895654917460ec56c29336cc1"
 dependencies = [
  "libc",
  "zstd-sys",
@@ -8451,9 +8463,9 @@ dependencies = [
 
 [[package]]
 name = "zstd-sys"
-version = "1.6.1+zstd.1.5.0"
+version = "1.6.2+zstd.1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "615120c7a2431d16cf1cf979e7fc31ba7a5b5e5707b29c8a99e5dbf8a8392a33"
+checksum = "2daf2f248d9ea44454bfcb2516534e8b8ad2fc91bf818a1885495fc42bc8ac9f"
 dependencies = [
  "cc",
  "libc",
