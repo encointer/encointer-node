@@ -1,10 +1,11 @@
-use encointer_ceremonies_assignment::assignment_fn_inverse;
+use encointer_ceremonies_assignment::{assignment_fn_inverse, meetup_index};
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, ParticipantIndexType,
 	},
 	communities::Location,
 };
+use log::warn;
 use sp_core::sr25519;
 use substrate_api_client::{rpc::WsRpcClient, AccountId, ApiClientError};
 
@@ -149,7 +150,52 @@ impl CeremoniesApi for Api {
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
 	) -> Result<Option<MeetupIndexType>> {
-		todo!()
+		let meetup_count = self.get_meetup_count(community_ceremony)?;
+
+		if meetup_count == 0 {
+			warn!("Meetup Count is 0.");
+			return Ok(None)
+		}
+
+		let assignments = self
+			.get_assignments(community_ceremony)?
+			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))?;
+
+		// Some helper queries to make below code more readable.
+		let bootstrapper_count = || -> Result<ParticipantIndexType> {
+			Ok(self
+				.get_assignment_counts(community_ceremony)?
+				.expect("AssignmentCounts exists if participant registered")
+				.bootstrappers)
+		};
+		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
+			self.get_storage_double_map(
+				ENCOINTER_CEREMONIES,
+				storage_key,
+				community_ceremony,
+				account_id,
+				None,
+			)
+		};
+		let meetup_index_fn =
+			|p_index, assignment_params| meetup_index(p_index, assignment_params, meetup_count);
+
+		// Finally get the meetup index
+
+		if let Some(p_index) = index_query("BootstrapperIndex")? {
+			return Ok(meetup_index_fn(p_index - 1, assignments.bootstrappers_reputables))
+		} else if let Some(p_index) = index_query("ReputableIndex")? {
+			return Ok(meetup_index_fn(
+				p_index - 1 + bootstrapper_count()?,
+				assignments.bootstrappers_reputables,
+			))
+		} else if let Some(p_index) = index_query("EndorseeIndex")? {
+			return Ok(meetup_index_fn(p_index - 1, assignments.endorsees))
+		} else if let Some(p_index) = index_query("NewbieIndex")? {
+			return Ok(meetup_index_fn(p_index - 1, assignments.newbies))
+		}
+
+		Ok(None)
 	}
 
 	fn get_meetup_location(
