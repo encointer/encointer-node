@@ -1,5 +1,5 @@
-use crate::{Api, Result};
-use encointer_ceremonies_assignment::{assignment_fn_inverse, meetup_index};
+use crate::{Api, CommunitiesApi, Result};
+use encointer_ceremonies_assignment::{assignment_fn_inverse, meetup_index, meetup_location};
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, ParticipantIndexType,
@@ -12,12 +12,11 @@ use substrate_api_client::{AccountId, ApiClientError};
 const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
 
 pub trait CeremoniesApi {
-	fn get_assignments(&self, community_ceremony: &CommunityCeremony)
-		-> Result<Option<Assignment>>;
+	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
 	fn get_assignment_counts(
 		&self,
 		community_ceremony: &CommunityCeremony,
-	) -> Result<Option<AssignmentCount>>;
+	) -> Result<AssignmentCount>;
 
 	fn get_bootstrapper(
 		&self,
@@ -54,7 +53,7 @@ pub trait CeremoniesApi {
 	fn get_meetup_location(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		meetup_index: &MeetupIndexType,
+		meetup_index: MeetupIndexType,
 	) -> Result<Option<Location>>;
 
 	fn get_meetup_participants(
@@ -65,18 +64,17 @@ pub trait CeremoniesApi {
 }
 
 impl CeremoniesApi for Api {
-	fn get_assignments(
-		&self,
-		community_ceremony: &CommunityCeremony,
-	) -> Result<Option<Assignment>> {
-		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)
+	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
+		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)?
+			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))
 	}
 
 	fn get_assignment_counts(
 		&self,
 		community_ceremony: &CommunityCeremony,
-	) -> Result<Option<AssignmentCount>> {
-		self.get_storage_map(ENCOINTER_CEREMONIES, "AssignmentCounts", community_ceremony, None)
+	) -> Result<AssignmentCount> {
+		self.get_storage_map(ENCOINTER_CEREMONIES, "AssignmentCounts", community_ceremony, None)?
+			.ok_or_else(|| ApiClientError::Other("AssignmentCounts not found".into()))
 	}
 
 	fn get_bootstrapper(
@@ -153,16 +151,11 @@ impl CeremoniesApi for Api {
 			return Ok(None)
 		}
 
-		let assignments = self
-			.get_assignments(community_ceremony)?
-			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))?;
+		let assignments = self.get_assignments(community_ceremony)?;
 
 		// Some helper queries to make below code more readable.
 		let bootstrapper_count = || -> Result<ParticipantIndexType> {
-			Ok(self
-				.get_assignment_counts(community_ceremony)?
-				.expect("AssignmentCounts exists if participant registered")
-				.bootstrappers)
+			Ok(self.get_assignment_counts(community_ceremony)?.bootstrappers)
 		};
 		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
 			self.get_storage_double_map(
@@ -197,12 +190,12 @@ impl CeremoniesApi for Api {
 	fn get_meetup_location(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		meetup_index: &MeetupIndexType,
+		meetup_index: MeetupIndexType,
 	) -> Result<Option<Location>> {
-		// let locations = 	Ok(self
-		// 	.get_storage_map(ENCOINTER_CEREMONIES, "MeetupCount", community_ceremony, None)?
-		// 	.unwrap_or(0))
-		todo!()
+		let locations = self.get_locations(community_ceremony.0)?;
+		let location_assignment_params = self.get_assignments(&community_ceremony)?.locations;
+
+		Ok(meetup_location(meetup_index, locations, location_assignment_params))
 	}
 
 	fn get_meetup_participants(
@@ -220,13 +213,8 @@ impl CeremoniesApi for Api {
 			))
 		}
 
-		let params = self
-			.get_assignments(community_ceremony)?
-			.ok_or_else(|| ApiClientError::Other("Assignments not found".into()))?;
-
-		let assigned = self
-			.get_assignment_counts(community_ceremony)?
-			.ok_or_else(|| ApiClientError::Other("AssignmentCounts not found".into()))?;
+		let params = self.get_assignments(community_ceremony)?;
+		let assigned = self.get_assignment_counts(community_ceremony)?;
 
 		let bootstrappers_reputables = assignment_fn_inverse(
 			meetup_index,
