@@ -28,6 +28,7 @@ use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
+use encointer_api_client_extension::{CeremoniesApi, CommunitiesApi};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -450,7 +451,7 @@ fn main() {
                     let names = get_cid_names(&api).unwrap();
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
-                        let loc = get_community_locations(&api, n.cid).unwrap();
+                        let loc = api.get_locations(n.cid).unwrap();
                         println!("{}: {} locations: {}", n.cid, n.name, loc.len());
                     }
                     Ok(())
@@ -470,7 +471,7 @@ fn main() {
                         "listing locations for cid {}",
                         cid.encode().to_base58()
                     );
-                    let loc = get_community_locations(&api, cid).unwrap();
+                    let loc = api.get_locations(cid).unwrap();
                     for l in loc.iter() {
                         println!("lat: {} lon: {}", l.lat, l.lon);
                     }
@@ -1275,31 +1276,12 @@ fn get_community_identifiers(
 		.unwrap()
 }
 
-fn get_community_locations(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	cid: CommunityIdentifier,
-) -> Option<Vec<Location>> {
-	let req = json!({
-		"method": "communities_getLocations",
-		"params": vec![cid],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
-
-	let n = api
-		.get_request(req.into())
-		.unwrap()
-		.expect("Could not find any locations for that cid...");
-
-	Some(serde_json::from_str(&n).unwrap())
-}
-
 fn get_meetup_location(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 	mindex: MeetupIndexType,
 ) -> Option<Location> {
-	let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
+	let locations = api.get_locations(cid).unwrap();
 	let lidx = (mindex - 1) as usize;
 	if lidx >= locations.len() {
 		return None

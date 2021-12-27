@@ -17,6 +17,7 @@ log = "0.4.14"
 serde_json = { version = "1.0.73"}
 
 # local deps
+encointer-api-client-extension = { path = "./encointer-api-client-extension" }
 encointer-node-notee-runtime = { path = "../runtime" }
 # encointer deps
 encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "master" }
