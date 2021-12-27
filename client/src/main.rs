@@ -28,7 +28,7 @@ use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
-use encointer_api_client_extension::{CeremoniesApi, CommunitiesApi};
+use encointer_api_client_extension::{CommunitiesApi, ENCOINTER_CEREMONIES};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -61,8 +61,8 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, Api, ApiClientError, GenericAddress, Metadata, UncheckedExtrinsicV4,
-	XtStatus,
+	utils::FromHexString, Api, ApiClientError, ApiResult, GenericAddress, Metadata,
+	UncheckedExtrinsicV4, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -523,24 +523,34 @@ fn main() {
             Command::new("list-participants")
                 .description("list all registered participants for current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    debug!("{:?}", matches);
-                    let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
-                    let cid = verify_cid(&api,
-                        matches.cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    println!(
-                        "listing participants for cid {} and ceremony nr {}",
-                        cid.encode().to_base58(),
-                        cindex
-                    );
-                    let pcount = get_participant_count(&api, (cid, cindex));
-                    println!("number of participants assigned:  {}", pcount);
-                    for p in 1..pcount + 1 {
-                        let accountid = get_participant(&api, (cid, cindex), p).unwrap();
-                        println!("ParticipantRegistry[{}, {}] = {}", cindex, p, accountid);
-                    }
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let cindex = get_ceremony_index(&api);
+
+                            println!("listing participants for cid {} and ceremony nr {}", cid, cindex);
+
+                            let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+                            let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+
+                            let count_query = |registry_index| api.get_storage_map(ENCOINTER_CEREMONIES, registries[registry_index], (cid, cindex), None);
+                            let account_query = |count_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, counts[count_index],(cid, cindex), p_index, None);
+
+                            for i in 0..registries.len() {
+                                println!("Querying {}", registries[i]);
+
+                                let count: ParticipantIndexType = count_query(i)?.unwrap();
+                                println!("number of participants assigned:  {}", count);
+
+                                for p_index in 1..count +1 {
+                                    let accountid: AccountId = account_query(i, p_index)?.unwrap();
+                                    println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
+                                }
+                            }
+
+                            Ok(())
+                        }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )

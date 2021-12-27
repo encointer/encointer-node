@@ -9,7 +9,7 @@ use encointer_primitives::{
 use log::warn;
 use substrate_api_client::{AccountId, ApiClientError};
 
-const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
+pub const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
 
 pub trait CeremoniesApi {
 	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
