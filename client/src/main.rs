@@ -795,22 +795,24 @@ fn main() {
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    debug!("{:?}", matches);
-                    let arg_who = matches.account_arg().unwrap();
-                    let claimant = get_pair_from_str(arg_who);
-                    let api = get_chain_api(matches);
-                    let cid = verify_cid(&api,
-                        matches
-                            .cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    let n_participants = matches
-                        .value_of("vote")
-                        .unwrap()
-                        .parse::<u32>()
-                        .unwrap();
-                    let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
-                    println!("{}", hex::encode(claim));
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let arg_who = matches.account_arg().unwrap();
+                            let claimant = get_pair_from_str(arg_who);
+
+                            let n_participants = matches
+                                .value_of("vote")
+                                .unwrap()
+                                .parse::<u32>()
+                                .unwrap();
+
+                            let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
+
+                            println!("{}", hex::encode(claim));
+                            Ok(())
+                        }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )
