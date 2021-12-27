@@ -150,6 +150,10 @@ class Client:
         ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
+    def claim_reward(self, account, cid):
+        ret = subprocess.run(self.cli + ["--cid", cid, "claim-reward", account], stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
     def create_business(self, account, cid, ipfs_cid):
         ret = subprocess.run(self.cli + ["--cid", cid, "create-business", account, "--ipfs-cid", ipfs_cid],
                              stdout=subprocess.PIPE)

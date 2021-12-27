@@ -109,6 +109,10 @@ def main(ipfs_local, client, port):
     print(client.list_attestees(cid))
     client.next_phase()
 
+    print("Claiming rewards")
+    client.claim_reward(account1, cid)
+    client.await_block()
+
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]

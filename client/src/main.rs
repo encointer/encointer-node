@@ -838,6 +838,36 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("claim-reward")
+                .description("Claim the rewards for all meetup participants of the last ceremony.")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .signer_arg("account that was part of the meetup")
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+
+                    extract_and_execute(
+                        &matches, |api, cid| {
+                            let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
+                            let api = api.set_signer(signer.clone().into());
+
+                            let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                                api.clone(),
+                                ENCOINTER_CEREMONIES,
+                                "claim_rewards",
+                                cid
+                            );
+                            ensure_payment(&api, &xt.hex_encode());
+
+                            let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                            println!("Claiming reward for {}. xt-status: 'ready'", signer.public());
+                        }
+                    );
+
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("create-business")
                 .description("Register a community business on behalf of the account")
                 .options(|app| {
