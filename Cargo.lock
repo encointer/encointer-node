@@ -1326,17 +1326,10 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 name = "encointer-api-client-extension"
 version = "0.8.0"
 dependencies = [
- "base58",
- "clap",
- "clap-nested",
  "encointer-ceremonies-assignment",
  "encointer-primitives",
- "env_logger 0.9.0",
- "geojson",
- "hex",
  "log",
  "pallet-encointer-ceremonies",
- "parity-scale-codec",
  "serde_json",
  "sp-core",
  "substrate-api-client",
