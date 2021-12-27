@@ -99,25 +99,25 @@ def main(ipfs_local, client, port):
     print('Listing meetups')
     print(client.list_meetups(cid))
     client.next_phase()
-
-    print(f'Performing meetups for cid {cid}')
-    perform_meetup(client, cid)
-
-    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
-    client.await_block(blocks_to_wait)
-
-    print(client.list_attestees(cid))
-    client.next_phase()
-
-    print(f'Balances for new community with cid: {cid}.')
-    bal = [client.balance(a, cid=cid) for a in accounts]
-    [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
-
-    if round(bal[0]) > 0:
-        print("tests passed")
-    else:
-        print("balance is wrong")
-        exit(1)
+    #
+    # print(f'Performing meetups for cid {cid}')
+    # perform_meetup(client, cid)
+    #
+    # print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    # client.await_block(blocks_to_wait)
+    #
+    # print(client.list_attestees(cid))
+    # client.next_phase()
+    #
+    # print(f'Balances for new community with cid: {cid}.')
+    # bal = [client.balance(a, cid=cid) for a in accounts]
+    # [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
+    #
+    # if round(bal[0]) > 0:
+    #     print("tests passed")
+    # else:
+    #     print("balance is wrong")
+    #     exit(1)
 
 
 if __name__ == '__main__':

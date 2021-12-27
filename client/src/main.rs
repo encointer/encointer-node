@@ -27,7 +27,7 @@ use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
-use encointer_api_client_extension::{CommunitiesApi, ENCOINTER_CEREMONIES};
+use encointer_api_client_extension::{CeremoniesApi, CommunitiesApi, ENCOINTER_CEREMONIES};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -36,8 +36,8 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupIndexType,
-		ParticipantIndexType, ProofOfAttendance, Reputation,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, ParticipantIndexType,
+		ProofOfAttendance, Reputation,
 	},
 	communities::{
 		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
@@ -554,32 +554,39 @@ fn main() {
             Command::new("list-meetups")
                 .description("list all assigned meetups for current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
-                    let cid = verify_cid(&api,
-                        matches
-                            .cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let cindex = get_ceremony_index(&api);
+                            let community_ceremony = (cid, cindex);
 
-                    let mcount = get_meetup_count(&api, (cid, cindex));
-                    println!("number of meetups assigned:  {}", mcount);
-                    for m in 1..=mcount {
-                        println!("MeetupRegistry[{}, {}] location is {:?}",
-                            cindex, m, get_meetup_location(&api, cid, m));
-                        println!("MeetupRegistry[{}, {}] meeting time is {:?}",
-                            cindex, m, get_meetup_time(&api, cid, m));
-                        match get_meetup_participants(&api, (cid, cindex), m) {
-                            Some(participants) => {
-                                println!("MeetupRegistry[{}, {}] participants are:", cindex, m);
-                                for p in participants.iter() {
-                                    println!("   {}", p);
+                            println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
+
+                            let mcount = api.get_meetup_count(&community_ceremony)?;
+                            println!("number of meetups assigned:  {}", mcount);
+
+                            for m in 1..=mcount {
+                                let m_location = api.get_meetup_location(&community_ceremony, m)?.unwrap();
+
+                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, m, m_location);
+
+                                println!("MeetupRegistry[{}, {}] meeting time is {:?}", cindex, m, get_meetup_time(&api, m_location));
+
+                                let participants =  api.get_meetup_participants(&community_ceremony, m)?;
+
+                                if !participants.is_empty() {
+                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, m);
+                                    for p in participants.iter() {
+                                        println!("   {}", p);
+                                    }
+                                } else {
+                                    println!("MeetupRegistry[{}, {}] EMPTY", cindex, m);
                                 }
                             }
-                            None => println!("MeetupRegistry[{}, {}] EMPTY", cindex, m),
+
+                            Ok(())
                         }
-                    }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )
@@ -1146,16 +1153,6 @@ fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType
 		.unwrap()
 }
 
-fn get_meetup_count(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-) -> MeetupIndexType {
-	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
-		.unwrap()
-		.or(Some(0))
-		.unwrap()
-}
-
 fn get_participant_count(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
@@ -1185,24 +1182,6 @@ fn get_participant(
 		.unwrap()
 }
 
-fn get_meetup_index_for(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-	account: &AccountId,
-) -> Option<MeetupIndexType> {
-	api.get_storage_double_map("EncointerCeremonies", "MeetupIndex", key, account.clone(), None)
-		.unwrap()
-}
-
-fn get_meetup_participants(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-	mindex: MeetupIndexType,
-) -> Option<Vec<AccountId>> {
-	api.get_storage_double_map("EncointerCeremonies", "MeetupRegistry", key, mindex, None)
-		.unwrap()
-}
-
 fn get_attestees(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
@@ -1228,12 +1207,14 @@ fn new_claim_for(
 	n_participants: u32,
 ) -> Vec<u8> {
 	let cindex = get_ceremony_index(api);
-	let mindex = get_meetup_index_for(api, (cid, cindex), &claimant.public().into())
+	let mindex = api
+		.get_meetup_index(&(cid, cindex), &claimant.public().into())
+		.unwrap()
 		.expect("participant must be assigned to meetup to generate a claim");
 
 	// implicitly assume that participant meet at the right place at the right time
-	let mloc = get_meetup_location(api, cid, mindex).unwrap();
-	let mtime = get_meetup_time(api, cid, mindex).unwrap();
+	let mloc = api.get_meetup_location(&(cid, cindex), mindex).unwrap().unwrap();
+	let mtime = get_meetup_time(api, mloc).unwrap();
 	info!(
 		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
 		claimant.public().to_ss58check(),
@@ -1262,19 +1243,6 @@ fn get_community_identifiers(
 ) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
-}
-
-fn get_meetup_location(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	cid: CommunityIdentifier,
-	mindex: MeetupIndexType,
-) -> Option<Location> {
-	let locations = api.get_locations(cid).unwrap();
-	let lidx = (mindex - 1) as usize;
-	if lidx >= locations.len() {
-		return None
-	}
-	Some(locations[lidx])
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
@@ -1346,13 +1314,8 @@ fn get_offerings_for_business(
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_meetup_time(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	cid: CommunityIdentifier,
-	mindex: MeetupIndexType,
-) -> Option<Moment> {
-	let mlocation = get_meetup_location(api, cid, mindex).unwrap();
-	let mlon: f64 = mlocation.lon.lossy_into();
+fn get_meetup_time(api: &Api<sr25519::Pair, WsRpcClient>, location: Location) -> Option<Moment> {
+	let mlon: f64 = location.lon.lossy_into();
 
 	let next_phase_timestamp: Moment = api
 		.get_storage_value("EncointerScheduler", "NextPhaseTimestamp", None)
