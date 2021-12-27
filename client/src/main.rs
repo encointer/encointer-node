@@ -525,11 +525,11 @@ fn main() {
 
                             println!("listing participants for cid {} and ceremony nr {}", cid, cindex);
 
-                            let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
                             let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+                            let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None);
 
-                            let count_query = |registry_index| api.get_storage_map(ENCOINTER_CEREMONIES, registries[registry_index], (cid, cindex), None);
-                            let account_query = |count_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, counts[count_index],(cid, cindex), p_index, None);
+                            let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+                            let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None);
 
                             for i in 0..registries.len() {
                                 println!("Querying {}", registries[i]);
