@@ -594,36 +594,54 @@ fn main() {
             Command::new("list-attestees")
                 .description("list all attestees for participants of current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
-                    let cid = verify_cid(&api,
-                        matches
-                            .cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    println!("listing attestees for cid {} and ceremony nr {}", cid, cindex);
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let cindex = get_ceremony_index(&api);
 
-                    let wcount = get_attestee_count(&api, (cid, cindex));
-                    println!("number of attestees:  {}", wcount);
-                    let pcount = get_participant_count(&api, (cid, cindex));
-                    let mut participants_windex = HashMap::new();
-                    for p in 1..pcount + 1 {
-                        let accountid =
-                            get_participant(&api, (cid, cindex), p).expect("error getting participant");
-                        match get_participant_attestation_index(&api, (cid, cindex), &accountid) {
-                            Some(windex) => {
-                                participants_windex.insert(windex as AttestationIndexType, accountid)
+                            println!("listing attestees for cid {} and ceremony nr {}", cid, cindex);
+
+                            let wcount = get_attestee_count(&api, (cid, cindex));
+                            println!("number of attestees:  {}", wcount);
+
+                            println!("listing participants for cid {} and ceremony nr {}", cid, cindex);
+
+                            let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+                            let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None);
+
+                            let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+                            let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None);
+
+                            let mut participants_windex = HashMap::new();
+
+                            for i in 0..registries.len() {
+                                println!("Querying {}", registries[i]);
+
+                                let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
+                                println!("number of participants assigned:  {}", count);
+
+                                for p_index in 1..count +1 {
+                                    let accountid: AccountId = account_query(i, p_index)?.unwrap();
+
+                                    match get_participant_attestation_index(&api, (cid, cindex), &accountid) {
+                                        Some(windex) => {
+                                            participants_windex.insert(windex as AttestationIndexType, accountid)
+                                        }
+                                        _ => continue,
+                                    };
+                                }
                             }
-                            _ => continue,
-                        };
-                    }
-                    for w in 1..wcount + 1 {
-                        let attestees = get_attestees(&api, (cid, cindex), w);
-                        println!(
-                            "AttestationRegistry[{}, {} ({})] = {:?}",
-                            cindex, w, participants_windex[&w], attestees
-                        );
-                    }
+
+                            for w in 1..wcount + 1 {
+                                let attestees = get_attestees(&api, (cid, cindex), w);
+                                println!(
+                                    "AttestationRegistry[{}, {} ({})] = {:?}",
+                                    cindex, w, participants_windex[&w], attestees
+                                );
+                            }
+                            Ok(())
+                        }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )
@@ -1158,16 +1176,6 @@ fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType
 		.unwrap()
 }
 
-fn get_participant_count(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-) -> ParticipantIndexType {
-	api.get_storage_map("EncointerCeremonies", "ParticipantCount", key, None)
-		.unwrap()
-		.or(Some(0))
-		.unwrap()
-}
-
 fn get_attestee_count(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
@@ -1175,15 +1183,6 @@ fn get_attestee_count(
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
-		.unwrap()
-}
-
-fn get_participant(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-	pindex: ParticipantIndexType,
-) -> Option<AccountId> {
-	api.get_storage_double_map("EncointerCeremonies", "ParticipantRegistry", key, pindex, None)
 		.unwrap()
 }
 
