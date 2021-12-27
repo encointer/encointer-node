@@ -757,26 +757,29 @@ fn main() {
                     .claims_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let arg_who = matches.account_arg().unwrap();
-                    let who = get_pair_from_str(arg_who);
-                    let claims_arg: Vec<_> = matches.claims_arg().unwrap();
-                    let mut claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = vec![];
-                    for arg in claims_arg.iter() {
-                        let w = ClaimOfAttendance::decode(&mut &hex::decode(arg).unwrap()[..]).unwrap();
-                        claims.push(w);
-                    }
+                    let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+                    let claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = matches.claims_arg().unwrap()
+                        .into_iter()
+                        .map(|c| Decode::decode(&mut &hex::decode(c).unwrap()[..]).unwrap())
+                        .collect();
+
                     debug!("claims: {:?}", claims);
+
                     info!("send attest_claims by {}", who.public());
-                    let api = get_chain_api(matches).set_signer(sr25519_core::Pair::from(who));
+
+                    let api = get_chain_api(matches).set_signer(who.clone().into());
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
                         "attest_claims",
                         claims.clone()
                     );
+
                     ensure_payment(&api, &xt.hex_encode());
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Claims sent by {}. status: 'ready'", arg_who);
+
+                    println!("Claims sent by {}. status: 'ready'", who.public());
                     Ok(())
                 }),
         )
