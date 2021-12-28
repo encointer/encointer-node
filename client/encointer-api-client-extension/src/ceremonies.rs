@@ -1,5 +1,7 @@
-use crate::{Api, CommunitiesApi, Result};
-use encointer_ceremonies_assignment::{assignment_fn_inverse, meetup_index, meetup_location};
+use crate::{Api, CommunitiesApi, Result, SchedulerApi};
+use encointer_ceremonies_assignment::{
+	assignment_fn_inverse, meetup_index, meetup_location, meetup_time,
+};
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, ParticipantIndexType,
@@ -7,7 +9,7 @@ use encointer_primitives::{
 	communities::Location,
 };
 use log::warn;
-use substrate_api_client::{AccountId, ApiClientError};
+use substrate_api_client::{AccountId, ApiClientError, Moment};
 
 pub const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
 
@@ -61,6 +63,8 @@ pub trait CeremoniesApi {
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
 	) -> Result<Vec<AccountId>>;
+
+	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
 }
 
 impl CeremoniesApi for Api {
@@ -242,6 +246,12 @@ impl CeremoniesApi for Api {
 				.filter_map(|p| self.get_newbie(community_ceremony, &(p + 1)).ok().flatten());
 
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
+	}
+
+	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {
+		let attesting_start = self.get_start_of_attesting_phase()?;
+
+		Ok(meetup_time(location, attesting_start, one_day))
 	}
 }
 

@@ -42,7 +42,7 @@ use encointer_primitives::{
 	communities::{
 		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
 	},
-	fixed::{traits::LossyInto, transcendental::exp},
+	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
 use geojson::GeoJson;
@@ -569,7 +569,7 @@ fn main() {
 
                                 println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, m, m_location);
 
-                                println!("MeetupRegistry[{}, {}] meeting time is {:?}", cindex, m, get_meetup_time(&api, m_location));
+                                println!("MeetupRegistry[{}, {}] meeting time is {:?}", cindex, m, api.get_meetup_time(m_location, ONE_DAY));
 
                                 let participants =  api.get_meetup_participants(&community_ceremony, m)?;
 
@@ -1248,7 +1248,8 @@ fn new_claim_for(
 
 	// implicitly assume that participant meet at the right place at the right time
 	let mloc = api.get_meetup_location(&(cid, cindex), mindex).unwrap().unwrap();
-	let mtime = get_meetup_time(api, mloc).unwrap();
+	let mtime = api.get_meetup_time(mloc, ONE_DAY).unwrap();
+
 	info!(
 		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
 		claimant.public().to_ss58check(),
@@ -1346,37 +1347,6 @@ fn get_offerings_for_business(
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
-}
-
-fn get_meetup_time(api: &Api<sr25519::Pair, WsRpcClient>, location: Location) -> Option<Moment> {
-	let mlon: f64 = location.lon.lossy_into();
-
-	let next_phase_timestamp: Moment = api
-		.get_storage_value("EncointerScheduler", "NextPhaseTimestamp", None)
-		.unwrap()
-		.unwrap();
-
-	let attesting_start = match get_current_phase(api) {
-		CeremonyPhaseType::ASSIGNING => next_phase_timestamp, // - next_phase_timestamp.rem(ONE_DAY),
-		CeremonyPhaseType::ATTESTING => {
-			let attesting_duration: Moment = api
-				.get_storage_map(
-					"EncointerScheduler",
-					"PhaseDurations",
-					CeremonyPhaseType::ATTESTING,
-					None,
-				)
-				.unwrap()
-				.unwrap();
-			next_phase_timestamp - attesting_duration //- next_phase_timestamp.rem(ONE_DAY)
-		},
-		CeremonyPhaseType::REGISTERING =>
-			panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location."),
-	};
-	let mtime = ((attesting_start + ONE_DAY / 2) as i64 - (mlon * (ONE_DAY as f64) / 360.0) as i64)
-		as Moment;
-	debug!("meetup time at lon {}: {:?}", mlon, mtime);
-	Some(mtime)
 }
 
 fn prove_attendance(
