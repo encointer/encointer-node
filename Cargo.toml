@@ -6,10 +6,13 @@ members = [
     'node',
     'runtime',
     'client',
+    'client/encointer-api-client-extension',
 ]
 
 #only while debugging
 #[patch."https://github.com/encointer/pallets"]
+#encointer-ceremonies-assignment = { path = "../encointer-pallets/ceremonies/assignment" }
+#encointer-primitives = { path = "../encointer-pallets/primitives" }
 #pallet-encointer-ceremonies = { path = "../encointer-pallets/ceremonies" }
 #pallet-encointer-communities = { path = "../encointer-pallets/communities" }
 #pallet-encointer-communities-rpc = { path = "../encointer-pallets/communities/rpc" }
@@ -19,10 +22,10 @@ members = [
 #pallet-encointer-bazaar = { path = "../encointer-pallets/bazaar" }
 #pallet-encointer-bazaar-rpc = { path = "../encointer-pallets/bazaar/rpc" }
 #pallet-encointer-bazaar-rpc-runtime-api = { path = "../encointer-pallets/bazaar/rpc/runtime-api" }
-#encointer-primitives = { path = "../encointer-pallets/primitives" }
 
-#[patch."https://github.com/scs/pallet-substratee-registry.git"]
-#pallet-substratee-registry = { path = "../pallet-substratee-registry" }
+#[patch."https://github.com/scs/substrate-api-client"]
+#substrate-api-client = { path = "../substrate-api-client" }
+#substrate-client-keystore = { path = "../substrate-api-client/client-keystore" }
 
 #[patch."https://github.com/encointer/substrate-fixed"]
 #substrate-fixed = { path = "../substrate-fixed" }

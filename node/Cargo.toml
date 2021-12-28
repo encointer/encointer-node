@@ -8,7 +8,7 @@ license = "GPL-3.0"
 name = "encointer-node-notee"
 repository = "https://github.com/encointer/encointer-node"
 #keep with client version
-version = "0.7.0"
+version = "0.8.0"
 
 [[bin]]
 name = "encointer-node-notee"
@@ -24,7 +24,7 @@ structopt = "0.3.25"
 log = "0.4.14"
 
 sc-cli = { version = "0.10.0-dev", features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
-sp-core = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
+sp-core = { version = "4.1.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-executor = { version = "0.10.0-dev", features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-service = { version = "0.10.0-dev", features = ["wasmtime"], git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-telemetry = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
@@ -59,11 +59,11 @@ frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/pari
 # encointer dependencies
 encointer-node-notee-runtime = { path = "../runtime" }
 
-pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "v0.7.0"}
-pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "v0.7.0"}
+pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "master"}
+pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master"}
 
-pallet-encointer-bazaar-rpc = {git = "https://github.com/encointer/pallets", branch = "v0.7.0"}
-pallet-encointer-bazaar-rpc-runtime-api = {git = "https://github.com/encointer/pallets", branch = "v0.7.0"}
+pallet-encointer-bazaar-rpc = {git = "https://github.com/encointer/pallets", branch = "master"}
+pallet-encointer-bazaar-rpc-runtime-api = {git = "https://github.com/encointer/pallets", branch = "master"}
 
 [features]
 default = []

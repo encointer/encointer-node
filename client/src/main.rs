@@ -19,34 +19,17 @@
 //! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
-#![feature(array_methods)]
-
 mod cli_args;
 mod utils;
 
-#[macro_use]
-extern crate clap;
-extern crate env_logger;
-extern crate log;
-
-use sp_application_crypto::{ed25519, sr25519};
-use sp_keyring::AccountKeyring;
-use std::{collections::HashMap, path::PathBuf};
-
-use base58::{FromBase58, ToBase58};
-
-use clap::{AppSettings, Arg, ArgMatches};
-use clap_nested::{Command, Commander};
-use codec::{Compact, Decode, Encode};
-use log::*;
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	MultiSignature,
-};
-
 use crate::utils::offline_xt;
+use clap::{value_t, AppSettings, Arg, ArgMatches};
+use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
+use codec::{Compact, Decode, Encode};
+use encointer_api_client_extension::{
+	CeremoniesApi, CommunitiesApi, SchedulerApi, ENCOINTER_CEREMONIES,
+};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -55,22 +38,32 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, MeetupLocationIndexType,
-		ParticipantIndexType, ProofOfAttendance, Reputation,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, ParticipantIndexType,
+		ProofOfAttendance, Reputation,
 	},
 	communities::{
 		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
 	},
+	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
-use fixed::{traits::LossyInto, transcendental::exp};
 use geojson::GeoJson;
+use log::*;
 use serde_json::{json, to_value};
-use std::{convert::TryInto, fs, str::FromStr, sync::mpsc::channel};
+use sp_application_crypto::{ed25519, sr25519};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use sp_keyring::AccountKeyring;
+use sp_runtime::{
+	traits::{IdentifyAccount, Verify},
+	MultiSignature,
+};
+use std::{
+	collections::HashMap, convert::TryInto, fs, path::PathBuf, str::FromStr, sync::mpsc::channel,
+};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, Api, ApiClientError, GenericAddress, Metadata, UncheckedExtrinsicV4,
-	XtStatus,
+	utils::FromHexString, Api, ApiClientError, ApiResult, GenericAddress, Metadata,
+	UncheckedExtrinsicV4, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -459,7 +452,7 @@ fn main() {
                     let names = get_cid_names(&api).unwrap();
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
-                        let loc = get_community_locations(&api, n.cid).unwrap();
+                        let loc = api.get_locations(n.cid).unwrap();
                         println!("{}: {} locations: {}", n.cid, n.name, loc.len());
                     }
                     Ok(())
@@ -475,11 +468,8 @@ fn main() {
                                              .cid_arg()
                                              .expect("please supply argument --cid"),
                     );
-                    println!(
-                        "listing locations for cid {}",
-                        cid.encode().to_base58()
-                    );
-                    let loc = get_community_locations(&api, cid).unwrap();
+                    println!("listing locations for cid {}", cid);
+                    let loc = api.get_locations(cid).unwrap();
                     for l in loc.iter() {
                         println!("lat: {} lon: {}", l.lat, l.lon);
                     }
@@ -497,15 +487,11 @@ fn main() {
                     debug!("block number: {}", bn);
                     let cindex = get_ceremony_index(&api);
                     info!("ceremony index: {}", cindex);
-                    let tnext: Moment = api.get_storage_value(
-                        "EncointerScheduler",
-                        "NextPhaseTimestamp",
-                        None
-                    ).unwrap().unwrap();
+                    let tnext: Moment = api.get_next_phase_timestamp().unwrap();
                     debug!("next phase timestamp: {}", tnext);
                     // <<<<
 
-                    let phase = get_current_phase(&api);
+                    let phase = api.get_current_phase().unwrap();
                     println!("{:?}", phase);
                     Ok(())
                 }),
@@ -522,7 +508,7 @@ fn main() {
                     ensure_payment(&api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    let phase = get_current_phase(&api);
+                    let phase = api.get_current_phase().unwrap();
                     println!("Phase is now: {:?}", phase);
                     Ok(())
                 }),
@@ -531,24 +517,34 @@ fn main() {
             Command::new("list-participants")
                 .description("list all registered participants for current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    debug!("{:?}", matches);
-                    let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
-                    let cid = verify_cid(&api,
-                        matches.cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    println!(
-                        "listing participants for cid {} and ceremony nr {}",
-                        cid.encode().to_base58(),
-                        cindex
-                    );
-                    let pcount = get_participant_count(&api, (cid, cindex));
-                    println!("number of participants assigned:  {}", pcount);
-                    for p in 1..pcount + 1 {
-                        let accountid = get_participant(&api, (cid, cindex), p).unwrap();
-                        println!("ParticipantRegistry[{}, {}] = {}", cindex, p, accountid);
-                    }
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let cindex = get_ceremony_index(&api);
+
+                            println!("listing participants for cid {} and ceremony nr {}", cid, cindex);
+
+                            let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+                            let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None);
+
+                            let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+                            let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None);
+
+                            for i in 0..registries.len() {
+                                println!("Querying {}", registries[i]);
+
+                                let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
+                                println!("number of participants assigned:  {}", count);
+
+                                for p_index in 1..count +1 {
+                                    let accountid: AccountId = account_query(i, p_index)?.unwrap();
+                                    println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
+                                }
+                            }
+
+                            Ok(())
+                        }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )
@@ -556,35 +552,39 @@ fn main() {
             Command::new("list-meetups")
                 .description("list all assigned meetups for current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
-                    let cid = verify_cid(&api,
-                        matches
-                            .cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    println!(
-                        "listing meetups for cid {} and ceremony nr {}",
-                        cid.encode().to_base58(),
-                        cindex
-                    );
-                    let mcount = get_meetup_count(&api, (cid, cindex));
-                    println!("number of meetups assigned:  {}", mcount);
-                    for m in 1..=mcount {
-                        println!("MeetupRegistry[{}, {}] location is {:?}",
-                            cindex, m, get_meetup_location(&api, cid, m));
-                        println!("MeetupRegistry[{}, {}] meeting time is {:?}",
-                            cindex, m, get_meetup_time(&api, cid, m));
-                        match get_meetup_participants(&api, (cid, cindex), m) {
-                            Some(participants) => {
-                                println!("MeetupRegistry[{}, {}] participants are:", cindex, m);
-                                for p in participants.iter() {
-                                    println!("   {}", p);
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let cindex = get_ceremony_index(&api);
+                            let community_ceremony = (cid, cindex);
+
+                            println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
+
+                            let mcount = api.get_meetup_count(&community_ceremony)?;
+                            println!("number of meetups assigned:  {}", mcount);
+
+                            for m in 1..=mcount {
+                                let m_location = api.get_meetup_location(&community_ceremony, m)?.unwrap();
+
+                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, m, m_location);
+
+                                println!("MeetupRegistry[{}, {}] meeting time is {:?}", cindex, m, api.get_meetup_time(m_location, ONE_DAY));
+
+                                let participants =  api.get_meetup_participants(&community_ceremony, m)?;
+
+                                if !participants.is_empty() {
+                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, m);
+                                    for p in participants.iter() {
+                                        println!("   {}", p);
+                                    }
+                                } else {
+                                    println!("MeetupRegistry[{}, {}] EMPTY", cindex, m);
                                 }
                             }
-                            None => println!("MeetupRegistry[{}, {}] EMPTY", cindex, m),
+
+                            Ok(())
                         }
-                    }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )
@@ -592,39 +592,54 @@ fn main() {
             Command::new("list-attestees")
                 .description("list all attestees for participants of current ceremony and supplied community identifier")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
-                    let cid = verify_cid(&api,
-                        matches
-                            .cid_arg()
-                            .expect("please supply argument --cid"),
-                    );
-                    println!(
-                        "listing attestees for cid {} and ceremony nr {}",
-                        cid.encode().to_base58(),
-                        cindex
-                    );
-                    let wcount = get_attestee_count(&api, (cid, cindex));
-                    println!("number of attestees:  {}", wcount);
-                    let pcount = get_participant_count(&api, (cid, cindex));
-                    let mut participants_windex = HashMap::new();
-                    for p in 1..pcount + 1 {
-                        let accountid =
-                            get_participant(&api, (cid, cindex), p).expect("error getting participant");
-                        match get_participant_attestation_index(&api, (cid, cindex), &accountid) {
-                            Some(windex) => {
-                                participants_windex.insert(windex as AttestationIndexType, accountid)
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let cindex = get_ceremony_index(&api);
+
+                            println!("listing attestees for cid {} and ceremony nr {}", cid, cindex);
+
+                            let wcount = get_attestee_count(&api, (cid, cindex));
+                            println!("number of attestees:  {}", wcount);
+
+                            println!("listing participants for cid {} and ceremony nr {}", cid, cindex);
+
+                            let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+                            let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None);
+
+                            let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+                            let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None);
+
+                            let mut participants_windex = HashMap::new();
+
+                            for i in 0..registries.len() {
+                                println!("Querying {}", registries[i]);
+
+                                let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
+                                println!("number of participants assigned:  {}", count);
+
+                                for p_index in 1..count +1 {
+                                    let accountid: AccountId = account_query(i, p_index)?.unwrap();
+
+                                    match get_participant_attestation_index(&api, (cid, cindex), &accountid) {
+                                        Some(windex) => {
+                                            participants_windex.insert(windex as AttestationIndexType, accountid)
+                                        }
+                                        _ => continue,
+                                    };
+                                }
                             }
-                            _ => continue,
-                        };
-                    }
-                    for w in 1..wcount + 1 {
-                        let attestees = get_attestees(&api, (cid, cindex), w);
-                        println!(
-                            "AttestationRegistry[{}, {} ({})] = {:?}",
-                            cindex, w, participants_windex[&w], attestees
-                        );
-                    }
+
+                            for w in 1..wcount + 1 {
+                                let attestees = get_attestees(&api, (cid, cindex), w);
+                                println!(
+                                    "AttestationRegistry[{}, {} ({})] = {:?}",
+                                    cindex, w, participants_windex[&w], attestees
+                                );
+                            }
+                            Ok(())
+                        }
+                    ).unwrap();
+
                     Ok(())
                 }),
         )
@@ -658,7 +673,7 @@ fn main() {
                         },
                     };
                     debug!("proof: {:x?}", proof.encode());
-                    if get_current_phase(&api) != CeremonyPhaseType::REGISTERING {
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
                         error!("wrong ceremony phase for registering participant");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
@@ -758,26 +773,29 @@ fn main() {
                     .claims_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let arg_who = matches.account_arg().unwrap();
-                    let who = get_pair_from_str(arg_who);
-                    let claims_arg: Vec<_> = matches.claims_arg().unwrap();
-                    let mut claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = vec![];
-                    for arg in claims_arg.iter() {
-                        let w = ClaimOfAttendance::decode(&mut &hex::decode(arg).unwrap()[..]).unwrap();
-                        claims.push(w);
-                    }
+                    let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+                    let claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = matches.claims_arg().unwrap()
+                        .into_iter()
+                        .map(|c| Decode::decode(&mut &hex::decode(c).unwrap()[..]).unwrap())
+                        .collect();
+
                     debug!("claims: {:?}", claims);
+
                     info!("send attest_claims by {}", who.public());
-                    let api = get_chain_api(matches).set_signer(sr25519_core::Pair::from(who));
+
+                    let api = get_chain_api(matches).set_signer(who.clone().into());
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
                         "attest_claims",
                         claims.clone()
                     );
+
                     ensure_payment(&api, &xt.hex_encode());
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                    println!("Claims sent by {}. status: 'ready'", arg_who);
+
+                    println!("Claims sent by {}. status: 'ready'", who.public());
                     Ok(())
                 }),
         )
@@ -796,22 +814,54 @@ fn main() {
                     )
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    debug!("{:?}", matches);
-                    let arg_who = matches.account_arg().unwrap();
-                    let claimant = get_pair_from_str(arg_who);
-                    let api = get_chain_api(matches);
-                    let cid = verify_cid(&api,
-                        matches
-                            .cid_arg()
-                            .expect("please supply argument --cid"),
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+                            let arg_who = matches.account_arg().unwrap();
+                            let claimant = get_pair_from_str(arg_who);
+
+                            let n_participants = matches
+                                .value_of("vote")
+                                .unwrap()
+                                .parse::<u32>()
+                                .unwrap();
+
+                            let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
+
+                            println!("{}", hex::encode(claim));
+                            Ok(())
+                        }
+                    ).unwrap();
+
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("claim-reward")
+                .description("Claim the rewards for all meetup participants of the last ceremony.")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .signer_arg("account that was part of the meetup")
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+
+                    extract_and_execute(
+                        &matches, |api, cid| {
+                            let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
+                            let api = api.set_signer(signer.clone().into());
+
+                            let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                                api.clone(),
+                                ENCOINTER_CEREMONIES,
+                                "claim_rewards",
+                                cid
+                            );
+                            ensure_payment(&api, &xt.hex_encode());
+
+                            let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                            println!("Claiming reward for {}. xt-status: 'ready'", signer.public());
+                        }
                     );
-                    let n_participants = matches
-                        .value_of("vote")
-                        .unwrap()
-                        .parse::<u32>()
-                        .unwrap();
-                    let claim = new_claim_for(&api, &claimant.into(), cid, n_participants);
-                    println!("{}", hex::encode(claim));
+
                     Ok(())
                 }),
         )
@@ -983,7 +1033,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
-								encointer_ceremonies::RawEvent::ParticipantRegistered(
+								pallet_encointer_ceremonies::RawEvent::ParticipantRegistered(
 									accountid,
 								) => {
 									println!(
@@ -997,7 +1047,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> scheduler event: {:?}", ee);
 							match &ee {
-								encointer_scheduler::Event::PhaseChangedTo(phase) => {
+								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
 								},
 							}
@@ -1006,7 +1056,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
-								encointer_communities::RawEvent::CommunityRegistered(
+								pallet_encointer_communities::RawEvent::CommunityRegistered(
 									account,
 									cid,
 								) => {
@@ -1015,10 +1065,10 @@ fn listen(matches: &ArgMatches<'_>) {
 										account, cid
 									);
 								},
-								encointer_communities::RawEvent::MetadataUpdated(cid) => {
+								pallet_encointer_communities::RawEvent::MetadataUpdated(cid) => {
 									println!("Community metadata updated cid: {:?}", cid);
 								},
-								encointer_communities::RawEvent::NominalIncomeUpdated(
+								pallet_encointer_communities::RawEvent::NominalIncomeUpdated(
 									cid,
 									income,
 								) => {
@@ -1027,7 +1077,7 @@ fn listen(matches: &ArgMatches<'_>) {
 										cid, income
 									);
 								},
-								encointer_communities::RawEvent::DemurrageUpdated(
+								pallet_encointer_communities::RawEvent::DemurrageUpdated(
 									cid,
 									demurrage,
 								) => {
@@ -1076,21 +1126,9 @@ fn extract_and_execute<T>(
 	closure(api, cid)
 }
 
-// Todo: replace with `from_str` method introduced in https://github.com/encointer/pallets/pull/81
-fn get_cid(cid: &str) -> CommunityIdentifier {
-	let mut geohash: [u8; 5] = [0u8; 5];
-	let mut digest: [u8; 4] = [0u8; 4];
-
-	geohash.clone_from_slice(&cid[..5].as_bytes());
-	digest.clone_from_slice(&cid[5..].from_base58().expect("cid must be base58 encoded"));
-
-	// this is needed because the `CommunityIdentifier`s fields are private
-	CommunityIdentifier::decode(&mut &[&geohash[..], &digest[..]].concat()[..]).unwrap()
-}
-
 fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIdentifier {
 	let cids = get_community_identifiers(&api).expect("no community registered");
-	let cid = get_cid(cid);
+	let cid = CommunityIdentifier::from_str(cid).unwrap();
 	if !cids.contains(&cid) {
 		panic!("cid {} does not exist on chain", cid);
 	}
@@ -1159,33 +1197,6 @@ fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexTyp
 		.unwrap()
 }
 
-fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType {
-	api.get_storage_value("EncointerScheduler", "CurrentPhase", None)
-		.unwrap()
-		.or(Some(CeremonyPhaseType::default()))
-		.unwrap()
-}
-
-fn get_meetup_count(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-) -> MeetupLocationIndexType {
-	api.get_storage_map("EncointerCeremonies", "MeetupCount", key, None)
-		.unwrap()
-		.or(Some(0))
-		.unwrap()
-}
-
-fn get_participant_count(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-) -> ParticipantIndexType {
-	api.get_storage_map("EncointerCeremonies", "ParticipantCount", key, None)
-		.unwrap()
-		.or(Some(0))
-		.unwrap()
-}
-
 fn get_attestee_count(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	key: CommunityCeremony,
@@ -1193,39 +1204,6 @@ fn get_attestee_count(
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
-		.unwrap()
-}
-
-fn get_participant(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-	pindex: ParticipantIndexType,
-) -> Option<AccountId> {
-	api.get_storage_double_map("EncointerCeremonies", "ParticipantRegistry", key, pindex, None)
-		.unwrap()
-}
-
-fn get_meetup_index_for(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-	account: &AccountId,
-) -> Option<MeetupLocationIndexType> {
-	api.get_storage_double_map(
-		"EncointerCeremonies",
-		"MeetupLocationIndex",
-		key,
-		account.clone(),
-		None,
-	)
-	.unwrap()
-}
-
-fn get_meetup_participants(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	key: CommunityCeremony,
-	mindex: MeetupLocationIndexType,
-) -> Option<Vec<AccountId>> {
-	api.get_storage_double_map("EncointerCeremonies", "MeetupRegistry", key, mindex, None)
 		.unwrap()
 }
 
@@ -1254,12 +1232,15 @@ fn new_claim_for(
 	n_participants: u32,
 ) -> Vec<u8> {
 	let cindex = get_ceremony_index(api);
-	let mindex = get_meetup_index_for(api, (cid, cindex), &claimant.public().into())
+	let mindex = api
+		.get_meetup_index(&(cid, cindex), &claimant.public().into())
+		.unwrap()
 		.expect("participant must be assigned to meetup to generate a claim");
 
 	// implicitly assume that participant meet at the right place at the right time
-	let mloc = get_meetup_location(api, cid, mindex).unwrap();
-	let mtime = get_meetup_time(api, cid, mindex).unwrap();
+	let mloc = api.get_meetup_location(&(cid, cindex), mindex).unwrap().unwrap();
+	let mtime = api.get_meetup_time(mloc, ONE_DAY).unwrap();
+
 	info!(
 		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
 		claimant.public().to_ss58check(),
@@ -1288,38 +1269,6 @@ fn get_community_identifiers(
 ) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
-}
-
-fn get_community_locations(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	cid: CommunityIdentifier,
-) -> Option<Vec<Location>> {
-	let req = json!({
-		"method": "communities_getLocations",
-		"params": vec![cid],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
-
-	let n = api
-		.get_request(req.into())
-		.unwrap()
-		.expect("Could not find any locations for that cid...");
-
-	Some(serde_json::from_str(&n).unwrap())
-}
-
-fn get_meetup_location(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	cid: CommunityIdentifier,
-	mindex: MeetupLocationIndexType,
-) -> Option<Location> {
-	let locations = get_community_locations(api, cid).or(Some(vec![])).unwrap();
-	let lidx = (mindex - 1) as usize;
-	if lidx >= locations.len() {
-		return None
-	}
-	Some(locations[lidx])
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
@@ -1389,42 +1338,6 @@ fn get_offerings_for_business(
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
-}
-
-fn get_meetup_time(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	cid: CommunityIdentifier,
-	mindex: MeetupLocationIndexType,
-) -> Option<Moment> {
-	let mlocation = get_meetup_location(api, cid, mindex).unwrap();
-	let mlon: f64 = mlocation.lon.lossy_into();
-
-	let next_phase_timestamp: Moment = api
-		.get_storage_value("EncointerScheduler", "NextPhaseTimestamp", None)
-		.unwrap()
-		.unwrap();
-
-	let attesting_start = match get_current_phase(api) {
-		CeremonyPhaseType::ASSIGNING => next_phase_timestamp, // - next_phase_timestamp.rem(ONE_DAY),
-		CeremonyPhaseType::ATTESTING => {
-			let attesting_duration: Moment = api
-				.get_storage_map(
-					"EncointerScheduler",
-					"PhaseDurations",
-					CeremonyPhaseType::ATTESTING,
-					None,
-				)
-				.unwrap()
-				.unwrap();
-			next_phase_timestamp - attesting_duration //- next_phase_timestamp.rem(ONE_DAY)
-		},
-		CeremonyPhaseType::REGISTERING =>
-			panic!("ceremony phase must be ASSIGNING or ATTESTING to request meetup location."),
-	};
-	let mtime = ((attesting_start + ONE_DAY / 2) as i64 - (mlon * (ONE_DAY as f64) / 360.0) as i64)
-		as Moment;
-	debug!("meetup time at lon {}: {:?}", mlon, mtime);
-	Some(mtime)
 }
 
 fn prove_attendance(

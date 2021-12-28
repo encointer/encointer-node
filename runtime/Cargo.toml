@@ -7,66 +7,24 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "0.7.9"
-
-[dependencies.encointer-scheduler]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-scheduler"
-
-[dependencies.encointer-ceremonies]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-ceremonies"
-
-[dependencies.encointer-communities]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-communities"
-
-[dependencies.encointer-communities-rpc-runtime-api]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-communities-rpc-runtime-api"
-
-[dependencies.encointer-balances]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-balances"
-
-[dependencies.encointer-bazaar]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-bazaar"
-
-[dependencies.encointer-bazaar-rpc-runtime-api]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-package = "pallet-encointer-bazaar-rpc-runtime-api"
-
-[dependencies.encointer-primitives]
-default-features = false
-git = "https://github.com/encointer/pallets"
-branch = "v0.7.0"
-
-[dependencies.fixed]
-default-features = false
-git = "https://github.com/encointer/substrate-fixed"
-tag = "v0.5.7"
-package = "substrate-fixed"
+version = "0.8.9"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "2.1.3", default-features = false, features = ["derive"] }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { features = ["derive"], optional = true, version = "1.0.101" }
 
+# encointer deps
+encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-ceremonies = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+
+# substrate deps
 pallet-aura = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 pallet-balances = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 frame-support = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
@@ -81,7 +39,7 @@ frame-executive = { version = "4.0.0-dev", default-features = false, git = "http
 sp-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-block-builder = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-consensus-aura = { version = "0.10.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-core = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sp-core = { version = "4.1.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-inherents = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-offchain = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 sp-runtime = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
@@ -132,15 +90,14 @@ std = [
     "sp-std/std",
     "sp-transaction-pool/std",
     "sp-version/std",
-	"encointer-scheduler/std",
-	"encointer-ceremonies/std",
-	"encointer-balances/std",
-	"encointer-communities/std",
-    "encointer-communities-rpc-runtime-api/std",
-	"encointer-bazaar/std",
-    "encointer-bazaar-rpc-runtime-api/std",
+	"pallet-encointer-scheduler/std",
+	"pallet-encointer-ceremonies/std",
+	"pallet-encointer-balances/std",
+	"pallet-encointer-communities/std",
+    "pallet-encointer-communities-rpc-runtime-api/std",
+	"pallet-encointer-bazaar/std",
+    "pallet-encointer-bazaar-rpc-runtime-api/std",
     "encointer-primitives/std",
-    "fixed/std"
 ]
 runtime-benchmarks = [
     "frame-benchmarking",
@@ -151,5 +108,5 @@ runtime-benchmarks = [
     "pallet-balances/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
     "sp-runtime/runtime-benchmarks",
-    "encointer-communities/runtime-benchmarks"
+    "pallet-encointer-communities/runtime-benchmarks"
 ]
