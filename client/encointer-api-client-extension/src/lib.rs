@@ -7,6 +7,8 @@ pub type Api = substrate_api_client::Api<sr25519::Pair, WsRpcClient>;
 
 pub use ceremonies::*;
 pub use communities::*;
+pub use scheduler::*;
 
 mod ceremonies;
 mod communities;
+mod scheduler;
