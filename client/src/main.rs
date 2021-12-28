@@ -27,7 +27,9 @@ use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
-use encointer_api_client_extension::{CeremoniesApi, CommunitiesApi, ENCOINTER_CEREMONIES};
+use encointer_api_client_extension::{
+	CeremoniesApi, CommunitiesApi, SchedulerApi, ENCOINTER_CEREMONIES,
+};
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
 	ONE_DAY,
@@ -485,15 +487,11 @@ fn main() {
                     debug!("block number: {}", bn);
                     let cindex = get_ceremony_index(&api);
                     info!("ceremony index: {}", cindex);
-                    let tnext: Moment = api.get_storage_value(
-                        "EncointerScheduler",
-                        "NextPhaseTimestamp",
-                        None
-                    ).unwrap().unwrap();
+                    let tnext: Moment = api.get_next_phase_timestamp().unwrap();
                     debug!("next phase timestamp: {}", tnext);
                     // <<<<
 
-                    let phase = get_current_phase(&api);
+                    let phase = api.get_current_phase().unwrap();
                     println!("{:?}", phase);
                     Ok(())
                 }),
@@ -510,7 +508,7 @@ fn main() {
                     ensure_payment(&api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    let phase = get_current_phase(&api);
+                    let phase = api.get_current_phase().unwrap();
                     println!("Phase is now: {:?}", phase);
                     Ok(())
                 }),
@@ -675,7 +673,7 @@ fn main() {
                         },
                     };
                     debug!("proof: {:x?}", proof.encode());
-                    if get_current_phase(&api) != CeremonyPhaseType::REGISTERING {
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
                         error!("wrong ceremony phase for registering participant");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
@@ -1196,13 +1194,6 @@ fn get_demurrage_per_block(
 fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexType {
 	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
 		.unwrap()
-		.unwrap()
-}
-
-fn get_current_phase(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyPhaseType {
-	api.get_storage_value("EncointerScheduler", "CurrentPhase", None)
-		.unwrap()
-		.or(Some(CeremonyPhaseType::default()))
 		.unwrap()
 }
 
