@@ -2,13 +2,10 @@ import glob
 import os
 import subprocess
 import re
-import shutil
 from os import path
-
+from pathlib import Path
 from .client import Client
-
-def zip_folder(name: str, folder_abs_path: str):
-    return shutil.make_archive(f"{name}","zip", folder_abs_path)
+import warnings
 
 def purge_prompt(path: str, file_description: str):
     files = glob.glob(path + '/*')
@@ -55,6 +52,23 @@ def take_only_last_cid(ret_cids):
             warnings.warn('No cid returned. Something happened. stderr: ')
             warnings.warn(str(ret_cids.stderr))
             return ''
+
+
+def generate_file_list(path_to_files):
+    args = []
+    if os.path.isdir(path_to_files):
+        for dir_, _, files in os.walk(path_to_files):
+            for file_name in files:
+                rel_path = os.path.relpath(os.path.join(dir_, file_name), str(Path(path_to_files).parent))
+                rel_path = Path(rel_path)
+                with open(os.path.join(dir_, file_name), 'rb') as file:
+                    args += [(rel_path.as_posix(), file.read())]
+    else:
+        rel_path = ''
+        rel_path = Path(rel_path)
+        with open(os.path.abspath(path_to_files), 'rb') as file:
+            args += [(rel_path.as_posix(), file.read())]
+    return args
 
 
 def set_local_or_remote_chain(client: str, port: str, node_url: str):

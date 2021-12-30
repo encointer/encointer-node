@@ -17,7 +17,6 @@ import click
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ICONS_PATH
-from py_client.helpers import zip_folder
 
 account1 = '//Alice'
 account2 = '//Bob'
@@ -69,8 +68,7 @@ def main(ipfs_local, client, port):
 
     print('Uploading icons to ipfs')
     root_dir = os.path.realpath(ICONS_PATH)
-    zipped_folder = zip_folder("icons",root_dir)
-    ipfs_cid = Ipfs.add(zipped_folder, ipfs_local)
+    ipfs_cid = Ipfs.add_recursive(root_dir, ipfs_local)
 
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
     update_spec_with_cid(spec_file_path, ipfs_cid)

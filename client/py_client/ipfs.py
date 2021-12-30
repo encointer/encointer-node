@@ -1,7 +1,9 @@
 import subprocess
-import warnings
 import os
-from .helpers import take_only_last_cid
+import requests
+import json
+
+from .helpers import take_only_last_cid, generate_file_list
 
 ICONS_PATH = './test-data/icons'
 use_ipfs_gateway = True
@@ -15,18 +17,43 @@ except:
 class Ipfs:
     """ Minimal wrapper for the ipfs cli """
     @staticmethod
-    def add(path_to_files, local = False):
+    def add_recursive(path_to_files, local = False):
         if not (use_ipfs_gateway or local):
             return "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
-        ret = ''
         if local:
-            ret = subprocess.run(["ipfs", "add", path_to_files], stdout=subprocess.PIPE)
+            ret = subprocess.run(["ipfs", "add", "-rw", path_to_files], stdout=subprocess.PIPE)
+            return take_only_last_cid(ret)
         else:
-            ret = subprocess.run(["curl", "-X", "POST", "-F", f"file=@{path_to_files}", "-u", ipfs_api_key, ipfs_add_url], stdout=subprocess.PIPE)
-        return take_only_last_cid(ret)
+            headers = { }
+            params = ()
+            if os.path.isdir(path_to_files):
+                params = (
+                    ('pin', 'true'),
+                    ('recursive', 'true'),
+                    ('wrap-with-directory', 'true'),
+                )
+            else:
+                params = (
+                    ('pin', 'true'),
+                )
+            files = generate_file_list(path_to_files)
+            auth = ipfs_api_key.split(":")
+            response = requests.post('https://ipfs.infura.io:5001/api/v0/add', headers=headers, params=params, files=files, auth=(auth[0], auth[1]))
+
+            for line in response.text.split("\n"):
+                data = json.loads(line)
+                if os.path.isfile(path_to_files):
+                    return data["Name"]
+                if data["Name"] == "":
+                    print("hash of wrapping directory: " + data["Hash"])
+                    return data["Hash"]
+            return 'No cid returned'
+
 
     @staticmethod
-    def add_multiple(paths, local = False):
+    def add_multiple_recursive(paths, local = False):
         if not (use_ipfs_gateway or local):
             return ["QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"]
-        return [Ipfs.add(f, local) for f in paths]
+        return [Ipfs.add_recursive(f, local) for f in paths]
+
+
