@@ -1457,7 +1457,6 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
-	// Todo: Get value from node, but we need: https://github.com/encointer/pallets/issues/87
 	let total_newbie_tickets: u8 =
 		api.get_constant("EncointerCeremonies", "AmountNewbieTickets").unwrap();
 
