@@ -1182,9 +1182,7 @@ fn get_demurrage_per_block(
 		.unwrap();
 
 	if d.is_none() {
-		d = api
-			.get_storage_value("EncointerBalances", "DemurragePerBlockDefault", None)
-			.unwrap();
+		d = api.get_constant("EncointerBalances", "DefaultDemurrage").unwrap();
 	}
 
 	debug!("Fetched demurrage per block {:?}", &d);
