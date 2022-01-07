@@ -1177,16 +1177,21 @@ fn get_demurrage_per_block(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Demurrage {
-	let mut d: Option<Demurrage> = api
+	let d: Option<Demurrage> = api
 		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
 		.unwrap();
 
-	if d.is_none() {
-		d = api.get_constant("EncointerBalances", "DefaultDemurrage").unwrap();
+	match d {
+		Some(d) => {
+			debug!("Fetched community specific demurrage per block {:?}", &d);
+			d
+		},
+		None => {
+			let d = api.get_constant("EncointerBalances", "DefaultDemurrage").unwrap();
+			debug!("Fetched default demurrage per block {:?}", d);
+			d
+		},
 	}
-
-	debug!("Fetched demurrage per block {:?}", &d);
-	d.unwrap()
 }
 
 fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexType {
