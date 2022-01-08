@@ -1,8 +1,7 @@
 use encointer_node_notee_runtime::{
-	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, Demurrage,
-	EncointerBalancesConfig, EncointerCeremoniesConfig, EncointerCommunitiesConfig,
-	EncointerSchedulerConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-	WASM_BINARY,
+	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
+	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};
@@ -181,11 +180,6 @@ fn testnet_genesis(
 		},
 		encointer_communities: EncointerCommunitiesConfig {
 			community_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
-		},
-		encointer_balances: EncointerBalancesConfig {
-			demurrage_per_block_default: Demurrage::from_bits(
-				0x0000000000000000000001E3F0A8A973_i128,
-			),
 		},
 	}
 }

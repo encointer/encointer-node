@@ -370,7 +370,13 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const ReputationLifetime: u32 = 1;
+	pub const AmountNewbieTickets: u8 = 50;
+	pub const MinSolarTripTimeS: u32 = 1;
+	pub const MaxSpeedMps: u32 = 83;
+	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
 }
+
 impl pallet_encointer_scheduler::Config for Runtime {
 	type Event = Event;
 	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Module<Runtime>;
@@ -384,14 +390,19 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	// Note: in production networks it is advised to use babes randomness source.
 	// But we have low security requirements here, so it should be fine.
 	type RandomnessSource = pallet_randomness_collective_flip::Pallet<Runtime>;
+	type ReputationLifetime = ReputationLifetime;
+	type AmountNewbieTickets = AmountNewbieTickets;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
+	type MinSolarTripTimeS = MinSolarTripTimeS;
+	type MaxSpeedMps = MaxSpeedMps;
 }
 
 impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
+	type DefaultDemurrage = DefaultDemurrage;
 }
 
 impl pallet_encointer_bazaar::Config for Runtime {
@@ -417,7 +428,7 @@ construct_runtime!(
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event},
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config<T>, Event<T>},
-		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>, Config},
+		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>},
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>},
 	}
 );

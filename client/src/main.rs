@@ -1177,18 +1177,21 @@ fn get_demurrage_per_block(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Demurrage {
-	let mut d: Option<Demurrage> = api
+	let d: Option<Demurrage> = api
 		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
 		.unwrap();
 
-	if d.is_none() {
-		d = api
-			.get_storage_value("EncointerBalances", "DemurragePerBlockDefault", None)
-			.unwrap();
+	match d {
+		Some(d) => {
+			debug!("Fetched community specific demurrage per block {:?}", &d);
+			d
+		},
+		None => {
+			let d = api.get_constant("EncointerBalances", "DefaultDemurrage").unwrap();
+			debug!("Fetched default demurrage per block {:?}", d);
+			d
+		},
 	}
-
-	debug!("Fetched demurrage per block {:?}", &d);
-	d.unwrap()
 }
 
 fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexType {
@@ -1459,8 +1462,8 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
-	// Todo: Get value from node, but we need: https://github.com/encointer/pallets/issues/87
-	let total_newbie_tickets: u8 = 50;
+	let total_newbie_tickets: u8 =
+		api.get_constant("EncointerCeremonies", "AmountNewbieTickets").unwrap();
 
 	// prepare closure to make below call more readable.
 	let ticket_query = |bs| -> Result<u8, ApiClientError> {
