@@ -212,8 +212,11 @@ impl CeremoniesApi for Api {
 
 		if meetup_index_zero_based > meetup_count {
 			return Err(ApiClientError::Other(
-				format!("Invalid meetup index > meetup count: {}, {}", meetup_index, meetup_count)
-					.into(),
+				format!(
+					"Invalid meetup index > meetup count: {}, {}",
+					meetup_index_zero_based, meetup_count
+				)
+				.into(),
 			))
 		}
 
@@ -221,7 +224,7 @@ impl CeremoniesApi for Api {
 		let assigned = self.get_assignment_counts(community_ceremony)?;
 
 		let bootstrappers_reputables = assignment_fn_inverse(
-			meetup_index,
+			meetup_index_zero_based,
 			params.bootstrappers_reputables,
 			meetup_count,
 			assigned.bootstrappers + assigned.reputables,
@@ -233,17 +236,25 @@ impl CeremoniesApi for Api {
 				.flatten()
 		});
 
-		let endorsees =
-			assignment_fn_inverse(meetup_index, params.endorsees, meetup_count, assigned.endorsees)
-				.into_iter()
-				.filter(|p| p < &assigned.endorsees)
-				.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
+		let endorsees = assignment_fn_inverse(
+			meetup_index_zero_based,
+			params.endorsees,
+			meetup_count,
+			assigned.endorsees,
+		)
+		.into_iter()
+		.filter(|p| p < &assigned.endorsees)
+		.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
 
-		let newbies =
-			assignment_fn_inverse(meetup_index, params.newbies, meetup_count, assigned.newbies)
-				.into_iter()
-				.filter(|p| p < &assigned.newbies)
-				.filter_map(|p| self.get_newbie(community_ceremony, &(p + 1)).ok().flatten());
+		let newbies = assignment_fn_inverse(
+			meetup_index_zero_based,
+			params.newbies,
+			meetup_count,
+			assigned.newbies,
+		)
+		.into_iter()
+		.filter(|p| p < &assigned.newbies)
+		.filter_map(|p| self.get_newbie(community_ceremony, &(p + 1)).ok().flatten());
 
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
 	}
