@@ -370,7 +370,7 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const ReputationLifetime: u32 = 1;
+	pub const ReputationLifetime: u32 = 337;
 	pub const AmountNewbieTickets: u8 = 50;
 	pub const MinSolarTripTimeS: u32 = 1;
 	pub const MaxSpeedMps: u32 = 83;
