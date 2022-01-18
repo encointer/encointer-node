@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, Index};
 use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
+use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -42,6 +43,7 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
+	C::Api: pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId>,
 	C::Api: pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block>,
 	C::Api: pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId>,
 	P: TransactionPool + 'static,
@@ -60,6 +62,8 @@ where
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
 
 	io.extend_with(BazaarApi::to_delegate(Bazaar::new(client.clone(), deny_unsafe)));
+
+	io.extend_with(CeremoniesApi::to_delegate(Ceremonies::new(client.clone(), deny_unsafe)));
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed

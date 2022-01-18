@@ -1436,6 +1436,7 @@ dependencies = [
  "pallet-encointer-bazaar",
  "pallet-encointer-bazaar-rpc-runtime-api",
  "pallet-encointer-ceremonies",
+ "pallet-encointer-ceremonies-rpc-runtime-api",
  "pallet-encointer-communities",
  "pallet-encointer-communities-rpc-runtime-api",
  "pallet-encointer-scheduler",
