@@ -52,6 +52,7 @@ pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
 pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
+	ceremonies::{CommunityCeremony, Reputation},
 	common::PalletString,
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
@@ -592,6 +593,13 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+
+	impl pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId> for Runtime {
+		fn get_reputations() -> Vec<(CommunityCeremony, AccountId, Reputation)> {
+			EncointerCeremonies::get_reputations()
 		}
 	}
 
