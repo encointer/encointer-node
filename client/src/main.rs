@@ -1033,7 +1033,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
-								pallet_encointer_ceremonies::RawEvent::ParticipantRegistered(
+								pallet_encointer_ceremonies::Event::ParticipantRegistered(
 									accountid,
 								) => {
 									println!(
@@ -1041,6 +1041,7 @@ fn listen(matches: &ArgMatches<'_>) {
 										accountid
 									);
 								},
+								_ => println!("Unsupported EncointerCommunities event"),
 							}
 						},
 						Event::EncointerScheduler(ee) => {
