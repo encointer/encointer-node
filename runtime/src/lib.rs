@@ -380,7 +380,7 @@ parameter_types! {
 
 impl pallet_encointer_scheduler::Config for Runtime {
 	type Event = Event;
-	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Module<Runtime>;
+	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Pallet<Runtime>;
 	type MomentsPerDay = MomentsPerDay;
 }
 

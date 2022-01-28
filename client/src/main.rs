@@ -1033,7 +1033,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
-								pallet_encointer_ceremonies::RawEvent::ParticipantRegistered(
+								pallet_encointer_ceremonies::Event::ParticipantRegistered(
 									accountid,
 								) => {
 									println!(
@@ -1041,6 +1041,7 @@ fn listen(matches: &ArgMatches<'_>) {
 										accountid
 									);
 								},
+								_ => println!("Unsupported EncointerCommunities event"),
 							}
 						},
 						Event::EncointerScheduler(ee) => {
@@ -1056,7 +1057,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
-								pallet_encointer_communities::RawEvent::CommunityRegistered(
+								pallet_encointer_communities::Event::CommunityRegistered(
 									account,
 									cid,
 								) => {
@@ -1065,10 +1066,10 @@ fn listen(matches: &ArgMatches<'_>) {
 										account, cid
 									);
 								},
-								pallet_encointer_communities::RawEvent::MetadataUpdated(cid) => {
+								pallet_encointer_communities::Event::MetadataUpdated(cid) => {
 									println!("Community metadata updated cid: {:?}", cid);
 								},
-								pallet_encointer_communities::RawEvent::NominalIncomeUpdated(
+								pallet_encointer_communities::Event::NominalIncomeUpdated(
 									cid,
 									income,
 								) => {
@@ -1077,7 +1078,7 @@ fn listen(matches: &ArgMatches<'_>) {
 										cid, income
 									);
 								},
-								pallet_encointer_communities::RawEvent::DemurrageUpdated(
+								pallet_encointer_communities::Event::DemurrageUpdated(
 									cid,
 									demurrage,
 								) => {
@@ -1086,6 +1087,7 @@ fn listen(matches: &ArgMatches<'_>) {
 										cid, demurrage
 									);
 								},
+								_ => println!("Unsupported EncointerCommunities event"),
 							}
 						},
 						Event::EncointerBalances(ee) => {
