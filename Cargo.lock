@@ -1427,6 +1427,7 @@ dependencies = [
 name = "encointer-node-notee"
 version = "0.8.0"
 dependencies = [
+ "clap 3.0.14",
  "encointer-node-notee-runtime",
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -1462,7 +1463,6 @@ dependencies = [
  "sp-finality-grandpa",
  "sp-runtime",
  "sp-timestamp",
- "structopt",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
 ]
@@ -7263,30 +7263,6 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
-
-[[package]]
-name = "structopt"
-version = "0.3.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40b9788f4202aa75c240ecc9c15c65185e6a39ccdeb0fd5d008b98825464c87c"
-dependencies = [
- "clap 2.34.0",
- "lazy_static",
- "structopt-derive",
-]
-
-[[package]]
-name = "structopt-derive"
-version = "0.4.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
-dependencies = [
- "heck 0.3.3",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "strum"
