@@ -1470,7 +1470,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "0.8.9"
+version = "0.8.10"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
