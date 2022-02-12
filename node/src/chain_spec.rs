@@ -1,7 +1,7 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
-	EncointerCeremoniesConfig, EncointerSchedulerConfig, GenesisConfig,
-	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerSchedulerConfig, GenesisConfig, GrandpaConfig, Signature,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};

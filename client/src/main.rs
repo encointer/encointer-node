@@ -1057,13 +1057,8 @@ fn listen(matches: &ArgMatches<'_>) {
 							count += 1;
 							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
-								pallet_encointer_communities::Event::CommunityRegistered(
-									cid,
-								) => {
-									println!(
-										"Community registered: cid: {:?}",
-										cid
-									);
+								pallet_encointer_communities::Event::CommunityRegistered(cid) => {
+									println!("Community registered: cid: {:?}", cid);
 								},
 								pallet_encointer_communities::Event::MetadataUpdated(cid) => {
 									println!("Community metadata updated cid: {:?}", cid);
