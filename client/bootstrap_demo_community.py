@@ -60,7 +60,7 @@ def main(ipfs_local, client, port):
     client = Client(rust_client=client, port=port)
     spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'
 
-    cid = client.new_community(spec_file_path, account1)
+    cid = client.new_community(spec_file_path)
     if len(cid) > 10:
         print(f'Registered community with cid: {cid}')
     else:

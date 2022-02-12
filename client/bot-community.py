@@ -12,7 +12,7 @@ then start a node with
 and init and grow a community
    ./bot-community.py --port 9945 init
    ./bot-community.py --port 9945 benchmark
-   
+
 on testnet Gesell, execute the current ceremony phase (it does not advance the phase).
    ./bot-community.py --port 9945 execute-current-phase
 
@@ -65,9 +65,10 @@ def init(ctx):
         print("add image to ipfs failed")
     print('initializing community')
     b = init_bootstrappers(client)
+    client.await_block()
     specfile = random_community_spec(b, ipfs_cid, NUMBER_OF_LOCATIONS)
     print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
-    cid = client.new_community(specfile, b[0])
+    cid = client.new_community(specfile)
     print(f'created community with cid: {cid}')
     write_cid(cid)
     client.await_block()
@@ -91,9 +92,15 @@ def _execute_current_phase(client: Client):
     accounts = client.list_accounts()
     print(f'number of known accounts: {len(accounts)}')
     if phase == 'REGISTERING':
-        write_current_stats(client, accounts, cid)
+        print("all participants claim their potential reward")
+        for account in accounts:
+            client.claim_reward(account, cid)
+        client.await_block()
 
-        init_new_community_members(client, cid, len(accounts))
+        total_supply = write_current_stats(client, accounts, cid)
+
+        if total_supply > 0:
+            init_new_community_members(client, cid, len(accounts))
 
         # updated account list with new community members
         accounts = client.list_accounts()
@@ -208,6 +215,7 @@ def write_current_stats(client: Client, accounts, cid):
     f = open('bot-stats.csv', 'a')
     f.write(f'{len(accounts)}, {total}\n')
     f.close()
+    return total
 
 
 def init_new_community_members(client: Client, cid: str, current_community_size: int):
@@ -223,11 +231,12 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
 
     endorsees = endorse_new_accounts(client, cid, bootstrappers_with_tickets, NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION)
 
-    print(f'Awaiting endorsement process \n')
-    # We don't need to wait here, but if there are any errors the logs mix with the fauceting, which is confusing.
-    client.await_block()
+    if len(endorsees) > 0:
+        print(f'Awaiting endorsement process \n')
+        # We don't need to wait here, but if there are any errors the logs mix with the fauceting, which is confusing.
+        client.await_block()
+        print(f'Added endorsees to community: {len(endorsees)}')
 
-    print(f'Added endorsees to community: {len(endorsees)}')
 
     newbies = client.create_accounts(get_newbie_amount(current_community_size))
 

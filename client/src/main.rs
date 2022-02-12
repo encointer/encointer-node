@@ -343,12 +343,8 @@ fn main() {
                             .required(true)
                             .help("enhanced geojson file that specifies a community"),
                     )
-                    .signer_arg("a bootstrapper account to sign the registration extrinsic")
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let p_arg = matches.value_of("signer").unwrap();
-                    let signer = get_pair_from_str(p_arg);
-
                     let spec_file = matches.value_of("specfile").unwrap();
 
                     let spec_str = fs::read_to_string(spec_file).unwrap();
@@ -392,11 +388,10 @@ fn main() {
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
-                    info!("Community registered by {}", signer.public().to_ss58check());
-                    let api = get_chain_api(matches);
-                    let _api = api.clone().set_signer(sr25519_core::Pair::from(signer));
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-                        _api.clone(),
+                    let sudoer = AccountKeyring::Alice.pair();
+                    let api = get_chain_api(matches).set_signer(sudoer);
+                    let call = compose_call!(
+                        api.metadata.clone(),
                         "EncointerCommunities",
                         "new_community",
                         loc[0],
@@ -405,24 +400,32 @@ fn main() {
                         None::<Demurrage>,
                         None::<NominalIncome>
                     );
-                    ensure_payment(&_api, &xt.hex_encode());
-                    let tx_hash = _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                    let xt: UncheckedExtrinsicV4<_> =
+                        compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
+                    ensure_payment(&api, &xt.hex_encode());
+                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
-                    let mut nonce = _api.get_nonce().unwrap();
+                    let mut nonce = api.get_nonce().unwrap();
                     // only the first meetup location has been registered now. register all others one-by-one
                     loc.remove(0);
                     let last = nonce + loc.len() as u32 -1 ;
                     for l in loc.into_iter() {
                         let call = compose_call!(
-                            _api.metadata,
+                            api.metadata,
                             "EncointerCommunities",
                             "add_location",
                             cid,
                             l
                         );
+                        let sudo_call = compose_call!(
+                            api.metadata,
+                            "Sudo",
+                            "sudo",
+                            call
+                        );
                         let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
-                            _api.clone().signer.unwrap(),
-                            call.clone(),
+                            api.clone().signer.unwrap(),
+                            sudo_call.clone(),
                             nonce,
                             Era::Immortal,
                             api.genesis_hash,
@@ -432,10 +435,10 @@ fn main() {
                         );
                         if nonce == last {
                             // only check once at the end
-                            ensure_payment(&_api, &xt.hex_encode());
+                            ensure_payment(&api, &xt.hex_encode());
                         }
                         info!("   Registering location {:?}", l);
-                        let _blockh = _api
+                        let _blockh = api
                             .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
                             .unwrap();
                         nonce += 1;
@@ -502,9 +505,13 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
-
+                    let call = compose_call!(
+                        api.metadata.clone(),
+                        "EncointerScheduler",
+                        "next_phase"
+                    );
                     let xt: UncheckedExtrinsicV4<_> =
-                        compose_extrinsic!(api.clone(), "EncointerScheduler", "next_phase");
+                        compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
                     ensure_payment(&api, &xt.hex_encode());
                     // send and watch extrinsic until finalized
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();

@@ -10,24 +10,30 @@ except:
     print("didn't find ENCOINTER_CLIENT in env variables, setting client to ../target/release/encointer-client-notee")
     DEFAULT_CLIENT = '../target/release/encointer-client-notee'
 
+
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
+
 
 class ExtrinsicWrongPhase(Error):
     """"it is not the right ceremony phase for this extrinsic"""
     pass
 
+
 class ExtrinsicFeePaymentImpossible(Error):
     """Signer can't pay fees. Either because account does not exist or the balance is too low"""
     pass
+
 
 class ParticipantAlreadyLinked(Error):
     """Can't register participant. reputation has already been linked"""
     pass
 
+
 class UnknownError(Error):
     pass
+
 
 def ensure_clean_exit(returncode):
     if returncode == 0:
@@ -102,8 +108,8 @@ class Client:
             ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
-    def new_community(self, specfile, sender):
-        ret = subprocess.run(self.cli + ["new-community", specfile, sender], stdout=subprocess.PIPE)
+    def new_community(self, specfile):
+        ret = subprocess.run(self.cli + ["new-community", specfile], stdout=subprocess.PIPE)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
