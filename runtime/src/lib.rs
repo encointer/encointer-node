@@ -57,6 +57,7 @@ pub use encointer_primitives::{
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
+use frame_system::EnsureRoot;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -121,6 +122,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+	state_version: 0,
 };
 
 /// This determines the average expected block time that we are targeting.
@@ -376,12 +378,14 @@ parameter_types! {
 	pub const MinSolarTripTimeS: u32 = 1;
 	pub const MaxSpeedMps: u32 = 83;
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
+	pub const InactivityTimeout: u32 = 50;
 }
 
 impl pallet_encointer_scheduler::Config for Runtime {
 	type Event = Event;
 	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Pallet<Runtime>;
 	type MomentsPerDay = MomentsPerDay;
+	type CeremonyMaster = EnsureRoot<AccountId>;
 }
 
 impl pallet_encointer_ceremonies::Config for Runtime {
@@ -393,12 +397,14 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	type RandomnessSource = pallet_randomness_collective_flip::Pallet<Runtime>;
 	type ReputationLifetime = ReputationLifetime;
 	type AmountNewbieTickets = AmountNewbieTickets;
+	type InactivityTimeout = InactivityTimeout;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
 	type MinSolarTripTimeS = MinSolarTripTimeS;
 	type MaxSpeedMps = MaxSpeedMps;
+	type CommunityMaster = EnsureRoot<AccountId>;
 }
 
 impl pallet_encointer_balances::Config for Runtime {
@@ -428,7 +434,7 @@ construct_runtime!(
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event},
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>},
-		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config<T>, Event<T>},
+		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Event<T>},
 		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>},
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>},
 	}
