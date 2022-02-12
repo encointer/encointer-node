@@ -25,9 +25,9 @@ members = [
 #pallet-encointer-bazaar-rpc = { path = "../encointer-pallets/bazaar/rpc" }
 #pallet-encointer-bazaar-rpc-runtime-api = { path = "../encointer-pallets/bazaar/rpc/runtime-api" }
 
-[patch."https://github.com/scs/substrate-api-client"]
-substrate-api-client = { path = "../substrate-api-client" }
-substrate-client-keystore = { path = "../substrate-api-client/client-keystore" }
+#[patch."https://github.com/scs/substrate-api-client"]
+#substrate-api-client = { path = "../substrate-api-client" }
+#substrate-client-keystore = { path = "../substrate-api-client/client-keystore" }
 
 #[patch."https://github.com/encointer/substrate-fixed"]
 #substrate-fixed = { path = "../substrate-fixed" }
