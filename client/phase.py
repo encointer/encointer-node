@@ -17,15 +17,18 @@ from py_client.helpers import set_local_or_remote_chain
 global COUNT
 COUNT = 0
 
+global patience
 
 @click.command()
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
+@click.option('-r', '--remote-chain', default=None, help='choose one of the remote chains: gesell.')
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-def main(remote_chain, client, port):
+@click.option('--idle-blocks', default=10, help='how many idle blocks to await before moving to next phase')
+def main(remote_chain, client, port, idle_blocks):
     localhost = None
     client = set_local_or_remote_chain(client, port, remote_chain)
-    global COUNT
+    global COUNT, patience
+    patience = idle_blocks
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = substrateinterface.SubstrateInterface(
@@ -42,9 +45,9 @@ def main(remote_chain, client, port):
 
 
 def subscription_handler(event_count, update_nr, subscription_id):
-    global COUNT
+    global COUNT, patience
     print(f'events: {event_count}, idle blocks {COUNT}')
-    if COUNT > 10:
+    if COUNT > patience:
         return update_nr
     elif event_count.value == 1:
         COUNT += 1
