@@ -33,8 +33,8 @@ cargo build --release
 You can start a development chain with:
 
 ```bash
-export RUST_LOG=INFO,parity_ws=WARN,encointer=debug
-./target/release/encointer-node-notee --dev -lencointer=debug --enable-offchain-indexing true
+export RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer=debug
+./target/release/encointer-node-notee --dev --enable-offchain-indexing true
 ```
 
 Offchain-indexing is needed for the custom rpc `communities_getAll`. If you don't want it, omit the flag.
@@ -74,9 +74,14 @@ encointer-node/client> ./bootstrap_demo_community.sh
 
 ### Grow Bot Community
 
+Assuming a local node is running with default ports:
 ```
 pip3 install random_word pyproj geojson
-rm -rf my_keystore
+# in first terminal, do this to accelerate phase progress
+./phase.py --idle-blocks 3
+# in second terminal, launch faucet service
+./faucet.py
+# in third terminal, populate your bot community
 ./bot-community.py init
 ./bot-community.py benchmark
 ```

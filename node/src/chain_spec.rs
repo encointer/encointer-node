@@ -1,7 +1,7 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
-	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
-	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerSchedulerConfig, GenesisConfig, GrandpaConfig, Signature,
+	SudoConfig, SystemConfig, WASM_BINARY,
 };
 use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};
@@ -81,6 +81,10 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		None,
 		// Protocol ID
 		None,
+		// Arbitrary string. Nodes will only synchronize with other nodes that have the same value
+		// in their `fork_id`. This can be used in order to segregate nodes in cases when multiple
+		// chains have the same genesis hash.
+		None,
 		// Properties
 		properties(),
 		// Extensions
@@ -128,6 +132,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		None,
 		// Protocol ID
 		None,
+		// Arbitrary string. Nodes will only synchronize with other nodes that have the same value
+		// in their `fork_id`. This can be used in order to segregate nodes in cases when multiple
+		// chains have the same genesis hash.
+		None,
 		// Properties
 		properties(),
 		// Extensions
@@ -160,13 +168,12 @@ fn testnet_genesis(
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
-			key: root_key,
+			key: Some(root_key),
 		},
 		transaction_payment: Default::default(),
 		encointer_scheduler: EncointerSchedulerConfig {
 			current_phase: CeremonyPhaseType::REGISTERING,
 			current_ceremony_index: 1,
-			ceremony_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
 			phase_durations: vec![
 				(CeremonyPhaseType::REGISTERING, 57600000),
 				(CeremonyPhaseType::ASSIGNING, 28800000),
@@ -177,9 +184,6 @@ fn testnet_genesis(
 			ceremony_reward: BalanceType::from_num(1),
 			time_tolerance: 600_000,   // +-10min
 			location_tolerance: 1_000, // [m]
-		},
-		encointer_communities: EncointerCommunitiesConfig {
-			community_master: get_account_id_from_seed::<sr25519::Public>("Alice"),
 		},
 	}
 }
