@@ -228,8 +228,12 @@ fn main() {
                         }
                         None => {
                             if matches.all_flag() {
-                                let community_balances = get_all_balances(&api, &accountid);
-                                println!("wants to see it all {:?}", community_balances);
+                                let community_balances = get_all_balances(&api, &accountid).unwrap();
+                                let bn = get_block_number(&api);
+                                for b in community_balances.iter() {
+                                    let dr = get_demurrage_per_block(&api, b.0);
+                                    println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
+                                }
                             }
                             let balance = if let Some(data) = api.get_account_data(&accountid).unwrap() {
                                 data.free
@@ -1411,8 +1415,13 @@ fn get_all_balances(
 	});
 
     let n = api.get_request(req.into()).unwrap().unwrap(); //expect("Could not query all balances...");
-    println!("json reply: {}", n);
-    Some(serde_json::from_str(&n).unwrap())
+
+    let balances: Vec<(CommunityIdentifier, Vec<u8>)> = serde_json::from_str(&n).unwrap();
+    Some(balances
+        .iter()
+        .map(|b| (b.0, BalanceEntry::decode(&mut b.1.as_slice()).unwrap()))
+        .collect()
+    )
 }
 
 
