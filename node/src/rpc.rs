@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, Index, BlockNumber};
+use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index};
 use pallet_encointer_balances_rpc::{Balances, BalancesApi};
 use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
 use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};

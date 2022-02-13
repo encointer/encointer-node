@@ -1389,42 +1389,44 @@ fn get_offerings_for_business(
 }
 
 fn get_reputation_history(
-    api: &Api<sr25519::Pair, WsRpcClient>,
-    account_id: &AccountId,
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, Reputation)>> {
-    let req = json!({
+	let req = json!({
 		"method": "ceremonies_getReputations",
 		"params": vec![account_id],
 		"jsonrpc": "2.0",
 		"id": "1",
 	});
 
-    let n = api.get_request(req.into()).unwrap().expect("Could not query reputation history...");
-    Some(serde_json::from_str(&n).unwrap())
+	let n = api
+		.get_request(req.into())
+		.unwrap()
+		.expect("Could not query reputation history...");
+	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_all_balances(
-    api: &Api<sr25519::Pair, WsRpcClient>,
-    account_id: &AccountId,
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
-    let req = json!({
+	let req = json!({
 		"method": "encointerBalances_getAllBalances",
 		"params": vec![account_id],
 		"jsonrpc": "2.0",
 		"id": "1",
 	});
 
-    let n = api.get_request(req.into()).unwrap().unwrap(); //expect("Could not query all balances...");
+	let n = api.get_request(req.into()).unwrap().unwrap(); //expect("Could not query all balances...");
 
-    let balances: Vec<(CommunityIdentifier, Vec<u8>)> = serde_json::from_str(&n).unwrap();
-    Some(balances
-        .iter()
-        .map(|b| (b.0, BalanceEntry::decode(&mut b.1.as_slice()).unwrap()))
-        .collect()
-    )
+	let balances: Vec<(CommunityIdentifier, Vec<u8>)> = serde_json::from_str(&n).unwrap();
+	Some(
+		balances
+			.iter()
+			.map(|b| (b.0, BalanceEntry::decode(&mut b.1.as_slice()).unwrap()))
+			.collect(),
+	)
 }
-
-
 
 fn prove_attendance(
 	prover: AccountId,
