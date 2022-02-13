@@ -68,6 +68,14 @@ def init(ctx):
     client.await_block()
     specfile = random_community_spec(b, ipfs_cid, NUMBER_OF_LOCATIONS)
     print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
+
+    while True:
+        phase = client.get_phase()
+        if phase == 'REGISTERING':
+            break
+        print(f"waiting for ceremony phase REGISTERING. now is {phase}")
+        client.await_block()
+
     cid = client.new_community(specfile)
     print(f'created community with cid: {cid}')
     write_cid(cid)

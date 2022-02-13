@@ -209,6 +209,7 @@ fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
+                    .all_flag()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
@@ -226,6 +227,14 @@ fn main() {
                             println!("{}", balance);
                         }
                         None => {
+                            if matches.all_flag() {
+                                let community_balances = get_all_balances(&api, &accountid).unwrap();
+                                let bn = get_block_number(&api);
+                                for b in community_balances.iter() {
+                                    let dr = get_demurrage_per_block(&api, b.0);
+                                    println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
+                                }
+                            }
                             let balance = if let Some(data) = api.get_account_data(&accountid).unwrap() {
                                 data.free
                             } else {
@@ -237,6 +246,23 @@ fn main() {
                     Ok(())
                 }),
         )
+        .add_cmd(
+            Command::new("reputation")
+                .description("List reputation history for an account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()})
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let account = matches.account_arg().unwrap();
+                    let account_id = get_accountid_from_str(account);
+                    let reputation = get_reputation_history(&api, &account_id);
+                    // only print plain offerings to be able to parse them in python scripts
+                    println!("{:?}", reputation);
+                    Ok(())
+                }),
+        )
+
         .add_cmd(
             Command::new("transfer")
                 .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
@@ -873,6 +899,22 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("reputation")
+                .description("List reputation history for an account")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()})
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let account = matches.account_arg().unwrap();
+                    let account_id = get_accountid_from_str(account);
+                    let reputation = get_reputation_history(&api, &account_id);
+                    // only print plain offerings to be able to parse them in python scripts
+                    println!("{:?}", reputation);
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("create-business")
                 .description("Register a community business on behalf of the account")
                 .options(|app| {
@@ -1344,6 +1386,46 @@ fn get_offerings_for_business(
 		.unwrap()
 		.expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_reputation_history(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	account_id: &AccountId,
+) -> Option<Vec<(CommunityIdentifier, Reputation)>> {
+	let req = json!({
+		"method": "ceremonies_getReputations",
+		"params": vec![account_id],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api
+		.get_request(req.into())
+		.unwrap()
+		.expect("Could not query reputation history...");
+	Some(serde_json::from_str(&n).unwrap())
+}
+
+fn get_all_balances(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	account_id: &AccountId,
+) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
+	let req = json!({
+		"method": "encointerBalances_getAllBalances",
+		"params": vec![account_id],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api.get_request(req.into()).unwrap().unwrap(); //expect("Could not query all balances...");
+
+	let balances: Vec<(CommunityIdentifier, Vec<u8>)> = serde_json::from_str(&n).unwrap();
+	Some(
+		balances
+			.iter()
+			.map(|b| (b.0, BalanceEntry::decode(&mut b.1.as_slice()).unwrap()))
+			.collect(),
+	)
 }
 
 fn prove_attendance(

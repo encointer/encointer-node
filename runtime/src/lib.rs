@@ -602,6 +602,11 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl pallet_encointer_balances_rpc_runtime_api::BalancesApi<Block, AccountId, BlockNumber> for Runtime {
+		fn get_all_balances(account: &AccountId) -> Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)> {
+			EncointerBalances::get_all_balances(account)
+		}
+	}
 
 	impl pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId> for Runtime {
 		fn get_reputations() -> Vec<(CommunityCeremony, AccountId, Reputation)> {

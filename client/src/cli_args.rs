@@ -9,6 +9,7 @@ const IPFS_CID_ARG: &'static str = "ceremony-index";
 const BOOTSTRAPPER_ARG: &'static str = "bootstrapper";
 const FUNDEES_ARG: &'static str = "fundees";
 const ENDORSEES_ARG: &'static str = "endorsees";
+const ALL_FLAG: &'static str = "all";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -20,6 +21,7 @@ pub trait EncointerArgs<'b> {
 	fn bootstrapper_arg(self) -> Self;
 	fn fundees_arg(self) -> Self;
 	fn endorsees_arg(self) -> Self;
+	fn all_flag(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -32,6 +34,7 @@ pub trait EncointerArgsExtractor {
 	fn bootstrapper_arg(&self) -> Option<&str>;
 	fn fundees_arg(&self) -> Option<Vec<&str>>;
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
+	fn all_flag(&self) -> bool;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -135,6 +138,17 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("Account(s) to be endorsed, ss58check encoded"),
 		)
 	}
+
+	fn all_flag(self) -> Self {
+		self.arg(
+			Arg::with_name(ALL_FLAG)
+				.short("a")
+				.long("all")
+				.takes_value(false)
+				.required(false)
+				.help("list all community currency balances for account"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -172,5 +186,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn endorsees_arg(&self) -> Option<Vec<&str>> {
 		self.values_of(ENDORSEES_ARG).map(|v| v.collect())
+	}
+
+	fn all_flag(&self) -> bool {
+		self.is_present(ALL_FLAG)
 	}
 }
