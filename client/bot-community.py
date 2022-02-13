@@ -31,7 +31,7 @@ from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWro
 from py_client.ipfs import Ipfs, ICONS_PATH
 
 KEYSTORE_PATH = './my_keystore'
-NUMBER_OF_LOCATIONS = 100
+NUMBER_OF_LOCATIONS = 10
 MAX_POPULATION = 10 * NUMBER_OF_LOCATIONS
 NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 
