@@ -168,15 +168,23 @@ jobs:
 
     - name: start dev node
       run: ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
+
     - name: start faucet service
       run: |
         cd client
         python faucet.py &
-    - name: grow community
+
+    - name: start phase accelerator service
+      run: |
+        cd client
+        python phase.py --idle-blocks 3 &
+
+    - name: grow community for 2 entire ceremony cycles
       run: |
         cd client
         python bot-community.py init
-        python bot-community.py execute-current-phase
+        python bot-community.py test
+        diff bot-stats.csv bot-stats-golden.csv
 
   test-bazaar:
     runs-on: ubuntu-latest

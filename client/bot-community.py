@@ -32,8 +32,8 @@ from py_client.ipfs import Ipfs, ICONS_PATH
 
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 100
-MAX_POPULATION = 12 * NUMBER_OF_LOCATIONS
-NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 101
+MAX_POPULATION = 10 * NUMBER_OF_LOCATIONS
+NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 
 
 @click.group()
@@ -72,6 +72,7 @@ def init(ctx):
     print(f'created community with cid: {cid}')
     write_cid(cid)
     client.await_block()
+    print(client.list_communities())
 
 
 @cli.command()
@@ -127,6 +128,17 @@ def benchmark(ctx):
     py_client = ctx['client']
     print('will grow population forever')
     while True:
+        phase = _execute_current_phase(py_client)
+        while phase == py_client.get_phase():
+            py_client.await_block()
+
+
+@cli.command()
+@click.pass_obj
+def test(ctx):
+    py_client = ctx['client']
+    print('will grow population for fixed number of ceremonies')
+    for i in range(3*2+1):
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
             py_client.await_block()
@@ -213,7 +225,7 @@ def write_current_stats(client: Client, accounts, cid):
     total = sum(bal)
     print(f'****** money supply is {total}')
     f = open('bot-stats.csv', 'a')
-    f.write(f'{len(accounts)}, {total}\n')
+    f.write(f'{len(accounts)}, {round(total)}\n')
     f.close()
     return total
 

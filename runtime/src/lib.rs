@@ -374,7 +374,7 @@ impl pallet_sudo::Config for Runtime {
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 	pub const ReputationLifetime: u32 = 337;
-	pub const AmountNewbieTickets: u8 = 50;
+	pub const EndorsementTicketsPerBootstrapper: u8 = 50;
 	pub const MinSolarTripTimeS: u32 = 1;
 	pub const MaxSpeedMps: u32 = 83;
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
@@ -396,7 +396,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	// But we have low security requirements here, so it should be fine.
 	type RandomnessSource = pallet_randomness_collective_flip::Pallet<Runtime>;
 	type ReputationLifetime = ReputationLifetime;
-	type AmountNewbieTickets = AmountNewbieTickets;
+	type EndorsementTicketsPerBootstrapper = EndorsementTicketsPerBootstrapper;
 	type InactivityTimeout = InactivityTimeout;
 }
 

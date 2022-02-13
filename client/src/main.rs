@@ -1466,7 +1466,7 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 =
-		api.get_constant("EncointerCeremonies", "AmountNewbieTickets").unwrap();
+		api.get_constant("EncointerCeremonies", "EndorsementTicketsPerBootstrapper").unwrap();
 
 	// prepare closure to make below call more readable.
 	let ticket_query = |bs| -> Result<u8, ApiClientError> {
