@@ -1419,13 +1419,7 @@ fn get_all_balances(
 
 	let n = api.get_request(req.into()).unwrap().unwrap(); //expect("Could not query all balances...");
 
-	let balances: Vec<(CommunityIdentifier, Vec<u8>)> = serde_json::from_str(&n).unwrap();
-	Some(
-		balances
-			.iter()
-			.map(|b| (b.0, BalanceEntry::decode(&mut b.1.as_slice()).unwrap()))
-			.collect(),
-	)
+	serde_json::from_str(&n).ok()
 }
 
 fn prove_attendance(
