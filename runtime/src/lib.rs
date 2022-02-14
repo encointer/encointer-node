@@ -423,20 +423,24 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Aura: pallet_aura::{Pallet, Config<T>},
-		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Config},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
-		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event},
-		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>},
-		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Event<T>},
-		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>},
-		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 2,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 5,
+
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Config} = 11,
+
+		Aura: pallet_aura::{Pallet, Config<T>} = 23,
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 25,
+
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 44,
+
+		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
+		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
+		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Event<T>} = 62,
+		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>} = 63,
+		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
 
