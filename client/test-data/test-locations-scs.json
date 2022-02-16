@@ -2,9 +2,11 @@
   "type": "FeatureCollection",
   "community": {
     "meta": {
-      "name": "Mediterranea",
-      "symbol": "MTA",
-      "icons": "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
+      "name": "EdisonPaula",
+      "symbol": "SCS",
+      "icons": "QmRCpUBDeqofYn2rg9c7YLmzi2dyerZzj33Ur26NXqFoLN",
+      "theme": "QmSCssyu7vD7thWPBL93cTgxaZJyjBgz9rTvP3jV8TJYLy",
+      "url": "https://leu.zuerich"
     },
     "bootstrappers": [
       "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
@@ -13,7 +15,9 @@
       "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
       "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
       "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
-    ]
+    ],
+    "demurrage_halving_blocks": 100800,
+    "ceremony_income": 22
   },
   "features": [
     {
@@ -22,8 +26,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.543548583984375,
-          35.48415637985317
+          8.515608608722687,
+          47.38984797042854
         ]
       }
     },
@@ -33,8 +37,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.40484619140625,
-          35.480801595828616
+          8.515962660312653,
+          47.390349148891545
         ]
       }
     },
@@ -44,74 +48,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.40621948242187,
-          35.357696204467516
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.544921875,
-          35.35993616287676
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.68087768554687,
-          35.48751102385376
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.689117431640625,
-          35.37001520672124
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.4075927734375,
-          35.232159412017154
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.551788330078125,
-          35.238889532322595
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.700103759765625,
-          35.24898366572645
+          8.515377938747404,
+          47.389401263868514
         ]
       }
     }

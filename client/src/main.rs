@@ -42,9 +42,9 @@ use encointer_primitives::{
 		ProofOfAttendance, Reputation,
 	},
 	communities::{
-		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
+		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location,
 	},
-	fixed::transcendental::exp,
+	fixed::transcendental::{exp, ln},
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
 use geojson::GeoJson;
@@ -407,15 +407,36 @@ fn main() {
                         .unwrap();
 
                     meta.validate().unwrap();
-
                     info!("Metadata: {:?}", meta);
 
                     let cid = CommunityIdentifier::new(loc[0], bootstrappers.clone()).unwrap();
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
-                    let sudoer = AccountKeyring::Alice.pair();
+
+                    let mut maybe_demurrage: Option<BalanceType> = None;
+                    if let Ok(demurrage_halving_blocks) = serde_json::from_value::<u64>(spec["community"]["demurrage_halving_blocks"].clone()) {
+                        let demurrage_rate = ln::<BalanceType, BalanceType>(BalanceType::from_num(0.5)).unwrap()
+                            .checked_mul(BalanceType::from_num(-1)).unwrap()
+                            .checked_div(BalanceType::from_num(demurrage_halving_blocks)).unwrap();
+                        info!("demurrage halving blocks: {} which translates to a rate of {} ",
+                            demurrage_halving_blocks, hex::encode(demurrage_rate.encode()));
+                        maybe_demurrage = Some(demurrage_rate);
+                    } else {
+                        info!("using default demurrage");
+                    }
+
+                    let mut maybe_income: Option<BalanceType> = None;
+                    if let Ok(income) = serde_json::from_value::<f64>(spec["community"]["ceremony_income"].clone()) {
+                        info!("ceremony income specified as {}", income);
+                        maybe_income = Some(BalanceType::from_num(income));
+                    } else {
+                        info!("using default income");
+                    }
+
+                        let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
+
                     let call = compose_call!(
                         api.metadata.clone(),
                         "EncointerCommunities",
@@ -423,14 +444,21 @@ fn main() {
                         loc[0],
                         bootstrappers,
                         meta,
-                        None::<Demurrage>,
-                        None::<NominalIncome>
+                        maybe_demurrage,
+                        maybe_income
                     );
+                    println!("raw call to register {}: 0x{}", cid, hex::encode(call.encode()));
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
                     ensure_payment(&api, &xt.hex_encode());
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                        error!("wrong ceremony phase for registering new locations for {}", cid);
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+
                     let mut nonce = api.get_nonce().unwrap();
                     // only the first meetup location has been registered now. register all others one-by-one
                     loc.remove(0);
