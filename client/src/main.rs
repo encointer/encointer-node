@@ -447,7 +447,7 @@ fn main() {
                         maybe_demurrage,
                         maybe_income
                     );
-                    println!("raw call to register {}: 0x{}", cid, hex::encode(call.encode()));
+                    info!("raw call to register {}: 0x{}", cid, hex::encode(call.encode()));
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
                     ensure_payment(&api, &xt.hex_encode());
