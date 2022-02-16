@@ -7,7 +7,10 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{traits::InstanceFilter, RuntimeDebug};
+use frame_support::{
+	traits::{EqualPrivilegeOnly, InstanceFilter},
+	RuntimeDebug,
+};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -117,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 10,
+	spec_version: 11,
 	impl_version: 0,
 
 	apis: RUNTIME_API_VERSIONS,
@@ -372,11 +375,38 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
+		BlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type PreimageProvider = ();
+	type NoPreimagePostponement = ();
+}
+
+impl pallet_utility::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 	pub const ReputationLifetime: u32 = 337;
 	pub const EndorsementTicketsPerBootstrapper: u8 = 50;
-	pub const MinSolarTripTimeS: u32 = 1;
-	pub const MaxSpeedMps: u32 = 83;
+	pub const MinSolarTripTimeS: u32 = 1; // [s]
+	pub const MaxSpeedMps: u32 = 1; // [m/s] suggested would be 83m/s
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
 	pub const InactivityTimeout: u32 = 50;
 }
@@ -434,7 +464,9 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Config<T>} = 23,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 25,
 
+		Utility: pallet_utility::{Pallet, Call, Event} = 40,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 44,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 48,
 
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,

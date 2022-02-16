@@ -1,0 +1,57 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "EdisonPaula",
+      "symbol": "SCS",
+      "icons": "QmRCpUBDeqofYn2rg9c7YLmzi2dyerZzj33Ur26NXqFoLN",
+      "theme": "QmSCssyu7vD7thWPBL93cTgxaZJyjBgz9rTvP3jV8TJYLy",
+      "url": "https://leu.zuerich"
+    },
+    "bootstrappers": [
+      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+      "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+      "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+      "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
+      "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
+      "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+    ],
+    "demurrage_halving_blocks": 100800,
+    "ceremony_income": 22
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.515608608722687,
+          47.38984797042854
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.515962660312653,
+          47.390349148891545
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.515377938747404,
+          47.389401263868514
+        ]
+      }
+    }
+  ]
+}

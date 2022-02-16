@@ -41,10 +41,8 @@ use encointer_primitives::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, ParticipantIndexType,
 		ProofOfAttendance, Reputation,
 	},
-	communities::{
-		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location, NominalIncome,
-	},
-	fixed::transcendental::exp,
+	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
+	fixed::transcendental::{exp, ln},
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
 use geojson::GeoJson;
@@ -407,15 +405,36 @@ fn main() {
                         .unwrap();
 
                     meta.validate().unwrap();
-
                     info!("Metadata: {:?}", meta);
 
                     let cid = CommunityIdentifier::new(loc[0], bootstrappers.clone()).unwrap();
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
-                    let sudoer = AccountKeyring::Alice.pair();
+
+                    let mut maybe_demurrage: Option<BalanceType> = None;
+                    if let Ok(demurrage_halving_blocks) = serde_json::from_value::<u64>(spec["community"]["demurrage_halving_blocks"].clone()) {
+                        let demurrage_rate = ln::<BalanceType, BalanceType>(BalanceType::from_num(0.5)).unwrap()
+                            .checked_mul(BalanceType::from_num(-1)).unwrap()
+                            .checked_div(BalanceType::from_num(demurrage_halving_blocks)).unwrap();
+                        info!("demurrage halving blocks: {} which translates to a rate of {} ",
+                            demurrage_halving_blocks, hex::encode(demurrage_rate.encode()));
+                        maybe_demurrage = Some(demurrage_rate);
+                    } else {
+                        info!("using default demurrage");
+                    }
+
+                    let mut maybe_income: Option<BalanceType> = None;
+                    if let Ok(income) = serde_json::from_value::<f64>(spec["community"]["ceremony_income"].clone()) {
+                        info!("ceremony income specified as {}", income);
+                        maybe_income = Some(BalanceType::from_num(income));
+                    } else {
+                        info!("using default income");
+                    }
+
+                        let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
+
                     let call = compose_call!(
                         api.metadata.clone(),
                         "EncointerCommunities",
@@ -423,53 +442,61 @@ fn main() {
                         loc[0],
                         bootstrappers,
                         meta,
-                        None::<Demurrage>,
-                        None::<NominalIncome>
+                        maybe_demurrage,
+                        maybe_income
                     );
+                    let unsigned_sudo_call = compose_call!(
+                        api.metadata.clone(),
+                        "Sudo",
+                        "sudo",
+                        call.clone()
+                    );
+                    info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
                     ensure_payment(&api, &xt.hex_encode());
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
-                    let mut nonce = api.get_nonce().unwrap();
+                    println!("{}", cid);
+
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                        error!("wrong ceremony phase for registering new locations for {}", cid);
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+
                     // only the first meetup location has been registered now. register all others one-by-one
                     loc.remove(0);
-                    let last = nonce + loc.len() as u32 -1 ;
-                    for l in loc.into_iter() {
-                        let call = compose_call!(
+                    let calls: Vec<_> = loc.into_iter()
+                        .map(|l| compose_call!(
                             api.metadata,
                             "EncointerCommunities",
                             "add_location",
                             cid,
                             l
-                        );
-                        let sudo_call = compose_call!(
-                            api.metadata,
-                            "Sudo",
-                            "sudo",
-                            call
-                        );
-                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
-                            api.clone().signer.unwrap(),
-                            sudo_call.clone(),
-                            nonce,
-                            Era::Immortal,
-                            api.genesis_hash,
-                            api.genesis_hash,
-                            api.runtime_version.spec_version,
-                            api.runtime_version.transaction_version
-                        );
-                        if nonce == last {
-                            // only check once at the end
-                            ensure_payment(&api, &xt.hex_encode());
-                        }
-                        info!("   Registering location {:?}", l);
-                        let _blockh = api
-                            .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
-                            .unwrap();
-                        nonce += 1;
-                    }
-                    println!("{}", cid);
+                        ))
+                        .collect();
+                    let batch_call = compose_call!(
+                        api.metadata,
+                        "Utility",
+                        "batch",
+                        calls
+                    );
+                    let unsigned_sudo_call = compose_call!(
+                        api.metadata,
+                        "Sudo",
+                        "sudo",
+                        batch_call.clone()
+                    );
+                    info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                        api,
+                        "Sudo",
+                        "sudo",
+                        batch_call
+                    );
+                    ensure_payment(&api, &xt.hex_encode());
+                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     Ok(())
                 }),
         )
