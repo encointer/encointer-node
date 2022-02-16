@@ -7,7 +7,10 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{traits::{InstanceFilter, EqualPrivilegeOnly}, RuntimeDebug};
+use frame_support::{
+	traits::{EqualPrivilegeOnly, InstanceFilter},
+	RuntimeDebug,
+};
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
