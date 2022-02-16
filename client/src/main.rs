@@ -41,9 +41,7 @@ use encointer_primitives::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, ParticipantIndexType,
 		ProofOfAttendance, Reputation,
 	},
-	communities::{
-		CidName, CommunityIdentifier, CommunityMetadata, Degree, Location,
-	},
+	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
 	fixed::transcendental::{exp, ln},
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
