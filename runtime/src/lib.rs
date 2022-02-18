@@ -120,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 11,
+	spec_version: 12,
 	impl_version: 0,
 
 	apis: RUNTIME_API_VERSIONS,
@@ -403,12 +403,12 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const ReputationLifetime: u32 = 337;
-	pub const EndorsementTicketsPerBootstrapper: u8 = 50;
+	pub const ReputationLifetime: u32 = 337; // 7.02 days at 30min ceremony cycle
+	pub const EndorsementTicketsPerBootstrapper: u8 = 5;
 	pub const MinSolarTripTimeS: u32 = 1; // [s]
 	pub const MaxSpeedMps: u32 = 1; // [m/s] suggested would be 83m/s
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
-	pub const InactivityTimeout: u32 = 50;
+	pub const InactivityTimeout: u32 = 168500; // 10 years at 30min ceremony cycle
 }
 
 impl pallet_encointer_scheduler::Config for Runtime {
