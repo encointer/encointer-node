@@ -4,12 +4,7 @@ import os
 
 from py_client.scheduler import CeremonyPhase
 
-try:
-    DEFAULT_CLIENT = os.environ['ENCOINTER_CLIENT']
-except:
-    print("didn't find ENCOINTER_CLIENT in env variables, setting client to ../target/release/encointer-client-notee")
-    DEFAULT_CLIENT = '../target/release/encointer-client-notee'
-
+DEFAULT_CLIENT = '../target/release/encointer-client-notee'
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -49,9 +44,16 @@ def ensure_clean_exit(returncode):
 class Client:
     def __init__(self,
                  node_url=None,
-                 rust_client=DEFAULT_CLIENT,
+                 rust_client=None,
                  port=9944
                  ):
+        if not rust_client:
+            try:
+                rust_client = os.environ['ENCOINTER_CLIENT']
+            except:
+                print(f"didn't find ENCOINTER_CLIENT in env variables nor arguments, setting client to {DEFAULT_CLIENT}")
+                rust_client = DEFAULT_CLIENT
+
         if node_url:
             print("connecting to remote chain: ", node_url)
             self.cli = [rust_client, '-u', node_url, '-p', str(port)]
