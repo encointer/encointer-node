@@ -24,8 +24,7 @@ account3 = '//Charlie'
 accounts = [account1, account2, account3]
 
 TEST_DATA_DIR = './test-data/'
-SPEC_FILE = 'test-locations-mediterranean.json'
-
+TEST_LOCATIONS_MEDITERRANEAN = 'test-locations-mediterranean.json'
 
 def perform_meetup(client, cid):
     print('Starting meetup...')
@@ -55,10 +54,11 @@ def update_spec_with_cid(file, cid):
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
-def main(ipfs_local, client, port):
+@click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
+@click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
+def main(ipfs_local, client, port, spec_file):
     client = Client(rust_client=client, port=port)
-    spec_file_path = f'{TEST_DATA_DIR}{SPEC_FILE}'
+    spec_file_path = spec_file
 
     cid = client.new_community(spec_file_path)
     if len(cid) > 10:
