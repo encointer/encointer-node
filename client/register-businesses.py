@@ -51,7 +51,7 @@ def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
 
     create_offerings(cid, 5)
 
-    offerings_ipfs_cids = Ipfs.add_multiple_recursive(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_local)
+    offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
 
     for c in offerings_ipfs_cids:
