@@ -4,15 +4,19 @@
     "meta": {
       "name": "EdisonPaula",
       "symbol": "EDI",
-      "icons": "QmReBN5AVcVSuE7tTkAMegxhCCadn49gu3Cm9ZeFj9i178"
+      "icons": "QmcqHLThzvpKt67NpKRy1NHtx7KduKx3EzyFB3Yk95ra8t"
     },
     "bootstrappers": [
-      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-      "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-      "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
-      "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
-      "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
-      "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
+      "5ECkrFJwePB7W9jJUJfQhC8dDqGv1LzxG6Uq5jnXSa72RvF7",
+      "5FsHqdzwHD1aXE3TFaw3HCjg4qisPjSBwCu8orNHTrz2ezAk",
+      "5Hh293GGCyG48Z4UEXbftSfbTnWXepezbfNcdbV2SmBKwCZv",
+      "5CCrnj8AXNuqgwUqWRtaepkvLjdZKWQ4MoRKc2GDsrA7SC4A",
+      "5FvNKkMDRb8pBsXfxRBphY9ZmkkCNUHWnq5Dpw7hKpvBU1L4",
+      "5HEbRQGjxxjbGqN1JYwfxzYfSmNHiuRnwHZp2QdjjrPmGTx6",
+      "5Cg5fyjiAcH6x8PYWU5Z9aBTPe8mV7D9nxEFDqu8iT5SZ7dx",
+      "5E9yNH27WWgYv8amcSnXhEvB6qQof6sMq2h8rVxgS2QtSok2",
+      "5G3y5Cxha4D5X4iGzJQ8j62CzeTtpTo379PqBkFSzVFvnXjB",
+      "5EFbay2uvdfCCnQLFYRp9ozaP3X4868enZDRE27HyGKcJ9qD"
     ],
     "demurrage_halving_blocks": 100800,
     "ceremony_income": 22
