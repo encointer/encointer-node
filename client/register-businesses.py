@@ -34,7 +34,7 @@ def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
     cid = read_cid()
 
     create_businesses(2)
-    business_ipfs_cids = Ipfs.add_multiple_recursive(glob.glob(BUSINESSES_PATH + '/*.json'), ipfs_local)
+    business_ipfs_cids = Ipfs.add_multiple(glob.glob(BUSINESSES_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded businesses to ipfs: ipfs_cids: {business_ipfs_cids}')
 
     for bi in range(len(business_ipfs_cids)):
@@ -51,7 +51,7 @@ def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
 
     create_offerings(cid, 5)
 
-    offerings_ipfs_cids = Ipfs.add_multiple_recursive(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_local)
+    offerings_ipfs_cids = Ipfs.add_multiple(glob.glob(OFFERINGS_PATH + '/*.json'), ipfs_local)
     print(f'Uploaded offerings to ipfs: ipfs_cids: {offerings_ipfs_cids}')
 
     for c in offerings_ipfs_cids:
@@ -119,7 +119,7 @@ def random_business():
     :return:
     """
     print("adding business image to remote: ")
-    image_cid = Ipfs.add_recursive(ICON_PATH, IPFS_LOCAL)
+    image_cid = Ipfs.add(ICON_PATH, IPFS_LOCAL)
     s = RandomSentence()
     return {
         "name": RandomWords().random_words(count=1)[0],
@@ -138,7 +138,7 @@ def random_offering(community_identifier):
     :return:
     """
     print("adding offering image to remote: ")
-    image_cid = Ipfs.add_recursive(ICON_PATH, IPFS_LOCAL)
+    image_cid = Ipfs.add(ICON_PATH, IPFS_LOCAL)
     return {
         "name": RandomWords().random_words(count=1)[0],
         "price": random.randint(0, 100),
