@@ -18,7 +18,7 @@ BUSINESSES_PATH = './test-data/bazaar/'
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('--cid', default='', help='the community identifier of the community your business belongs to (11 digits)')
+@click.option('--cid', default='', help='the community identifier of the community you want to register your business in (11 digits).')
 @click.option('-r', '--remote_chain', default=None, help='choose remote_chain: gesell.')
 def register_business(cid, client, port, remote_chain):
     """
