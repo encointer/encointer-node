@@ -55,6 +55,13 @@ jobs:
       with:
         name: encointer-client-notee-${{ github.sha }}
         path: target/release/encointer-client-notee
+    - name: Upload runtime
+      uses: actions/upload-artifact@v2
+      with:
+        name: encointer-node-notee-runtime-${{ github.sha }}
+        path: |
+          target/release/wbuild/encointer-node-notee-runtime/encointer_node_notee_runtime.compact.compressed.wasm
+          target/release/wbuild/encointer-node-notee-runtime/encointer_node_notee_runtime.compact.wasm
 
   unit-tests:
     runs-on: ubuntu-latest
