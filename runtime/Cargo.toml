@@ -104,6 +104,7 @@ std = [
 	"pallet-encointer-bazaar/std",
     "pallet-encointer-bazaar-rpc-runtime-api/std",
     "encointer-primitives/std",
+    "encointer-primitives/serde_derive",
 ]
 runtime-benchmarks = [
     "frame-benchmarking",
