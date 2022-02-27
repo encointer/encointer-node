@@ -15,6 +15,9 @@ env:
   IPFS_ADD_URL: "https://ipfs.infura.io:5001/api/v0/add"
   IPFS_API_KEY: ${{ secrets.IPFS_API_KEY }}
   ENCOINTER_CLIENT: "../target/release/encointer-client-notee"
+  VERBOSE: ${{ github.events.input.verbose }}
+  SUBWASM_VERSION: 0.14.1
+
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
