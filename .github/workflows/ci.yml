@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [ master, sgx-master ]
+    tags:
+    - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches: [ master, sgx-master ]
 #  schedule:
@@ -13,6 +15,9 @@ env:
   IPFS_ADD_URL: "https://ipfs.infura.io:5001/api/v0/add"
   IPFS_API_KEY: ${{ secrets.IPFS_API_KEY }}
   ENCOINTER_CLIENT: "../target/release/encointer-client-notee"
+  VERBOSE: ${{ github.events.input.verbose }}
+  SUBWASM_VERSION: 0.14.1
+
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
@@ -43,12 +48,91 @@ jobs:
 
     - name: Build
       run: cargo build --release
-    - uses: actions/upload-artifact@v2
+    - name: Upload node
+      uses: actions/upload-artifact@v2
       with:
-        name: executables
-        path: |
-          target/release/encointer-node-notee
-          target/release/encointer-client-notee
+        name: encointer-node-notee-${{ github.sha }}
+        path: target/release/encointer-node-notee
+    - name: Upload CLI client
+      uses: actions/upload-artifact@v2
+      with:
+        name: encointer-client-notee-${{ github.sha }}
+        path: target/release/encointer-client-notee
+
+  build-runtimes:
+    name: Build Runtimes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: ["encointer-node-notee"]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache target dir
+        uses: actions/cache@v2
+        with:
+          path: "${{ github.workspace }}/runtime/target"
+          key: srtool-target-${{ matrix.runtime }}-${{ github.sha }}
+          restore-keys: |
+            srtool-target-${{ matrix.runtime }}-
+            srtool-target-
+      - name: Srtool build
+        id: srtool_build
+        uses: chevdor/srtool-actions@v0.3.0
+        with:
+          chain: ${{ matrix.runtime }}
+          runtime_dir: runtime
+
+      - name: Summary
+        run: |
+          echo '${{ steps.srtool_build.outputs.json }}' | jq > ${{ matrix.runtime }}-srtool-digest.json
+          cat ${{ matrix.runtime }}-srtool-digest.json
+          echo "Compact Runtime: ${{ steps.srtool_build.outputs.wasm }}"
+          echo "Compressed Runtime: ${{ steps.srtool_build.outputs.wasm_compressed }}"
+      # We now get extra information thanks to subwasm
+      - name: Install subwasm
+        run: |
+          wget https://github.com/chevdor/subwasm/releases/download/v${{ env.SUBWASM_VERSION }}/subwasm_linux_amd64_v${{ env.SUBWASM_VERSION }}.deb
+          sudo dpkg -i subwasm_linux_amd64_v${{ env.SUBWASM_VERSION }}.deb
+          subwasm --version
+      - name: Show Runtime information
+        shell: bash
+        run: |
+          subwasm info ${{ steps.srtool_build.outputs.wasm }}
+          subwasm info ${{ steps.srtool_build.outputs.wasm_compressed }}
+          subwasm --json info ${{ steps.srtool_build.outputs.wasm }} > ${{ matrix.runtime }}-info.json
+          subwasm --json info ${{ steps.srtool_build.outputs.wasm_compressed }} > ${{ matrix.runtime }}-compressed-info.json
+      - name: Extract the metadata
+        shell: bash
+        run: |
+          subwasm meta ${{ steps.srtool_build.outputs.wasm }}
+          subwasm --json meta ${{ steps.srtool_build.outputs.wasm }} > ${{ matrix.runtime }}-metadata.json
+      # This is unsupported it wants to diff the metadata with a running chain. i.e. wss://kusama-<matrix.chain>-rpc.parity.io
+      #      - name: Check the metadata diff
+      #        shell: bash
+      #        run: |
+      #          subwasm diff ${{ steps.srtool_build.outputs.wasm }} --chain-b ${{ matrix.chain }} > ${{ matrix.chain }}-diff.txt
+      #          cat ${{ matrix.chain }}-diff.txt
+
+      - name: Upload ${{ matrix.runtime }} srtool json
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.runtime }}-srtool-json-${{ github.sha }}
+          path: |
+            ${{ matrix.runtime }}-srtool-digest.json
+            ${{ matrix.runtime }}-info.json
+            ${{ matrix.runtime }}-compressed-info.json
+            ${{ matrix.runtime }}-metadata.json
+      #            ${{ matrix.runtime }}-diff.txt
+
+
+      - name: Upload ${{ matrix.runtime }} runtime
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.runtime }}-runtime-${{ github.sha }}
+          path: |
+            ${{ steps.srtool_build.outputs.wasm }}
+            ${{ steps.srtool_build.outputs.wasm_compressed }}
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -109,13 +193,20 @@ jobs:
 
     - name: download build artifacts
       uses: actions/download-artifact@master
+      with:
+        name: encointer-node-notee-${{ github.sha }}
+
+    - name: download build artifacts
+      uses: actions/download-artifact@master
+      with:
+        name: encointer-client-notee-${{ github.sha }}
 
     - name: fix permissions of artifacts and move to original folder
       run: |
-        chmod +x executables/encointer-node-notee
-        chmod +x executables/encointer-client-notee
+        chmod +x encointer-node-notee
+        chmod +x encointer-client-notee
         mkdir -p target/release
-        mv executables/* target/release
+        mv encointer-*-notee target/release
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -146,13 +237,20 @@ jobs:
 
     - name: download build artifacts
       uses: actions/download-artifact@master
+      with:
+        name: encointer-node-notee-${{ github.sha }}
+
+    - name: download build artifacts
+      uses: actions/download-artifact@master
+      with:
+        name: encointer-client-notee-${{ github.sha }}
 
     - name: fix permissions of artifacts and move to original folder
       run: |
-        chmod +x executables/encointer-node-notee
-        chmod +x executables/encointer-client-notee
+        chmod +x encointer-node-notee
+        chmod +x encointer-client-notee
         mkdir -p target/release
-        mv executables/* target/release
+        mv encointer-*-notee target/release
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -194,13 +292,20 @@ jobs:
 
       - name: download build artifacts
         uses: actions/download-artifact@master
+        with:
+          name: encointer-node-notee-${{ github.sha }}
+
+      - name: download build artifacts
+        uses: actions/download-artifact@master
+        with:
+          name: encointer-client-notee-${{ github.sha }}
 
       - name: fix permissions of artifacts and move to original folder
         run: |
-          chmod +x executables/encointer-node-notee
-          chmod +x executables/encointer-client-notee
+          chmod +x encointer-node-notee
+          chmod +x encointer-client-notee
           mkdir -p target/release
-          mv executables/* target/release
+          mv encointer-*-notee target/release
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -227,3 +332,91 @@ jobs:
           cd client
           python bot-community.py init
           python register-businesses.py
+
+  release:
+    name: Draft Release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests, check, test-bootstrapping, test-community-growing, test-bazaar]
+    outputs:
+      release_url: ${{ steps.create-release.outputs.html_url }}
+      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download Encointer Node
+        uses: actions/download-artifact@v2
+        with:
+          name: encointer-node-notee-${{ github.sha }}
+
+      - name: Download Encointer Client
+        uses: actions/download-artifact@v2
+        with:
+          name: encointer-client-notee-${{ github.sha }}
+
+      - name: Create required package.json
+        run: test -f package.json || echo '{}' >package.json
+
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
+
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: .
+
+      - name: Release
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          draft: true
+          files: |
+            encointer-node-notee
+            encointer-client-notee
+
+  publish-runtimes:
+    name: Publish Runtimes
+    runs-on: ubuntu-latest
+    needs: [release, build-runtimes]
+    strategy:
+      matrix:
+        runtime: ["encointer-node-notee"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+      - name: Set up Ruby 2.7
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+
+      - name: Get runtime version
+        id: get-runtime-ver
+        run: |
+          ls
+          ls "${{ matrix.runtime }}-runtime-${{ github.sha }}"
+          runtime_ver="$(ruby -e 'require "./scripts/github/lib.rb"; puts get_runtime()')"
+          echo "::set-output name=runtime_ver::$runtime_ver"
+      - name: Upload compact ${{ matrix.runtime }} wasm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.build.outputs.asset_upload_url }}
+          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
+          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
+          asset_content_type: application/wasm
+
+      - name: Upload compressed ${{ matrix.runtime }} wasm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.build.outputs.asset_upload_url }}
+          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.compressed.wasm"
+          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.compressed.wasm
+          asset_content_type: application/wasm
+
