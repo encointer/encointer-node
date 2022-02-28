@@ -36,24 +36,24 @@ def register_business(cid, bizaccount, client, port, remote_chain):
     biz_title = 'Select your business json file'
     biz_file = filedialog.askopenfile(mode='r', title=biz_title)
     # should we handle trailling commma of last element? its in general not allowed in python
-    businessPyObject = json.load(biz_file)
+    business = json.load(biz_file)
     biz_file.close()
 
-    print(businessPyObject)
-    # print(type(businessPyObject))
-
-    # if account doesn't exist yet:
-    # owner = client.new_account()
-    # print('owner is:', owner)
-    # client.faucet(owner)
-    # print(client.create_business(owner, cid, businessPyObject['logo']))
-    # client.await_block()
+    print(f'adding business {biz_file.name} to ipfs')
+    business_cid = Ipfs.add(biz_file.name)
+    print('business is:', business)
 
     # if account already exists and is fauceted:
-    print('community cid is:', cid)
-    print('owner is:', bizaccount)
-    print(client.create_business(bizaccount, cid, businessPyObject['logo']))
-    client.await_block()
+    print(f'registering business:')
+    print(f'    cid:            {cid}')
+    print(f'    owner:          {bizaccount}')
+    print(f'    business url:   {business_cid}\n')
+
+    try:
+        print(client.create_business(bizaccount, cid, business['logo']))
+        client.await_block()
+    except:
+        print("json file doesn't have a logo entry, please save for the logo a content identifier in the json file")
 
 
 if __name__ == '__main__':
