@@ -46,9 +46,13 @@ def register_alice_bob_charlie_and_go_to_assigning(ctx, cid: str):
               help='CommunityIdentifier. Default is Mediterranean test currency')
 @click.pass_context
 def register_alice_bob_charlie(ctx, cid: str):
+    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
+
     client = ctx.obj['client']
 
-    _register_alice_bob_charlie(client, cid)
+    accounts = ['//Alice', '//Bob', '//Charlie']
+
+    register(accounts, client, cid, should_faucet=False)
 
 
 @cli.command()
@@ -63,18 +67,6 @@ def register_gina_harry_ian(ctx, cid: str, should_faucet: bool):
     """ Registers accounts who are not-bootstrappers in the mediterranean test currency """
     client = ctx.obj['client']
 
-    _register_gina_harry_ian(client, cid, should_faucet)
-
-
-def _register_alice_bob_charlie(client: Client, cid: str):
-    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
-
-    accounts = ['//Alice', '//Bob', '//Charlie']
-
-    register(accounts, client, cid, should_faucet=False)
-
-
-def _register_gina_harry_ian(client: Client, cid: str, should_faucet=False):
     click.echo(f'Registering Gina, Harry and Ian for cid: {cid}')
     click.echo(f'Fauceting the new accounts: {should_faucet}')
 
