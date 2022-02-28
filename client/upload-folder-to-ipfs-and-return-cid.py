@@ -10,12 +10,9 @@ import os
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 def upload_folder(ipfs_local):
     """
-    Register a business on chain
-
-    :param name: path to LocalBusiness.json with all infos specified in https://github.com/encointer/pallets/blob/master/bazaar/README.md
-    :return:
+    Upload a folder to ipfs
+    cid of the folder
     """
-
     root = tk.Tk()
     root.withdraw()
 

@@ -10,12 +10,9 @@ import os
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 def upload_image(ipfs_local):
     """
-    Register a business on chain
-
-    :param name: path to LocalBusiness.json with all infos specified in https://github.com/encointer/pallets/blob/master/bazaar/README.md
-    :return:
+    Upload an image to ipfs
+    :return: cid of the image
     """
-
     root = tk.Tk()
     root.withdraw()
 
