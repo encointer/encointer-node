@@ -64,7 +64,7 @@ def register_alice_bob_charlie(ctx, cid: str):
               help='If newbies should be fauceted')
 @click.pass_context
 def register_gina_harry_ian(ctx, cid: str, should_faucet: bool):
-    """ Registers accounts who are not-bootstrappers in the mediterranean test currency """
+    """ Registers accounts who aren't bootstrappers in the mediterranean test currency """
     client = ctx.obj['client']
 
     click.echo(f'Registering Gina, Harry and Ian for cid: {cid}')
