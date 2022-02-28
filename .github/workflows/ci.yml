@@ -62,9 +62,6 @@ jobs:
   build-runtimes:
     name: Build Runtimes
     runs-on: ubuntu-latest
-    outputs:
-      release_url: ${{ steps.create-release.outputs.html_url }}
-      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
     strategy:
       matrix:
         runtime: ["encointer-node-notee"]
@@ -384,7 +381,7 @@ jobs:
   publish-runtimes:
     name: Publish Runtimes
     runs-on: ubuntu-latest
-    needs: [release, build-runtimes]
+    needs: [release]
     strategy:
       matrix:
         runtime: ["encointer-node-notee"]
