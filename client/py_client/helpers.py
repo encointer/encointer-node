@@ -45,8 +45,7 @@ def take_only_last_cid(ret_cids):
         cids = p.findall(str(last))
     
         if cids:
-            print()
-            print(cids)
+            print(cids[0])
             return cids[0]
         else:
             warnings.warn('No cid returned. Something happened. stderr: ')
