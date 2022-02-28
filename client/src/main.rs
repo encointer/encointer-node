@@ -575,11 +575,19 @@ fn main() {
         )
         .add_cmd(
             Command::new("list-participants")
-                .description("list all registered participants for current ceremony and supplied community identifier")
+                .description("list all registered participants supplied community identifier and ceremony index")
+                .options(|app| {
+                app.setting(AppSettings::ColoredHelp)
+                    .ceremony_index_arg()
+                })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         &matches, |api, cid| -> ApiResult<()>{
-                            let cindex = get_ceremony_index(&api);
+
+                            let current_ceremony_index = get_ceremony_index(&api);
+
+                            let cindex = matches.ceremony_index_arg()
+                                .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
 
                             println!("listing participants for cid {} and ceremony nr {}", cid, cindex);
 
@@ -610,7 +618,7 @@ fn main() {
         )
         .add_cmd(
             Command::new("list-meetups")
-                .description("list all assigned meetups for current ceremony and supplied community identifier")
+                .description("list all assigned meetups for supplied community identifier and ceremony index")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .ceremony_index_arg()
@@ -659,11 +667,19 @@ fn main() {
         )
         .add_cmd(
             Command::new("list-attestees")
-                .description("list all attestees for participants of current ceremony and supplied community identifier")
+                .description("list all attestees for participants for supplied community identifier and ceremony index")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .ceremony_index_arg()
+                })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         &matches, |api, cid| -> ApiResult<()>{
-                            let cindex = get_ceremony_index(&api);
+
+                            let current_ceremony_index = get_ceremony_index(&api);
+
+                            let cindex = matches.ceremony_index_arg()
+                                .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
 
                             println!("listing attestees for cid {} and ceremony nr {}", cid, cindex);
 
