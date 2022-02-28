@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import json
-from py_client.client import Client
 from py_client.ipfs import Ipfs
-from py_client.helpers import read_cid
 import json
 import click
 import tkinter as tk
@@ -11,9 +8,8 @@ from tkinter import filedialog
 from py_client.helpers import set_local_or_remote_chain
 import os
 import tempfile
-BUSINESSES_PATH = './test-data/bazaar/'
 
-# Before running this script, make sure, that a community is registered on the chain (for example by running bot-community.py init)
+# Before running this script, make sure, that a community is registered on the chain and a business is created with a fauceted account (for example by running bot-community.py init and register-business.py)
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
@@ -24,9 +20,12 @@ BUSINESSES_PATH = './test-data/bazaar/'
 @click.option('-r', '--remote_chain', default=None, help='choose remote_chain: gesell.')
 def register_offering(bizaccount, cid, price, client, port, remote_chain):
     """
-    Register a business on chain
-
-    :param name: path to LocalBusiness.json with all infos specified in https://github.com/encointer/pallets/blob/master/bazaar/README.md
+    Register a product on chain and upload to ipfs\n
+    Select Product.json which should be according to the folowing scheme:\n
+    https://github.com/encointer/pallets/blob/master/bazaar/README.md\n
+    :param cid: on chain registered community identifier\n
+    :param bizaccount: on chain registered business account in ss58 or raw_seed format\n
+    :param price: price for the product you want to offer\n
     :return:
     """
     client = set_local_or_remote_chain(client, port, remote_chain)
