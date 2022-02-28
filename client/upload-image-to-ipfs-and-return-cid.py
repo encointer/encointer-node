@@ -6,8 +6,6 @@ import tkinter as tk
 from tkinter import filedialog
 import os
 
-BUSINESSES_PATH = './test-data/bazaar/'
-
 @click.command()
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 def upload_image(ipfs_local):
@@ -30,8 +28,6 @@ def upload_image(ipfs_local):
             image_cid = Ipfs.add(logo_path, ipfs_local)
         except:
             print("failed to add image to ipfs")
-
-    print("cid of your file:", image_cid)
 
 
 if __name__ == '__main__':
