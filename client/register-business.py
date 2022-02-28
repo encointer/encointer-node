@@ -18,9 +18,10 @@ BUSINESSES_PATH = './test-data/bazaar/'
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('--cid', default='', help='the community identifier of the community you want to register your business in (11 digits).')
+@click.option('--cid', required=True, help='the community identifier of the community you want to register your business in (11 digits).')
+@click.option('--bizaccount', required=True, help='the account of the owner in ss58 format or raw_seed.')
 @click.option('-r', '--remote_chain', default=None, help='choose remote_chain: gesell.')
-def register_business(cid, client, port, remote_chain):
+def register_business(cid, bizaccount, client, port, remote_chain):
     """
     Register a business on chain
 
@@ -41,10 +42,17 @@ def register_business(cid, client, port, remote_chain):
     print(businessPyObject)
     # print(type(businessPyObject))
 
-    owner = client.new_account()
-    print('owner is:', owner)
-    client.faucet(owner)
-    print(client.create_business(owner, cid, businessPyObject['logo']))
+    # if account doesn't exist yet:
+    # owner = client.new_account()
+    # print('owner is:', owner)
+    # client.faucet(owner)
+    # print(client.create_business(owner, cid, businessPyObject['logo']))
+    # client.await_block()
+
+    # if account already exists and is fauceted:
+    print('community cid is:', cid)
+    print('owner is:', bizaccount)
+    print(client.create_business(bizaccount, cid, businessPyObject['logo']))
     client.await_block()
 
 
