@@ -9,15 +9,16 @@ from py_client.helpers import set_local_or_remote_chain
 import tempfile
 import os
 
-# Before running this script, make sure, that a community is registered on the chain (for example by running bot-community.py init)
+# Before running this script, make sure, that a community is registered on the chain and a business is created with a fauceted account (for example by running bot-community.py init)
+# Then after creating a business with 'bazaar.py --cid xxx --bizaccount xxx register-business' you can register an offering)
 
 
 @click.group()
 @click.option('--cid', required=True, help='the community identifier of the community you want to register your business in (11 digits).')
 @click.option('--bizaccount', required=True, help='the account of the owner in ss58 format or raw_seed.')
+@click.option('--price', default='0', help='price of your offering.')
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('--price', default='0', help='price of your offering.')
 @click.option('-r', '--remote_chain', default=None, help='choose remote chain: gesell.')
 @click.pass_context
 def cli(ctx, client, port, cid, bizaccount, price, remote_chain):
@@ -74,7 +75,7 @@ def register_business(ctx):
 
 @cli.command()
 @click.pass_obj
-def register_offering(ctx):
+def register_offering(ctx, price):
     """
     Register a product on chain and upload to ipfs.\n
     Select Product.json which should be according to the folowing scheme:\n
