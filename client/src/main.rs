@@ -22,7 +22,7 @@
 mod cli_args;
 mod utils;
 
-use crate::utils::offline_xt;
+use crate::utils::{into_effective_cindex, offline_xt};
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
@@ -611,10 +611,19 @@ fn main() {
         .add_cmd(
             Command::new("list-meetups")
                 .description("list all assigned meetups for current ceremony and supplied community identifier")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .ceremony_index_arg()
+                })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         &matches, |api, cid| -> ApiResult<()>{
-                            let cindex = get_ceremony_index(&api);
+
+                            let current_ceremony_index = get_ceremony_index(&api);
+
+                            let cindex = matches.ceremony_index_arg()
+                                .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
+
                             let community_ceremony = (cid, cindex);
 
                             println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
@@ -804,12 +813,10 @@ fn main() {
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
 
-                    let index: i32 = matches.ceremony_index_arg().unwrap().parse().unwrap();
-                    let cindex = match index {
-                        i32::MIN..=-1 => get_ceremony_index(&api) - index.abs() as u32,
-                        1..=i32::MAX => index as u32,
-                        0 => panic!("Zero not allowed as ceremony index"),
-                    };
+                    let current_ceremony_index = get_ceremony_index(&api);
+
+                    let cindex = matches.ceremony_index_arg()
+                        .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
 
                     let cid = verify_cid(
                         &api,
