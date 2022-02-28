@@ -26,8 +26,11 @@ def upload_folder(ipfs_local):
         folder_path = os.path.abspath(directory)
         try:
             Ipfs.add_recursive(folder_path, ipfs_local)
-        except:
+        except Exception as ex:
             print("failed to add folder to ipfs")
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
 if __name__ == '__main__':
     upload_folder()

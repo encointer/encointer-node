@@ -25,9 +25,12 @@ def upload_image(ipfs_local):
     if bizImageFile:
         logo_path = os.path.abspath(bizImageFile.name)
         try:
-            image_cid = Ipfs.add(logo_path, ipfs_local)
-        except:
+            Ipfs.add(logo_path, ipfs_local)
+        except Exception as ex:
             print("failed to add image to ipfs")
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print(message)
 
 
 if __name__ == '__main__':
