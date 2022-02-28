@@ -62,6 +62,9 @@ jobs:
   build-runtimes:
     name: Build Runtimes
     runs-on: ubuntu-latest
+    outputs:
+      release_url: ${{ steps.create-release.outputs.html_url }}
+      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
     strategy:
       matrix:
         runtime: ["encointer-node-notee"]
@@ -405,7 +408,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.build-runtimes.outputs.asset_upload_url }}
+          upload_url: ${{ needs.release.outputs.asset_upload_url }}
           asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
           asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
           asset_content_type: application/wasm
@@ -415,7 +418,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.build-runtimes.outputs.asset_upload_url }}
+          upload_url: ${{ needs.release.outputs.asset_upload_url }}
           asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.compressed.wasm"
           asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.compressed.wasm
           asset_content_type: application/wasm
