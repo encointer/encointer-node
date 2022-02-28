@@ -75,7 +75,7 @@ def register_business(ctx):
 
 @cli.command()
 @click.pass_obj
-def register_offering(ctx, price):
+def register_offering(ctx):
     """
     Register a product on chain and upload to ipfs.\n
     Select Product.json which should be according to the folowing scheme:\n
