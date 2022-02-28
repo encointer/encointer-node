@@ -85,7 +85,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 			Arg::with_name(CEREMONY_INDEX_ARG)
 				.takes_value(true)
 				.allow_hyphen_values(true)
-				.default_value("-1")
 				.help(
 					"If positive, absolute index. If negative, current_index -i. 0 is not allowed",
 				),

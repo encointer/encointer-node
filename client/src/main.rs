@@ -831,8 +831,8 @@ fn main() {
 
                     let current_ceremony_index = get_ceremony_index(&api);
 
-                    let cindex = matches.ceremony_index_arg()
-                        .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
+                    let cindex_arg = matches.ceremony_index_arg().unwrap_or(-1);
+                    let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
 
                     let cid = verify_cid(
                         &api,
