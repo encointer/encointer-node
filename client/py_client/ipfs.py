@@ -65,7 +65,7 @@ class Ipfs:
             ret = subprocess.run(["ipfs", "add", path_to_files], stdout=subprocess.PIPE)
             return take_only_last_cid(ret)
         else:
-            ret = subprocess.run(["curl", "-s", "-X", "POST", "-F", f"file=@{path_to_files}", "-u", ipfs_api_key, ipfs_add_url], stdout=subprocess.PIPE)
+            ret = subprocess.run(["curl", "-sS", "-X", "POST", "-F", f"file=@{path_to_files}", "-u", ipfs_api_key, ipfs_add_url], stdout=subprocess.PIPE)
         return take_only_last_cid(ret)
 
 
