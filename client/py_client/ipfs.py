@@ -14,6 +14,24 @@ except:
     print("IPFS environment not set up for using gateway")
     use_ipfs_gateway = False
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class CouldNotResolveHost(Error):
+    """"Failed to connect to host. Maybe you are not connected to the internet?"""
+    pass
+
+class UnknownError(Error):
+    pass
+
+def eval_returncode(returncode):
+    if returncode == 0:
+        return
+    if returncode == 6:
+        raise CouldNotResolveHost
+    raise UnknownError
+
 class Ipfs:
     """ Minimal wrapper for the ipfs cli """
     @staticmethod
@@ -62,10 +80,10 @@ class Ipfs:
         if not (use_ipfs_gateway or local):
             return "QmWgTp4fBkxyUhnMrx4UVVqQ2McTQKJzq8yq3J5tCzdtfx"
         if local:
-            ret = subprocess.run(["ipfs", "add", path_to_files], stdout=subprocess.PIPE)
+            ret = subprocess.run(["ipfs", "add", path_to_files], check=True, stdout=subprocess.PIPE)
             return take_only_last_cid(ret)
         else:
-            ret = subprocess.run(["curl", "-sS", "-X", "POST", "-F", f"file=@{path_to_files}", "-u", ipfs_api_key, ipfs_add_url], stdout=subprocess.PIPE)
+            ret = subprocess.run(["curl", "-sS", "-X", "POST", "-F", f"file=@{path_to_files}", "-u", ipfs_api_key, ipfs_add_url], check=True, stdout=subprocess.PIPE)
         return take_only_last_cid(ret)
 
 
