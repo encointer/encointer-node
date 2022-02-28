@@ -58,13 +58,6 @@ def register_offering(bizaccount, cid, price, client, port, remote_chain):
         print(f'adding offering {f_name} to ipfs')
         offer_cid = Ipfs.add(f_name)
 
-    # if account doesn't exist yet:
-    # owner = '5Hn1PiMrErPKpJC1VWSNBwSdWDoHW1XTQgcGUXD8enHpHKDo'
-    # print('owner is:', owner)
-    # client.faucet(owner)
-    # print(client.create_offering(owner, cid, product['logo']))
-    # client.await_block()
-
     # if account already exists and is fauceted:
     print(f'registering product:')
     print(f'    cid:            {cid}')
