@@ -29,7 +29,7 @@ pub trait EncointerArgsExtractor {
 	fn signer_arg(&self) -> Option<&str>;
 	fn cid_arg(&self) -> Option<&str>;
 	fn claims_arg(&self) -> Option<Vec<&str>>;
-	fn ceremony_index_arg(&self) -> Option<&str>;
+	fn ceremony_index_arg(&self) -> Option<i32>;
 	fn ipfs_cid_arg(&self) -> Option<&str>;
 	fn bootstrapper_arg(&self) -> Option<&str>;
 	fn fundees_arg(&self) -> Option<Vec<&str>>;
@@ -85,7 +85,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 			Arg::with_name(CEREMONY_INDEX_ARG)
 				.takes_value(true)
 				.allow_hyphen_values(true)
-				.default_value("-1")
 				.help(
 					"If positive, absolute index. If negative, current_index -i. 0 is not allowed",
 				),
@@ -168,8 +167,8 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.values_of(CLAIMS_ARG).map(|c| c.collect())
 	}
 
-	fn ceremony_index_arg(&self) -> Option<&str> {
-		self.value_of(CEREMONY_INDEX_ARG)
+	fn ceremony_index_arg(&self) -> Option<i32> {
+		self.value_of(CEREMONY_INDEX_ARG).map(|v| v.parse().unwrap())
 	}
 
 	fn ipfs_cid_arg(&self) -> Option<&str> {
