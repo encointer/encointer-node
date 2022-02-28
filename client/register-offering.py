@@ -58,14 +58,11 @@ def register_offering(bizaccount, cid, price, client, port, remote_chain):
         print(f'adding offering {f_name} to ipfs')
         offer_cid = Ipfs.add(f_name)
 
-    # if account already exists and is fauceted:
     print(f'registering product:')
     print(f'    cid:            {cid}')
     print(f'    owner:          {bizaccount}')
     print(f'    offering url:   {offer_cid}\n')
 
-    # there is a naming mismatch: we actually register/create a product on chain and not an offering,
-    # since an offering is a product with price, where the chain doesnt store the price
     try:
         print(client.create_offering(bizaccount, cid, product['logo']))
         client.await_block()

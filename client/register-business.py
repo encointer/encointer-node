@@ -43,7 +43,6 @@ def register_business(cid, bizaccount, client, port, remote_chain):
     business_cid = Ipfs.add(biz_file.name)
     print('business is:', business)
 
-    # if account already exists and is fauceted:
     print(f'registering business:')
     print(f'    cid:            {cid}')
     print(f'    owner:          {bizaccount}')
