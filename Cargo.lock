@@ -1377,6 +1377,7 @@ dependencies = [
  "encointer-ceremonies-assignment",
  "encointer-primitives",
  "log",
+ "serde",
  "serde_json",
  "sp-core",
  "substrate-api-client",

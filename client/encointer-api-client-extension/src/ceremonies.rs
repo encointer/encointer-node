@@ -9,9 +9,13 @@ use encointer_primitives::{
 	communities::Location,
 };
 use log::warn;
+use serde::{Deserialize, Serialize};
 use substrate_api_client::{AccountId, ApiClientError, Moment};
 
 pub const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
+
+// same as in runtime, but we did not want to import the runtime here.
+pub const ONE_DAY: Moment = 86_400_000;
 
 pub trait CeremoniesApi {
 	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
@@ -65,6 +69,11 @@ pub trait CeremoniesApi {
 	) -> Result<Vec<AccountId>>;
 
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
+
+	fn get_community_ceremony_stats(
+		&self,
+		community_ceremony: &CommunityCeremony,
+	) -> Result<CommunityCeremonyStats>;
 }
 
 impl CeremoniesApi for Api {
@@ -264,6 +273,28 @@ impl CeremoniesApi for Api {
 
 		Ok(meetup_time(location, attesting_start, one_day))
 	}
+
+	fn get_community_ceremony_stats(
+		&self,
+		community_ceremony: &CommunityCeremony,
+	) -> Result<CommunityCeremonyStats> {
+		let assignment = self.get_assignments(&community_ceremony)?;
+		let assignment_count = self.get_assignment_counts(&community_ceremony)?;
+		let mcount = self.get_meetup_count(community_ceremony)?;
+
+		let mut meetups = vec![];
+
+		// get stats of every meetup
+		for m in 1..=mcount {
+			let m_location = self.get_meetup_location(&community_ceremony, m)?.unwrap();
+			let time = self.get_meetup_time(m_location, ONE_DAY)?;
+			let participants = self.get_meetup_participants(&community_ceremony, m)?;
+
+			meetups.push(Meetup::new(m, m_location, time, participants))
+		}
+
+		Ok(CommunityCeremonyStats::new(assignment, assignment_count, mcount, meetups))
+	}
 }
 
 fn get_bootstrapper_or_reputable(
@@ -279,4 +310,46 @@ fn get_bootstrapper_or_reputable(
 	}
 
 	Ok(None)
+}
+
+// Todo: is waiting for: https://github.com/encointer/pallets/issues/167
+// #[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
+pub struct CommunityCeremonyStats {
+	pub assignment: Assignment,
+	pub assignment_count: AssignmentCount,
+	pub meetup_count: MeetupIndexType,
+	pub meetups: Vec<Meetup>,
+}
+
+impl CommunityCeremonyStats {
+	pub fn new(
+		assignment: Assignment,
+		assignment_count: AssignmentCount,
+		meetup_count: MeetupIndexType,
+		meetups: Vec<Meetup>,
+	) -> Self {
+		Self { assignment, assignment_count, meetup_count, meetups }
+	}
+}
+
+// Todo: is waiting for: https://github.com/encointer/pallets/issues/167
+// #[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Meetup {
+	pub index: MeetupIndexType,
+	pub location: Location,
+	pub time: Moment,
+	pub participants: Vec<AccountId>,
+}
+
+impl Meetup {
+	pub fn new(
+		index: MeetupIndexType,
+		location: Location,
+		time: Moment,
+		participants: Vec<AccountId>,
+	) -> Self {
+		Self { index, location, time, participants }
+	}
 }

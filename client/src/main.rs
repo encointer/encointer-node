@@ -636,25 +636,20 @@ fn main() {
 
                             println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
 
-                            let mcount = api.get_meetup_count(&community_ceremony)?;
-                            println!("number of meetups assigned:  {}", mcount);
+                            let stats = api.get_community_ceremony_stats(&community_ceremony).unwrap();
 
-                            for m in 1..=mcount {
-                                let m_location = api.get_meetup_location(&community_ceremony, m)?.unwrap();
+                            // Todo: is waiting for: https://github.com/encointer/pallets/issues/167
+                            // info!("{}", serde_json::to_string_pretty(&stats).unwrap());
+                            info!("{:?}", stats);
 
-                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, m, m_location);
-
-                                println!("MeetupRegistry[{}, {}] meeting time is {:?}", cindex, m, api.get_meetup_time(m_location, ONE_DAY));
-
-                                let participants =  api.get_meetup_participants(&community_ceremony, m)?;
-
-                                if !participants.is_empty() {
-                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, m);
-                                    for p in participants.iter() {
+                            for meetup in stats.meetups.iter() {
+                                if !meetup.participants.is_empty() {
+                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
+                                    for p in meetup.participants.iter() {
                                         println!("   {}", p);
                                     }
                                 } else {
-                                    println!("MeetupRegistry[{}, {}] EMPTY", cindex, m);
+                                    println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
                                 }
                             }
 
