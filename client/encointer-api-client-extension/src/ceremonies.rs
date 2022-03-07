@@ -333,8 +333,6 @@ impl CommunityCeremonyStats {
 	}
 }
 
-// Todo: is waiting for: https://github.com/encointer/pallets/issues/167
-// #[derive(Debug, Serialize, Deserialize)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Meetup {
 	pub index: MeetupIndexType,
