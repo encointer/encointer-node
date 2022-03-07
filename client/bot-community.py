@@ -138,6 +138,7 @@ def benchmark(ctx):
     while True:
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
+            print("awaiting next phase...")
             py_client.await_block()
 
 
@@ -149,6 +150,7 @@ def test(ctx):
     for i in range(3*2+1):
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
+            print("awaiting next phase...")
             py_client.await_block()
 
 
