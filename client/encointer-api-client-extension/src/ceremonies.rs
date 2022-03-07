@@ -59,7 +59,7 @@ pub trait CeremoniesApi {
 	fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		account_id: &AccountId,
+		account_id: AccountId,
 	) -> Result<Option<MeetupIndexType>>;
 
 	fn get_meetup_location(
@@ -191,7 +191,7 @@ impl CeremoniesApi for Api {
 	fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		account_id: &AccountId,
+		account_id: AccountId,
 	) -> Result<Option<MeetupIndexType>> {
 		let meetup_count = self.get_meetup_count(community_ceremony)?;
 
@@ -206,34 +206,26 @@ impl CeremoniesApi for Api {
 		let bootstrapper_count = || -> Result<ParticipantIndexType> {
 			Ok(self.get_assignment_counts(community_ceremony)?.bootstrappers)
 		};
-		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
-			self.get_storage_double_map(
-				ENCOINTER_CEREMONIES,
-				storage_key,
-				community_ceremony,
-				account_id,
-				None,
-			)
-		};
+
+		let registration = self.get_registration(community_ceremony, account_id)?;
+
 		let meetup_index_fn =
 			|p_index, assignment_params| meetup_index(p_index, assignment_params, meetup_count);
 
 		// Finally get the meetup index
 
-		if let Some(p_index) = index_query("BootstrapperIndex")? {
-			return Ok(meetup_index_fn(p_index - 1, assignments.bootstrappers_reputables))
-		} else if let Some(p_index) = index_query("ReputableIndex")? {
-			return Ok(meetup_index_fn(
-				p_index - 1 + bootstrapper_count()?,
+		match registration.registration_type {
+			RegistrationType::Bootstrapper =>
+				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables)),
+			RegistrationType::Reputable => Ok(meetup_index_fn(
+				registration.index - 1 + bootstrapper_count()?,
 				assignments.bootstrappers_reputables,
-			))
-		} else if let Some(p_index) = index_query("EndorseeIndex")? {
-			return Ok(meetup_index_fn(p_index - 1, assignments.endorsees))
-		} else if let Some(p_index) = index_query("NewbieIndex")? {
-			return Ok(meetup_index_fn(p_index - 1, assignments.newbies))
+			)),
+			RegistrationType::Endorsee =>
+				Ok(meetup_index_fn(registration.index - 1, assignments.endorsees)),
+			RegistrationType::Newbie =>
+				Ok(meetup_index_fn(registration.index - 1, assignments.newbies)),
 		}
-
-		Ok(None)
 	}
 
 	fn get_meetup_location(

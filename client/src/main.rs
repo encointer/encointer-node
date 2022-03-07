@@ -1326,7 +1326,7 @@ fn new_claim_for(
 ) -> Vec<u8> {
 	let cindex = get_ceremony_index(api);
 	let mindex = api
-		.get_meetup_index(&(cid, cindex), &claimant.public().into())
+		.get_meetup_index(&(cid, cindex), claimant.public().into())
 		.unwrap()
 		.expect("participant must be assigned to meetup to generate a claim");
 
