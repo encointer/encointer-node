@@ -48,6 +48,12 @@ pub trait CeremoniesApi {
 		p: &ParticipantIndexType,
 	) -> Result<Option<AccountId>>;
 
+	fn get_registration(
+		&self,
+		community_ceremony: &CommunityCeremony,
+		account_id: AccountId,
+	) -> Result<Registration>;
+
 	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType>;
 
 	fn get_meetup_index(
@@ -144,6 +150,36 @@ impl CeremoniesApi for Api {
 			p,
 			None,
 		)
+	}
+
+	fn get_registration(
+		&self,
+		community_ceremony: &CommunityCeremony,
+		account_id: AccountId,
+	) -> Result<Registration> {
+		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
+			self.get_storage_double_map(
+				ENCOINTER_CEREMONIES,
+				storage_key,
+				community_ceremony,
+				&account_id,
+				None,
+			)
+		};
+
+		if let Some(p_index) = index_query("BootstrapperIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper, account_id))
+		} else if let Some(p_index) = index_query("ReputableIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Reputable, account_id))
+		} else if let Some(p_index) = index_query("EndorseeIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Endorsee, account_id))
+		} else if let Some(p_index) = index_query("NewbieIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Newbie, account_id))
+		}
+
+		Err(ApiClientError::Other(
+			format!("Could not get participant index for {:?}", account_id).into(),
+		))
 	}
 
 	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType> {
@@ -350,4 +386,29 @@ impl Meetup {
 	) -> Self {
 		Self { index, location, time, participants }
 	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Registration {
+	pub index: ParticipantIndexType,
+	pub registration_type: RegistrationType,
+	pub participant: AccountId,
+}
+
+impl Registration {
+	pub fn new(
+		index: ParticipantIndexType,
+		registration_type: RegistrationType,
+		participant: AccountId,
+	) -> Self {
+		Self { index, registration_type, participant }
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum RegistrationType {
+	Bootstrapper,
+	Reputable,
+	Endorsee,
+	Newbie,
 }
