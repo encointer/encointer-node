@@ -643,10 +643,10 @@ fn main() {
                             info!("{:?}", stats);
 
                             for meetup in stats.meetups.iter() {
-                                if !meetup.participants.is_empty() {
+                                if !meetup.registrations.is_empty() {
                                     println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
-                                    for p in meetup.participants.iter() {
-                                        println!("   {}", p);
+                                    for r in meetup.registrations.iter() {
+                                        println!("   {}", r.participant);
                                     }
                                 } else {
                                     println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);

@@ -318,7 +318,13 @@ impl CeremoniesApi for Api {
 			let time = self.get_meetup_time(m_location, ONE_DAY)?;
 			let participants = self.get_meetup_participants(&community_ceremony, m)?;
 
-			meetups.push(Meetup::new(m, m_location, time, participants))
+			let mut registrations = vec![];
+
+			for p in participants.into_iter() {
+				registrations.push(self.get_registration(&community_ceremony, p)?)
+			}
+
+			meetups.push(Meetup::new(m, m_location, time, registrations))
 		}
 
 		Ok(CommunityCeremonyStats::new(assignment, assignment_count, mcount, meetups))
@@ -366,7 +372,7 @@ pub struct Meetup {
 	pub index: MeetupIndexType,
 	pub location: Location,
 	pub time: Moment,
-	pub participants: Vec<AccountId>,
+	pub registrations: Vec<Registration>,
 }
 
 impl Meetup {
@@ -374,9 +380,9 @@ impl Meetup {
 		index: MeetupIndexType,
 		location: Location,
 		time: Moment,
-		participants: Vec<AccountId>,
+		registrations: Vec<Registration>,
 	) -> Self {
-		Self { index, location, time, participants }
+		Self { index, location, time, registrations }
 	}
 }
 
