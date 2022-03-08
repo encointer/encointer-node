@@ -78,7 +78,7 @@ pub trait CeremoniesApi {
 
 	fn get_community_ceremony_stats(
 		&self,
-		community_ceremony: &CommunityCeremony,
+		community_ceremony: CommunityCeremony,
 	) -> Result<CommunityCeremonyStats>;
 }
 
@@ -304,11 +304,11 @@ impl CeremoniesApi for Api {
 
 	fn get_community_ceremony_stats(
 		&self,
-		community_ceremony: &CommunityCeremony,
+		community_ceremony: CommunityCeremony,
 	) -> Result<CommunityCeremonyStats> {
 		let assignment = self.get_assignments(&community_ceremony)?;
 		let assignment_count = self.get_assignment_counts(&community_ceremony)?;
-		let mcount = self.get_meetup_count(community_ceremony)?;
+		let mcount = self.get_meetup_count(&community_ceremony)?;
 
 		let mut meetups = vec![];
 
@@ -327,7 +327,13 @@ impl CeremoniesApi for Api {
 			meetups.push(Meetup::new(m, m_location, time, registrations))
 		}
 
-		Ok(CommunityCeremonyStats::new(assignment, assignment_count, mcount, meetups))
+		Ok(CommunityCeremonyStats::new(
+			community_ceremony,
+			assignment,
+			assignment_count,
+			mcount,
+			meetups,
+		))
 	}
 }
 
@@ -350,6 +356,7 @@ fn get_bootstrapper_or_reputable(
 // #[derive(Debug, Serialize, Deserialize)]
 #[derive(Debug)]
 pub struct CommunityCeremonyStats {
+	pub community_ceremony: CommunityCeremony,
 	pub assignment: Assignment,
 	pub assignment_count: AssignmentCount,
 	pub meetup_count: MeetupIndexType,
@@ -358,12 +365,13 @@ pub struct CommunityCeremonyStats {
 
 impl CommunityCeremonyStats {
 	pub fn new(
+		community_ceremony: CommunityCeremony,
 		assignment: Assignment,
 		assignment_count: AssignmentCount,
 		meetup_count: MeetupIndexType,
 		meetups: Vec<Meetup>,
 	) -> Self {
-		Self { assignment, assignment_count, meetup_count, meetups }
+		Self { community_ceremony, assignment, assignment_count, meetup_count, meetups }
 	}
 }
 
