@@ -645,8 +645,8 @@ fn main() {
                             for meetup in stats.meetups.iter() {
                                 if !meetup.registrations.is_empty() {
                                     println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
-                                    for r in meetup.registrations.iter() {
-                                        println!("   {}", r.participant);
+                                    for (participant, _registration) in meetup.registrations.iter() {
+                                        println!("   {}", participant);
                                     }
                                 } else {
                                     println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
@@ -1326,7 +1326,7 @@ fn new_claim_for(
 ) -> Vec<u8> {
 	let cindex = get_ceremony_index(api);
 	let mindex = api
-		.get_meetup_index(&(cid, cindex), claimant.public().into())
+		.get_meetup_index(&(cid, cindex), &claimant.public().into())
 		.unwrap()
 		.expect("participant must be assigned to meetup to generate a claim");
 

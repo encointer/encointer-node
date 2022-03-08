@@ -51,7 +51,7 @@ pub trait CeremoniesApi {
 	fn get_registration(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		account_id: AccountId,
+		account_id: &AccountId,
 	) -> Result<Registration>;
 
 	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType>;
@@ -59,7 +59,7 @@ pub trait CeremoniesApi {
 	fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		account_id: AccountId,
+		account_id: &AccountId,
 	) -> Result<Option<MeetupIndexType>>;
 
 	fn get_meetup_location(
@@ -155,7 +155,7 @@ impl CeremoniesApi for Api {
 	fn get_registration(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		account_id: AccountId,
+		account_id: &AccountId,
 	) -> Result<Registration> {
 		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
 			self.get_storage_double_map(
@@ -168,13 +168,13 @@ impl CeremoniesApi for Api {
 		};
 
 		if let Some(p_index) = index_query("BootstrapperIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper, account_id))
+			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper))
 		} else if let Some(p_index) = index_query("ReputableIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Reputable, account_id))
+			return Ok(Registration::new(p_index, RegistrationType::Reputable))
 		} else if let Some(p_index) = index_query("EndorseeIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Endorsee, account_id))
+			return Ok(Registration::new(p_index, RegistrationType::Endorsee))
 		} else if let Some(p_index) = index_query("NewbieIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Newbie, account_id))
+			return Ok(Registration::new(p_index, RegistrationType::Newbie))
 		}
 
 		Err(ApiClientError::Other(
@@ -191,7 +191,7 @@ impl CeremoniesApi for Api {
 	fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
-		account_id: AccountId,
+		account_id: &AccountId,
 	) -> Result<Option<MeetupIndexType>> {
 		let meetup_count = self.get_meetup_count(community_ceremony)?;
 
@@ -321,7 +321,8 @@ impl CeremoniesApi for Api {
 			let mut registrations = vec![];
 
 			for p in participants.into_iter() {
-				registrations.push(self.get_registration(&community_ceremony, p)?)
+				let r = self.get_registration(&community_ceremony, &p)?;
+				registrations.push((p, r))
 			}
 
 			meetups.push(Meetup::new(m, m_location, time, registrations))
@@ -380,7 +381,7 @@ pub struct Meetup {
 	pub index: MeetupIndexType,
 	pub location: Location,
 	pub time: Moment,
-	pub registrations: Vec<Registration>,
+	pub registrations: Vec<(AccountId, Registration)>,
 }
 
 impl Meetup {
@@ -388,7 +389,7 @@ impl Meetup {
 		index: MeetupIndexType,
 		location: Location,
 		time: Moment,
-		registrations: Vec<Registration>,
+		registrations: Vec<(AccountId, Registration)>,
 	) -> Self {
 		Self { index, location, time, registrations }
 	}
@@ -398,16 +399,11 @@ impl Meetup {
 pub struct Registration {
 	pub index: ParticipantIndexType,
 	pub registration_type: RegistrationType,
-	pub participant: AccountId,
 }
 
 impl Registration {
-	pub fn new(
-		index: ParticipantIndexType,
-		registration_type: RegistrationType,
-		participant: AccountId,
-	) -> Self {
-		Self { index, registration_type, participant }
+	pub fn new(index: ParticipantIndexType, registration_type: RegistrationType) -> Self {
+		Self { index, registration_type }
 	}
 }
 
