@@ -76,6 +76,7 @@ where
 			client.clone(),
 			storage,
 			offchain_indexing_enabled,
+			deny_unsafe,
 		))),
 		None => log::warn!(
 			"Offchain caching disabled, due to lack of offchain storage support in backend."
