@@ -16,14 +16,14 @@ serde = { features = ["derive"], optional = true, version = "1.0.136" }
 
 # encointer deps
 encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-ceremonies = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 
 # substrate deps
 pallet-aura = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
@@ -93,16 +93,15 @@ std = [
     "sp-std/std",
     "sp-transaction-pool/std",
     "sp-version/std",
-	"pallet-encointer-scheduler/std",
-	"pallet-encointer-ceremonies/std",
-	"pallet-encointer-ceremonies-rpc-runtime-api/std",
-	"pallet-encointer-balances/std",
-	"pallet-encointer-communities/std",
-    "pallet-encointer-communities-rpc-runtime-api/std",
-	"pallet-encointer-bazaar/std",
-    "pallet-encointer-bazaar-rpc-runtime-api/std",
     "encointer-primitives/std",
-    "encointer-primitives/serde_derive",
+    "pallet-encointer-balances/std",
+    "pallet-encointer-bazaar/std",
+    "pallet-encointer-bazaar-rpc-runtime-api/std",
+    "pallet-encointer-ceremonies/std",
+    "pallet-encointer-ceremonies-rpc-runtime-api/std",
+    "pallet-encointer-communities/std",
+    "pallet-encointer-communities-rpc-runtime-api/std",
+    "pallet-encointer-scheduler/std",
 ]
 runtime-benchmarks = [
     "frame-benchmarking",
