@@ -94,6 +94,7 @@ std = [
     "sp-transaction-pool/std",
     "sp-version/std",
     "encointer-primitives/std",
+    "encointer-primitives/serde_derive",
     "pallet-encointer-balances/std",
     "pallet-encointer-bazaar/std",
     "pallet-encointer-bazaar-rpc-runtime-api/std",
