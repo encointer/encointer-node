@@ -184,6 +184,10 @@ fn testnet_genesis(
 			ceremony_reward: BalanceType::from_num(1),
 			time_tolerance: 600_000,   // +-10min
 			location_tolerance: 1_000, // [m]
+			endorsement_tickets_per_bootstrapper: 5,
+			reputation_lifetime: 337,   // 7.02 days at 30min ceremony cycle
+			inactivity_timeout: 168500, // 10 years at 30min ceremony cycle
+			meetup_time_offset: 0,
 		},
 	}
 }
