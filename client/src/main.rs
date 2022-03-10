@@ -1133,11 +1133,13 @@ fn listen(matches: &ArgMatches<'_>) {
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
 								pallet_encointer_ceremonies::Event::ParticipantRegistered(
+									cid,
+									participant_type,
 									accountid,
 								) => {
 									println!(
-										"Participant registered for ceremony: {:?}",
-										accountid
+										"Participant registered as {:?}, for cid: {:?}, account: {}, ",
+										participant_type, cid, accountid
 									);
 								},
 								_ => println!("Unsupported EncointerCommunities event"),
@@ -1149,6 +1151,9 @@ fn listen(matches: &ArgMatches<'_>) {
 							match &ee {
 								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
+								},
+								pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
+									println!("Ceremony schedule was pushed by one day");
 								},
 							}
 						},
