@@ -8,7 +8,6 @@
 use std::sync::Arc;
 
 use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index};
-use pallet_encointer_balances_rpc::{Balances, BalancesApi};
 use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
 use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};
 pub use sc_rpc_api::DenyUnsafe;
@@ -44,9 +43,9 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
-	C::Api: pallet_encointer_balances_rpc_runtime_api::BalancesApi<Block, AccountId, BlockNumber>,
 	C::Api: pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId>,
-	C::Api: pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block>,
+	C::Api:
+		pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block, AccountId, BlockNumber>,
 	C::Api: pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId>,
 	P: TransactionPool + 'static,
 	TBackend: sc_client_api::Backend<Block>,
@@ -62,8 +61,6 @@ where
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));
 
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
-
-	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone(), deny_unsafe)));
 
 	io.extend_with(BazaarApi::to_delegate(Bazaar::new(client.clone(), deny_unsafe)));
 
