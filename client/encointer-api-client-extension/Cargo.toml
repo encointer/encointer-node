@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4.14"
-serde_json = { version = "1.0.73"}
+serde_json = "1.0.79"
 
 # encointer deps
 encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "master" }
