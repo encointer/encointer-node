@@ -63,8 +63,6 @@ pallet-encointer-ceremonies-rpc = { git = "https://github.com/encointer/pallets"
 pallet-encointer-ceremonies-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master"}
 pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "master"}
 pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master"}
-pallet-encointer-balances-rpc = { git = "https://github.com/encointer/pallets", branch = "master"}
-pallet-encointer-balances-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-bazaar-rpc = {git = "https://github.com/encointer/pallets", branch = "master"}
 pallet-encointer-bazaar-rpc-runtime-api = {git = "https://github.com/encointer/pallets", branch = "master"}
 
