@@ -1278,7 +1278,7 @@ fn get_demurrage_per_block(
 	cid: CommunityIdentifier,
 ) -> Demurrage {
 	let d: Option<Demurrage> = api
-		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
+		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
 		.unwrap();
 
 	match d {
