@@ -46,19 +46,45 @@ def register_alice_bob_charlie_and_go_to_assigning(ctx, cid: str):
               help='CommunityIdentifier. Default is Mediterranean test currency')
 @click.pass_context
 def register_alice_bob_charlie(ctx, cid: str):
-    client = ctx.obj['client']
-
-    _register_alice_bob_charlie(client, cid)
-
-
-def _register_alice_bob_charlie(client: Client, cid: str):
     click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
 
-    print(client.list_communities())
+    client = ctx.obj['client']
 
+    accounts = ['//Alice', '//Bob', '//Charlie']
+
+    register(accounts, client, cid, should_faucet=False)
+
+
+@cli.command()
+@click.option('--cid',
+              default='sqm1v79dF6b',
+              help='CommunityIdentifier. Default is Mediterranean test currency')
+@click.option('--should_faucet',
+              default=False,
+              help='If newbies should be fauceted')
+@click.pass_context
+def register_gina_harry_ian(ctx, cid: str, should_faucet: bool):
+    """ Registers accounts who aren't bootstrappers in the mediterranean test currency """
+    client = ctx.obj['client']
+
+    click.echo(f'Registering Gina, Harry and Ian for cid: {cid}')
+    click.echo(f'Fauceting the new accounts: {should_faucet}')
+
+    # newbies in the mediterranean test-currency
+    accounts = ['//Gina', '//Harry', '//Ian']
+
+    register(accounts, client, cid, should_faucet)
+
+
+def register(accounts, client: Client, cid: str, should_faucet=False):
+    print(client.list_communities())
     print(client.go_to_phase(CeremonyPhase.REGISTERING))
 
-    for acc in ['//Alice', '//Bob', '//Charlie']:
+    if should_faucet:
+        client.faucet(accounts, is_faucet=True)
+        client.await_block()
+
+    for acc in accounts:
         client.register_participant(acc, cid)
 
     print('Awaiting next block')
