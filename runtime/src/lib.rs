@@ -403,8 +403,6 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const MinSolarTripTimeS: u32 = 1; // [s]
-	pub const MaxSpeedMps: u32 = 1; // [m/s] suggested would be 83m/s
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
@@ -469,7 +467,7 @@ construct_runtime!(
 
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
-		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Event<T>} = 62,
+		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config, Event<T>} = 62,
 		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>} = 63,
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 	}
