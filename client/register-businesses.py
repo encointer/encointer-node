@@ -14,7 +14,7 @@ from py_client.helpers import purge_prompt, read_cid, mkdir_p, set_local_or_remo
 BUSINESSES_PATH = './test-data/bazaar/businesses'
 OFFERINGS_PATH = './test-data/bazaar/offerings'
 
-ICON_PATH = './test-data/assets/community_icon.png'
+ICON_PATH = './test-data/assets/icons/community_icon.png'
 
 global IPFS_LOCAL
 
