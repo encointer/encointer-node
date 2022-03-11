@@ -1133,11 +1133,13 @@ fn listen(matches: &ArgMatches<'_>) {
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
 								pallet_encointer_ceremonies::Event::ParticipantRegistered(
+									cid,
+									participant_type,
 									accountid,
 								) => {
 									println!(
-										"Participant registered for ceremony: {:?}",
-										accountid
+										"Participant registered as {:?}, for cid: {:?}, account: {}, ",
+										participant_type, cid, accountid
 									);
 								},
 								_ => println!("Unsupported EncointerCommunities event"),
@@ -1149,6 +1151,9 @@ fn listen(matches: &ArgMatches<'_>) {
 							match &ee {
 								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
+								},
+								pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
+									println!("Ceremony schedule was pushed by one day");
 								},
 							}
 						},
@@ -1273,7 +1278,7 @@ fn get_demurrage_per_block(
 	cid: CommunityIdentifier,
 ) -> Demurrage {
 	let d: Option<Demurrage> = api
-		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
+		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
 		.unwrap();
 
 	match d {
@@ -1592,7 +1597,8 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 = api
-		.get_constant("EncointerCeremonies", "EndorsementTicketsPerBootstrapper")
+		.get_storage_value("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
+		.unwrap()
 		.unwrap();
 
 	// prepare closure to make below call more readable.

@@ -81,7 +81,7 @@ ipfs daemon
 ./register-businesses.py --ipfs-local
 ```
 
-In IPFS, the community icons and data of businesses and offerings are stored.
+In IPFS, the community assets and data of businesses and offerings are stored.
 
 You can cat/get the data stored in ipfs locally:
 ```
