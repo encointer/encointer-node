@@ -5,6 +5,7 @@ from py_client.client import Client
 from py_client.ipfs import Ipfs
 from py_client.helpers import read_cid
 
+# this is not the community icon, but the businesses
 ICON_PATH = './test-data/icons/community_icon.png'
 BUSINESSES_PATH = './test-data/bazaar/businesses'
 OFFERINGS_PATH = './test-data/bazaar/offerings'
