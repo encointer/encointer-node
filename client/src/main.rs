@@ -38,8 +38,8 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation, ParticipantIndexType,
-		ProofOfAttendance, Reputation,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
+		ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
 	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
 	fixed::transcendental::{exp, ln},
@@ -74,7 +74,7 @@ mod exit_code {
 	pub const WRONG_PHASE: i32 = 50;
 	pub const FEE_PAYMENT_FAILED: i32 = 51;
 	pub const INVALID_REPUTATION: i32 = 52;
-    pub const RPC_ERROR: i32 = 60;
+	pub const RPC_ERROR: i32 = 60;
 }
 
 fn main() {
