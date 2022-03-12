@@ -74,6 +74,7 @@ mod exit_code {
 	pub const WRONG_PHASE: i32 = 50;
 	pub const FEE_PAYMENT_FAILED: i32 = 51;
 	pub const INVALID_REPUTATION: i32 = 52;
+    pub const RPC_ERROR: i32 = 60;
 }
 
 fn main() {
@@ -244,23 +245,6 @@ fn main() {
                     Ok(())
                 }),
         )
-        .add_cmd(
-            Command::new("reputation")
-                .description("List reputation history for an account")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                        .account_arg()})
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let account = matches.account_arg().unwrap();
-                    let account_id = get_accountid_from_str(account);
-                    let reputation = get_reputation_history(&api, &account_id);
-                    // only print plain offerings to be able to parse them in python scripts
-                    println!("{:?}", reputation);
-                    Ok(())
-                }),
-        )
-
         .add_cmd(
             Command::new("transfer")
                 .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
@@ -958,9 +942,14 @@ fn main() {
                     let api = get_chain_api(matches);
                     let account = matches.account_arg().unwrap();
                     let account_id = get_accountid_from_str(account);
-                    let reputation = get_reputation_history(&api, &account_id);
-                    // only print plain offerings to be able to parse them in python scripts
-                    println!("{:?}", reputation);
+                    if let Some(reputation) = get_reputation_history(&api, &account_id) {
+                        for rep in reputation.iter() {
+                            println!("{}, {}, {:?}", rep.0, rep.1.community_identifier, rep.1.reputation);
+                        }
+                    } else {
+                        error!("could not fetch reputation over rpc");
+                        std::process::exit(exit_code::RPC_ERROR);
+                    }
                     Ok(())
                 }),
         )

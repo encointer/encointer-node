@@ -110,6 +110,16 @@ class Client:
             ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
+    def reputation(self, account):
+        ret = subprocess.run(self.cli + ["reputation", account], stdout=subprocess.PIPE)
+        ensure_clean_exit(ret.returncode)
+        reputation_history = []
+        lines = ret.stdout.decode("utf-8").splitlines()
+        while len(lines) > 0:
+            (cindex, cid, rep) = lines.pop(0).split(',')
+            reputation_history.append((cindex, cid, rep.strip().split('::')[1]))
+        return reputation_history
+
     def new_community(self, specfile):
         ret = subprocess.run(self.cli + ["new-community", specfile], stdout=subprocess.PIPE)
         ensure_clean_exit(ret.returncode)

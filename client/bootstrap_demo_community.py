@@ -115,11 +115,16 @@ def main(ipfs_local, client, port, spec_file):
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
 
-    if round(bal[0]) > 0:
-        print("tests passed")
-    else:
+    if not round(bal[0]) > 0:
         print("balance is wrong")
         exit(1)
+    rep = client.reputation(account1)
+    print(rep)
+    if not len(rep) > 0:
+        print("no reputation gained")
+        exit(1)
+
+    print("tests passed")
 
 
 if __name__ == '__main__':
