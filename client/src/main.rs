@@ -38,7 +38,7 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, ParticipantIndexType,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation, ParticipantIndexType,
 		ProofOfAttendance, Reputation,
 	},
 	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
@@ -1446,7 +1446,7 @@ fn get_offerings_for_business(
 fn get_reputation_history(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	account_id: &AccountId,
-) -> Option<Vec<(CommunityIdentifier, Reputation)>> {
+) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
 	let req = json!({
 		"method": "ceremonies_getReputations",
 		"params": vec![account_id],
