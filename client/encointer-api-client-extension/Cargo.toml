@@ -9,7 +9,7 @@ serde_json = { version = "1.0.79"}
 serde = { features = ["derive"], version = "1.0.132" }
 
 # encointer deps
-encointer-primitives = { git = "https://github.com/encointer/pallets", features = ["serde_derive"], branch = "master" }
+encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "master" }
 
 # scs deps
