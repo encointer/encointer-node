@@ -28,7 +28,7 @@ from py_client.communities import random_community_spec, COMMUNITY_SPECS_PATH
 from py_client.helpers import purge_prompt, read_cid, write_cid, set_local_or_remote_chain
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
     ParticipantAlreadyLinked
-from py_client.ipfs import Ipfs, ICONS_PATH
+from py_client.ipfs import Ipfs, ASSETS_PATH
 
 KEYSTORE_PATH = './my_keystore'
 NUMBER_OF_LOCATIONS = 10
@@ -58,7 +58,7 @@ def init(ctx):
     client = ctx['client']
     purge_keystore_prompt()
 
-    root_dir = os.path.realpath(ICONS_PATH)
+    root_dir = os.path.realpath(ASSETS_PATH)
     try:
         ipfs_cid = Ipfs.add_recursive(root_dir, ctx['ipfs_local'])
     except:

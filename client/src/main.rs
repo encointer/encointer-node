@@ -38,8 +38,8 @@ use encointer_primitives::{
 	balances::Demurrage,
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, ParticipantIndexType,
-		ProofOfAttendance, Reputation,
+		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
+		ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
 	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
 	fixed::transcendental::{exp, ln},
@@ -74,6 +74,7 @@ mod exit_code {
 	pub const WRONG_PHASE: i32 = 50;
 	pub const FEE_PAYMENT_FAILED: i32 = 51;
 	pub const INVALID_REPUTATION: i32 = 52;
+	pub const RPC_ERROR: i32 = 60;
 }
 
 fn main() {
@@ -244,23 +245,6 @@ fn main() {
                     Ok(())
                 }),
         )
-        .add_cmd(
-            Command::new("reputation")
-                .description("List reputation history for an account")
-                .options(|app| {
-                    app.setting(AppSettings::ColoredHelp)
-                        .account_arg()})
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
-                    let account = matches.account_arg().unwrap();
-                    let account_id = get_accountid_from_str(account);
-                    let reputation = get_reputation_history(&api, &account_id);
-                    // only print plain offerings to be able to parse them in python scripts
-                    println!("{:?}", reputation);
-                    Ok(())
-                }),
-        )
-
         .add_cmd(
             Command::new("transfer")
                 .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
@@ -953,9 +937,14 @@ fn main() {
                     let api = get_chain_api(matches);
                     let account = matches.account_arg().unwrap();
                     let account_id = get_accountid_from_str(account);
-                    let reputation = get_reputation_history(&api, &account_id);
-                    // only print plain offerings to be able to parse them in python scripts
-                    println!("{:?}", reputation);
+                    if let Some(reputation) = get_reputation_history(&api, &account_id) {
+                        for rep in reputation.iter() {
+                            println!("{}, {}, {:?}", rep.0, rep.1.community_identifier, rep.1.reputation);
+                        }
+                    } else {
+                        error!("could not fetch reputation over rpc");
+                        std::process::exit(exit_code::RPC_ERROR);
+                    }
                     Ok(())
                 }),
         )
@@ -1128,11 +1117,13 @@ fn listen(matches: &ArgMatches<'_>) {
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
 								pallet_encointer_ceremonies::Event::ParticipantRegistered(
+									cid,
+									participant_type,
 									accountid,
 								) => {
 									println!(
-										"Participant registered for ceremony: {:?}",
-										accountid
+										"Participant registered as {:?}, for cid: {:?}, account: {}, ",
+										participant_type, cid, accountid
 									);
 								},
 								_ => println!("Unsupported EncointerCommunities event"),
@@ -1144,6 +1135,9 @@ fn listen(matches: &ArgMatches<'_>) {
 							match &ee {
 								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
 									println!("Phase changed to: {:?}", phase);
+								},
+								pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
+									println!("Ceremony schedule was pushed by one day");
 								},
 							}
 						},
@@ -1268,7 +1262,7 @@ fn get_demurrage_per_block(
 	cid: CommunityIdentifier,
 ) -> Demurrage {
 	let d: Option<Demurrage> = api
-		.get_storage_map("EncointerCommunities", "DemurragePerBlock", cid, None)
+		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
 		.unwrap();
 
 	match d {
@@ -1436,7 +1430,7 @@ fn get_offerings_for_business(
 fn get_reputation_history(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	account_id: &AccountId,
-) -> Option<Vec<(CommunityIdentifier, Reputation)>> {
+) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
 	let req = json!({
 		"method": "ceremonies_getReputations",
 		"params": vec![account_id],
@@ -1587,7 +1581,8 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 = api
-		.get_constant("EncointerCeremonies", "EndorsementTicketsPerBootstrapper")
+		.get_storage_value("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
+		.unwrap()
 		.unwrap();
 
 	// prepare closure to make below call more readable.

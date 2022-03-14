@@ -1,7 +1,7 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
-	EncointerCeremoniesConfig, EncointerSchedulerConfig, GenesisConfig, GrandpaConfig, Signature,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
+	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};
@@ -184,6 +184,14 @@ fn testnet_genesis(
 			ceremony_reward: BalanceType::from_num(1),
 			time_tolerance: 600_000,   // +-10min
 			location_tolerance: 1_000, // [m]
+			endorsement_tickets_per_bootstrapper: 5,
+			reputation_lifetime: 337,   // 7.02 days at 30min ceremony cycle
+			inactivity_timeout: 168500, // 10 years at 30min ceremony cycle
+			meetup_time_offset: 0,
+		},
+		encointer_communities: EncointerCommunitiesConfig {
+			min_solar_trip_time_s: 1, // [s]
+			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
 		},
 	}
 }

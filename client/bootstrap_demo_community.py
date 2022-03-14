@@ -16,7 +16,7 @@ import click
 
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
-from py_client.ipfs import Ipfs, ICONS_PATH
+from py_client.ipfs import Ipfs, ASSETS_PATH
 
 account1 = '//Alice'
 account2 = '//Bob'
@@ -43,7 +43,7 @@ def perform_meetup(client, cid):
 def update_spec_with_cid(file, cid):
     with open(file, 'r+') as spec_json:
         spec = json.load(spec_json)
-        spec['community']['meta']['icons'] = cid
+        spec['community']['meta']['assets'] = cid
         print(spec)
         # go to beginning of the file to overwrite
         spec_json.seek(0)
@@ -66,8 +66,8 @@ def main(ipfs_local, client, port, spec_file):
     else:
         exit(1)
 
-    print('Uploading icons to ipfs')
-    root_dir = os.path.realpath(ICONS_PATH)
+    print('Uploading assets to ipfs')
+    root_dir = os.path.realpath(ASSETS_PATH)
     ipfs_cid = Ipfs.add_recursive(root_dir, ipfs_local)
 
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
@@ -115,11 +115,16 @@ def main(ipfs_local, client, port, spec_file):
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
 
-    if round(bal[0]) > 0:
-        print("tests passed")
-    else:
+    if not round(bal[0]) > 0:
         print("balance is wrong")
         exit(1)
+    rep = client.reputation(account1)
+    print(rep)
+    if not len(rep) > 0:
+        print("no reputation gained")
+        exit(1)
+
+    print("tests passed")
 
 
 if __name__ == '__main__':

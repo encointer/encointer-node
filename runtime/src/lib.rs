@@ -55,7 +55,7 @@ pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
 pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
-	ceremonies::{CommunityCeremony, Reputation},
+	ceremonies::{CeremonyIndexType, CommunityReputation},
 	common::PalletString,
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
@@ -120,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 12,
+	spec_version: 13,
 	impl_version: 0,
 
 	apis: RUNTIME_API_VERSIONS,
@@ -403,12 +403,10 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const ReputationLifetime: u32 = 337; // 7.02 days at 30min ceremony cycle
-	pub const EndorsementTicketsPerBootstrapper: u8 = 5;
-	pub const MinSolarTripTimeS: u32 = 1; // [s]
-	pub const MaxSpeedMps: u32 = 1; // [m/s] suggested would be 83m/s
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
-	pub const InactivityTimeout: u32 = 168500; // 10 years at 30min ceremony cycle
+	pub const MeetupSizeTarget: u64 = 10;
+	pub const MeetupMinSize: u64 = 3;
+	pub const MeetupNewbieLimitDivider: u64 = 4;
 }
 
 impl pallet_encointer_scheduler::Config for Runtime {
@@ -420,20 +418,19 @@ impl pallet_encointer_scheduler::Config for Runtime {
 
 impl pallet_encointer_ceremonies::Config for Runtime {
 	type Event = Event;
+	type CeremonyMaster = EnsureRoot<AccountId>;
 	type Public = <MultiSignature as Verify>::Signer;
 	type Signature = MultiSignature;
 	// Note: in production networks it is advised to use babes randomness source.
 	// But we have low security requirements here, so it should be fine.
 	type RandomnessSource = pallet_randomness_collective_flip::Pallet<Runtime>;
-	type ReputationLifetime = ReputationLifetime;
-	type EndorsementTicketsPerBootstrapper = EndorsementTicketsPerBootstrapper;
-	type InactivityTimeout = InactivityTimeout;
+	type MeetupSizeTarget = MeetupSizeTarget;
+	type MeetupMinSize = MeetupMinSize;
+	type MeetupNewbieLimitDivider = MeetupNewbieLimitDivider;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
-	type MinSolarTripTimeS = MinSolarTripTimeS;
-	type MaxSpeedMps = MaxSpeedMps;
 	type CommunityMaster = EnsureRoot<AccountId>;
 }
 
@@ -470,7 +467,7 @@ construct_runtime!(
 
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
-		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Event<T>} = 62,
+		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config, Event<T>} = 62,
 		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>} = 63,
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 	}
@@ -638,19 +635,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_encointer_balances_rpc_runtime_api::BalancesApi<Block, AccountId, BlockNumber> for Runtime {
-		fn get_all_balances(account: &AccountId) -> Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)> {
-			EncointerBalances::get_all_balances(account)
-		}
-	}
-
 	impl pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId> for Runtime {
-		fn get_reputations() -> Vec<(CommunityCeremony, AccountId, Reputation)> {
-			EncointerCeremonies::get_reputations()
+		fn get_reputations(account: &AccountId) -> Vec<(CeremonyIndexType, CommunityReputation)> {
+			EncointerCeremonies::get_reputations(&account)
 		}
 	}
 
-	impl pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block> for Runtime {
+	impl pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block, AccountId, BlockNumber> for Runtime {
+		fn get_all_balances(account: &AccountId) -> Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)> {
+			EncointerCommunities::get_all_balances(account)
+		}
+
 		fn get_cids() -> Vec<CommunityIdentifier> {
 			EncointerCommunities::get_cids()
 		}

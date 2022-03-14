@@ -74,6 +74,8 @@ pub trait CeremoniesApi {
 		meetup_index: MeetupIndexType,
 	) -> Result<Vec<AccountId>>;
 
+	fn get_meetup_time_offset(&self) -> Result<Option<Moment>>;
+
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
 
 	fn get_community_ceremony_stats(
@@ -296,10 +298,15 @@ impl CeremoniesApi for Api {
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
 	}
 
+	fn get_meetup_time_offset(&self) -> Result<Option<Moment>> {
+		self.get_storage_value(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
+	}
+
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {
 		let attesting_start = self.get_start_of_attesting_phase()?;
+		let offset = self.get_meetup_time_offset()?.unwrap_or(0);
 
-		Ok(meetup_time(location, attesting_start, one_day))
+		Ok(meetup_time(location, attesting_start, one_day, offset))
 	}
 
 	fn get_community_ceremony_stats(
