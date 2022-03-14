@@ -622,9 +622,8 @@ fn main() {
 
                             let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
 
-                            // Todo: is waiting for: https://github.com/encointer/pallets/issues/167
-                            // info!("{}", serde_json::to_string_pretty(&stats).unwrap());
-                            info!("{:?}", stats);
+                            // serialization prints the the account id better than `debug`
+                            info!("{}", serde_json::to_string_pretty(&stats).unwrap());
 
                             for meetup in stats.meetups.iter() {
                                 if !meetup.registrations.is_empty() {
