@@ -360,9 +360,7 @@ fn get_bootstrapper_or_reputable(
 	Ok(None)
 }
 
-// Todo: is waiting for: https://github.com/encointer/pallets/issues/167
-// #[derive(Debug, Serialize, Deserialize)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CommunityCeremonyStats {
 	pub community_ceremony: CommunityCeremony,
 	pub assignment: Assignment,
