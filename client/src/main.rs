@@ -622,9 +622,6 @@ fn main() {
 
                             let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
 
-                            // serialization prints the the account id better than `debug`
-                            info!("{}", serde_json::to_string_pretty(&stats).unwrap());
-
                             for meetup in stats.meetups.iter() {
                                 if !meetup.registrations.is_empty() {
                                     println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
@@ -636,6 +633,35 @@ fn main() {
                                 }
                             }
 
+                            Ok(())
+                        }
+                    ).unwrap();
+
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("print-ceremony-stats")
+                .description("pretty prints all information for a community ceremony")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .ceremony_index_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+
+                            let current_ceremony_index = get_ceremony_index(&api);
+
+                            let cindex = matches.ceremony_index_arg()
+                                .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
+
+                            let community_ceremony = (cid, cindex);
+
+                            let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
+
+                            // serialization prints the the account id better than `debug`
+                            println!("{}", serde_json::to_string_pretty(&stats).unwrap());
                             Ok(())
                         }
                     ).unwrap();
