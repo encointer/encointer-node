@@ -16,6 +16,17 @@ and init and grow a community
 on testnet Gesell, execute the current ceremony phase (it does not advance the phase).
    ./bot-community.py --port 9945 execute-current-phase
 
+
+NOTE: There are a few extrinsic errors, which are (sometimes) ok to be thrown:
+    * Only ok in the first ceremony:
+        Module(ModuleError { index: 61, error: 1, message: None }) DispatchInfo { weight: 10000, class: DispatchClass::Normal, pays_fee: Pays::Yes }
+        Meaning: Tried to claim rewards when account was not registered. This happens in the first ceremony because no previous meetup took place.
+
+    * Always Ok:
+        Module(ModuleError { index: 61, error: 21, message: None }) DispatchInfo { weight: 10000, class: DispatchClass::Normal, pays_fee: Pays::Yes }
+        Meaning: Reward was already claimed. This happens because only one participant needs to claim the reward for the whole meetup, afterwards
+        above error is thrown.
+
 """
 import os
 
