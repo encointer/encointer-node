@@ -623,6 +623,10 @@ fn main() {
                             let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
 
                             for meetup in stats.meetups.iter() {
+                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, meetup.index, meetup.location);
+
+                                println!("MeetupRegistry[{:?}, {}] meeting time is {:?}", &community_ceremony, meetup.index, meetup.time);
+
                                 if !meetup.registrations.is_empty() {
                                     println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
                                     for (participant, _registration) in meetup.registrations.iter() {
