@@ -361,6 +361,7 @@ fn get_bootstrapper_or_reputable(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CommunityCeremonyStats {
 	pub community_ceremony: CommunityCeremony,
 	pub assignment: Assignment,
@@ -382,6 +383,7 @@ impl CommunityCeremonyStats {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Meetup {
 	pub index: MeetupIndexType,
 	pub location: Location,
@@ -401,6 +403,7 @@ impl Meetup {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Registration {
 	pub index: ParticipantIndexType,
 	pub registration_type: RegistrationType,
