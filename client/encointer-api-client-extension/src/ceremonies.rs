@@ -9,9 +9,13 @@ use encointer_primitives::{
 	communities::Location,
 };
 use log::warn;
+use serde::{Deserialize, Serialize};
 use substrate_api_client::{AccountId, ApiClientError, Moment};
 
 pub const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
+
+// same as in runtime, but we did not want to import the runtime here.
+pub const ONE_DAY: Moment = 86_400_000;
 
 pub trait CeremoniesApi {
 	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
@@ -44,6 +48,12 @@ pub trait CeremoniesApi {
 		p: &ParticipantIndexType,
 	) -> Result<Option<AccountId>>;
 
+	fn get_registration(
+		&self,
+		community_ceremony: &CommunityCeremony,
+		account_id: &AccountId,
+	) -> Result<Registration>;
+
 	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType>;
 
 	fn get_meetup_index(
@@ -67,6 +77,11 @@ pub trait CeremoniesApi {
 	fn get_meetup_time_offset(&self) -> Result<Option<Moment>>;
 
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
+
+	fn get_community_ceremony_stats(
+		&self,
+		community_ceremony: CommunityCeremony,
+	) -> Result<CommunityCeremonyStats>;
 }
 
 impl CeremoniesApi for Api {
@@ -139,6 +154,36 @@ impl CeremoniesApi for Api {
 		)
 	}
 
+	fn get_registration(
+		&self,
+		community_ceremony: &CommunityCeremony,
+		account_id: &AccountId,
+	) -> Result<Registration> {
+		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
+			self.get_storage_double_map(
+				ENCOINTER_CEREMONIES,
+				storage_key,
+				community_ceremony,
+				&account_id,
+				None,
+			)
+		};
+
+		if let Some(p_index) = index_query("BootstrapperIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper))
+		} else if let Some(p_index) = index_query("ReputableIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Reputable))
+		} else if let Some(p_index) = index_query("EndorseeIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Endorsee))
+		} else if let Some(p_index) = index_query("NewbieIndex")? {
+			return Ok(Registration::new(p_index, RegistrationType::Newbie))
+		}
+
+		Err(ApiClientError::Other(
+			format!("Could not get participant index for {:?}", account_id).into(),
+		))
+	}
+
 	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType> {
 		Ok(self
 			.get_storage_map(ENCOINTER_CEREMONIES, "MeetupCount", community_ceremony, None)?
@@ -163,34 +208,26 @@ impl CeremoniesApi for Api {
 		let bootstrapper_count = || -> Result<ParticipantIndexType> {
 			Ok(self.get_assignment_counts(community_ceremony)?.bootstrappers)
 		};
-		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
-			self.get_storage_double_map(
-				ENCOINTER_CEREMONIES,
-				storage_key,
-				community_ceremony,
-				account_id,
-				None,
-			)
-		};
+
+		let registration = self.get_registration(community_ceremony, account_id)?;
+
 		let meetup_index_fn =
 			|p_index, assignment_params| meetup_index(p_index, assignment_params, meetup_count);
 
 		// Finally get the meetup index
 
-		if let Some(p_index) = index_query("BootstrapperIndex")? {
-			return Ok(meetup_index_fn(p_index - 1, assignments.bootstrappers_reputables))
-		} else if let Some(p_index) = index_query("ReputableIndex")? {
-			return Ok(meetup_index_fn(
-				p_index - 1 + bootstrapper_count()?,
+		match registration.registration_type {
+			RegistrationType::Bootstrapper =>
+				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables)),
+			RegistrationType::Reputable => Ok(meetup_index_fn(
+				registration.index - 1 + bootstrapper_count()?,
 				assignments.bootstrappers_reputables,
-			))
-		} else if let Some(p_index) = index_query("EndorseeIndex")? {
-			return Ok(meetup_index_fn(p_index - 1, assignments.endorsees))
-		} else if let Some(p_index) = index_query("NewbieIndex")? {
-			return Ok(meetup_index_fn(p_index - 1, assignments.newbies))
+			)),
+			RegistrationType::Endorsee =>
+				Ok(meetup_index_fn(registration.index - 1, assignments.endorsees)),
+			RegistrationType::Newbie =>
+				Ok(meetup_index_fn(registration.index - 1, assignments.newbies)),
 		}
-
-		Ok(None)
 	}
 
 	fn get_meetup_location(
@@ -271,6 +308,41 @@ impl CeremoniesApi for Api {
 
 		Ok(meetup_time(location, attesting_start, one_day, offset))
 	}
+
+	fn get_community_ceremony_stats(
+		&self,
+		community_ceremony: CommunityCeremony,
+	) -> Result<CommunityCeremonyStats> {
+		let assignment = self.get_assignments(&community_ceremony)?;
+		let assignment_count = self.get_assignment_counts(&community_ceremony)?;
+		let mcount = self.get_meetup_count(&community_ceremony)?;
+
+		let mut meetups = vec![];
+
+		// get stats of every meetup
+		for m in 1..=mcount {
+			let m_location = self.get_meetup_location(&community_ceremony, m)?.unwrap();
+			let time = self.get_meetup_time(m_location, ONE_DAY)?;
+			let participants = self.get_meetup_participants(&community_ceremony, m)?;
+
+			let mut registrations = vec![];
+
+			for p in participants.into_iter() {
+				let r = self.get_registration(&community_ceremony, &p)?;
+				registrations.push((p, r))
+			}
+
+			meetups.push(Meetup::new(m, m_location, time, registrations))
+		}
+
+		Ok(CommunityCeremonyStats::new(
+			community_ceremony,
+			assignment,
+			assignment_count,
+			mcount,
+			meetups,
+		))
+	}
 }
 
 fn get_bootstrapper_or_reputable(
@@ -286,4 +358,67 @@ fn get_bootstrapper_or_reputable(
 	}
 
 	Ok(None)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CommunityCeremonyStats {
+	pub community_ceremony: CommunityCeremony,
+	pub assignment: Assignment,
+	pub assignment_count: AssignmentCount,
+	pub meetup_count: MeetupIndexType,
+	pub meetups: Vec<Meetup>,
+}
+
+impl CommunityCeremonyStats {
+	pub fn new(
+		community_ceremony: CommunityCeremony,
+		assignment: Assignment,
+		assignment_count: AssignmentCount,
+		meetup_count: MeetupIndexType,
+		meetups: Vec<Meetup>,
+	) -> Self {
+		Self { community_ceremony, assignment, assignment_count, meetup_count, meetups }
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Meetup {
+	pub index: MeetupIndexType,
+	pub location: Location,
+	pub time: Moment,
+	pub registrations: Vec<(AccountId, Registration)>,
+}
+
+impl Meetup {
+	pub fn new(
+		index: MeetupIndexType,
+		location: Location,
+		time: Moment,
+		registrations: Vec<(AccountId, Registration)>,
+	) -> Self {
+		Self { index, location, time, registrations }
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Registration {
+	pub index: ParticipantIndexType,
+	pub registration_type: RegistrationType,
+}
+
+impl Registration {
+	pub fn new(index: ParticipantIndexType, registration_type: RegistrationType) -> Self {
+		Self { index, registration_type }
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum RegistrationType {
+	Bootstrapper,
+	Reputable,
+	Endorsee,
+	Newbie,
 }
