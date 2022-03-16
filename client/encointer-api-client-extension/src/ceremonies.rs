@@ -4,7 +4,8 @@ use encointer_ceremonies_assignment::{
 };
 use encointer_primitives::{
 	ceremonies::{
-		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, ParticipantIndexType,
+		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, MeetupTimeOffsetType,
+		ParticipantIndexType
 	},
 	communities::Location,
 };
@@ -64,7 +65,7 @@ pub trait CeremoniesApi {
 		meetup_index: MeetupIndexType,
 	) -> Result<Vec<AccountId>>;
 
-	fn get_meetup_time_offset(&self) -> Result<Option<Moment>>;
+	fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>>;
 
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
 }
@@ -261,7 +262,7 @@ impl CeremoniesApi for Api {
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
 	}
 
-	fn get_meetup_time_offset(&self) -> Result<Option<Moment>> {
+	fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
 		self.get_storage_value(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
 	}
 
