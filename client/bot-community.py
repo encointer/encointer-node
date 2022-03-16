@@ -235,7 +235,8 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
 
 def get_newbie_amount(current_population: int):
     return min(
-        floor(current_population / 4.0),
+        # register more than can participate, to test restrictions
+        floor(current_population / 1.5),
         MAX_POPULATION - current_population
     )
 
@@ -271,7 +272,7 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
         print(f'Added endorsees to community: {len(endorsees)}')
 
 
-    newbies = client.create_accounts(get_newbie_amount(current_community_size))
+    newbies = client.create_accounts(get_newbie_amount(current_community_size + len(endorsees)))
 
     print(f'Add newbies to community {len(newbies)}')
 

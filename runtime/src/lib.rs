@@ -120,7 +120,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 13,
+	spec_version: 14,
 	impl_version: 0,
 
 	apis: RUNTIME_API_VERSIONS,
@@ -406,7 +406,7 @@ parameter_types! {
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
-	pub const MeetupNewbieLimitDivider: u64 = 4;
+	pub const MeetupNewbieLimitDivider: u64 = 2;
 }
 
 impl pallet_encointer_scheduler::Config for Runtime {
