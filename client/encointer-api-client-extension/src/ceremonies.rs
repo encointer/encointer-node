@@ -5,7 +5,7 @@ use encointer_ceremonies_assignment::{
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, MeetupTimeOffsetType,
-		ParticipantIndexType
+		ParticipantIndexType,
 	},
 	communities::Location,
 };
