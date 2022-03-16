@@ -620,28 +620,52 @@ fn main() {
 
                             println!("listing meetups for cid {} and ceremony nr {}", cid, cindex);
 
-                            let mcount = api.get_meetup_count(&community_ceremony)?;
-                            println!("number of meetups assigned:  {}", mcount);
+                            let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
 
-                            for m in 1..=mcount {
-                                let m_location = api.get_meetup_location(&community_ceremony, m)?.unwrap();
+                            for meetup in stats.meetups.iter() {
+                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, meetup.index, meetup.location);
 
-                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, m, m_location);
+                                println!("MeetupRegistry[{:?}, {}] meeting time is {:?}", &community_ceremony, meetup.index, meetup.time);
 
-                                println!("MeetupRegistry[{}, {}] meeting time is {:?}", cindex, m, api.get_meetup_time(m_location, ONE_DAY));
-
-                                let participants =  api.get_meetup_participants(&community_ceremony, m)?;
-
-                                if !participants.is_empty() {
-                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, m);
-                                    for p in participants.iter() {
-                                        println!("   {}", p);
+                                if !meetup.registrations.is_empty() {
+                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
+                                    for (participant, _registration) in meetup.registrations.iter() {
+                                        println!("   {}", participant);
                                     }
                                 } else {
-                                    println!("MeetupRegistry[{}, {}] EMPTY", cindex, m);
+                                    println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
                                 }
                             }
 
+                            Ok(())
+                        }
+                    ).unwrap();
+
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("print-ceremony-stats")
+                .description("pretty prints all information for a community ceremony")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .ceremony_index_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    extract_and_execute(
+                        &matches, |api, cid| -> ApiResult<()>{
+
+                            let current_ceremony_index = get_ceremony_index(&api);
+
+                            let cindex = matches.ceremony_index_arg()
+                                .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
+
+                            let community_ceremony = (cid, cindex);
+
+                            let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
+
+                            // serialization prints the the account id better than `debug`
+                            println!("{}", serde_json::to_string_pretty(&stats).unwrap());
                             Ok(())
                         }
                     ).unwrap();

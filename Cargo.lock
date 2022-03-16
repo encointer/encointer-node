@@ -1381,6 +1381,7 @@ dependencies = [
  "encointer-ceremonies-assignment",
  "encointer-primitives",
  "log",
+ "serde",
  "serde_json",
  "sp-core",
  "substrate-api-client",
@@ -1473,7 +1474,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "0.8.13"
+version = "0.8.14"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
