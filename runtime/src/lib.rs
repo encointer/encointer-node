@@ -516,6 +516,7 @@ mod benches {
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
 		[pallet_encointer_balances, EncointerBalances]
+		[pallet_encointer_bazaar, EncointerBazaar]
 		[pallet_encointer_communities, EncointerCommunities]
 	);
 }

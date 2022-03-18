@@ -115,5 +115,6 @@ runtime-benchmarks = [
     "sp-runtime/runtime-benchmarks",
     # encointer crates
     "pallet-encointer-balances/runtime-benchmarks",
+    "pallet-encointer-bazaar/runtime-benchmarks",
     "pallet-encointer-communities/runtime-benchmarks",
 ]
