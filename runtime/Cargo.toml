@@ -116,5 +116,7 @@ runtime-benchmarks = [
     # encointer crates
     "pallet-encointer-balances/runtime-benchmarks",
     "pallet-encointer-bazaar/runtime-benchmarks",
+    "pallet-encointer-ceremonies/runtime-benchmarks",
     "pallet-encointer-communities/runtime-benchmarks",
+    "pallet-encointer-scheduler/runtime-benchmarks",
 ]
