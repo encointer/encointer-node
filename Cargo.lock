@@ -4146,7 +4146,9 @@ name = "pallet-encointer-balances"
 version = "0.8.1"
 source = "git+https://github.com/encointer/pallets?branch=master#e389cb4b536134dacb63839029e0098044146331"
 dependencies = [
+ "approx",
  "encointer-primitives",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",

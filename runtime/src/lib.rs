@@ -515,6 +515,7 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
+		[pallet_encointer_balances, EncointerBalances]
 		[pallet_encointer_communities, EncointerCommunities]
 	);
 }
