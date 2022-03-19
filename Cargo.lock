@@ -1400,7 +1400,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-client-notee"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "clap 2.34.0",
  "clap-nested",
@@ -1430,7 +1430,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "clap 3.1.6",
  "encointer-node-notee-runtime",
