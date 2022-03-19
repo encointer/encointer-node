@@ -332,12 +332,7 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-
-	// Aura does not like that we play with the timestamps in the benchmarks.
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	type OnTimestampSet = (Aura, EncointerScheduler);
-	#[cfg(feature = "runtime-benchmarks")]
-	type OnTimestampSet = EncointerScheduler;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
