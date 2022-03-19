@@ -416,6 +416,7 @@ impl pallet_encointer_scheduler::Config for Runtime {
 	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Pallet<Runtime>;
 	type MomentsPerDay = MomentsPerDay;
 	type CeremonyMaster = EnsureRoot<AccountId>;
+	type WeightInfo = weights::pallet_encointer_scheduler::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_ceremonies::Config for Runtime {
