@@ -435,6 +435,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
 	type CommunityMaster = EnsureRoot<AccountId>;
+	type WeightInfo = weights::pallet_encointer_communities::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_balances::Config for Runtime {
