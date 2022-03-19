@@ -62,6 +62,8 @@ pub use encointer_primitives::{
 };
 use frame_system::EnsureRoot;
 
+mod weights;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -427,6 +429,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	type MeetupSizeTarget = MeetupSizeTarget;
 	type MeetupMinSize = MeetupMinSize;
 	type MeetupNewbieLimitDivider = MeetupNewbieLimitDivider;
+	type WeightInfo = weights::pallet_encointer_ceremonies::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
@@ -437,10 +440,12 @@ impl pallet_encointer_communities::Config for Runtime {
 impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
 	type DefaultDemurrage = DefaultDemurrage;
+	type WeightInfo = weights::pallet_encointer_balances::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_bazaar::Config for Runtime {
 	type Event = Event;
+	type WeightInfo = weights::pallet_encointer_bazaar::WeightInfo<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
