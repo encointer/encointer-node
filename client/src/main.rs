@@ -1080,6 +1080,9 @@ fn main() {
                     let from_cindex = into_effective_cindex(from_cindex_arg, current_ceremony_index);
                     let to_cindex = into_effective_cindex(to_cindex_arg, current_ceremony_index);
 
+                    if from_cindex > to_cindex {
+                        panic!("'from' <= 'to' ceremony index violated");
+                    }
                     let cid = verify_cid(&api,
                                          matches
                                              .cid_arg()
@@ -1087,7 +1090,7 @@ fn main() {
                     );
                     println!("purging ceremony index range [{}  {}] for community {}", from_cindex, to_cindex, cid);
 
-                    let calls: Vec<_> = (from_cindex..to_cindex+1)
+                    let calls: Vec<_> = (from_cindex..=to_cindex)
                         .map(|idx| compose_call!(
                             api.metadata,
                             "EncointerCeremonies",
