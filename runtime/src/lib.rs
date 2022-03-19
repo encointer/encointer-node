@@ -62,6 +62,8 @@ pub use encointer_primitives::{
 };
 use frame_system::EnsureRoot;
 
+mod weights;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -221,7 +223,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = ();
+	type WeightInfo = pallet_proxy::weights::SubstrateWeight<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
@@ -285,7 +287,7 @@ impl frame_system::Config for Runtime {
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = frame_system::weights::SubstrateWeight<Runtime>;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The set code logic, just the default since we're not a parachain.
@@ -321,7 +323,7 @@ impl pallet_grandpa::Config for Runtime {
 
 	type HandleEquivocation = ();
 
-	type WeightInfo = ();
+	type WeightInfo = (); // grandpa has default non-zero implementations for `()`
 	type MaxAuthorities = MaxAuthorities;
 }
 
@@ -334,7 +336,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = (Aura, EncointerScheduler);
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -414,6 +416,7 @@ impl pallet_encointer_scheduler::Config for Runtime {
 	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Pallet<Runtime>;
 	type MomentsPerDay = MomentsPerDay;
 	type CeremonyMaster = EnsureRoot<AccountId>;
+	type WeightInfo = weights::pallet_encointer_scheduler::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_ceremonies::Config for Runtime {
@@ -427,20 +430,24 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	type MeetupSizeTarget = MeetupSizeTarget;
 	type MeetupMinSize = MeetupMinSize;
 	type MeetupNewbieLimitDivider = MeetupNewbieLimitDivider;
+	type WeightInfo = weights::pallet_encointer_ceremonies::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
 	type CommunityMaster = EnsureRoot<AccountId>;
+	type WeightInfo = weights::pallet_encointer_communities::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
 	type DefaultDemurrage = DefaultDemurrage;
+	type WeightInfo = weights::pallet_encointer_balances::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_bazaar::Config for Runtime {
 	type Event = Event;
+	type WeightInfo = weights::pallet_encointer_bazaar::WeightInfo<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -503,6 +510,25 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 >;
+
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benches {
+	define_benchmarks!(
+		[frame_benchmarking, BaselineBench::<Runtime>]
+		[frame_system, SystemBench::<Runtime>]
+		[pallet_balances, Balances]
+		[pallet_timestamp, Timestamp]
+		[pallet_encointer_balances, EncointerBalances]
+		[pallet_encointer_bazaar, EncointerBazaar]
+		[pallet_encointer_ceremonies, EncointerCeremonies]
+		[pallet_encointer_communities, EncointerCommunities]
+		[pallet_encointer_scheduler, EncointerScheduler]
+	);
+}
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -676,18 +702,13 @@ impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, baseline, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-
-			list_benchmark!(list, extra, frame_benchmarking, BaselineBench::<Runtime>);
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_encointer_communities, EncointerCommunities);
+			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -697,7 +718,7 @@ impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, TrackedStorageKey};
 
 			use frame_system_benchmarking::Pallet as SystemBench;
 			use baseline::Pallet as BaselineBench;
@@ -720,12 +741,7 @@ impl_runtime_apis! {
 
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
-
-			add_benchmark!(params, batches, frame_benchmarking, BaselineBench::<Runtime>);
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_encointer_communities, EncointerCommunities);
+			add_benchmarks!(params, batches);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
