@@ -1059,6 +1059,68 @@ fn main() {
                     Ok(())
                 }),
         )
+        .add_cmd(
+                Command::new("purge-community-ceremony")
+                    .description("purge all history within the provided ceremony index range for the specified community")
+                    .options(|app| {
+                        app.setting(AppSettings::ColoredHelp)
+                            .from_cindex_arg()
+                            .to_cindex_arg()
+
+                    })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let sudoer = AccountKeyring::Alice.pair();
+                    let api = get_chain_api(matches).set_signer(sudoer);
+
+                    let current_ceremony_index = get_ceremony_index(&api);
+
+                    let from_cindex_arg = matches.from_cindex_arg().unwrap_or(0);
+                    let to_cindex_arg = matches.to_cindex_arg().unwrap_or(0);
+
+                    let from_cindex = into_effective_cindex(from_cindex_arg, current_ceremony_index);
+                    let to_cindex = into_effective_cindex(to_cindex_arg, current_ceremony_index);
+
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid"),
+                    );
+                    println!("purging ceremony index range [{}  {}] for community {}", from_cindex, to_cindex, cid);
+
+                    let calls: Vec<_> = (from_cindex..to_cindex+1)
+                        .map(|idx| compose_call!(
+                            api.metadata,
+                            "EncointerCeremonies",
+                            "purge_community_ceremony",
+                            (cid, idx)
+                        ))
+                        .collect();
+                    let batch_call = compose_call!(
+                        api.metadata,
+                        "Utility",
+                        "batch",
+                        calls
+                    );
+                    let unsigned_sudo_call = compose_call!(
+                        api.metadata,
+                        "Sudo",
+                        "sudo",
+                        batch_call.clone()
+                    );
+                    info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                        api,
+                        "Sudo",
+                        "sudo",
+                        batch_call
+                    );
+                    ensure_payment(&api, &xt.hex_encode());
+                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+                    Ok(())
+                }),
+        )
+
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");

@@ -5,9 +5,11 @@ const SIGNER_ARG: &'static str = "signer";
 const CID_ARG: &'static str = "cid";
 const CLAIMS_ARG: &'static str = "claims";
 const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
-const IPFS_CID_ARG: &'static str = "ceremony-index";
+const IPFS_CID_ARG: &'static str = "ipfs-cid";
 const BOOTSTRAPPER_ARG: &'static str = "bootstrapper";
 const FUNDEES_ARG: &'static str = "fundees";
+const FROM_CINDEX_ARG: &'static str = "from-cindex";
+const TO_CINDEX_ARG: &'static str = "to-cindex";
 const ENDORSEES_ARG: &'static str = "endorsees";
 const ALL_FLAG: &'static str = "all";
 
@@ -20,6 +22,8 @@ pub trait EncointerArgs<'b> {
 	fn ipfs_cid_arg(self) -> Self;
 	fn bootstrapper_arg(self) -> Self;
 	fn fundees_arg(self) -> Self;
+	fn from_cindex_arg(self) -> Self;
+	fn to_cindex_arg(self) -> Self;
 	fn endorsees_arg(self) -> Self;
 	fn all_flag(self) -> Self;
 }
@@ -33,6 +37,8 @@ pub trait EncointerArgsExtractor {
 	fn ipfs_cid_arg(&self) -> Option<&str>;
 	fn bootstrapper_arg(&self) -> Option<&str>;
 	fn fundees_arg(&self) -> Option<Vec<&str>>;
+	fn from_cindex_arg(&self) -> Option<i32>;
+	fn to_cindex_arg(&self) -> Option<i32>;
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
 	fn all_flag(&self) -> bool;
 }
@@ -123,7 +129,24 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("Account(s) to be funded, ss58check encoded"),
 		)
 	}
-
+	fn from_cindex_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(FROM_CINDEX_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("FROM")
+				.help("first ceremony index to be purged"),
+		)
+	}
+	fn to_cindex_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(TO_CINDEX_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("TO")
+				.help("last ceremony index to be purged"),
+		)
+	}
 	fn endorsees_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(ENDORSEES_ARG)
@@ -181,6 +204,13 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn fundees_arg(&self) -> Option<Vec<&str>> {
 		self.values_of(FUNDEES_ARG).map(|v| v.collect())
+	}
+
+	fn from_cindex_arg(&self) -> Option<i32> {
+		self.value_of(FROM_CINDEX_ARG).map(|v| v.parse().unwrap())
+	}
+	fn to_cindex_arg(&self) -> Option<i32> {
+		self.value_of(TO_CINDEX_ARG).map(|v| v.parse().unwrap())
 	}
 
 	fn endorsees_arg(&self) -> Option<Vec<&str>> {
