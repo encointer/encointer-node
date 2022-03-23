@@ -451,6 +451,16 @@ impl pallet_encointer_bazaar::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_bazaar::WeightInfo<Runtime>;
 }
 
+
+impl pallet_asset_tx_payment::Config for Runtime {
+	type Fungibles = pallet_encointer_balances::Pallet<Runtime>;
+	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
+		pallet_encointer_balances::BalanceToCommunityBalance<Runtime>,
+		pallet_encointer_balances::BurnCredit,
+	>;
+}
+
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -465,6 +475,8 @@ construct_runtime!(
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Config} = 11,
+		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage} = 12,
+
 
 		Aura: pallet_aura::{Pallet, Config<T>} = 23,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 25,
@@ -480,6 +492,7 @@ construct_runtime!(
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
+
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
@@ -500,6 +513,7 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;

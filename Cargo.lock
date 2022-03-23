@@ -1484,6 +1484,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "pallet-asset-tx-payment",
  "pallet-aura",
  "pallet-balances",
  "pallet-encointer-balances",
