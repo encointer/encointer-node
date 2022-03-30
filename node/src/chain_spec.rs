@@ -1,6 +1,6 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
-	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig, EncointerBalancesConfig,
 	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use jsonrpc_core::serde_from_str;
@@ -192,6 +192,10 @@ fn testnet_genesis(
 		encointer_communities: EncointerCommunitiesConfig {
 			min_solar_trip_time_s: 1, // [s]
 			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
+		},
+
+		encointer_balances: EncointerBalancesConfig {
+			fee_conversion_factor: 10_000,
 		},
 	}
 }
