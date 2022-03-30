@@ -451,15 +451,13 @@ impl pallet_encointer_bazaar::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_bazaar::WeightInfo<Runtime>;
 }
 
-
 impl pallet_asset_tx_payment::Config for Runtime {
 	type Fungibles = pallet_encointer_balances::Pallet<Runtime>;
 	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
-		pallet_encointer_balances::BalanceToCommunityBalance<Runtime>,
+		pallet_encointer_communities::BalanceToCommunityBalance<Runtime>,
 		pallet_encointer_balances::BurnCredit,
 	>;
 }
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -492,7 +490,6 @@ construct_runtime!(
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
-
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
