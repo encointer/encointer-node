@@ -1389,6 +1389,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "encointer-balances-tx-payment"
+version = "0.1.0"
+dependencies = [
+ "encointer-primitives",
+ "frame-support",
+ "frame-system",
+ "pallet-asset-tx-payment",
+ "pallet-encointer-balances",
+ "pallet-encointer-communities",
+ "pallet-transaction-payment",
+ "sp-runtime",
+]
+
+[[package]]
 name = "encointer-ceremonies-assignment"
 version = "0.1.0"
 source = "git+https://github.com/encointer/pallets?branch=master#80442d3f3f89cb0b6661cebb4f8c5706f2f1556b"
@@ -1476,6 +1490,7 @@ dependencies = [
 name = "encointer-node-notee-runtime"
 version = "0.8.14"
 dependencies = [
+ "encointer-balances-tx-payment",
  "encointer-primitives",
  "frame-benchmarking",
  "frame-executive",
@@ -4290,10 +4305,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "pallet-asset-tx-payment",
  "pallet-encointer-balances",
  "pallet-encointer-scheduler",
- "pallet-transaction-payment",
  "parity-scale-codec",
  "scale-info",
  "sp-io",

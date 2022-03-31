@@ -454,7 +454,7 @@ impl pallet_encointer_bazaar::Config for Runtime {
 impl pallet_asset_tx_payment::Config for Runtime {
 	type Fungibles = pallet_encointer_balances::Pallet<Runtime>;
 	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
-		pallet_encointer_communities::BalanceToCommunityBalance<Runtime>,
+		encointer_balances_tx_payment::BalanceToCommunityBalance<Runtime>,
 		pallet_encointer_balances::BurnCredit,
 	>;
 }
