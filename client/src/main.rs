@@ -25,7 +25,7 @@ mod utils;
 
 use crate::{
 	community_spec::{
-		add_location_calls, new_community_call, read_community_spec_from_file, CommunitySpec,
+		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
 	},
 	utils::{
 		batch_call, into_effective_cindex,
@@ -375,7 +375,7 @@ fn main() {
 
                     let call = new_community_call(&spec, &api.metadata);
                     // only the first meetup location has been registered now. register all others one-by-one
-                    let calls = add_location_calls(&spec, &api.metadata);
+                    let calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
                     let batch_call = batch_call(&api.metadata, calls);
 
                     let unsigned_sudo_call = sudo_call(&api.metadata, call.clone());

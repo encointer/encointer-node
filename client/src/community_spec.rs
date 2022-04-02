@@ -151,19 +151,8 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> im
 
 type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
 
-/// Creates `add_location` calls for spec skipping the first Location.
-pub fn add_location_calls<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Vec<AddLocationCall> {
-	let cid = spec.community_identifier();
-
-	// skip the first location, as it has been registered with `new_community`
-	spec.locations()
-		.into_iter()
-		.skip(1)
-		.map(|l| add_location_call(metadata, cid, l))
-		.collect()
-}
-
-fn add_location_call(
+/// Create an `add_location` call to be used in an extrinsic.
+pub fn add_location_call(
 	metadata: &Metadata,
 	cid: CommunityIdentifier,
 	loc: Location,
