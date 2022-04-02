@@ -20,12 +20,16 @@
 //!
 
 mod cli_args;
+mod community_spec;
 mod utils;
 
-use crate::utils::{
-	into_effective_cindex,
-	keys::{get_accountid_from_str, get_pair_from_str},
-	offline_xt, read_community_spec_from_file, CommunitySpec,
+use crate::{
+	community_spec::{read_community_spec_from_file, CommunitySpec},
+	utils::{
+		into_effective_cindex,
+		keys::{get_accountid_from_str, get_pair_from_str},
+		offline_xt,
+	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
