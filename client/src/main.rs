@@ -24,7 +24,9 @@ mod community_spec;
 mod utils;
 
 use crate::{
-	community_spec::{new_community_call, read_community_spec_from_file, CommunitySpec},
+	community_spec::{
+		add_location_calls, new_community_call, read_community_spec_from_file, CommunitySpec,
+	},
 	utils::{
 		batch_call, into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
@@ -360,12 +362,11 @@ fn main() {
                     let spec_file = matches.value_of("specfile").unwrap();
                     let spec = read_community_spec_from_file(spec_file);
                     let cid = spec.community_identifier();
-                    let mut loc = spec.locations();
 
                     let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
-                    let call = new_community_call(spec, &api.metadata);
+                    let call = new_community_call(&spec, &api.metadata);
 
                     let unsigned_sudo_call = sudo_call(&api.metadata, call.clone());
                     info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
@@ -382,17 +383,7 @@ fn main() {
                     }
 
                     // only the first meetup location has been registered now. register all others one-by-one
-                    loc.remove(0);
-                    let calls: Vec<_> = loc.into_iter()
-                        .map(|l| compose_call!(
-                            api.metadata,
-                            "EncointerCommunities",
-                            "add_location",
-                            cid,
-                            l
-                        ))
-                        .collect();
-
+                    let calls = add_location_calls(&spec, &api.metadata);
                     let batch_call = batch_call(&api.metadata, calls);
 
                     let unsigned_sudo_call = sudo_call(&api.metadata.clone(), batch_call.clone());

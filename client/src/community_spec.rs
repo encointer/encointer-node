@@ -113,7 +113,8 @@ impl CommunitySpec for serde_json::Value {
 	}
 }
 
-pub fn new_community_call<T: CommunitySpec>(spec: T, metadata: &Metadata) -> impl Encode + Clone {
+/// Extracts all the info from `spec` to create a `new_community` call.
+pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> impl Encode + Clone {
 	debug!("meta: {:?}", spec.community());
 
 	let bootstrappers = spec.bootstrappers();
@@ -146,4 +147,26 @@ pub fn new_community_call<T: CommunitySpec>(spec: T, metadata: &Metadata) -> imp
 		maybe_demurrage,
 		maybe_income
 	)
+}
+
+type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
+
+/// Creates `add_location` calls for spec skipping the first Location.
+pub fn add_location_calls<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Vec<AddLocationCall> {
+	let cid = spec.community_identifier();
+
+	// skip the first location, as it has been registered with `new_community`
+	spec.locations()
+		.into_iter()
+		.skip(1)
+		.map(|l| add_location_call(metadata, cid, l))
+		.collect()
+}
+
+fn add_location_call(
+	metadata: &Metadata,
+	cid: CommunityIdentifier,
+	loc: Location,
+) -> AddLocationCall {
+	compose_call!(metadata, "EncointerCommunities", "add_location", cid, loc)
 }
