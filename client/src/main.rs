@@ -359,6 +359,7 @@ fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    // -----setup
                     let spec_file = matches.value_of("specfile").unwrap();
                     let spec = read_community_spec_from_file(spec_file);
                     let cid = spec.community_identifier();
@@ -366,7 +367,16 @@ fn main() {
                     let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                        error!("Wrong ceremony phase for registering new locations for {}", cid);
+                        error!("Exiting process without registering a new community");
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+
                     let call = new_community_call(&spec, &api.metadata);
+                    // only the first meetup location has been registered now. register all others one-by-one
+                    let calls = add_location_calls(&spec, &api.metadata);
+                    let batch_call = batch_call(&api.metadata, calls);
 
                     let unsigned_sudo_call = sudo_call(&api.metadata, call.clone());
                     info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
@@ -376,15 +386,6 @@ fn main() {
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     println!("{}", cid);
-
-                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
-                        error!("wrong ceremony phase for registering new locations for {}", cid);
-                        std::process::exit(exit_code::WRONG_PHASE);
-                    }
-
-                    // only the first meetup location has been registered now. register all others one-by-one
-                    let calls = add_location_calls(&spec, &api.metadata);
-                    let batch_call = batch_call(&api.metadata, calls);
 
                     let unsigned_sudo_call = sudo_call(&api.metadata.clone(), batch_call.clone());
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
