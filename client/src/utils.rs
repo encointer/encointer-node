@@ -47,7 +47,8 @@ pub mod keys {
 	use crate::{AccountPublic, KEYSTORE_PATH};
 	use encointer_node_notee_runtime::AccountId;
 	use log::{debug, trace};
-	use sp_core::{crypto::Ss58Codec, sr25519, Pair};
+	use sp_application_crypto::sr25519;
+	use sp_core::{crypto::Ss58Codec, Pair};
 	use sp_runtime::traits::IdentifyAccount;
 	use std::path::PathBuf;
 	use substrate_client_keystore::LocalKeystore;
