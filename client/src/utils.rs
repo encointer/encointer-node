@@ -25,7 +25,7 @@ pub fn offline_xt<C: Encode + Clone>(
 }
 
 /// Wraps the supplied call in a sudo call
-pub fn sudo_call<C: Encode + Clone>(metadata: Metadata, call: C) -> ([u8; 2], C) {
+pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C) {
 	compose_call!(metadata, "Sudo", "sudo", call)
 }
 

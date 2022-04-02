@@ -365,9 +365,9 @@ fn main() {
                     let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
-                    let call = new_community_call(spec, api.metadata.clone());
+                    let call = new_community_call(spec, &api.metadata);
 
-                    let unsigned_sudo_call = sudo_call(api.metadata.clone(), call.clone());
+                    let unsigned_sudo_call = sudo_call(&api.metadata, call.clone());
                     info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
 
                     let xt: UncheckedExtrinsicV4<_> =
@@ -400,7 +400,7 @@ fn main() {
                         calls
                     );
 
-                    let unsigned_sudo_call = sudo_call(api.metadata.clone(), batch_call.clone());
+                    let unsigned_sudo_call = sudo_call(&api.metadata.clone(), batch_call.clone());
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
 
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(

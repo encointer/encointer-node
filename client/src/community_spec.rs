@@ -113,7 +113,7 @@ impl CommunitySpec for serde_json::Value {
 	}
 }
 
-pub fn new_community_call<T: CommunitySpec>(spec: T, metadata: Metadata) -> impl Encode + Clone {
+pub fn new_community_call<T: CommunitySpec>(spec: T, metadata: &Metadata) -> impl Encode + Clone {
 	debug!("meta: {:?}", spec.community());
 
 	let bootstrappers = spec.bootstrappers();
