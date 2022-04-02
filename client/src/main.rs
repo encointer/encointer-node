@@ -26,7 +26,7 @@ mod utils;
 use crate::{
 	community_spec::{new_community_call, read_community_spec_from_file, CommunitySpec},
 	utils::{
-		into_effective_cindex,
+		batch_call, into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
 		offline_xt, sudo_call,
 	},
@@ -393,12 +393,8 @@ fn main() {
                             l
                         ))
                         .collect();
-                    let batch_call = compose_call!(
-                        api.metadata,
-                        "Utility",
-                        "batch",
-                        calls
-                    );
+
+                    let batch_call = batch_call(&api.metadata, calls);
 
                     let unsigned_sudo_call = sudo_call(&api.metadata.clone(), batch_call.clone());
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
