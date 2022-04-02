@@ -22,7 +22,11 @@
 mod cli_args;
 mod utils;
 
-use crate::utils::{into_effective_cindex, offline_xt};
+use crate::utils::{
+	into_effective_cindex,
+	keys::{get_accountid_from_str, get_pair_from_str},
+	offline_xt,
+};
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
@@ -1311,37 +1315,6 @@ fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIden
 		panic!("cid {} does not exist on chain", cid);
 	}
 	cid
-}
-
-fn get_accountid_from_str(account: &str) -> AccountId {
-	debug!("getting AccountId from -{}-", account);
-	match &account[..2] {
-		"//" => AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
-			.into_account(),
-		_ => AccountPublic::from(sr25519::Public::from_ss58check(account).unwrap()).into_account(),
-	}
-}
-
-// get a pair either form keyring (well known keys) or from the store
-fn get_pair_from_str(account: &str) -> sr25519::AppPair {
-	debug!("getting pair for {}", account);
-	match &account[..2] {
-		"//" => sr25519::AppPair::from_string(account, None).unwrap(),
-		_ => {
-			debug!("fetching from keystore at {}", &KEYSTORE_PATH);
-			// open store without password protection
-			let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
-				.expect("store should exist");
-			trace!("store opened");
-			let pair = store
-				.key_pair::<sr25519::AppPair>(
-					&sr25519::Public::from_ss58check(account).unwrap().into(),
-				)
-				.unwrap();
-			drop(store);
-			pair.unwrap()
-		},
-	}
 }
 
 fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
