@@ -28,7 +28,7 @@ use crate::{
 	utils::{
 		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
-		offline_xt,
+		offline_xt, sudo_call,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -367,14 +367,9 @@ fn main() {
 
                     let call = new_community_call(spec, api.metadata.clone());
 
-                    let unsigned_sudo_call = compose_call!(
-                        api.metadata.clone(),
-                        "Sudo",
-                        "sudo",
-                        call.clone()
-                    );
-
+                    let unsigned_sudo_call = sudo_call(api.metadata.clone(), call.clone());
                     info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
                     ensure_payment(&api, &xt.hex_encode());
@@ -404,19 +399,17 @@ fn main() {
                         "batch",
                         calls
                     );
-                    let unsigned_sudo_call = compose_call!(
-                        api.metadata,
-                        "Sudo",
-                        "sudo",
-                        batch_call.clone()
-                    );
+
+                    let unsigned_sudo_call = sudo_call(api.metadata.clone(), batch_call.clone());
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+
                     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
                         api,
                         "Sudo",
                         "sudo",
                         batch_call
                     );
+
                     ensure_payment(&api, &xt.hex_encode());
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
