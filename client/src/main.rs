@@ -25,7 +25,7 @@ mod utils;
 use crate::utils::{
 	into_effective_cindex,
 	keys::{get_accountid_from_str, get_pair_from_str},
-	offline_xt,
+	offline_xt, read_community_spec_from_file, CommunitySpec,
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
@@ -45,22 +45,18 @@ use encointer_primitives::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
-	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
-	fixed::transcendental::{exp, ln},
+	communities::{CidName, CommunityIdentifier},
+	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
-use geojson::GeoJson;
 use log::*;
 use serde_json::{json, to_value};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	MultiSignature,
-};
+use sp_runtime::{traits::Verify, MultiSignature};
 use std::{
-	collections::HashMap, convert::TryInto, fs, path::PathBuf, str::FromStr, sync::mpsc::channel,
+	collections::HashMap, convert::TryInto, path::PathBuf, str::FromStr, sync::mpsc::channel,
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
@@ -358,69 +354,35 @@ fn main() {
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let spec_file = matches.value_of("specfile").unwrap();
+                    let spec = read_community_spec_from_file(spec_file);
 
-                    let spec_str = fs::read_to_string(spec_file).unwrap();
-                    let geoloc = spec_str.parse::<GeoJson>().unwrap();
+                    let mut loc = spec.locations();
 
-                    let mut loc = Vec::with_capacity(100);
-                    match geoloc {
-                        GeoJson::FeatureCollection(ref ctn) => {
-                            for feature in &ctn.features {
-                                let val = &feature.geometry.as_ref().unwrap().value;
-                                if let geojson::Value::Point(pt) = val {
-                                    let l = Location {
-                                        lon: Degree::from_num(pt[0]),
-                                        lat: Degree::from_num(pt[1]),
-                                    };
-                                    loc.push(l);
-                                    debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
-                                }
-                            }
-                        }
-                        _ => (),
-                    };
-                    let spec: serde_json::Value = serde_json::from_str(&spec_str).unwrap();
-                    debug!("meta: {:?}", spec["community"]);
-                    let bootstrappers: Vec<AccountId> = spec["community"]["bootstrappers"]
-                        .as_array()
-                        .expect("bootstrappers must be array")
-                        .iter()
-                        .map(|a| get_accountid_from_str(&a.as_str().unwrap()))
-                        .collect();
+                    debug!("meta: {:?}", spec.community());
 
+                    let bootstrappers = spec.bootstrappers();
 
-                    let meta: CommunityMetadata = serde_json::from_value(spec["community"]["meta"].clone())
-                        .unwrap();
+                    let meta = spec.metadata();
 
                     meta.validate().unwrap();
                     info!("Metadata: {:?}", meta);
 
-                    let cid = CommunityIdentifier::new(loc[0], bootstrappers.clone()).unwrap();
+                    let cid = spec.community_identifier();
 
                     info!("bootstrappers: {:?}", bootstrappers);
                     info!("name: {}", meta.name);
 
-                    let mut maybe_demurrage: Option<BalanceType> = None;
-                    if let Ok(demurrage_halving_blocks) = serde_json::from_value::<u64>(spec["community"]["demurrage_halving_blocks"].clone()) {
-                        let demurrage_rate = ln::<BalanceType, BalanceType>(BalanceType::from_num(0.5)).unwrap()
-                            .checked_mul(BalanceType::from_num(-1)).unwrap()
-                            .checked_div(BalanceType::from_num(demurrage_halving_blocks)).unwrap();
-                        info!("demurrage halving blocks: {} which translates to a rate of {} ",
-                            demurrage_halving_blocks, hex::encode(demurrage_rate.encode()));
-                        maybe_demurrage = Some(demurrage_rate);
-                    } else {
+                    let maybe_demurrage = spec.demurrage();
+                    if maybe_demurrage.is_none() {
                         info!("using default demurrage");
-                    }
+                    };
 
-                    let mut maybe_income: Option<BalanceType> = None;
-                    if let Ok(income) = serde_json::from_value::<f64>(spec["community"]["ceremony_income"].clone()) {
-                        info!("ceremony income specified as {}", income);
-                        maybe_income = Some(BalanceType::from_num(income));
-                    } else {
+                    let maybe_income = spec.ceremony_reward();
+                    if maybe_income.is_none() {
                         info!("using default income");
                     }
 
-                        let sudoer = AccountKeyring::Alice.pair();
+                    let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
                     let call = compose_call!(
