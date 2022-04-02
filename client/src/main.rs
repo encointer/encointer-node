@@ -24,7 +24,7 @@ mod community_spec;
 mod utils;
 
 use crate::{
-	community_spec::{read_community_spec_from_file, CommunitySpec},
+	community_spec::{new_community_call, read_community_spec_from_file, CommunitySpec},
 	utils::{
 		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
@@ -359,52 +359,21 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let spec_file = matches.value_of("specfile").unwrap();
                     let spec = read_community_spec_from_file(spec_file);
-
-                    let mut loc = spec.locations();
-
-                    debug!("meta: {:?}", spec.community());
-
-                    let bootstrappers = spec.bootstrappers();
-
-                    let meta = spec.metadata();
-
-                    meta.validate().unwrap();
-                    info!("Metadata: {:?}", meta);
-
                     let cid = spec.community_identifier();
-
-                    info!("bootstrappers: {:?}", bootstrappers);
-                    info!("name: {}", meta.name);
-
-                    let maybe_demurrage = spec.demurrage();
-                    if maybe_demurrage.is_none() {
-                        info!("using default demurrage");
-                    };
-
-                    let maybe_income = spec.ceremony_reward();
-                    if maybe_income.is_none() {
-                        info!("using default income");
-                    }
+                    let mut loc = spec.locations();
 
                     let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
-                    let call = compose_call!(
-                        api.metadata.clone(),
-                        "EncointerCommunities",
-                        "new_community",
-                        loc[0],
-                        bootstrappers,
-                        meta,
-                        maybe_demurrage,
-                        maybe_income
-                    );
+                    let call = new_community_call(spec, api.metadata.clone());
+
                     let unsigned_sudo_call = compose_call!(
                         api.metadata.clone(),
                         "Sudo",
                         "sudo",
                         call.clone()
                     );
+
                     info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
                     let xt: UncheckedExtrinsicV4<_> =
                         compose_extrinsic!(api.clone(), "Sudo", "sudo", call);

@@ -6,7 +6,8 @@ use encointer_primitives::{
 	fixed::transcendental::ln,
 };
 use geojson::GeoJson;
-use log::debug;
+use log::{debug, info};
+use substrate_api_client::{compose_call, Metadata};
 
 pub fn read_community_spec_from_file(path: &str) -> serde_json::Value {
 	let spec_str = std::fs::read_to_string(path).unwrap();
@@ -110,4 +111,39 @@ impl CommunitySpec for serde_json::Value {
 			Err(_) => None,
 		}
 	}
+}
+
+pub fn new_community_call<T: CommunitySpec>(spec: T, metadata: Metadata) -> impl Encode + Clone {
+	debug!("meta: {:?}", spec.community());
+
+	let bootstrappers = spec.bootstrappers();
+
+	let meta = spec.metadata();
+
+	meta.validate().unwrap();
+	info!("Metadata: {:?}", meta);
+
+	info!("bootstrappers: {:?}", bootstrappers);
+	info!("name: {}", meta.name);
+
+	let maybe_demurrage = spec.demurrage();
+	if maybe_demurrage.is_none() {
+		info!("using default demurrage");
+	};
+
+	let maybe_income = spec.ceremony_reward();
+	if maybe_income.is_none() {
+		info!("using default income");
+	}
+
+	compose_call!(
+		metadata,
+		"EncointerCommunities",
+		"new_community",
+		spec.locations()[0],
+		bootstrappers,
+		meta,
+		maybe_demurrage,
+		maybe_income
+	)
 }
