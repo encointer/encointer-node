@@ -3,7 +3,8 @@ use encointer_primitives::scheduler::CeremonyIndexType;
 use sp_application_crypto::sr25519;
 use sp_core::Pair;
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata, UncheckedExtrinsicV4,
+	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata,
+	UncheckedExtrinsicV4,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
@@ -27,6 +28,13 @@ pub fn offline_xt<C: Encode + Clone>(
 /// Wraps the supplied call in a sudo call
 pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C) {
 	compose_call!(metadata, "Sudo", "sudo", call)
+}
+
+pub fn sudo_xt<C: Encode + Clone>(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	call: C,
+) -> UncheckedExtrinsicV4<([u8; 2], C)> {
+	compose_extrinsic!(api, "Sudo", "sudo", call)
 }
 
 /// Wraps the supplied calls in a batch call
