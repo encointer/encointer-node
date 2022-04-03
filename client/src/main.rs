@@ -20,9 +20,19 @@
 //!
 
 mod cli_args;
+mod community_spec;
 mod utils;
 
-use crate::utils::{into_effective_cindex, offline_xt};
+use crate::{
+	community_spec::{
+		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
+	},
+	utils::{
+		batch_call, ensure_payment, into_effective_cindex,
+		keys::{get_accountid_from_str, get_pair_from_str},
+		offline_xt, send_and_wait_for_in_block, sudo_call, sudo_xt,
+	},
+};
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
@@ -41,22 +51,18 @@ use encointer_primitives::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
 		ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
-	communities::{CidName, CommunityIdentifier, CommunityMetadata, Degree, Location},
-	fixed::transcendental::{exp, ln},
+	communities::{CidName, CommunityIdentifier},
+	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
-use geojson::GeoJson;
 use log::*;
 use serde_json::{json, to_value};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify},
-	MultiSignature,
-};
+use sp_runtime::{traits::Verify, MultiSignature};
 use std::{
-	collections::HashMap, convert::TryInto, fs, path::PathBuf, str::FromStr, sync::mpsc::channel,
+	collections::HashMap, convert::TryInto, path::PathBuf, str::FromStr, sync::mpsc::channel,
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
@@ -353,134 +359,41 @@ fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    // -----setup
                     let spec_file = matches.value_of("specfile").unwrap();
+                    let spec = read_community_spec_from_file(spec_file);
+                    let cid = spec.community_identifier();
 
-                    let spec_str = fs::read_to_string(spec_file).unwrap();
-                    let geoloc = spec_str.parse::<GeoJson>().unwrap();
-
-                    let mut loc = Vec::with_capacity(100);
-                    match geoloc {
-                        GeoJson::FeatureCollection(ref ctn) => {
-                            for feature in &ctn.features {
-                                let val = &feature.geometry.as_ref().unwrap().value;
-                                if let geojson::Value::Point(pt) = val {
-                                    let l = Location {
-                                        lon: Degree::from_num(pt[0]),
-                                        lat: Degree::from_num(pt[1]),
-                                    };
-                                    loc.push(l);
-                                    debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
-                                }
-                            }
-                        }
-                        _ => (),
-                    };
-                    let spec: serde_json::Value = serde_json::from_str(&spec_str).unwrap();
-                    debug!("meta: {:?}", spec["community"]);
-                    let bootstrappers: Vec<AccountId> = spec["community"]["bootstrappers"]
-                        .as_array()
-                        .expect("bootstrappers must be array")
-                        .iter()
-                        .map(|a| get_accountid_from_str(&a.as_str().unwrap()))
-                        .collect();
-
-
-                    let meta: CommunityMetadata = serde_json::from_value(spec["community"]["meta"].clone())
-                        .unwrap();
-
-                    meta.validate().unwrap();
-                    info!("Metadata: {:?}", meta);
-
-                    let cid = CommunityIdentifier::new(loc[0], bootstrappers.clone()).unwrap();
-
-                    info!("bootstrappers: {:?}", bootstrappers);
-                    info!("name: {}", meta.name);
-
-                    let mut maybe_demurrage: Option<BalanceType> = None;
-                    if let Ok(demurrage_halving_blocks) = serde_json::from_value::<u64>(spec["community"]["demurrage_halving_blocks"].clone()) {
-                        let demurrage_rate = ln::<BalanceType, BalanceType>(BalanceType::from_num(0.5)).unwrap()
-                            .checked_mul(BalanceType::from_num(-1)).unwrap()
-                            .checked_div(BalanceType::from_num(demurrage_halving_blocks)).unwrap();
-                        info!("demurrage halving blocks: {} which translates to a rate of {} ",
-                            demurrage_halving_blocks, hex::encode(demurrage_rate.encode()));
-                        maybe_demurrage = Some(demurrage_rate);
-                    } else {
-                        info!("using default demurrage");
-                    }
-
-                    let mut maybe_income: Option<BalanceType> = None;
-                    if let Ok(income) = serde_json::from_value::<f64>(spec["community"]["ceremony_income"].clone()) {
-                        info!("ceremony income specified as {}", income);
-                        maybe_income = Some(BalanceType::from_num(income));
-                    } else {
-                        info!("using default income");
-                    }
-
-                        let sudoer = AccountKeyring::Alice.pair();
+                    let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
-                    let call = compose_call!(
-                        api.metadata.clone(),
-                        "EncointerCommunities",
-                        "new_community",
-                        loc[0],
-                        bootstrappers,
-                        meta,
-                        maybe_demurrage,
-                        maybe_income
+                    // ------- create calls for xt's
+
+                    let new_community_call = new_community_call(&spec, &api.metadata);
+                    // only the first meetup location has been registered now. register all others one-by-one
+                    let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
+                    let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
+
+                    info!("raw 'new_community' sudo call to sign with js/apps {}: 0x{}",
+                        cid, hex::encode(sudo_call(&api.metadata, new_community_call.clone()).encode())
                     );
-                    let unsigned_sudo_call = compose_call!(
-                        api.metadata.clone(),
-                        "Sudo",
-                        "sudo",
-                        call.clone()
+
+                    info!("raw sudo 'add_location' batch call to sign with js/apps {}: 0x{}",
+                        cid, hex::encode(sudo_call(&api.metadata.clone(), add_location_batch_call.clone()).encode())
                     );
-                    info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
-                    let xt: UncheckedExtrinsicV4<_> =
-                        compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
-                    ensure_payment(&api, &xt.hex_encode());
-                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+
+                    // ---- send xt's to chain
+                    send_and_wait_for_in_block(&api, sudo_xt(&api, new_community_call));
                     println!("{}", cid);
 
                     if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
-                        error!("wrong ceremony phase for registering new locations for {}", cid);
+                        error!("Wrong ceremony phase for registering new locations for {}", cid);
+                        error!("Aborting without registering additional locations");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
 
-                    // only the first meetup location has been registered now. register all others one-by-one
-                    loc.remove(0);
-                    let calls: Vec<_> = loc.into_iter()
-                        .map(|l| compose_call!(
-                            api.metadata,
-                            "EncointerCommunities",
-                            "add_location",
-                            cid,
-                            l
-                        ))
-                        .collect();
-                    let batch_call = compose_call!(
-                        api.metadata,
-                        "Utility",
-                        "batch",
-                        calls
-                    );
-                    let unsigned_sudo_call = compose_call!(
-                        api.metadata,
-                        "Sudo",
-                        "sudo",
-                        batch_call.clone()
-                    );
-                    info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-                        api,
-                        "Sudo",
-                        "sudo",
-                        batch_call
-                    );
-                    ensure_payment(&api, &xt.hex_encode());
-                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+                    send_and_wait_for_in_block(&api, sudo_xt(&api, add_location_batch_call));
+
                     Ok(())
                 }),
         )
@@ -1156,28 +1069,6 @@ fn reasonable_native_balance(api: &Api<sr25519::Pair, WsRpcClient>) -> u128 {
 	return ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
 }
 
-fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
-	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
-		Some(bal) => bal.free,
-		None => {
-			error!("account does not exist on chain");
-			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-		},
-	};
-	let fee = api
-		.get_fee_details(xt, None)
-		.unwrap()
-		.unwrap()
-		.inclusion_fee
-		.map_or_else(|| 0, |details| details.base_fee);
-	let ed = api.get_existential_deposit().unwrap();
-	if signer_balance < fee + ed {
-		error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
-		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-	}
-	debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
-}
-
 fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches);
 	debug!("Subscribing to events");
@@ -1311,37 +1202,6 @@ fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIden
 		panic!("cid {} does not exist on chain", cid);
 	}
 	cid
-}
-
-fn get_accountid_from_str(account: &str) -> AccountId {
-	debug!("getting AccountId from -{}-", account);
-	match &account[..2] {
-		"//" => AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
-			.into_account(),
-		_ => AccountPublic::from(sr25519::Public::from_ss58check(account).unwrap()).into_account(),
-	}
-}
-
-// get a pair either form keyring (well known keys) or from the store
-fn get_pair_from_str(account: &str) -> sr25519::AppPair {
-	debug!("getting pair for {}", account);
-	match &account[..2] {
-		"//" => sr25519::AppPair::from_string(account, None).unwrap(),
-		_ => {
-			debug!("fetching from keystore at {}", &KEYSTORE_PATH);
-			// open store without password protection
-			let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
-				.expect("store should exist");
-			trace!("store opened");
-			let pair = store
-				.key_pair::<sr25519::AppPair>(
-					&sr25519::Public::from_ss58check(account).unwrap().into(),
-				)
-				.unwrap();
-			drop(store);
-			pair.unwrap()
-		},
-	}
 }
 
 fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
