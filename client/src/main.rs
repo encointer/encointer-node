@@ -28,9 +28,9 @@ use crate::{
 		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
 	},
 	utils::{
-		batch_call, into_effective_cindex,
+		batch_call, ensure_payment, into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
-		offline_xt, sudo_call, sudo_xt,
+		offline_xt, send_and_wait_for_in_block, sudo_call, sudo_xt,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -373,27 +373,26 @@ fn main() {
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
 
+                    // ------- create calls for xt's
+
                     let new_community_call = new_community_call(&spec, &api.metadata);
                     // only the first meetup location has been registered now. register all others one-by-one
                     let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
                     let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
-                    let unsigned_new_community_sudo_call = sudo_call(&api.metadata, new_community_call.clone());
-                    info!("raw 'new_community' sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_new_community_sudo_call.encode()));
+                    info!("raw 'new_community' sudo call to sign with js/apps {}: 0x{}",
+                        cid, hex::encode(sudo_call(&api.metadata, new_community_call.clone()).encode())
+                    );
 
-                    let xt = sudo_xt(&api, new_community_call);
-                    ensure_payment(&api, &xt.hex_encode());
-                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
+                    info!("raw sudo 'add_location' batch call to sign with js/apps {}: 0x{}",
+                        cid, hex::encode(sudo_call(&api.metadata.clone(), add_location_batch_call.clone()).encode())
+                    );
+
+                    // ---- send xt's to chain
+                    send_and_wait_for_in_block(&api, sudo_xt(&api, new_community_call));
+                    send_and_wait_for_in_block(&api, sudo_xt(&api, add_location_batch_call));
+
                     println!("{}", cid);
-
-                    let unsigned_add_location_batch_sudo_call = sudo_call(&api.metadata.clone(), add_location_batch_call.clone());
-                    info!("raw sudo 'add_location' batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_add_location_batch_sudo_call.encode()));
-
-                    let xt = sudo_xt(&api, add_location_batch_call);
-                    ensure_payment(&api, &xt.hex_encode());
-                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                    info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     Ok(())
                 }),
         )
@@ -1067,28 +1066,6 @@ fn reasonable_native_balance(api: &Api<sr25519::Pair, WsRpcClient>) -> u128 {
 		.base_fee;
 	let ed = api.get_existential_deposit().unwrap();
 	return ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
-}
-
-fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
-	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
-		Some(bal) => bal.free,
-		None => {
-			error!("account does not exist on chain");
-			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-		},
-	};
-	let fee = api
-		.get_fee_details(xt, None)
-		.unwrap()
-		.unwrap()
-		.inclusion_fee
-		.map_or_else(|| 0, |details| details.base_fee);
-	let ed = api.get_existential_deposit().unwrap();
-	if signer_balance < fee + ed {
-		error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
-		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-	}
-	debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
 }
 
 fn listen(matches: &ArgMatches<'_>) {
