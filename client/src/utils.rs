@@ -1,5 +1,5 @@
 use crate::exit_code;
-use codec::Encode;
+use codec::{Compact, Encode};
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
 use sp_application_crypto::sr25519;
@@ -59,7 +59,7 @@ pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8
 ///
 /// `threshold` is the number of members. threshold < 1 will make the proposal be executed directly.
 /// `length_bound` must be >= `Proposal.encode().len() + (size_of::<u32>() == 4)`
-type CollectiveProposeCall<Proposal> = ([u8; 2], u32, Proposal, u32);
+type CollectiveProposeCall<Proposal> = ([u8; 2], Compact<u32>, Proposal, Compact<u32>);
 
 /// Creates a council propose call
 pub fn collective_propose_call<Proposal: Encode>(
@@ -68,7 +68,14 @@ pub fn collective_propose_call<Proposal: Encode>(
 	proposal: Proposal,
 ) -> CollectiveProposeCall<Proposal> {
 	let length_bound = proposal.encode().len() as u32 + 4;
-	compose_call!(metadata, "Collective", "propose", threshold, proposal, length_bound)
+	compose_call!(
+		metadata,
+		"Collective",
+		"propose",
+		Compact(threshold),
+		proposal,
+		Compact(length_bound)
+	)
 }
 
 pub fn send_and_wait_for_in_block<C: Encode>(
