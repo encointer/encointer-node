@@ -393,11 +393,13 @@ fn main() {
 
                     } else {
                         info!("Printing raw collective propose calls for js/apps for cid: {}", cid);
-                        print_raw_call("collective_propose(new_community)", &collective_propose_call(&api.metadata, 1, new_community_call.clone()));
-                        print_raw_call("collective_propose(utility_batch(add_location))", &collective_propose_call(&api.metadata, 1, add_location_batch_call.clone()));
+                        let propose_new_community = collective_propose_call(&api.metadata, 1, new_community_call);
+                        let propose_add_location_batch = collective_propose_call(&api.metadata, 1, add_location_batch_call);
+                        print_raw_call("collective_propose(new_community)", &propose_new_community);
+                        print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
 
                         // ---- send xt's to chain
-                        send_and_wait_for_in_block(&api, xt(&api, new_community_call));
+                        send_and_wait_for_in_block(&api, xt(&api, propose_new_community));
                         println!("{}", cid);
 
                         if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
@@ -406,7 +408,7 @@ fn main() {
                             std::process::exit(exit_code::WRONG_PHASE);
                         }
 
-                        send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
+                        send_and_wait_for_in_block(&api, xt(&api, propose_add_location_batch));
                     }
                     Ok(())
                 }),
