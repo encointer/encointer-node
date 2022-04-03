@@ -367,12 +367,6 @@ fn main() {
                     let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
-                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
-                        error!("Wrong ceremony phase for registering new locations for {}", cid);
-                        error!("Exiting process without registering a new community");
-                        std::process::exit(exit_code::WRONG_PHASE);
-                    }
-
                     // ------- create calls for xt's
 
                     let new_community_call = new_community_call(&spec, &api.metadata);
@@ -390,9 +384,16 @@ fn main() {
 
                     // ---- send xt's to chain
                     send_and_wait_for_in_block(&api, sudo_xt(&api, new_community_call));
+                    println!("{}", cid);
+
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                        error!("Wrong ceremony phase for registering new locations for {}", cid);
+                        error!("Aborting without registering additional locations");
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+
                     send_and_wait_for_in_block(&api, sudo_xt(&api, add_location_batch_call));
 
-                    println!("{}", cid);
                     Ok(())
                 }),
         )
