@@ -113,8 +113,11 @@ impl CommunitySpec for serde_json::Value {
 	}
 }
 
+type NewCommunityCall =
+	([u8; 2], Location, Vec<AccountId>, CommunityMetadata, Option<Demurrage>, Option<BalanceType>);
+
 /// Extracts all the info from `spec` to create a `new_community` call.
-pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> impl Encode + Clone {
+pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> NewCommunityCall {
 	debug!("meta: {:?}", spec.community());
 
 	let bootstrappers = spec.bootstrappers();
