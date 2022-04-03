@@ -66,7 +66,7 @@ pub fn collective_propose_call<Proposal: Encode>(
 	metadata: &Metadata,
 	threshold: u32,
 	proposal: Proposal,
-) -> ([u8; 2], u32, Proposal, u32) {
+) -> CollectiveProposeCall<Proposal> {
 	let length_bound = proposal.encode().len() as u32 + 4;
 	compose_call!(metadata, "Collective", "propose", threshold, proposal, length_bound)
 }
