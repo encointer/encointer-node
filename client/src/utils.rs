@@ -82,6 +82,11 @@ pub fn send_and_wait_for_in_block<C: Encode>(
 	tx_hash
 }
 
+/// Prints the raw call to be supplied with js/apps.
+pub fn print_raw_call<Call: Encode>(name: &str, call: &Call) {
+	info!("{}: 0x{}", name, hex::encode(call.encode()));
+}
+
 /// Checks if the sudo pallet exists on chain.
 ///
 /// This will implicitly distinguish between solo-chain (sudo exists) and parachain

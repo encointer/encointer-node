@@ -28,9 +28,10 @@ use crate::{
 		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
 	},
 	utils::{
-		batch_call, contains_sudo_pallet, ensure_payment, into_effective_cindex,
+		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment,
+		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
-		offline_xt, send_and_wait_for_in_block, sudo_call, sudo_xt,
+		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, sudo_xt, xt,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -375,14 +376,9 @@ fn main() {
                     let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
                     if contains_sudo_pallet(&api.metadata) {
-
-                        info!("raw 'new_community' sudo call to sign with js/apps {}: 0x{}",
-                        cid, hex::encode(sudo_call(&api.metadata, new_community_call.clone()).encode())
-                        );
-
-                        info!("raw sudo 'add_location' batch call to sign with js/apps {}: 0x{}",
-                            cid, hex::encode(sudo_call(&api.metadata.clone(), add_location_batch_call.clone()).encode())
-                        );
+                        info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+                        print_raw_call("sudo(new_community)", &sudo_call(&api.metadata, new_community_call.clone()));
+                        print_raw_call("sudo(utility_batch(add_location))", &sudo_call(&api.metadata.clone(), add_location_batch_call.clone()));
 
                         // ---- send xt's to chain
                         send_and_wait_for_in_block(&api, sudo_xt(&api, new_community_call));
@@ -393,10 +389,24 @@ fn main() {
                             error!("Aborting without registering additional locations");
                             std::process::exit(exit_code::WRONG_PHASE);
                         }
-
                         send_and_wait_for_in_block(&api, sudo_xt(&api, add_location_batch_call));
+
                     } else {
-                        todo!("Implement for collective pallet");
+                        info!("Printing raw collective propose calls for js/apps for cid: {}", cid);
+                        print_raw_call("collective_propose(new_community)", &collective_propose_call(&api.metadata, 1, new_community_call.clone()));
+                        print_raw_call("collective_propose(utility_batch(add_location))", &collective_propose_call(&api.metadata, 1, add_location_batch_call.clone()));
+
+                        // ---- send xt's to chain
+                        send_and_wait_for_in_block(&api, xt(&api, new_community_call));
+                        println!("{}", cid);
+
+                        if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                            error!("Wrong ceremony phase for registering new locations for {}", cid);
+                            error!("Aborting without registering additional locations");
+                            std::process::exit(exit_code::WRONG_PHASE);
+                        }
+
+                        send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
                     }
                     Ok(())
                 }),
