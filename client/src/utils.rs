@@ -27,6 +27,17 @@ pub fn offline_xt<C: Encode + Clone>(
 	)
 }
 
+/// Creates a signed extrinsic from a call
+///
+/// Panics if no signer is set.
+pub fn xt<C: Encode + Clone>(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	call: C,
+) -> UncheckedExtrinsicV4<C> {
+	let nonce = api.get_nonce().unwrap();
+	offline_xt(api, call, nonce)
+}
+
 /// Wraps the supplied call in a sudo call
 pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C) {
 	compose_call!(metadata, "Sudo", "sudo", call)
@@ -44,6 +55,22 @@ pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8
 	compose_call!(metadata, "Utility", "batch", calls)
 }
 
+/// ([pallet_index, call_index], threshold, Proposal,length_bound)
+///
+/// `threshold` is the number of members. threshold < 1 will make the proposal be executed directly.
+/// `length_bound` must be >= `Proposal.encode().len() + (size_of::<u32>() == 4)`
+type CollectiveProposeCall<Proposal> = ([u8; 2], u32, Proposal, u32);
+
+/// Creates a council propose call
+pub fn collective_propose_call<Proposal: Encode>(
+	metadata: &Metadata,
+	threshold: u32,
+	proposal: Proposal,
+) -> ([u8; 2], u32, Proposal, u32) {
+	let length_bound = proposal.encode().len() as u32 + 4;
+	compose_call!(metadata, "Collective", "propose", threshold, proposal, length_bound)
+}
+
 pub fn send_and_wait_for_in_block<C: Encode>(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	xt: UncheckedExtrinsicV4<C>,
@@ -53,6 +80,20 @@ pub fn send_and_wait_for_in_block<C: Encode>(
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
 	tx_hash
+}
+
+/// Checks if the sudo pallet exists on chain.
+///
+/// This will implicitly distinguish between solo-chain (sudo exists) and parachain
+/// (sudo doesn't exist).
+pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
+	if metadata.pallet("Sudo").is_ok() {
+		info!("'Sudo' pallet found on chain. Will send privileged xt's as sudo");
+		true
+	} else {
+		info!("'Sudo' pallet not found on chain. Will send privileged xt's as a council-proposal");
+		false
+	}
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
