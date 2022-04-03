@@ -373,24 +373,24 @@ fn main() {
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
 
-                    let call = new_community_call(&spec, &api.metadata);
+                    let new_community_call = new_community_call(&spec, &api.metadata);
                     // only the first meetup location has been registered now. register all others one-by-one
-                    let calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
-                    let batch_call = batch_call(&api.metadata, calls);
+                    let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
+                    let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
-                    let unsigned_sudo_call = sudo_call(&api.metadata, call.clone());
-                    info!("raw sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+                    let unsigned_new_community_sudo_call = sudo_call(&api.metadata, new_community_call.clone());
+                    info!("raw 'new_community' sudo call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_new_community_sudo_call.encode()));
 
-                    let xt = sudo_xt(&api, call);
+                    let xt = sudo_xt(&api, new_community_call);
                     ensure_payment(&api, &xt.hex_encode());
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     println!("{}", cid);
 
-                    let unsigned_sudo_call = sudo_call(&api.metadata.clone(), batch_call.clone());
-                    info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+                    let unsigned_add_location_batch_sudo_call = sudo_call(&api.metadata.clone(), add_location_batch_call.clone());
+                    info!("raw sudo 'add_location' batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_add_location_batch_sudo_call.encode()));
 
-                    let xt = sudo_xt(&api, batch_call);
+                    let xt = sudo_xt(&api, add_location_batch_call);
                     ensure_payment(&api, &xt.hex_encode());
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
