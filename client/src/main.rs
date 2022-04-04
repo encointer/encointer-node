@@ -375,7 +375,7 @@ fn main() {
                     let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
                     let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
-                    // return xt's as string to get same return types for if and else arm
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
                     let (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata) {
                         let sudo_new_community = sudo_call(&api.metadata, new_community_call);
                         let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
@@ -472,7 +472,7 @@ fn main() {
                         "next_phase"
                     );
 
-                    // return xt's as string to get same return types for if and else arm
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
                     let next_phase_call = if contains_sudo_pallet(&api.metadata) {
                         let sudo_next_phase_call = sudo_call(&api.metadata, next_phase_call);
                         info!("Printing raw sudo call for js/apps:");
