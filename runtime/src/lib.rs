@@ -443,6 +443,7 @@ impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
 	type DefaultDemurrage = DefaultDemurrage;
 	type WeightInfo = weights::pallet_encointer_balances::WeightInfo<Runtime>;
+	type CeremonyMaster = EnsureRoot<AccountId>;
 }
 
 impl pallet_encointer_bazaar::Config for Runtime {
