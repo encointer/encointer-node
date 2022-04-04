@@ -5,8 +5,8 @@ use log::{debug, error, info};
 use sp_application_crypto::sr25519;
 use sp_core::{Pair, H256};
 use substrate_api_client::{
-	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata,
-	UncheckedExtrinsicV4, XtStatus,
+	compose_call, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata, UncheckedExtrinsicV4,
+	XtStatus,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
@@ -41,13 +41,6 @@ pub fn xt<C: Encode + Clone>(
 /// Wraps the supplied call in a sudo call
 pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C) {
 	compose_call!(metadata, "Sudo", "sudo", call)
-}
-
-pub fn sudo_xt<C: Encode + Clone>(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	call: C,
-) -> UncheckedExtrinsicV4<([u8; 2], C)> {
-	compose_extrinsic!(api, "Sudo", "sudo", call)
 }
 
 /// Wraps the supplied calls in a batch call
@@ -153,6 +146,22 @@ pub fn into_effective_cindex(
 		i32::MIN..=-1 => current_ceremony_index - ceremony_index.abs() as u32,
 		1..=i32::MAX => ceremony_index as CeremonyIndexType,
 		0 => panic!("Zero not allowed as ceremony index"),
+	}
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct OpaqueCall(pub Vec<u8>);
+
+impl OpaqueCall {
+	/// Convert a call to an `OpaqueCall`.
+	pub fn from_tuple<C: Encode>(call: &C) -> Self {
+		OpaqueCall(call.encode())
+	}
+}
+
+impl Encode for OpaqueCall {
+	fn encode(&self) -> Vec<u8> {
+		self.0.clone()
 	}
 }
 
