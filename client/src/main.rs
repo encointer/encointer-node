@@ -31,7 +31,7 @@ use crate::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment,
 		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
-		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, sudo_xt, xt,
+		offline_xt, print_raw_call, send_xt_hex_and_wait_for_in_block, sudo_call, xt,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -375,21 +375,15 @@ fn main() {
                     let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
                     let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
-                    if contains_sudo_pallet(&api.metadata) {
+                    // return xt's as string to get same return types for if and else arm
+                    let (new_community_xt, add_location_batch_xt) = if contains_sudo_pallet(&api.metadata) {
+                        let sudo_new_community = sudo_call(&api.metadata, new_community_call);
+                        let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
                         info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-                        print_raw_call("sudo(new_community)", &sudo_call(&api.metadata, new_community_call.clone()));
-                        print_raw_call("sudo(utility_batch(add_location))", &sudo_call(&api.metadata.clone(), add_location_batch_call.clone()));
+                        print_raw_call("sudo(new_community)", &sudo_new_community);
+                        print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 
-                        // ---- send xt's to chain
-                        send_and_wait_for_in_block(&api, sudo_xt(&api, new_community_call));
-                        println!("{}", cid);
-
-                        if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
-                            error!("Wrong ceremony phase for registering new locations for {}", cid);
-                            error!("Aborting without registering additional locations");
-                            std::process::exit(exit_code::WRONG_PHASE);
-                        }
-                        send_and_wait_for_in_block(&api, sudo_xt(&api, add_location_batch_call));
+                        (xt(&api, sudo_new_community).hex_encode(), xt(&api, sudo_add_location_batch).hex_encode())
 
                     } else {
                         info!("Printing raw collective propose calls for js/apps for cid: {}", cid);
@@ -398,18 +392,19 @@ fn main() {
                         print_raw_call("collective_propose(new_community)", &propose_new_community);
                         print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
 
-                        // ---- send xt's to chain
-                        send_and_wait_for_in_block(&api, xt(&api, propose_new_community));
-                        println!("{}", cid);
+                        (xt(&api, propose_new_community).hex_encode(), xt(&api, propose_add_location_batch).hex_encode())
+                    };
 
-                        if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
-                            error!("Wrong ceremony phase for registering new locations for {}", cid);
-                            error!("Aborting without registering additional locations");
-                            std::process::exit(exit_code::WRONG_PHASE);
-                        }
+                    // ---- send xt's to chain
+                    send_xt_hex_and_wait_for_in_block(&api, new_community_xt);
+                    println!("{}", cid);
 
-                        send_and_wait_for_in_block(&api, xt(&api, propose_add_location_batch));
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                        error!("Wrong ceremony phase for registering new locations for {}", cid);
+                        error!("Aborting without registering additional locations");
+                        std::process::exit(exit_code::WRONG_PHASE);
                     }
+                    send_xt_hex_and_wait_for_in_block(&api, add_location_batch_xt);
                     Ok(())
                 }),
         )

@@ -82,8 +82,15 @@ pub fn send_and_wait_for_in_block<C: Encode>(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	xt: UncheckedExtrinsicV4<C>,
 ) -> Option<H256> {
-	ensure_payment(&api, &xt.hex_encode());
-	let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode())
+}
+
+pub fn send_xt_hex_and_wait_for_in_block(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	xt_hex: String,
+) -> Option<H256> {
+	ensure_payment(&api, &xt_hex);
+	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
 	tx_hash
