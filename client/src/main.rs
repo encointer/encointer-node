@@ -396,7 +396,7 @@ fn main() {
                     };
 
                     // ---- send xt's to chain
-                    send_and_wait_for_in_block(&api, xt(&api,new_community_call));
+                    send_and_wait_for_in_block(&api, xt(&api, new_community_call));
                     println!("{}", cid);
 
                     if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
@@ -404,7 +404,7 @@ fn main() {
                         error!("Aborting without registering additional locations");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    send_and_wait_for_in_block(&api, xt(&api,add_location_batch_call));
+                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
                     Ok(())
                 }),
         )
