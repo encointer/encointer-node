@@ -115,7 +115,7 @@ def _execute_current_phase(client: Client):
         print("all participants claim their potential reward")
         for account in accounts:
             client.claim_reward(account, cid)
-        client.await_block()
+        client.await_block(3)
 
         total_supply = write_current_stats(client, accounts, cid)
 
