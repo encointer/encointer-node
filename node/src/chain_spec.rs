@@ -194,6 +194,6 @@ fn testnet_genesis(
 			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
 		},
 
-		encointer_balances: EncointerBalancesConfig { fee_conversion_factor: 10_000 },
+		encointer_balances: EncointerBalancesConfig { fee_conversion_factor: 100_000 },
 	}
 }
