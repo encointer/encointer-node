@@ -109,7 +109,7 @@ def main(ipfs_local, client, port, spec_file):
 
     print("Claiming rewards")
     client.claim_reward(account1, cid)
-    client.await_block()
+    client.await_block(blocks_to_wait)
 
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
