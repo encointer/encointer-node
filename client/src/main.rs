@@ -466,16 +466,30 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
-                    let call = compose_call!(
-                        api.metadata.clone(),
+                    let next_phase_call = compose_call!(
+                        &api.metadata,
                         "EncointerScheduler",
                         "next_phase"
                     );
-                    let xt: UncheckedExtrinsicV4<_> =
-                        compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
-                    ensure_payment(&api, &xt.hex_encode());
-                    // send and watch extrinsic until finalized
-                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+
+                    // return xt's as string to get same return types for if and else arm
+                    let next_phase_xt = if contains_sudo_pallet(&api.metadata) {
+                        let sudo_next_phase_call = sudo_call(&api.metadata, next_phase_call);
+                        info!("Printing raw sudo call for js/apps:");
+                        print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
+
+                        xt(&api, sudo_next_phase_call).hex_encode()
+
+                    } else {
+                        info!("Printing raw collective propose calls for js/apps");
+                        let propose_next_phase = collective_propose_call(&api.metadata, 1, next_phase_call);
+                        print_raw_call("collective_propose(next_phase)", &propose_next_phase);
+
+                        xt(&api, propose_next_phase).hex_encode()
+                    };
+
+                    send_xt_hex_and_wait_for_in_block(&api, next_phase_xt);
+
                     let phase = api.get_current_phase().unwrap();
                     println!("Phase is now: {:?}", phase);
                     Ok(())
