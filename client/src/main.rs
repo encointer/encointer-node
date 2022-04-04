@@ -31,8 +31,7 @@ use crate::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment,
 		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
-		offline_xt, print_raw_call, send_and_wait_for_in_block, send_xt_hex_and_wait_for_in_block,
-		sudo_call, xt, OpaqueCall,
+		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -474,22 +473,22 @@ fn main() {
                     );
 
                     // return xt's as string to get same return types for if and else arm
-                    let next_phase_xt = if contains_sudo_pallet(&api.metadata) {
+                    let next_phase_call = if contains_sudo_pallet(&api.metadata) {
                         let sudo_next_phase_call = sudo_call(&api.metadata, next_phase_call);
                         info!("Printing raw sudo call for js/apps:");
                         print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
 
-                        xt(&api, sudo_next_phase_call).hex_encode()
+                        OpaqueCall::from_tuple(&sudo_next_phase_call)
 
                     } else {
                         info!("Printing raw collective propose calls for js/apps");
                         let propose_next_phase = collective_propose_call(&api.metadata, 1, next_phase_call);
                         print_raw_call("collective_propose(next_phase)", &propose_next_phase);
 
-                        xt(&api, propose_next_phase).hex_encode()
+                        OpaqueCall::from_tuple(&propose_next_phase)
                     };
 
-                    send_xt_hex_and_wait_for_in_block(&api, next_phase_xt);
+                    send_and_wait_for_in_block(&api, xt(&api, next_phase_call));
 
                     let phase = api.get_current_phase().unwrap();
                     println!("Phase is now: {:?}", phase);
