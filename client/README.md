@@ -91,3 +91,12 @@ Or if it was stored remotely (on Infura):
 ```
 curl -X POST "https://ipfs.infura.io:5001/api/v0/cat?arg=<CONTENT_IDENTIFIER>" 
 ```
+
+# run bot-community against parachain
+
+The same client can be used against an encointer parachain. Please start the parachain with polkadot-launch from the encointer-parachain repo:
+```
+node ../polkadot-launch/dist/cli.js polkadot-launch/launch-kusama-local-with-encointer.json
+```
+
+then you can run bootstrapping or bot-community exactly like for solo-node

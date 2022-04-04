@@ -102,7 +102,7 @@ For benchmarking a new pallet you need to do the following:
 
 1. Add the new pallet to be benchmarked to the `define_benchmarks!` macro in the runtime.
 2. Make sure you enable the pallet's benchmark by enabling its runtime-benchmark feature in the runtime's toml.
-3. Compile the node with `--features runtime-benchmark`
-4. Add it to the benchmark script: `./scripts/runtime_benchmark.sh`
+3. Compile the node with `--features runtime-benchmarks`
+4. Add it to the benchmark script: `./scripts/benchmark_runtime.sh`
 
 This will automatically generate the new/updated weight file in `./runtime/src/weights`.

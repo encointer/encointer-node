@@ -17,6 +17,9 @@ from py_client.helpers import set_local_or_remote_chain
 global COUNT
 COUNT = 0
 
+# a solochain has timestamp.set event in every block, a parachain additionaly has parachainSystem.setValidationData
+INTRINSIC_EVENTS = 2
+
 global patience
 
 @click.command()
@@ -49,7 +52,7 @@ def subscription_handler(event_count, update_nr, subscription_id):
     print(f'events: {event_count}, idle blocks {COUNT}')
     if COUNT > patience:
         return update_nr
-    elif event_count.value == 1:
+    elif event_count.value <= INTRINSIC_EVENTS:
         COUNT += 1
     else:
         COUNT = 0
