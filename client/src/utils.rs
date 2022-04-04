@@ -151,8 +151,8 @@ pub fn into_effective_cindex(
 
 /// Simple blob to hold a call in encoded format.
 ///
-/// Useful for managing a set of extrinsic with different calls without running into rust's type
-/// problem.
+/// Useful for managing a set of extrinsic with different calls without having problems with rust's
+/// type system.
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct OpaqueCall(pub Vec<u8>);
 
