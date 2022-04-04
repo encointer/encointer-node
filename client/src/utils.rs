@@ -1,12 +1,12 @@
 use crate::exit_code;
-use codec::Encode;
+use codec::{Compact, Encode};
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
 use sp_application_crypto::sr25519;
 use sp_core::{Pair, H256};
 use substrate_api_client::{
-	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata,
-	UncheckedExtrinsicV4, XtStatus,
+	compose_call, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata, UncheckedExtrinsicV4,
+	XtStatus,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
@@ -27,16 +27,20 @@ pub fn offline_xt<C: Encode + Clone>(
 	)
 }
 
+/// Creates a signed extrinsic from a call
+///
+/// Panics if no signer is set.
+pub fn xt<C: Encode + Clone>(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	call: C,
+) -> UncheckedExtrinsicV4<C> {
+	let nonce = api.get_nonce().unwrap();
+	offline_xt(api, call, nonce)
+}
+
 /// Wraps the supplied call in a sudo call
 pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C) {
 	compose_call!(metadata, "Sudo", "sudo", call)
-}
-
-pub fn sudo_xt<C: Encode + Clone>(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	call: C,
-) -> UncheckedExtrinsicV4<([u8; 2], C)> {
-	compose_extrinsic!(api, "Sudo", "sudo", call)
 }
 
 /// Wraps the supplied calls in a batch call
@@ -44,15 +48,64 @@ pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8
 	compose_call!(metadata, "Utility", "batch", calls)
 }
 
+/// ([pallet_index, call_index], threshold, Proposal,length_bound)
+///
+/// `threshold` is the number of members. threshold < 1 will make the proposal be executed directly.
+/// `length_bound` must be >= `Proposal.encode().len() + (size_of::<u32>() == 4)`
+type CollectiveProposeCall<Proposal> = ([u8; 2], Compact<u32>, Proposal, Compact<u32>);
+
+/// Creates a council propose call
+pub fn collective_propose_call<Proposal: Encode>(
+	metadata: &Metadata,
+	threshold: u32,
+	proposal: Proposal,
+) -> CollectiveProposeCall<Proposal> {
+	let length_bound = proposal.encode().len() as u32 + 4;
+	compose_call!(
+		metadata,
+		"Collective",
+		"propose",
+		Compact(threshold),
+		proposal,
+		Compact(length_bound)
+	)
+}
+
 pub fn send_and_wait_for_in_block<C: Encode>(
 	api: &Api<sr25519::Pair, WsRpcClient>,
 	xt: UncheckedExtrinsicV4<C>,
 ) -> Option<H256> {
-	ensure_payment(&api, &xt.hex_encode());
-	let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode())
+}
+
+pub fn send_xt_hex_and_wait_for_in_block(
+	api: &Api<sr25519::Pair, WsRpcClient>,
+	xt_hex: String,
+) -> Option<H256> {
+	ensure_payment(&api, &xt_hex);
+	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
 	tx_hash
+}
+
+/// Prints the raw call to be supplied with js/apps.
+pub fn print_raw_call<Call: Encode>(name: &str, call: &Call) {
+	info!("{}: 0x{}", name, hex::encode(call.encode()));
+}
+
+/// Checks if the sudo pallet exists on chain.
+///
+/// This will implicitly distinguish between solo-chain (sudo exists) and parachain
+/// (sudo doesn't exist).
+pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
+	if metadata.pallet("Sudo").is_ok() {
+		info!("'Sudo' pallet found on chain. Will send privileged xt's as sudo");
+		true
+	} else {
+		info!("'Sudo' pallet not found on chain. Will send privileged xt's as a council-proposal");
+		false
+	}
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
@@ -93,6 +146,26 @@ pub fn into_effective_cindex(
 		i32::MIN..=-1 => current_ceremony_index - ceremony_index.abs() as u32,
 		1..=i32::MAX => ceremony_index as CeremonyIndexType,
 		0 => panic!("Zero not allowed as ceremony index"),
+	}
+}
+
+/// Simple blob to hold a call in encoded format.
+///
+/// Useful for managing a set of extrinsic with different calls without having problems with rust's
+/// type system.
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct OpaqueCall(pub Vec<u8>);
+
+impl OpaqueCall {
+	/// Convert a call to an `OpaqueCall`.
+	pub fn from_tuple<C: Encode>(call: &C) -> Self {
+		OpaqueCall(call.encode())
+	}
+}
+
+impl Encode for OpaqueCall {
+	fn encode(&self) -> Vec<u8> {
+		self.0.clone()
 	}
 }
 

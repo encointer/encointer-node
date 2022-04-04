@@ -28,9 +28,10 @@ use crate::{
 		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
 	},
 	utils::{
-		batch_call, ensure_payment, into_effective_cindex,
+		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment,
+		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
-		offline_xt, send_and_wait_for_in_block, sudo_call, sudo_xt,
+		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -374,16 +375,28 @@ fn main() {
                     let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
                     let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
-                    info!("raw 'new_community' sudo call to sign with js/apps {}: 0x{}",
-                        cid, hex::encode(sudo_call(&api.metadata, new_community_call.clone()).encode())
-                    );
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
+                    let (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata) {
+                        let sudo_new_community = sudo_call(&api.metadata, new_community_call);
+                        let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
+                        info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+                        print_raw_call("sudo(new_community)", &sudo_new_community);
+                        print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 
-                    info!("raw sudo 'add_location' batch call to sign with js/apps {}: 0x{}",
-                        cid, hex::encode(sudo_call(&api.metadata.clone(), add_location_batch_call.clone()).encode())
-                    );
+                        (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
+
+                    } else {
+                        info!("Printing raw collective propose calls for js/apps for cid: {}", cid);
+                        let propose_new_community = collective_propose_call(&api.metadata, 1, new_community_call);
+                        let propose_add_location_batch = collective_propose_call(&api.metadata, 1, add_location_batch_call);
+                        print_raw_call("collective_propose(new_community)", &propose_new_community);
+                        print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+
+                        (OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
+                    };
 
                     // ---- send xt's to chain
-                    send_and_wait_for_in_block(&api, sudo_xt(&api, new_community_call));
+                    send_and_wait_for_in_block(&api, xt(&api, new_community_call));
                     println!("{}", cid);
 
                     if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
@@ -391,9 +404,7 @@ fn main() {
                         error!("Aborting without registering additional locations");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-
-                    send_and_wait_for_in_block(&api, sudo_xt(&api, add_location_batch_call));
-
+                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
                     Ok(())
                 }),
         )
@@ -455,16 +466,30 @@ fn main() {
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
-                    let call = compose_call!(
-                        api.metadata.clone(),
+                    let next_phase_call = compose_call!(
+                        &api.metadata,
                         "EncointerScheduler",
                         "next_phase"
                     );
-                    let xt: UncheckedExtrinsicV4<_> =
-                        compose_extrinsic!(api.clone(), "Sudo", "sudo", call);
-                    ensure_payment(&api, &xt.hex_encode());
-                    // send and watch extrinsic until finalized
-                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
+                    let next_phase_call = if contains_sudo_pallet(&api.metadata) {
+                        let sudo_next_phase_call = sudo_call(&api.metadata, next_phase_call);
+                        info!("Printing raw sudo call for js/apps:");
+                        print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
+
+                        OpaqueCall::from_tuple(&sudo_next_phase_call)
+
+                    } else {
+                        info!("Printing raw collective propose calls for js/apps");
+                        let propose_next_phase = collective_propose_call(&api.metadata, 1, next_phase_call);
+                        print_raw_call("collective_propose(next_phase)", &propose_next_phase);
+
+                        OpaqueCall::from_tuple(&propose_next_phase)
+                    };
+
+                    send_and_wait_for_in_block(&api, xt(&api, next_phase_call));
+
                     let phase = api.get_current_phase().unwrap();
                     println!("Phase is now: {:?}", phase);
                     Ok(())
