@@ -77,15 +77,17 @@ where
 				offchain_indexing_enabled,
 				deny_unsafe,
 			)));
+
 			io.extend_with(CeremoniesApi::to_delegate(Ceremonies::new(
 				client.clone(),
 				deny_unsafe,
 				storage,
 				offchain_indexing_enabled,
-			)))
+			)));
 		},
 		None => log::warn!(
-			"Offchain caching disabled, due to lack of offchain storage support in backend."
+			"Offchain caching disabled, due to lack of offchain storage support in backend. \n 
+			Will not initialize custom RPCs for 'CommunitiesApi' and 'CeremoniesApi'"
 		),
 	};
 
