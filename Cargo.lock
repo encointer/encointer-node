@@ -1391,6 +1391,7 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment"
 version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=master#80442d3f3f89cb0b6661cebb4f8c5706f2f1556b"
 dependencies = [
  "encointer-primitives",
  "frame-support",
