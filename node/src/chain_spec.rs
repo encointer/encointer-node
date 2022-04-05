@@ -195,7 +195,9 @@ fn testnet_genesis(
 		},
 
 		encointer_balances: EncointerBalancesConfig {
-			fee_conversion_factor: 100_000, // translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
+			// Lower values lead to lower fees in CC proportionally.
+			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
+			fee_conversion_factor: 100_000,
 		},
 	}
 }
