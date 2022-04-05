@@ -13,8 +13,8 @@ encointer-primitives = { git = "https://github.com/encointer/pallets", branch = 
 encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "master" }
 
 # scs deps
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "master"}
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "master"}
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "cl/encointer-community-currency-fees-hotfix"}
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "cl/encointer-community-currency-fees-hotfix"}
 
 # substrate deps
 sp-core = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "master" }
