@@ -194,6 +194,8 @@ fn testnet_genesis(
 			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
 		},
 
-		encointer_balances: EncointerBalancesConfig { fee_conversion_factor: 100_000 }, // 0.01 CC per 5muKSM fee at 20 CC nominal income
+		encointer_balances: EncointerBalancesConfig {
+			fee_conversion_factor: 100_000, // translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
+		},
 	}
 }
