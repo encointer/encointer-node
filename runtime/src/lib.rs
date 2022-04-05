@@ -55,7 +55,7 @@ pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
 pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
-	ceremonies::{CeremonyIndexType, CommunityReputation},
+	ceremonies::{AggregatedAccountData, CeremonyIndexType, CommunityReputation},
 	common::PalletString,
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
@@ -662,9 +662,12 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId> for Runtime {
+	impl pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId, Moment> for Runtime {
 		fn get_reputations(account: &AccountId) -> Vec<(CeremonyIndexType, CommunityReputation)> {
 			EncointerCeremonies::get_reputations(&account)
+		}
+		fn get_aggregated_account_data(cid:CommunityIdentifier, account: &AccountId) -> AggregatedAccountData<AccountId, Moment> {
+			EncointerCeremonies::get_aggregated_account_data(cid, &account)
 		}
 	}
 
