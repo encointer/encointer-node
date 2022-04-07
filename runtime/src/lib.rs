@@ -406,6 +406,8 @@ impl pallet_utility::Config for Runtime {
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
+	/// 0.000005
+	pub const ExistentialDeposit: BalanceType = BalanceType::from_bits(0x0000000000000000000053e2d6238da4_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
 	pub const MeetupNewbieLimitDivider: u64 = 2;
@@ -442,6 +444,7 @@ impl pallet_encointer_communities::Config for Runtime {
 impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
 	type DefaultDemurrage = DefaultDemurrage;
+	type ExistentialDeposit = DefaultDemurrage;
 	type WeightInfo = weights::pallet_encointer_balances::WeightInfo<Runtime>;
 	type CeremonyMaster = EnsureRoot<AccountId>;
 }
