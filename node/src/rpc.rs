@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index};
+use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index, Moment};
 use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
 use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};
 pub use sc_rpc_api::DenyUnsafe;
@@ -43,7 +43,7 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
-	C::Api: pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId>,
+	C::Api: pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId, Moment>,
 	C::Api:
 		pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block, AccountId, BlockNumber>,
 	C::Api: pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId>,
