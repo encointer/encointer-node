@@ -406,6 +406,8 @@ impl pallet_utility::Config for Runtime {
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
+	/// 0.000005
+	pub const EncointerExistentialDeposit: BalanceType = BalanceType::from_bits(0x0000000000000000000053e2d6238da4_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
 	pub const MeetupNewbieLimitDivider: u64 = 2;
@@ -442,6 +444,7 @@ impl pallet_encointer_communities::Config for Runtime {
 impl pallet_encointer_balances::Config for Runtime {
 	type Event = Event;
 	type DefaultDemurrage = DefaultDemurrage;
+	type ExistentialDeposit = EncointerExistentialDeposit;
 	type WeightInfo = weights::pallet_encointer_balances::WeightInfo<Runtime>;
 	type CeremonyMaster = EnsureRoot<AccountId>;
 }
@@ -449,6 +452,14 @@ impl pallet_encointer_balances::Config for Runtime {
 impl pallet_encointer_bazaar::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = weights::pallet_encointer_bazaar::WeightInfo<Runtime>;
+}
+
+impl pallet_asset_tx_payment::Config for Runtime {
+	type Fungibles = pallet_encointer_balances::Pallet<Runtime>;
+	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
+		encointer_balances_tx_payment::BalanceToCommunityBalance<Runtime>,
+		encointer_balances_tx_payment::BurnCredit,
+	>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -465,6 +476,8 @@ construct_runtime!(
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Config} = 11,
+		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage} = 12,
+
 
 		Aura: pallet_aura::{Pallet, Config<T>} = 23,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 25,
@@ -476,7 +489,7 @@ construct_runtime!(
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
 		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config, Event<T>} = 62,
-		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Event<T>} = 63,
+		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Config, Event<T>} = 63,
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
@@ -499,7 +512,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;

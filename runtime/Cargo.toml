@@ -16,6 +16,7 @@ serde = { features = ["derive"], optional = true, version = "1.0.136" }
 
 # encointer deps
 encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+encointer-balances-tx-payment = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
@@ -33,6 +34,7 @@ pallet-grandpa = { version = "4.0.0-dev", default-features = false, git = "https
 pallet-randomness-collective-flip = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 pallet-sudo = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
+pallet-asset-tx-payment  = { version = "4.0.0-dev" , default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 pallet-transaction-payment = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
 pallet-proxy = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "master" }
@@ -74,6 +76,7 @@ std = [
     "frame-system/std",
     "frame-system-rpc-runtime-api/std",
     "pallet-aura/std",
+    "pallet-asset-tx-payment/std",
     "pallet-balances/std",
     "pallet-grandpa/std",
     "pallet-proxy/std",
@@ -93,6 +96,7 @@ std = [
     "sp-std/std",
     "sp-transaction-pool/std",
     "sp-version/std",
+    "encointer-balances-tx-payment/std",
     "encointer-primitives/std",
     "encointer-primitives/serde_derive",
     "pallet-encointer-balances/std",

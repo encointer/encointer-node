@@ -301,7 +301,7 @@ fn main() {
                                 cid,
                                 amount
                             );
-                            ensure_payment(&_api, &xt.hex_encode());
+                            // ensure_payment(&_api, &xt.hex_encode());
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {

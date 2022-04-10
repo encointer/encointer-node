@@ -1,5 +1,5 @@
 use encointer_node_notee_runtime::{
-	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
+	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
 	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
 	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
@@ -192,6 +192,12 @@ fn testnet_genesis(
 		encointer_communities: EncointerCommunitiesConfig {
 			min_solar_trip_time_s: 1, // [s]
 			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
+		},
+
+		encointer_balances: EncointerBalancesConfig {
+			// Lower values lead to lower fees in CC proportionally.
+			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
+			fee_conversion_factor: 100_000,
 		},
 	}
 }
