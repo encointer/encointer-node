@@ -10,7 +10,7 @@ pub trait CommunitiesApi {
 impl CommunitiesApi for Api {
 	fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>> {
 		let req = json!({
-		"method": "communities_getLocations",
+		"method": "encointer_getLocations",
 		"params": vec![cid],
 		"jsonrpc": "2.0",
 		"id": "1",

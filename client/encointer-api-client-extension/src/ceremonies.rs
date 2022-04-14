@@ -269,6 +269,7 @@ impl CeremoniesApi for Api {
 			meetup_count,
 			assigned.bootstrappers + assigned.reputables,
 		)
+		.unwrap_or_default()
 		.into_iter()
 		.filter_map(|p_index| {
 			get_bootstrapper_or_reputable(self, community_ceremony, p_index, &assigned)
@@ -282,6 +283,7 @@ impl CeremoniesApi for Api {
 			meetup_count,
 			assigned.endorsees,
 		)
+		.unwrap_or_default()
 		.into_iter()
 		.filter(|p| p < &assigned.endorsees)
 		.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
@@ -292,6 +294,7 @@ impl CeremoniesApi for Api {
 			meetup_count,
 			assigned.newbies,
 		)
+		.unwrap_or_default()
 		.into_iter()
 		.filter(|p| p < &assigned.newbies)
 		.filter_map(|p| self.get_newbie(community_ceremony, &(p + 1)).ok().flatten());

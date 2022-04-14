@@ -1340,7 +1340,7 @@ fn get_community_identifiers(
 /// This rpc needs to have offchain indexing enabled in the node.
 fn get_cid_names(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CidName>> {
 	let req = json!({
-		"method": "communities_getAll",
+		"method": "encointer_getAllCommunities",
 		"params": [],
 		"jsonrpc": "2.0",
 		"id": "1",
@@ -1357,7 +1357,7 @@ fn get_businesses(
 	cid: CommunityIdentifier,
 ) -> Option<Vec<BusinessData>> {
 	let req = json!({
-		"method": "bazaar_getBusinesses",
+		"method": "encointer_bazaarGetBusinesses",
 		"params": vec![cid],
 		"jsonrpc": "2.0",
 		"id": "1",
@@ -1372,7 +1372,7 @@ fn get_offerings(
 	cid: CommunityIdentifier,
 ) -> Option<Vec<OfferingData>> {
 	let req = json!({
-		"method": "bazaar_getOfferings",
+		"method": "encointer_bazaarGetOfferings",
 		"params": vec![cid],
 		"jsonrpc": "2.0",
 		"id": "1",
@@ -1393,7 +1393,7 @@ fn get_offerings_for_business(
 	let b_id = BusinessIdentifier::new(cid, account_id);
 
 	let req = json!({
-		"method": "bazaar_getOfferingsForBusiness",
+		"method": "encointer_bazaarGetOfferingsForBusiness",
 		"params": vec![to_value(b_id).unwrap()],
 		"jsonrpc": "2.0",
 		"id": "1",
@@ -1411,7 +1411,7 @@ fn get_reputation_history(
 	account_id: &AccountId,
 ) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
 	let req = json!({
-		"method": "ceremonies_getReputations",
+		"method": "encointer_getReputations",
 		"params": vec![account_id],
 		"jsonrpc": "2.0",
 		"id": "1",
@@ -1429,7 +1429,7 @@ fn get_all_balances(
 	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
 	let req = json!({
-		"method": "encointerBalances_getAllBalances",
+		"method": "encointer_getAllBalances",
 		"params": vec![account_id],
 		"jsonrpc": "2.0",
 		"id": "1",
