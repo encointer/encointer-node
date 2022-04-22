@@ -74,7 +74,7 @@ def main(ipfs_local, client, port, spec_file):
     update_spec_with_cid(spec_file_path, ipfs_cid)
 
     print(client.list_communities())
-    client.go_to_phase(CeremonyPhase.REGISTERING)
+    client.go_to_phase(CeremonyPhase.Registering)
 
     # charlie has no genesis funds
     print('Faucet is dripping to Charlie...')

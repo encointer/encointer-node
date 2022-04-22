@@ -82,9 +82,9 @@ def init(ctx):
 
     while True:
         phase = client.get_phase()
-        if phase == 'REGISTERING':
+        if phase == 'Registering':
             break
-        print(f"waiting for ceremony phase REGISTERING. now is {phase}")
+        print(f"waiting for ceremony phase Registering. now is {phase}")
         client.await_block()
 
     cid = client.new_community(specfile)
@@ -111,7 +111,7 @@ def _execute_current_phase(client: Client):
     print(f'phase is {phase}')
     accounts = client.list_accounts()
     print(f'number of known accounts: {len(accounts)}')
-    if phase == 'REGISTERING':
+    if phase == 'Registering':
         print("all participants claim their potential reward")
         for account in accounts:
             client.claim_reward(account, cid)
@@ -128,11 +128,11 @@ def _execute_current_phase(client: Client):
         register_participants(client, accounts, cid)
         client.await_block()
 
-    if phase == "ASSIGNING":
+    if phase == "Assigning":
         meetups = client.list_meetups(cid)
         meetup_sizes = list(map(lambda x: len(x), meetups))
         print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
-    if phase == 'ATTESTING':
+    if phase == 'Attesting':
         meetups = client.list_meetups(cid)
         print(f'****** Performing {len(meetups)} meetups')
         for meetup in meetups:
