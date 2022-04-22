@@ -172,12 +172,12 @@ fn testnet_genesis(
 		},
 		transaction_payment: Default::default(),
 		encointer_scheduler: EncointerSchedulerConfig {
-			current_phase: CeremonyPhaseType::REGISTERING,
+			current_phase: CeremonyPhaseType::Registering,
 			current_ceremony_index: 1,
 			phase_durations: vec![
-				(CeremonyPhaseType::REGISTERING, 57600000),
-				(CeremonyPhaseType::ASSIGNING, 28800000),
-				(CeremonyPhaseType::ATTESTING, 172800000),
+				(CeremonyPhaseType::Registering, 57600000),
+				(CeremonyPhaseType::Assigning, 28800000),
+				(CeremonyPhaseType::Attesting, 172800000),
 			],
 		},
 		encointer_ceremonies: EncointerCeremoniesConfig {

@@ -399,7 +399,7 @@ fn main() {
                     send_and_wait_for_in_block(&api, xt(&api, new_community_call));
                     println!("{}", cid);
 
-                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
                         error!("Wrong ceremony phase for registering new locations for {}", cid);
                         error!("Aborting without registering additional locations");
                         std::process::exit(exit_code::WRONG_PHASE);
@@ -696,7 +696,7 @@ fn main() {
                     info!("{} has reputation {:?}", accountid, rep);
                     let proof = match rep {
                         Reputation::Unverified => None,
-                        Reputation::UnverifiedReputable => None, // this should never by the case during REGISTERING!
+                        Reputation::UnverifiedReputable => None, // this should never by the case during Registering!
                         Reputation::VerifiedUnlinked => Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
                         Reputation::VerifiedLinked => {
                             error!("reputation of {} has already been linked! Not registering again", accountid);
@@ -704,7 +704,7 @@ fn main() {
                         },
                     };
                     debug!("proof: {:x?}", proof.encode());
-                    if api.get_current_phase().unwrap() != CeremonyPhaseType::REGISTERING {
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
                         error!("wrong ceremony phase for registering participant");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
