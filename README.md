@@ -1,7 +1,5 @@
 # encointer-node
 
-![badge](https://img.shields.io/badge/substrate-2.0.0-success)
-
 Encointer-node is the implementation of the [encointer.org](https://encointer.org) blockchain.
 Use this together with the mobile phone app [encointer mobile app](https://github.com/encointer/encointer-wallet-flutter) 
 
@@ -37,7 +35,7 @@ export RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer
 ./target/release/encointer-node-notee --dev --enable-offchain-indexing true
 ```
 
-Offchain-indexing is needed for the custom rpc `communities_getAll`. If you don't want it, omit the flag.
+Offchain-indexing is needed for the custom rpc `encointer_getAllCommunities`. If you don't want it, omit the flag.
 `--rpc-methods unsafe` is needed for the bazaar's business and offering aggregation rpcs.
 
 Additional CLI usage options are available and may be shown by running `./target/release/encointer-node-notee --help`.
@@ -46,7 +44,7 @@ Additional CLI usage options are available and may be shown by running `./target
 Join our testnet as a full node with 
 
 ```bash
-./target/release/encointer-node-notee --chain gesellv2SpecRaw.json --name giveyournodeaname
+./target/release/encointer-node-notee --chain gesellv4SpecRaw.json --name giveyournodeaname
 ```
 
 ## CLI client
