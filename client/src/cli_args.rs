@@ -11,6 +11,7 @@ const FUNDEES_ARG: &'static str = "fundees";
 const FROM_CINDEX_ARG: &'static str = "from-cindex";
 const TO_CINDEX_ARG: &'static str = "to-cindex";
 const ENDORSEES_ARG: &'static str = "endorsees";
+const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
 
 pub trait EncointerArgs<'b> {
@@ -25,6 +26,7 @@ pub trait EncointerArgs<'b> {
 	fn from_cindex_arg(self) -> Self;
 	fn to_cindex_arg(self) -> Self;
 	fn endorsees_arg(self) -> Self;
+	fn time_offset_arg(self) -> Self;
 	fn all_flag(self) -> Self;
 }
 
@@ -40,6 +42,7 @@ pub trait EncointerArgsExtractor {
 	fn from_cindex_arg(&self) -> Option<i32>;
 	fn to_cindex_arg(&self) -> Option<i32>;
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
+	fn time_offset_arg(&self) -> Option<i32>;
 	fn all_flag(&self) -> bool;
 }
 
@@ -160,7 +163,15 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("Account(s) to be endorsed, ss58check encoded"),
 		)
 	}
-
+	fn time_offset_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(TIME_OFFSET_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("TIME_OFFSET")
+				.help("signed value in milliseconds"),
+		)
+	}
 	fn all_flag(self) -> Self {
 		self.arg(
 			Arg::with_name(ALL_FLAG)
@@ -217,6 +228,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.values_of(ENDORSEES_ARG).map(|v| v.collect())
 	}
 
+	fn time_offset_arg(&self) -> Option<i32> {
+		self.value_of(TIME_OFFSET_ARG).map(|v| v.parse().unwrap())
+	}
 	fn all_flag(&self) -> bool {
 		self.is_present(ALL_FLAG)
 	}
