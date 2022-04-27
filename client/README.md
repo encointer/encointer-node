@@ -100,3 +100,32 @@ node ../polkadot-launch/dist/cli.js polkadot-launch/launch-kusama-local-with-enc
 ```
 
 then you can run bootstrapping or bot-community exactly like for solo-node
+
+# register real community
+
+## upload assets to IPFS
+
+using infura:
+```
+ipfs-upload-client --id <your infura id> --secret <your infura secret> --pin leu.rococo 
+```
+
+using your own ipfs server
+```
+ipfs add -rw --pin leu.rococo
+```
+test if you can fetch the cid through the encointer gateway which will be used by the app
+
+```
+wget http://ipfs.encointer.org:8080/api/v0/object/get?arg=QmXydp7gdTGwxkCn24vEtvtSXbR7wSAGBDLQpc8buF6T92/community_icon.svg
+```
+it may take a while to sync from the server you used for uploading and pinning
+
+## create you community spec file
+
+insert your asset ipfs cid from above
+
+create a proposal:
+```
+RUST_LOG=info ../target/release/encointer-client-notee -u wss://rococo.api.encointer.org -p 443 new-community test-data/leu.rococo.json
+```
