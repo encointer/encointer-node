@@ -482,8 +482,9 @@ fn main() {
                         OpaqueCall::from_tuple(&sudo_next_phase_call)
 
                     } else {
-                        info!("Printing raw collective propose calls for js/apps");
-                        let propose_next_phase = collective_propose_call(&api.metadata, 1, next_phase_call);
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+                        let propose_next_phase = collective_propose_call(&api.metadata, threshold, next_phase_call);
                         print_raw_call("collective_propose(next_phase)", &propose_next_phase);
 
                         OpaqueCall::from_tuple(&propose_next_phase)
