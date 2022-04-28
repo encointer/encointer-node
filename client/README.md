@@ -105,6 +105,13 @@ then you can run bootstrapping or bot-community exactly like for solo-node
 
 ## upload assets to IPFS
 
+Make sure your SVG community icon doesn't include `<style>` attributes
+
+```
+cargo install svgcleaner
+svgcleaner community_icon.svg community_icon.svg
+```
+
 using infura:
 ```
 ipfs-upload-client --id <your infura id> --secret <your infura secret> --pin leu.rococo 

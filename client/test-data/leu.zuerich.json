@@ -2,9 +2,9 @@
   "type": "FeatureCollection",
   "community": {
     "meta": {
-      "name": "Leu Zürich",
+      "name": "Leu Zurich",
       "symbol": "LEU",
-      "assets": "QmZkNMbgjGz3HFWfi3fo8dVaK9FpAqsKgnofVrKCCyUv1P",
+      "assets": "QmSpwTDiKbRVqHaV2LvaUVkwZkkuF8w1BjTjwXD9PEzHnd",
       "url": "https://leu.zuerich"
     },
     "bootstrappers": [
