@@ -106,6 +106,7 @@ def main(ipfs_local, client, port, spec_file):
 
     print(client.list_attestees(cid))
     client.next_phase()
+    client.await_block(1)
 
     print("Claiming rewards")
     client.claim_reward(account1, cid)
