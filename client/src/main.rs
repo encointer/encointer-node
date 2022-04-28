@@ -28,8 +28,8 @@ use crate::{
 		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
 	},
 	utils::{
-		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment,
-		into_effective_cindex, get_councillors,
+		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
+		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str},
 		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
