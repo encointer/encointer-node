@@ -1063,7 +1063,43 @@ fn main() {
                     Ok(())
                 }),
         )
+        .add_cmd(
+            Command::new("set-meetup-time-offset")
+                .description("signed value to offset the ceremony meetup time relative to solar noon")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .setting(AppSettings::AllowLeadingHyphen)
+                        .time_offset_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches)
+                        .set_signer(AccountKeyring::Alice.pair());
+                    let time_offset = matches.time_offset_arg().unwrap_or(0);
+                    let call = compose_call!(
+                        &api.metadata,
+                        "EncointerCeremonies",
+                        "set_meetup_time_offset",
+                        time_offset
+                    );
 
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
+                    let privileged_call = if contains_sudo_pallet(&api.metadata) {
+                        let sudo_call = sudo_call(&api.metadata, call);
+                        info!("Printing raw sudo call for js/apps:");
+                        print_raw_call("sudo(...)", &sudo_call);
+                        OpaqueCall::from_tuple(&sudo_call)
+                    } else {
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+                        let propose_call = collective_propose_call(&api.metadata, threshold, call);
+                        print_raw_call("collective_propose(...)", &propose_call);
+                        OpaqueCall::from_tuple(&propose_call)
+                    };
+
+                    send_and_wait_for_in_block(&api, xt(&api, privileged_call));
+                    Ok(())
+                }),
+        )
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");
