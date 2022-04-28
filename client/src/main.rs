@@ -29,7 +29,7 @@ use crate::{
 	},
 	utils::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment,
-		into_effective_cindex,
+		into_effective_cindex, get_councillors,
 		keys::{get_accountid_from_str, get_pair_from_str},
 		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
@@ -386,9 +386,10 @@ fn main() {
                         (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
 
                     } else {
-                        info!("Printing raw collective propose calls for js/apps for cid: {}", cid);
-                        let propose_new_community = collective_propose_call(&api.metadata, 1, new_community_call);
-                        let propose_add_location_batch = collective_propose_call(&api.metadata, 1, add_location_batch_call);
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+                        let propose_new_community = collective_propose_call(&api.metadata, threshold, new_community_call);
+                        let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
                         print_raw_call("collective_propose(new_community)", &propose_new_community);
                         print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
 
