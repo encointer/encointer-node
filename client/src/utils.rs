@@ -1,12 +1,13 @@
 use crate::exit_code;
 use codec::{Compact, Encode};
+use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
 use sp_application_crypto::sr25519;
 use sp_core::{Pair, H256};
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, rpc::WsRpcClient, Api, Metadata, UncheckedExtrinsicV4,
-	XtStatus,
+	compose_call, compose_extrinsic_offline, rpc::WsRpcClient, Api, ApiClientError,
+	ApiResult as Result, Metadata, UncheckedExtrinsicV4, XtStatus,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
@@ -69,6 +70,10 @@ pub fn collective_propose_call<Proposal: Encode>(
 		proposal,
 		Compact(length_bound)
 	)
+}
+pub fn get_councillors(api: &Api<sr25519::Pair, WsRpcClient>) -> Result<Vec<AccountId>> {
+	api.get_storage_value("Membership", "Members", None)?
+		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
 pub fn send_and_wait_for_in_block<C: Encode>(
