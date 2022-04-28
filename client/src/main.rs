@@ -1089,8 +1089,9 @@ fn main() {
                         print_raw_call("sudo(...)", &sudo_call);
                         OpaqueCall::from_tuple(&sudo_call)
                     } else {
-                        info!("Printing raw collective propose calls for js/apps");
-                        let propose_call = collective_propose_call(&api.metadata, 1, call);
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+                        let propose_call = collective_propose_call(&api.metadata, threshold, call);
                         print_raw_call("collective_propose(...)", &propose_call);
                         OpaqueCall::from_tuple(&propose_call)
                     };
