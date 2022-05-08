@@ -410,6 +410,54 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("add-locations")
+                .description("Register new locations for a community")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .arg(
+                            Arg::with_name("specfile")
+                                .takes_value(true)
+                                .required(true)
+                                .help("geojson file that specifies locations to add as points"),
+                        )
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    // -----setup
+                    let spec_file = matches.value_of("specfile").unwrap();
+                    let spec = read_community_spec_from_file(spec_file);
+
+                    let sudoer = AccountKeyring::Alice.pair();
+                    let api = get_chain_api(matches).set_signer(sudoer);
+
+                    let cid = verify_cid(&api, matches.cid_arg().unwrap());
+
+                    let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
+                    let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
+
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
+                    let add_location_batch_call = if contains_sudo_pallet(&api.metadata) {
+                        let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
+                        info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+                        print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
+                        OpaqueCall::from_tuple(&sudo_add_location_batch)
+                    } else {
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+                        let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
+                        print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+                        OpaqueCall::from_tuple(&propose_add_location_batch)
+                    };
+                    // ---- send xt's to chain
+                    if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
+                        error!("Wrong ceremony phase for registering new locations for {}", cid);
+                        error!("Aborting without registering additional locations");
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("list-communities")
                 .description("list all registered communities")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
