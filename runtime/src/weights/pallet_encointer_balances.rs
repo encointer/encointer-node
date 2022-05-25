@@ -42,51 +42,51 @@ limitations under the License.
 #![allow(unused_imports)]
 
 use frame_support::{
-    traits::Get,
-    weights::{constants::RocksDbWeight, Weight},
+	traits::Get,
+	weights::{constants::RocksDbWeight, Weight},
 };
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_encointer_balances.
 pub trait WeightInfo {
-    fn transfer() -> Weight;
-    fn transfer_all() -> Weight;
-    fn set_fee_conversion_factor() -> Weight;
+	fn transfer() -> Weight;
+	fn transfer_all() -> Weight;
+	fn set_fee_conversion_factor() -> Weight;
 }
 
 /// Weights for pallet_encointer_balances using the Encointer solo chain node and recommended hardware.
 pub struct EncointerWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for EncointerWeight<T> {
-    fn transfer() -> Weight {
-        (88_000_000 as Weight)
-            .saturating_add(T::DbWeight::get().reads(4 as Weight))
-            .saturating_add(T::DbWeight::get().writes(3 as Weight))
-    }
-    fn transfer_all() -> Weight {
-        (111_000_000 as Weight)
-            .saturating_add(T::DbWeight::get().reads(5 as Weight))
-            .saturating_add(T::DbWeight::get().writes(4 as Weight))
-    }
+	fn transfer() -> Weight {
+		(88_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	fn transfer_all() -> Weight {
+		(111_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
 
-    fn set_fee_conversion_factor() -> Weight {
-        (16_300_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
-    }
+	fn set_fee_conversion_factor() -> Weight {
+		(16_300_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }
 
 // For tests
 impl WeightInfo for () {
-    fn transfer() -> Weight {
-        (88_000_000 as Weight)
-            .saturating_add(RocksDbWeight::get().reads(4 as Weight))
-            .saturating_add(RocksDbWeight::get().writes(3 as Weight))
-    }
-    fn transfer_all() -> Weight {
-        (111_000_000 as Weight)
-            .saturating_add(RocksDbWeight::get().reads(5 as Weight))
-            .saturating_add(RocksDbWeight::get().writes(4 as Weight))
-    }
+	fn transfer() -> Weight {
+		(88_000_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	fn transfer_all() -> Weight {
+		(111_000_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
 
-    fn set_fee_conversion_factor() -> Weight {
-        (16_300_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
-    }
+	fn set_fee_conversion_factor() -> Weight {
+		(16_300_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
 }
