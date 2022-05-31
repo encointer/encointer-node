@@ -7,14 +7,16 @@
 
 use std::sync::Arc;
 
-use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index, Moment};
-use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
-use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};
-pub use sc_rpc_api::DenyUnsafe;
+use jsonrpsee::RpcModule;
+use node_template_runtime::{opaque::Block, AccountId, Balance, Index};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
+use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};
+
+pub use sc_rpc_api::DenyUnsafe;
 
 /// Full client dependencies.
 ///
@@ -52,22 +54,21 @@ where
 	<TBackend as sc_client_api::Backend<Block>>::OffchainStorage: 'static,
 {
 	use pallet_encointer_communities_rpc::{Communities, CommunitiesApi};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use substrate_frame_rpc_system::{System, SystemApiServer};
 
-	let mut io = jsonrpc_core::IoHandler::default();
+	let mut module = RpcModule::new(());
 	let FullDeps { client, pool, backend, offchain_indexing_enabled, deny_unsafe } = deps;
 
-	io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));
+	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
-
-	io.extend_with(BazaarApi::to_delegate(Bazaar::new(client.clone(), deny_unsafe)));
+	module.merge(BazaarApi::to_delegate(Bazaar::new(client.clone(), deny_unsafe)));
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
 	// to call into the runtime.
-	// `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
+	// `module.merge(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
 
 	match backend.offchain_storage() {
 		Some(storage) => {
