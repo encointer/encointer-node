@@ -3,7 +3,6 @@ use encointer_node_notee_runtime::{
 	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
 	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -39,7 +38,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 
 fn properties() -> Option<Properties> {
-	serde_from_str(
+	serde_json::from_str(
 		r#"{
     "ss58Format": 42,
     "tokenDecimals": 12,

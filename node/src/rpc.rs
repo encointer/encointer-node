@@ -8,13 +8,11 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
-use node_template_runtime::{opaque::Block, AccountId, Balance, Index};
+use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, Index, Moment, BlockNumber};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use pallet_encointer_bazaar_rpc::{Bazaar, BazaarApi};
-use pallet_encointer_ceremonies_rpc::{Ceremonies, CeremoniesApi};
 
 pub use sc_rpc_api::DenyUnsafe;
 
@@ -37,7 +35,7 @@ pub struct FullDeps<C, P, Backend> {
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P, TBackend>(
 	deps: FullDeps<C, P, TBackend>,
-) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
@@ -53,7 +51,9 @@ where
 	TBackend: sc_client_api::Backend<Block>,
 	<TBackend as sc_client_api::Backend<Block>>::OffchainStorage: 'static,
 {
-	use pallet_encointer_communities_rpc::{Communities, CommunitiesApi};
+	use pallet_encointer_communities_rpc::{CommunitiesRpc, CommunitiesApiServer};
+	use pallet_encointer_bazaar_rpc::{BazaarRpc, BazaarApiServer};
+	use pallet_encointer_ceremonies_rpc::{CeremoniesRpc, CeremoniesApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -63,28 +63,28 @@ where
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 
-	module.merge(BazaarApi::to_delegate(Bazaar::new(client.clone(), deny_unsafe)));
+	module.merge(BazaarRpc::new(client.clone(), deny_unsafe).into_rpc())?;
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
 	// to call into the runtime.
-	// `module.merge(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
+	// `module.merge(YourRpcTrait::into_rpc(YourRpcStruct::new(ReferenceToClient, ...)))?;`
 
 	match backend.offchain_storage() {
 		Some(storage) => {
-			io.extend_with(CommunitiesApi::to_delegate(Communities::new(
+			module.merge(CommunitiesRpc::new(
 				client.clone(),
 				storage.clone(),
 				offchain_indexing_enabled,
 				deny_unsafe,
-			)));
+			).into_rpc())?;
 
-			io.extend_with(CeremoniesApi::to_delegate(Ceremonies::new(
+			module.merge(CeremoniesRpc::new(
 				client.clone(),
 				deny_unsafe,
 				storage,
 				offchain_indexing_enabled,
-			)));
+			).into_rpc())?;
 		},
 		None => log::warn!(
 			"Offchain caching disabled, due to lack of offchain storage support in backend. \n 
@@ -92,5 +92,5 @@ where
 		),
 	};
 
-	io
+	Ok(module)
 }
