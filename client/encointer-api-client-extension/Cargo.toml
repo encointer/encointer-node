@@ -4,6 +4,7 @@ version = "0.8.2"
 edition = "2021"
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = "0.4.14"
 serde_json = { version = "1.0.79"}
 serde = { features = ["derive"], version = "1.0.132" }
