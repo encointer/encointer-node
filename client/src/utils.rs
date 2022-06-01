@@ -3,28 +3,23 @@ use codec::{Compact, Encode};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
-use sp_application_crypto::sr25519;
 use sp_core::{Pair, H256};
+use encointer_api_client_extension::{Api, EncointerXt};
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, rpc::WsRpcClient, Api, ApiClientError,
-	ApiResult as Result, Metadata, UncheckedExtrinsicV4, XtStatus,
+	compose_call, compose_extrinsic_offline, ApiClientError,
+	ApiResult as Result, Metadata, XtStatus, ExtrinsicParams,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
 pub fn offline_xt<C: Encode + Clone>(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	call: C,
 	nonce: u32,
-) -> UncheckedExtrinsicV4<C> {
+) -> EncointerXt<C> {
 	compose_extrinsic_offline!(
 		api.clone().signer.unwrap(),
 		call,
-		nonce,
-		Era::Immortal,
-		api.genesis_hash,
-		api.genesis_hash,
-		api.runtime_version.spec_version,
-		api.runtime_version.transaction_version
+		api.extrinsic_params(nonce)
 	)
 }
 
@@ -32,9 +27,9 @@ pub fn offline_xt<C: Encode + Clone>(
 ///
 /// Panics if no signer is set.
 pub fn xt<C: Encode + Clone>(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	call: C,
-) -> UncheckedExtrinsicV4<C> {
+) -> EncointerXt<C> {
 	let nonce = api.get_nonce().unwrap();
 	offline_xt(api, call, nonce)
 }
@@ -71,20 +66,20 @@ pub fn collective_propose_call<Proposal: Encode>(
 		Compact(length_bound)
 	)
 }
-pub fn get_councillors(api: &Api<sr25519::Pair, WsRpcClient>) -> Result<Vec<AccountId>> {
+pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
 	api.get_storage_value("Membership", "Members", None)?
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
 pub fn send_and_wait_for_in_block<C: Encode>(
-	api: &Api<sr25519::Pair, WsRpcClient>,
-	xt: UncheckedExtrinsicV4<C>,
+	api: &Api,
+	xt: EncointerXt<C>,
 ) -> Option<H256> {
 	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode())
 }
 
 pub fn send_xt_hex_and_wait_for_in_block(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	xt_hex: String,
 ) -> Option<H256> {
 	ensure_payment(&api, &xt_hex);
@@ -114,7 +109,7 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api<sr25519::Pair, WsRpcClient>, xt: &str) {
+pub fn ensure_payment(api: &Api, xt: &str) {
 	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
 		Some(bal) => bal.free,
 		None => {

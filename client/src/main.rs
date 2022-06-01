@@ -67,9 +67,10 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, Api, ApiClientError, ApiResult, GenericAddress, Metadata,
-	UncheckedExtrinsicV4, XtStatus,
+	utils::FromHexString, ApiClientError, ApiResult, GenericAddress, Metadata,
+	XtStatus, ExtrinsicParams
 };
+use encointer_api_client_extension::{EncointerXt, Api};
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -188,15 +189,10 @@ fn main() {
                             GenericAddress::Id(to.clone()),
                             Compact(amount)
                         );
-                        let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
+                        let xt: EncointerXt<_> = compose_extrinsic_offline!(
                             api.clone().signer.unwrap(),
                             call.clone(),
-                            nonce,
-                            Era::Immortal,
-                            api.genesis_hash,
-                            api.genesis_hash,
-                            api.runtime_version.spec_version,
-                            api.runtime_version.transaction_version
+                            api.extrinsic_params(nonce)
                         );
                         ensure_payment(&api, &xt.hex_encode());
                         // send and watch extrinsic until finalized
@@ -293,7 +289,7 @@ fn main() {
                             let cid = verify_cid(&_api, cid_str);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
-                            let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                            let xt: EncointerXt<_> = compose_extrinsic!(
                                 _api.clone(),
                                 "EncointerBalances",
                                 "transfer",
@@ -711,7 +707,7 @@ fn main() {
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
                     let _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                    let xt: EncointerXt<_> = compose_extrinsic!(
                         _api.clone(),
                         "EncointerCeremonies",
                         "register_participant",
@@ -816,7 +812,7 @@ fn main() {
                     info!("send attest_claims by {}", who.public());
 
                     let api = get_chain_api(matches).set_signer(who.clone().into());
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                    let xt: EncointerXt<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
                         "attest_claims",
@@ -880,7 +876,7 @@ fn main() {
                             let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
                             let api = api.set_signer(signer.clone().into());
 
-                            let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                            let xt: EncointerXt<_> = compose_extrinsic!(
                                 api.clone(),
                                 ENCOINTER_CEREMONIES,
                                 "claim_rewards",
@@ -1051,7 +1047,7 @@ fn main() {
                         batch_call.clone()
                     );
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
-                    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+                    let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
                         "Sudo",
                         "sudo",
@@ -1108,7 +1104,7 @@ fn main() {
         .run();
 }
 
-fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
+fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 	let url = format!(
 		"{}:{}",
 		matches.value_of("node-url").unwrap(),
@@ -1116,10 +1112,10 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api<sr25519::Pair, WsRpcClient> {
 	);
 	debug!("connecting to {}", url);
 	let client = WsRpcClient::new(&url);
-	Api::<sr25519::Pair, _>::new(client).unwrap()
+	Api::new(client).unwrap()
 }
 
-fn reasonable_native_balance(api: &Api<sr25519::Pair, WsRpcClient>) -> u128 {
+fn reasonable_native_balance(api: &Api) -> u128 {
 	let xt = api.balance_transfer(GenericAddress::Id(AccountKeyring::Alice.into()), 9999);
 	let fee = api
 		.get_fee_details(&xt.hex_encode(), None)
@@ -1251,14 +1247,14 @@ fn listen(matches: &ArgMatches<'_>) {
 /// Extracts api and cid from `matches` and execute the given `closure` with them.
 fn extract_and_execute<T>(
 	matches: &ArgMatches<'_>,
-	closure: impl FnOnce(Api<sr25519::Pair, WsRpcClient>, CommunityIdentifier) -> T,
+	closure: impl FnOnce(Api, CommunityIdentifier) -> T,
 ) -> T {
 	let api = get_chain_api(matches);
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
 	closure(api, cid)
 }
 
-fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIdentifier {
+fn verify_cid(api: &Api, cid: &str) -> CommunityIdentifier {
 	let cids = get_community_identifiers(&api).expect("no community registered");
 	let cid = CommunityIdentifier::from_str(cid).unwrap();
 	if !cids.contains(&cid) {
@@ -1267,7 +1263,7 @@ fn verify_cid(api: &Api<sr25519::Pair, WsRpcClient>, cid: &str) -> CommunityIden
 	cid
 }
 
-fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
+fn get_block_number(api: &Api) -> BlockNumber {
 	let hdr: Header = api.get_header(None).unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
@@ -1275,7 +1271,7 @@ fn get_block_number(api: &Api<sr25519::Pair, WsRpcClient>) -> BlockNumber {
 }
 
 fn get_demurrage_per_block(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	cid: CommunityIdentifier,
 ) -> Demurrage {
 	let d: Option<Demurrage> = api
@@ -1295,14 +1291,14 @@ fn get_demurrage_per_block(
 	}
 }
 
-fn get_ceremony_index(api: &Api<sr25519::Pair, WsRpcClient>) -> CeremonyIndexType {
+fn get_ceremony_index(api: &Api) -> CeremonyIndexType {
 	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
 		.unwrap()
 		.unwrap()
 }
 
 fn get_attestee_count(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	key: CommunityCeremony,
 ) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
@@ -1312,7 +1308,7 @@ fn get_attestee_count(
 }
 
 fn get_attestees(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	key: CommunityCeremony,
 	windex: ParticipantIndexType,
 ) -> Option<Vec<AccountId>> {
@@ -1321,7 +1317,7 @@ fn get_attestees(
 }
 
 fn get_participant_attestation_index(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	key: CommunityCeremony,
 	accountid: &AccountId,
 ) -> Option<ParticipantIndexType> {
@@ -1330,7 +1326,7 @@ fn get_participant_attestation_index(
 }
 
 fn new_claim_for(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	claimant: &sr25519::Pair,
 	cid: CommunityIdentifier,
 	n_participants: u32,
@@ -1369,14 +1365,14 @@ fn new_claim_for(
 }
 
 fn get_community_identifiers(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 ) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
-fn get_cid_names(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CidName>> {
+fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
 	let req = json!({
 		"method": "encointer_getAllCommunities",
 		"params": [],
@@ -1391,7 +1387,7 @@ fn get_cid_names(api: &Api<sr25519::Pair, WsRpcClient>) -> Option<Vec<CidName>> 
 }
 
 fn get_businesses(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	cid: CommunityIdentifier,
 ) -> Option<Vec<BusinessData>> {
 	let req = json!({
@@ -1406,7 +1402,7 @@ fn get_businesses(
 }
 
 fn get_offerings(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	cid: CommunityIdentifier,
 ) -> Option<Vec<OfferingData>> {
 	let req = json!({
@@ -1424,7 +1420,7 @@ fn get_offerings(
 }
 
 fn get_offerings_for_business(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	cid: CommunityIdentifier,
 	account_id: AccountId,
 ) -> Option<Vec<OfferingData>> {
@@ -1445,7 +1441,7 @@ fn get_offerings_for_business(
 }
 
 fn get_reputation_history(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
 	let req = json!({
@@ -1463,7 +1459,7 @@ fn get_reputation_history(
 }
 
 fn get_all_balances(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
 	let req = json!({
@@ -1501,7 +1497,7 @@ fn prove_attendance(
 }
 
 fn get_reputation(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	prover: &AccountId,
 	cid: CommunityIdentifier,
 	cindex: CeremonyIndexType,
@@ -1542,7 +1538,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
-	let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+	let xt: EncointerXt<_> = compose_extrinsic!(
 		api.clone(),
 		"EncointerBazaar",
 		&business_call.to_string(),
@@ -1557,7 +1553,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 }
 
 fn endorse_newcomers(
-	api: &mut Api<sr25519::Pair, WsRpcClient>,
+	api: &mut Api,
 	cid: CommunityIdentifier,
 	matches: &ArgMatches<'_>,
 ) -> Result<(), ApiClientError> {
@@ -1594,7 +1590,7 @@ struct BootstrapperWithTickets {
 }
 
 fn get_bootstrappers_with_remaining_newbie_tickets(
-	api: &Api<sr25519::Pair, WsRpcClient>,
+	api: &Api,
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 = api

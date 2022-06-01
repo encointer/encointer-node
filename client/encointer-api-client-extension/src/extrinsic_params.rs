@@ -1,5 +1,5 @@
-use ac_primitives::{BaseExtrinsicParams, BaseExtrinsicParamsBuilder};
-use codec::{Compact, Decode, Encode};
+use ac_primitives::{BaseExtrinsicParams, BaseExtrinsicParamsBuilder, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4};
+use codec::{Decode, Encode};
 
 /// A struct representing the signed extra and additional parameters required
 /// to construct a transaction and pay in asset fees
@@ -7,6 +7,8 @@ pub type CommunityCurrencyTipExtrinsicParams = BaseExtrinsicParams<AssetTip>;
 /// A builder which leads to [`CommunityCurrencyTipExtrinsicParams`] being constructed.
 /// This is what you provide to methods like `sign_and_submit()`.
 pub type CommunityCurrencyTipExtrinsicParamsBuilder = BaseExtrinsicParamsBuilder<AssetTip>;
+
+pub type EncointerXt<Call> = UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra>;
 
 
 /// A tip payment made in the form of a specific asset.
