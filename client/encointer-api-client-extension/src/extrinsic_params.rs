@@ -8,7 +8,7 @@ pub type CommunityCurrencyTipExtrinsicParams = BaseExtrinsicParams<AssetTip>;
 /// This is what you provide to methods like `sign_and_submit()`.
 pub type CommunityCurrencyTipExtrinsicParamsBuilder = BaseExtrinsicParamsBuilder<AssetTip>;
 
-pub type EncointerXt<Call> = UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra>;
+pub type EncointerXt<Call> = UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<AssetTip>>;
 
 
 /// A tip payment made in the form of a specific asset.
