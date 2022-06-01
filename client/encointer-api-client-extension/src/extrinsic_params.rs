@@ -1,4 +1,5 @@
 use codec::{Decode, Encode};
+use encointer_primitives::communities::CommunityIdentifier;
 use substrate_api_client::{
 	BaseExtrinsicParams, BaseExtrinsicParamsBuilder, SubstrateDefaultSignedExtra,
 	UncheckedExtrinsicV4,
@@ -18,7 +19,7 @@ pub type EncointerXt<Call> = UncheckedExtrinsicV4<Call, SubstrateDefaultSignedEx
 pub struct AssetTip {
 	#[codec(compact)]
 	tip: u128,
-	asset: Option<u32>,
+	asset: Option<CommunityIdentifier>,
 }
 
 impl AssetTip {
@@ -29,7 +30,7 @@ impl AssetTip {
 
 	/// Designate the tip as being of a particular asset class.
 	/// If this is not set, then the native currency is used.
-	pub fn of_asset(mut self, asset: u32) -> Self {
+	pub fn of_asset(mut self, asset: CommunityIdentifier) -> Self {
 		self.asset = Some(asset);
 		self
 	}
