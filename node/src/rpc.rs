@@ -7,8 +7,8 @@
 
 use std::sync::Arc;
 
+use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index, Moment};
 use jsonrpsee::RpcModule;
-use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, Index, Moment, BlockNumber};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -51,9 +51,9 @@ where
 	TBackend: sc_client_api::Backend<Block>,
 	<TBackend as sc_client_api::Backend<Block>>::OffchainStorage: 'static,
 {
-	use pallet_encointer_communities_rpc::{CommunitiesRpc, CommunitiesApiServer};
-	use pallet_encointer_bazaar_rpc::{BazaarRpc, BazaarApiServer};
-	use pallet_encointer_ceremonies_rpc::{CeremoniesRpc, CeremoniesApiServer};
+	use pallet_encointer_bazaar_rpc::{BazaarApiServer, BazaarRpc};
+	use pallet_encointer_ceremonies_rpc::{CeremoniesApiServer, CeremoniesRpc};
+	use pallet_encointer_communities_rpc::{CommunitiesApiServer, CommunitiesRpc};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -72,19 +72,20 @@ where
 
 	match backend.offchain_storage() {
 		Some(storage) => {
-			module.merge(CommunitiesRpc::new(
-				client.clone(),
-				storage.clone(),
-				offchain_indexing_enabled,
-				deny_unsafe,
-			).into_rpc())?;
+			module.merge(
+				CommunitiesRpc::new(
+					client.clone(),
+					storage.clone(),
+					offchain_indexing_enabled,
+					deny_unsafe,
+				)
+				.into_rpc(),
+			)?;
 
-			module.merge(CeremoniesRpc::new(
-				client.clone(),
-				deny_unsafe,
-				storage,
-				offchain_indexing_enabled,
-			).into_rpc())?;
+			module.merge(
+				CeremoniesRpc::new(client.clone(), deny_unsafe, storage, offchain_indexing_enabled)
+					.into_rpc(),
+			)?;
 		},
 		None => log::warn!(
 			"Offchain caching disabled, due to lack of offchain storage support in backend. \n 

@@ -94,7 +94,8 @@ pub fn create_benchmark_extrinsic(
 	let raw_payload = runtime::SignedPayload::from_raw(
 		call.clone(),
 		extra.clone(),
-		(   // Encointer-change: non zero sender is missing
+		(
+			// Encointer-change: non zero sender is missing
 			runtime::VERSION.spec_version,
 			runtime::VERSION.transaction_version,
 			genesis_hash,

@@ -1,35 +1,24 @@
 use crate::exit_code;
 use codec::{Compact, Encode};
+use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
 use sp_core::{Pair, H256};
-use encointer_api_client_extension::{Api, EncointerXt};
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, ApiClientError,
-	ApiResult as Result, Metadata, XtStatus, ExtrinsicParams,
+	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, ExtrinsicParams,
+	Metadata, XtStatus,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
-pub fn offline_xt<C: Encode + Clone>(
-	api: &Api,
-	call: C,
-	nonce: u32,
-) -> EncointerXt<C> {
-	compose_extrinsic_offline!(
-		api.clone().signer.unwrap(),
-		call,
-		api.extrinsic_params(nonce)
-	)
+pub fn offline_xt<C: Encode + Clone>(api: &Api, call: C, nonce: u32) -> EncointerXt<C> {
+	compose_extrinsic_offline!(api.clone().signer.unwrap(), call, api.extrinsic_params(nonce))
 }
 
 /// Creates a signed extrinsic from a call
 ///
 /// Panics if no signer is set.
-pub fn xt<C: Encode + Clone>(
-	api: &Api,
-	call: C,
-) -> EncointerXt<C> {
+pub fn xt<C: Encode + Clone>(api: &Api, call: C) -> EncointerXt<C> {
 	let nonce = api.get_nonce().unwrap();
 	offline_xt(api, call, nonce)
 }
@@ -71,17 +60,11 @@ pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
-pub fn send_and_wait_for_in_block<C: Encode>(
-	api: &Api,
-	xt: EncointerXt<C>,
-) -> Option<H256> {
+pub fn send_and_wait_for_in_block<C: Encode>(api: &Api, xt: EncointerXt<C>) -> Option<H256> {
 	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode())
 }
 
-pub fn send_xt_hex_and_wait_for_in_block(
-	api: &Api,
-	xt_hex: String,
-) -> Option<H256> {
+pub fn send_xt_hex_and_wait_for_in_block(api: &Api, xt_hex: String) -> Option<H256> {
 	ensure_payment(&api, &xt_hex);
 	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);

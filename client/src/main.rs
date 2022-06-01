@@ -39,7 +39,7 @@ use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
-	CeremoniesApi, CommunitiesApi, SchedulerApi, ENCOINTER_CEREMONIES,
+	Api, CeremoniesApi, CommunitiesApi, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
@@ -67,10 +67,9 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, ApiClientError, ApiResult, GenericAddress, Metadata,
-	XtStatus, ExtrinsicParams
+	utils::FromHexString, ApiClientError, ApiResult, ExtrinsicParams, GenericAddress, Metadata,
+	XtStatus,
 };
-use encointer_api_client_extension::{EncointerXt, Api};
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -1270,10 +1269,7 @@ fn get_block_number(api: &Api) -> BlockNumber {
 	hdr.number
 }
 
-fn get_demurrage_per_block(
-	api: &Api,
-	cid: CommunityIdentifier,
-) -> Demurrage {
+fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 	let d: Option<Demurrage> = api
 		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
 		.unwrap();
@@ -1297,10 +1293,7 @@ fn get_ceremony_index(api: &Api) -> CeremonyIndexType {
 		.unwrap()
 }
 
-fn get_attestee_count(
-	api: &Api,
-	key: CommunityCeremony,
-) -> ParticipantIndexType {
+fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
@@ -1364,9 +1357,7 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(
-	api: &Api,
-) -> Option<Vec<CommunityIdentifier>> {
+fn get_community_identifiers(api: &Api) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
 		.unwrap()
 }
@@ -1386,10 +1377,7 @@ fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_businesses(
-	api: &Api,
-	cid: CommunityIdentifier,
-) -> Option<Vec<BusinessData>> {
+fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
 	let req = json!({
 		"method": "encointer_bazaarGetBusinesses",
 		"params": vec![cid],
@@ -1401,10 +1389,7 @@ fn get_businesses(
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_offerings(
-	api: &Api,
-	cid: CommunityIdentifier,
-) -> Option<Vec<OfferingData>> {
+fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
 	let req = json!({
 		"method": "encointer_bazaarGetOfferings",
 		"params": vec![cid],

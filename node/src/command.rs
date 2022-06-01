@@ -21,8 +21,8 @@ use crate::{
 	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
 	service,
 };
-use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use encointer_node_notee_runtime::Block;
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 use std::sync::Arc;

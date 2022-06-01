@@ -1,5 +1,8 @@
-use substrate_api_client::{BaseExtrinsicParams, BaseExtrinsicParamsBuilder, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4};
 use codec::{Decode, Encode};
+use substrate_api_client::{
+	BaseExtrinsicParams, BaseExtrinsicParamsBuilder, SubstrateDefaultSignedExtra,
+	UncheckedExtrinsicV4,
+};
 
 /// A struct representing the signed extra and additional parameters required
 /// to construct a transaction and pay in asset fees
@@ -9,7 +12,6 @@ pub type CommunityCurrencyTipExtrinsicParams = BaseExtrinsicParams<AssetTip>;
 pub type CommunityCurrencyTipExtrinsicParamsBuilder = BaseExtrinsicParamsBuilder<AssetTip>;
 
 pub type EncointerXt<Call> = UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<AssetTip>>;
-
 
 /// A tip payment made in the form of a specific asset.
 #[derive(Copy, Clone, Debug, Default, Decode, Encode, Eq, PartialEq)]
@@ -22,10 +24,7 @@ pub struct AssetTip {
 impl AssetTip {
 	/// Create a new tip of the amount provided.
 	pub fn new(amount: u128) -> Self {
-		AssetTip {
-			tip: amount,
-			asset: None,
-		}
+		AssetTip { tip: amount, asset: None }
 	}
 
 	/// Designate the tip as being of a particular asset class.
