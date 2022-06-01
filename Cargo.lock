@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=cl/encointer-community-currency-fees-hotfix#b51d802b054bbd655b3178448822e2db04a8a71e"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#edf0c13b05e43d9550a0a3773915c7bee74a48b5"
 dependencies = [
  "ac-primitives",
  "log",
@@ -27,7 +27,7 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=cl/encointer-community-currency-fees-hotfix#b51d802b054bbd655b3178448822e2db04a8a71e"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#edf0c13b05e43d9550a0a3773915c7bee74a48b5"
 dependencies = [
  "ac-primitives",
  "frame-metadata",
@@ -47,9 +47,8 @@ dependencies = [
 [[package]]
 name = "ac-primitives"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=cl/encointer-community-currency-fees-hotfix#b51d802b054bbd655b3178448822e2db04a8a71e"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#edf0c13b05e43d9550a0a3773915c7bee74a48b5"
 dependencies = [
- "encointer-primitives",
  "hex",
  "parity-scale-codec",
  "sp-core",
@@ -7720,7 +7719,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=cl/encointer-community-currency-fees-hotfix#b51d802b054bbd655b3178448822e2db04a8a71e"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#edf0c13b05e43d9550a0a3773915c7bee74a48b5"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -7771,7 +7770,7 @@ dependencies = [
 [[package]]
 name = "substrate-client-keystore"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=cl/encointer-community-currency-fees-hotfix#b51d802b054bbd655b3178448822e2db04a8a71e"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#edf0c13b05e43d9550a0a3773915c7bee74a48b5"
 dependencies = [
  "async-trait",
  "hex",
@@ -8327,7 +8326,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
