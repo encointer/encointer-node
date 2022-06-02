@@ -4,6 +4,7 @@ version = "0.8.2"
 edition = "2021"
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = "0.4.14"
 serde_json = { version = "1.0.79"}
 serde = { features = ["derive"], version = "1.0.132" }
@@ -13,8 +14,8 @@ encointer-primitives = { git = "https://github.com/encointer/pallets", branch = 
 encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "master" }
 
 # scs deps
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "cl/encointer-community-currency-fees-hotfix"}
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "cl/encointer-community-currency-fees-hotfix"}
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client", branch = "master"}
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client", branch = "master"}
 
 # substrate deps
 sp-core = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "master" }
