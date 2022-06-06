@@ -39,7 +39,8 @@ use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
-	Api, CeremoniesApi, CommunitiesApi, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
+	Api, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
+	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
@@ -110,6 +111,7 @@ fn main() {
                     .help("node port"),
             )
             .optional_cid_arg()
+            .tx_payment_cid_arg()
             .name("encointer-client-notee")
             .version(VERSION)
             .author("Encointer Association <info@encointer.org>")
@@ -282,12 +284,19 @@ fn main() {
                     let to = get_accountid_from_str(arg_to);
                     info!("from ss58 is {}", from.public().to_ss58check());
                     info!("to ss58 is {}", to.to_ss58check());
-                    let _api = api.set_signer(sr25519_core::Pair::from(from));
+                    let mut _api = api.set_signer(sr25519_core::Pair::from(from));
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
                             let cid = verify_cid(&_api, cid_str);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
+
+                            let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
+                            if let Some(tx_payment_cid) = matches.tx_payment_cid_arg() {
+                                tx_params = tx_params.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&_api,tx_payment_cid)));
+                            }
+                            _api = _api.set_extrinsic_params_builder(tx_params);
+
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 _api.clone(),
                                 "EncointerBalances",
