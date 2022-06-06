@@ -370,16 +370,16 @@ fn main() {
                                 cid
                             );
                             ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
-                            _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
-                            info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
-                            let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
-                            println!("balance for {} is now {}", to, result.free); 
+                            _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {
                             error!("No cid specified");
                             std::process::exit(exit_code::NO_CID_SPECIFIED);
                         }
                     };
+                    info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
+                    let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
+                    println!("balance for {} is now {}", to, result.free); 
                     Ok(())
 
                 }),
