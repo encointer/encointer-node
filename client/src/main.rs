@@ -182,7 +182,8 @@ fn main() {
 
                     let amount = reasonable_native_balance(&api);
 
-                    api = set_api_extrisic_params_builder(api.clone().into(), matches);
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
 
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
@@ -198,7 +199,7 @@ fn main() {
                             call.clone(),
                             api.extrinsic_params(nonce)
                         );
-                        ensure_payment(&api, &xt.hex_encode());
+                        ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
                         // send and watch extrinsic until finalized
                         println!("Faucet drips {} to {} (Alice's nonce={})", amount, to, nonce);
                         let _blockh = api
@@ -288,13 +289,14 @@ fn main() {
                     info!("from ss58 is {}", from.public().to_ss58check());
                     info!("to ss58 is {}", to.to_ss58check());
                     let mut _api = api.set_signer(sr25519_core::Pair::from(from));
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
                             let cid = verify_cid(&_api, cid_str);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
-                            _api = set_api_extrisic_params_builder(_api.clone().into(), matches);
+                            _api = set_api_extrisic_params_builder(_api.clone().into(), tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 _api.clone(),
@@ -304,7 +306,7 @@ fn main() {
                                 cid,
                                 amount
                             );
-                            // ensure_payment(&_api, &xt.hex_encode());
+                            ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {
@@ -314,7 +316,7 @@ fn main() {
                                 GenericAddress::Id(to.clone()),
                                 amount
                             );
-                            ensure_payment(&_api, &xt.hex_encode());
+                            ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
                             _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         }
                     };
@@ -714,7 +716,9 @@ fn main() {
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
                     let mut _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
-                    _api = set_api_extrisic_params_builder(_api.clone().into(), matches);
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    _api = set_api_extrisic_params_builder(_api.clone().into(), tx_payment_cid_arg);
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         _api.clone(),
@@ -723,7 +727,7 @@ fn main() {
                         cid,
                         proof
                     );
-                    ensure_payment(&_api, &xt.hex_encode());
+                    ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
                     let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
                     info!("Registration sent for {}. status: 'ready'", arg_who);
@@ -821,7 +825,9 @@ fn main() {
                     info!("send attest_claims by {}", who.public());
 
                     let mut api = get_chain_api(matches).set_signer(who.clone().into());
-                    api = set_api_extrisic_params_builder(api.clone().into(), matches);
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
@@ -829,7 +835,7 @@ fn main() {
                         claims.clone()
                     );
 
-                    ensure_payment(&api, &xt.hex_encode());
+                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
                     let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 
                     println!("Claims sent by {}. status: 'ready'", who.public());
@@ -885,14 +891,16 @@ fn main() {
                         &matches, |api, cid| {
                             let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
                             let mut api = api.set_signer(signer.clone().into());
-                            api = set_api_extrisic_params_builder(api.clone().into(), matches);
+
+                            let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                            api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 api.clone(),
                                 ENCOINTER_CEREMONIES,
                                 "claim_rewards",
                                 cid
                             );
-                            ensure_payment(&api, &xt.hex_encode());
+                            ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
 
                             let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
                             println!("Claiming reward for {}. xt-status: 'ready'", signer.public());
@@ -1057,14 +1065,16 @@ fn main() {
                         batch_call.clone()
                     );
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
-                    api = set_api_extrisic_params_builder(api.clone().into(), matches);
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
                         "Sudo",
                         "sudo",
                         batch_call
                     );
-                    ensure_payment(&api, &xt.hex_encode());
+                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
                     let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     Ok(())
@@ -1535,7 +1545,8 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
-	api = set_api_extrisic_params_builder(api.clone().into(), matches);
+	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+	api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
 	let xt: EncointerXt<_> = compose_extrinsic!(
 		api.clone(),
 		"EncointerBazaar",
@@ -1543,7 +1554,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 		cid,
 		ipfs_cid
 	);
-	ensure_payment(&api, &xt.hex_encode());
+	ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
@@ -1570,7 +1581,7 @@ fn endorse_newcomers(
 
 		let xt = offline_xt(&api, call, nonce);
 
-		ensure_payment(&api, &xt.hex_encode());
+		ensure_payment(&api, &xt.hex_encode(), None);
 
 		let _tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 
@@ -1644,9 +1655,9 @@ impl ToString for BazaarCalls {
 	}
 }
 
-fn set_api_extrisic_params_builder(api: Api, matches: &ArgMatches<'_>) -> Api {
+fn set_api_extrisic_params_builder(api: Api, tx_payment_cid_arg: Option<&str>) -> Api {
 	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
-	if let Some(tx_payment_cid) = matches.tx_payment_cid_arg() {
+	if let Some(tx_payment_cid) = tx_payment_cid_arg {
 		tx_params = tx_params
 			.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&api, tx_payment_cid)));
 	}
