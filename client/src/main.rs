@@ -83,6 +83,7 @@ mod exit_code {
 	pub const FEE_PAYMENT_FAILED: i32 = 51;
 	pub const INVALID_REPUTATION: i32 = 52;
 	pub const RPC_ERROR: i32 = 60;
+	pub const NO_CID_SPECIFIED: i32 = 70;
 }
 
 fn main() {
@@ -324,6 +325,63 @@ fn main() {
                     let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
                     println!("balance for {} is now {}", to, result.free);
                     Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("transfer_all")
+                .description("transfer all available funds from one account to another for a community specified with --cid.")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                    .arg(
+                        Arg::with_name("from")
+                            .takes_value(true)
+                            .required(true)
+                            .value_name("SS58")
+                            .help("sender's AccountId in ss58check format"),
+                    )
+                    .arg(
+                        Arg::with_name("to")
+                            .takes_value(true)
+                            .required(true)
+                            .value_name("SS58")
+                            .help("recipient's AccountId in ss58check format"),
+                    )
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let arg_from = matches.value_of("from").unwrap();
+                    let arg_to = matches.value_of("to").unwrap();
+                    let from = get_pair_from_str(arg_from);
+                    let to = get_accountid_from_str(arg_to);
+                    info!("from ss58 is {}", from.public().to_ss58check());
+                    info!("to ss58 is {}", to.to_ss58check());
+                    let mut _api = api.set_signer(sr25519_core::Pair::from(from));
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    let tx_hash = match matches.cid_arg() {
+                        Some(cid_str) => {
+                            let cid = verify_cid(&_api, cid_str);
+                            _api = set_api_extrisic_params_builder(_api.clone().into(), tx_payment_cid_arg);
+
+                            let xt: EncointerXt<_> = compose_extrinsic!(
+                                _api.clone(),
+                                "EncointerBalances",
+                                "transfer_all",
+                                to.clone(),
+                                cid
+                            );
+                            ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
+                            _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                            info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
+                            let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
+                            println!("balance for {} is now {}", to, result.free); 
+                        },
+                        None => {
+                            error!("No cid specified");
+                            std::process::exit(exit_code::NO_CID_SPECIFIED);
+                        }
+                    };
+                    Ok(())
+
                 }),
         )
         .add_cmd(
