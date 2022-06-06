@@ -171,7 +171,7 @@ fn main() {
                     .fundees_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches)
+                    let mut api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
                     let accounts = matches.fundees_arg().unwrap();
 
@@ -181,6 +181,9 @@ fn main() {
                     let mut nonce = api.get_nonce().unwrap();
 
                     let amount = reasonable_native_balance(&api);
+
+                    api = set_api_extrisic_params_builder(api.clone().into(), matches);
+
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
                         let call = compose_call!(
@@ -291,11 +294,7 @@ fn main() {
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
-                            let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
-                            if let Some(tx_payment_cid) = matches.tx_payment_cid_arg() {
-                                tx_params = tx_params.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&_api,tx_payment_cid)));
-                            }
-                            _api = _api.set_extrinsic_params_builder(tx_params);
+                            _api = set_api_extrisic_params_builder(_api.clone().into(), matches);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 _api.clone(),
@@ -714,7 +713,9 @@ fn main() {
                         error!("wrong ceremony phase for registering participant");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    let _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
+                    let mut _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
+                    _api = set_api_extrisic_params_builder(_api.clone().into(), matches);
+
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         _api.clone(),
                         "EncointerCeremonies",
@@ -819,7 +820,8 @@ fn main() {
 
                     info!("send attest_claims by {}", who.public());
 
-                    let api = get_chain_api(matches).set_signer(who.clone().into());
+                    let mut api = get_chain_api(matches).set_signer(who.clone().into());
+                    api = set_api_extrisic_params_builder(api.clone().into(), matches);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
@@ -882,8 +884,8 @@ fn main() {
                     extract_and_execute(
                         &matches, |api, cid| {
                             let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
-                            let api = api.set_signer(signer.clone().into());
-
+                            let mut api = api.set_signer(signer.clone().into());
+                            api = set_api_extrisic_params_builder(api.clone().into(), matches);
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 api.clone(),
                                 ENCOINTER_CEREMONIES,
@@ -1014,7 +1016,7 @@ fn main() {
                     })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let sudoer = AccountKeyring::Alice.pair();
-                    let api = get_chain_api(matches).set_signer(sudoer);
+                    let mut api = get_chain_api(matches).set_signer(sudoer);
 
                     let current_ceremony_index = get_ceremony_index(&api);
 
@@ -1055,6 +1057,7 @@ fn main() {
                         batch_call.clone()
                     );
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
+                    api = set_api_extrisic_params_builder(api.clone().into(), matches);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
                         "Sudo",
@@ -1528,10 +1531,11 @@ fn apply_demurrage(
 fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Result<(), ()> {
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
-	let api = get_chain_api(matches).set_signer(business_owner.clone().into());
+	let mut api = get_chain_api(matches).set_signer(business_owner.clone().into());
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
+	api = set_api_extrisic_params_builder(api.clone().into(), matches);
 	let xt: EncointerXt<_> = compose_extrinsic!(
 		api.clone(),
 		"EncointerBazaar",
@@ -1638,4 +1642,13 @@ impl ToString for BazaarCalls {
 			BazaarCalls::CreateOffering => "create_offering".to_string(),
 		}
 	}
+}
+
+fn set_api_extrisic_params_builder(api: Api, matches: &ArgMatches<'_>) -> Api {
+	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
+	if let Some(tx_payment_cid) = matches.tx_payment_cid_arg() {
+		tx_params = tx_params
+			.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&api, tx_payment_cid)));
+	}
+	api.set_extrinsic_params_builder(tx_params)
 }
