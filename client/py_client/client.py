@@ -6,6 +6,7 @@ from py_client.scheduler import CeremonyPhase
 
 DEFAULT_CLIENT = '../target/release/encointer-client-notee'
 
+
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
@@ -41,6 +42,7 @@ def ensure_clean_exit(returncode):
         raise ParticipantAlreadyLinked
     raise UnknownError
 
+
 class Client:
     def __init__(self,
                  node_url=None,
@@ -51,7 +53,8 @@ class Client:
             try:
                 rust_client = os.environ['ENCOINTER_CLIENT']
             except:
-                print(f"didn't find ENCOINTER_CLIENT in env variables nor arguments, setting client to {DEFAULT_CLIENT}")
+                print(
+                    f"didn't find ENCOINTER_CLIENT in env variables nor arguments, setting client to {DEFAULT_CLIENT}")
                 rust_client = DEFAULT_CLIENT
 
         if node_url:
@@ -81,11 +84,13 @@ class Client:
                 self.next_phase()
 
     def list_accounts(self):
-        ret = subprocess.run(self.cli + ["list-accounts"], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["list-accounts"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").splitlines()
 
     def new_account(self):
-        ret = subprocess.run(self.cli + ["new-account"], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["new-account"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def create_accounts(self, amount):
@@ -94,58 +99,69 @@ class Client:
     def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
         if is_faucet:
             self.await_block(1)
-            ret = subprocess.run(self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+            ret = subprocess.run(
+                self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
             print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret.returncode)
         else:
             payload = {'accounts': accounts}
             requests.get(faucet_url, params=payload)
 
-
     def balance(self, account, cid=None):
         if not cid:
-            ret = subprocess.run(self.cli + ["balance", account], stdout=subprocess.PIPE)
+            ret = subprocess.run(
+                self.cli + ["balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
         else:
-            ret = subprocess.run(self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
+            ret = subprocess.run(
+                self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
             return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
     def reputation(self, account):
-        ret = subprocess.run(self.cli + ["reputation", account], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["reputation", account], stdout=subprocess.PIPE)
         ensure_clean_exit(ret.returncode)
         reputation_history = []
         lines = ret.stdout.decode("utf-8").splitlines()
         while len(lines) > 0:
             (cindex, cid, rep) = lines.pop(0).split(',')
-            reputation_history.append((cindex, cid, rep.strip().split('::')[1]))
+            reputation_history.append(
+                (cindex, cid, rep.strip().split('::')[1]))
         return reputation_history
 
     def new_community(self, specfile):
-        ret = subprocess.run(self.cli + ["new-community", specfile], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["new-community", specfile], stdout=subprocess.PIPE)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def list_communities(self):
-        ret = subprocess.run(self.cli + ["list-communities"], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["list-communities"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def await_block(self, amount=1):
-        subprocess.run(self.cli + ["listen", "-b", str(amount)], stdout=subprocess.PIPE)
+        subprocess.run(self.cli + ["listen", "-b",
+                       str(amount)], stdout=subprocess.PIPE)
 
     def list_participants(self, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-participants"], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["--cid", cid, "list-participants"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def register_participant(self, account, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
         ensure_clean_exit(ret.returncode)
 
     def new_claim(self, account, vote, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "new-claim", account, str(vote)], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["--cid", cid, "new-claim", account, str(vote)], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def list_meetups(self, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-meetups"], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["--cid", cid, "list-meetups"], stdout=subprocess.PIPE)
         # print(ret.stdout.decode("utf-8"))
         meetups = []
         lines = ret.stdout.decode("utf-8").splitlines()
@@ -161,15 +177,18 @@ class Client:
         return meetups
 
     def attest_claims(self, account, claims):
-        ret = subprocess.run(self.cli + ["attest-claims", account] + claims, stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["attest-claims", account] + claims, stdout=subprocess.PIPE)
         ensure_clean_exit(ret.returncode)
 
     def list_attestees(self, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def claim_reward(self, account, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "claim-reward", account], stdout=subprocess.PIPE)
+        ret = subprocess.run(
+            self.cli + ["--cid", cid, "claim-reward", account], stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid):
@@ -215,5 +234,11 @@ class Client:
 
     def get_bootstrappers_with_remaining_newbie_tickets(self, cid):
         ret = subprocess.run(self.cli + ["get-bootstrappers-with-remaining-newbie-tickets", "--cid", cid],
+                             stdout=subprocess.PIPE)
+        return ret.stdout.decode("utf-8").strip()
+
+    def transfer_all(self, cid, source, dest, pay_fees_in_cc=False):
+        fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
+        ret = subprocess.run(self.cli + ["transfer_all", "--cid", cid] + fee_part + [source, dest],
                              stdout=subprocess.PIPE)
         return ret.stdout.decode("utf-8").strip()
