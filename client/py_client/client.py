@@ -64,12 +64,20 @@ class Client:
             print("connecting to local chain")
             self.cli = [rust_client, '-p', str(port)]
 
+    def run_cli_command(self, command, cid=None, pay_fees_in_cc=False, ipfs_cid=None, **kwargs):
+        cid_part = ["--cid", cid] if cid else []
+        fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
+        ipfs_cid_part = ["--ipfs-cid", ipfs_cid] if ipfs_cid else []
+        command = self.cli + cid_part + fee_part + ipfs_cid_part + command
+        ret = subprocess.run(command, stdout=subprocess.PIPE, **kwargs)
+        return ret
+
     def next_phase(self):
-        ret = subprocess.run(self.cli + ["next-phase"])
+        ret = self.run_cli_command(["next-phase"])
         ensure_clean_exit(ret.returncode)
 
     def get_phase(self):
-        ret = subprocess.run(self.cli + ["get-phase"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["get-phase"])
         return ret.stdout.strip().decode("utf-8")
 
     def go_to_phase(self, phase):
@@ -84,23 +92,21 @@ class Client:
                 self.next_phase()
 
     def list_accounts(self):
-        ret = subprocess.run(
-            self.cli + ["list-accounts"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-accounts"])
         return ret.stdout.decode("utf-8").splitlines()
 
     def new_account(self):
-        ret = subprocess.run(
-            self.cli + ["new-account"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["new-account"])
         return ret.stdout.decode("utf-8").strip()
 
     def create_accounts(self, amount):
         return [self.new_account() for _ in range(0, amount)]
 
-    def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False):
+    def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False, pay_fees_in_cc=False):
         if is_faucet:
             self.await_block(1)
-            ret = subprocess.run(
-                self.cli + ['faucet'] + accounts, check=True, timeout=2, stdout=subprocess.PIPE)
+            ret = self.run_cli_command(
+                ['faucet'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
             print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret.returncode)
         else:
@@ -108,18 +114,11 @@ class Client:
             requests.get(faucet_url, params=payload)
 
     def balance(self, account, cid=None):
-        if not cid:
-            ret = subprocess.run(
-                self.cli + ["balance", account], stdout=subprocess.PIPE)
-            return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
-        else:
-            ret = subprocess.run(
-                self.cli + ["--cid", cid, "balance", account], stdout=subprocess.PIPE)
-            return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
+        ret = self.run_cli_command(["balance", account], cid=cid)
+        return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
     def reputation(self, account):
-        ret = subprocess.run(
-            self.cli + ["reputation", account], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["reputation", account])
         ensure_clean_exit(ret.returncode)
         reputation_history = []
         lines = ret.stdout.decode("utf-8").splitlines()
@@ -130,38 +129,32 @@ class Client:
         return reputation_history
 
     def new_community(self, specfile):
-        ret = subprocess.run(
-            self.cli + ["new-community", specfile], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["new-community", specfile])
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def list_communities(self):
-        ret = subprocess.run(
-            self.cli + ["list-communities"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-communities"])
         return ret.stdout.decode("utf-8").strip()
 
     def await_block(self, amount=1):
-        subprocess.run(self.cli + ["listen", "-b",
-                       str(amount)], stdout=subprocess.PIPE)
+        self.run_cli_command(["listen", "-b", str(amount)])
 
     def list_participants(self, cid):
-        ret = subprocess.run(
-            self.cli + ["--cid", cid, "list-participants"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-participants"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
-    def register_participant(self, account, cid):
-        ret = subprocess.run(
-            self.cli + ["--cid", cid, "register-participant", account], stdout=subprocess.PIPE)
+    def register_participant(self, account, cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["register-participant", account], cid, pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
-    def new_claim(self, account, vote, cid):
-        ret = subprocess.run(
-            self.cli + ["--cid", cid, "new-claim", account, str(vote)], stdout=subprocess.PIPE)
+    def new_claim(self, account, vote, cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["new-claim", account, str(vote)], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def list_meetups(self, cid):
-        ret = subprocess.run(
-            self.cli + ["--cid", cid, "list-meetups"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-meetups"], cid)
         # print(ret.stdout.decode("utf-8"))
         meetups = []
         lines = ret.stdout.decode("utf-8").splitlines()
@@ -176,69 +169,66 @@ class Client:
                 meetups.append(participants)
         return meetups
 
-    def attest_claims(self, account, claims):
-        ret = subprocess.run(
-            self.cli + ["attest-claims", account] + claims, stdout=subprocess.PIPE)
+    def attest_claims(self, account, claims, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["attest-claims", account] +
+                                   claims, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
     def list_attestees(self, cid):
-        ret = subprocess.run(
-            self.cli + ["--cid", cid, "list-attestees"], stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-attestees"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
-    def claim_reward(self, account, cid):
-        ret = subprocess.run(
-            self.cli + ["--cid", cid, "claim-reward", account], stdout=subprocess.PIPE)
+    def claim_reward(self, account, cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["claim-reward", account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
-    def create_business(self, account, cid, ipfs_cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "create-business", account, "--ipfs-cid", ipfs_cid],
-                             stdout=subprocess.PIPE)
+    def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["create-business", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
-    def update_business(self, account, cid, ipfs_cd):
+    def update_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
         """ Update has not been tested """
-        ret = subprocess.run(self.cli + ["--cid", cid, "update-business", account, "--ipfs-cid", ipfs_cd],
-                             stdout=subprocess.PIPE)
+        ret = self.run_cli_command(
+            ["update-business", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
-    def create_offering(self, account, cid, ipfs_cd):
-        ret = subprocess.run(self.cli + ["--cid", cid, "create-offering", account, "--ipfs-cid", ipfs_cd],
-                             stdout=subprocess.PIPE)
+    def create_offering(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["create-offering", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def list_businesses(self, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-businesses"],
-                             stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-businesses"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def list_offerings(self, cid):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-offerings"],
-                             stdout=subprocess.PIPE)
+        ret = self.run_cli_command(["list-offerings"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def list_offerings_for_business(self, cid, account):
-        ret = subprocess.run(self.cli + ["--cid", cid, "list-business-offerings", account],
-                             stdout=subprocess.PIPE)
+        ret = self.run_cli_command(
+            ["list-business-offerings", account], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
-    def endorse_newcomers(self, cid, endorser, endorsees):
-        ret = subprocess.run(self.cli +
-                             ["endorse-newcomers", "--cid", cid, endorser, "--endorsees"] +
-                             endorsees,  # must be separate to append a list of args to the cli
-                             stdout=subprocess.PIPE)
+    def endorse_newcomers(self, cid, endorser, endorsees, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["endorse-newcomers", endorser, "--endorsees"] +
+            endorsees,  # must be separate to append a list of args to the cli
+            cid,
+            pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def get_bootstrappers_with_remaining_newbie_tickets(self, cid):
-        ret = subprocess.run(self.cli + ["get-bootstrappers-with-remaining-newbie-tickets", "--cid", cid],
-                             stdout=subprocess.PIPE)
+        ret = self.run_cli_command(
+            ["get-bootstrappers-with-remaining-newbie-tickets"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def transfer_all(self, cid, source, dest, pay_fees_in_cc=False):
-        fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
-        ret = subprocess.run(self.cli + ["transfer_all", "--cid", cid] + fee_part + [source, dest],
-                             stdout=subprocess.PIPE)
+        ret = self.run_cli_command(
+            ["transfer_all", source, dest], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
