@@ -184,7 +184,7 @@ fn main() {
                     let amount = reasonable_native_balance(&api);
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
@@ -297,7 +297,7 @@ fn main() {
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
-                            _api = set_api_extrisic_params_builder(_api.clone().into(), tx_payment_cid_arg);
+                            _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 _api.clone(),
@@ -360,7 +360,7 @@ fn main() {
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
                             let cid = verify_cid(&_api, cid_str);
-                            _api = set_api_extrisic_params_builder(_api.clone().into(), tx_payment_cid_arg);
+                            _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 _api.clone(),
@@ -776,7 +776,7 @@ fn main() {
                     let mut _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    _api = set_api_extrisic_params_builder(_api.clone().into(), tx_payment_cid_arg);
+                    _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         _api.clone(),
@@ -885,7 +885,7 @@ fn main() {
                     let mut api = get_chain_api(matches).set_signer(who.clone().into());
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
@@ -951,7 +951,7 @@ fn main() {
                             let mut api = api.set_signer(signer.clone().into());
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                            api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
+                            api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 api.clone(),
                                 ENCOINTER_CEREMONIES,
@@ -1125,7 +1125,7 @@ fn main() {
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
                         "Sudo",
@@ -1604,7 +1604,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-	api = set_api_extrisic_params_builder(api.clone().into(), tx_payment_cid_arg);
+	api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 	let xt: EncointerXt<_> = compose_extrinsic!(
 		api.clone(),
 		"EncointerBazaar",
@@ -1631,17 +1631,25 @@ fn endorse_newcomers(
 
 	let mut nonce = api.get_nonce()?;
 
+	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+	let updated_api = set_api_extrisic_params_builder(api.clone(), tx_payment_cid_arg);
+
 	for e in endorsees.into_iter() {
 		let endorsee = get_accountid_from_str(e);
 
-		let call =
-			compose_call!(api.metadata, "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
+		let call = compose_call!(
+			updated_api.metadata,
+			"EncointerCeremonies",
+			"endorse_newcomer",
+			cid,
+			endorsee
+		);
 
-		let xt = offline_xt(&api, call, nonce);
+		let xt = offline_xt(&updated_api, call, nonce);
 
-		ensure_payment(&api, &xt.hex_encode(), None);
+		ensure_payment(&updated_api, &xt.hex_encode(), tx_payment_cid_arg);
 
-		let _tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+		let _tx_hash = updated_api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
 
 		nonce += 1;
 	}
