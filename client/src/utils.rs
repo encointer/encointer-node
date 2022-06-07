@@ -94,44 +94,52 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 /// Checks if the account has sufficient funds. Exits the process if not.
 pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
-		let cid = verify_cid(&api, cid_str);
-		match api
-			.get_storage_double_map::<_, _, BalanceEntry<BlockNumber>>(
-				"EncointerBalances",
-				"Balance",
-				cid,
-				&api.signer_account().unwrap(),
-				None,
-			)
-			.unwrap()
-		{
-			None => {
-				error!("insufficient balance in community {}", cid);
-				std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-			},
-			_ => (),
-		}
+		ensure_payment_cc(api, cid_str);
 	} else {
-		let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
-			Some(bal) => bal.free,
-			None => {
-				error!("account does not exist on chain");
-				std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-			},
-		};
-		let fee = api
-			.get_fee_details(xt, None)
-			.unwrap()
-			.unwrap()
-			.inclusion_fee
-			.map_or_else(|| 0, |details| details.base_fee);
-		let ed = api.get_existential_deposit().unwrap();
-		if signer_balance < fee + ed {
-			error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
-			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-		}
-		debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
+		ensure_payment_native(api, xt);
 	}
+}
+
+fn ensure_payment_cc(api: &Api, cid_str: &str) {
+	let cid = verify_cid(&api, cid_str);
+	match api
+		.get_storage_double_map::<_, _, BalanceEntry<BlockNumber>>(
+			"EncointerBalances",
+			"Balance",
+			cid,
+			&api.signer_account().unwrap(),
+			None,
+		)
+		.unwrap()
+	{
+		None => {
+			error!("No balance available in community {}", cid);
+			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+		},
+		_ => (),
+	}
+}
+
+fn ensure_payment_native(api: &Api, xt: &str) {
+	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
+		Some(bal) => bal.free,
+		None => {
+			error!("account does not exist on chain");
+			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+		},
+	};
+	let fee = api
+		.get_fee_details(xt, None)
+		.unwrap()
+		.unwrap()
+		.inclusion_fee
+		.map_or_else(|| 0, |details| details.base_fee);
+	let ed = api.get_existential_deposit().unwrap();
+	if signer_balance < fee + ed {
+		error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
+		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+	}
+	debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
 }
 
 /// Handles the potential case of a negative ceremony index CLI.
