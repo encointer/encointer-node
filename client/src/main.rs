@@ -429,7 +429,7 @@ fn main() {
                     let cid = spec.community_identifier();
 
                     let sudoer = AccountKeyring::Alice.pair();
-                    let api = get_chain_api(matches).set_signer(sudoer);
+                    let mut api = get_chain_api(matches).set_signer(sudoer);
 
                     // ------- create calls for xt's
 
@@ -460,7 +460,10 @@ fn main() {
                     };
 
                     // ---- send xt's to chain
-                    send_and_wait_for_in_block(&api, xt(&api, new_community_call));
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    send_and_wait_for_in_block(&api, xt(&api, new_community_call), matches.tx_payment_cid_arg());
                     println!("{}", cid);
 
                     if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
@@ -468,7 +471,7 @@ fn main() {
                         error!("Aborting without registering additional locations");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
+                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call), tx_payment_cid_arg);
                     Ok(())
                 }),
         )
@@ -528,7 +531,7 @@ fn main() {
             Command::new("next-phase")
                 .description("Advance ceremony state machine to next phase by ROOT call")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches)
+                    let mut api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
                     let next_phase_call = compose_call!(
                         &api.metadata,
@@ -553,7 +556,10 @@ fn main() {
                         OpaqueCall::from_tuple(&propose_next_phase)
                     };
 
-                    send_and_wait_for_in_block(&api, xt(&api, next_phase_call));
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    send_and_wait_for_in_block(&api, xt(&api, next_phase_call), tx_payment_cid_arg);
 
                     let phase = api.get_current_phase().unwrap();
                     println!("Phase is now: {:?}", phase);
@@ -1147,7 +1153,7 @@ fn main() {
                         .time_offset_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches)
+                    let mut api = get_chain_api(matches)
                         .set_signer(AccountKeyring::Alice.pair());
                     let time_offset = matches.time_offset_arg().unwrap_or(0);
                     let call = compose_call!(
@@ -1171,7 +1177,9 @@ fn main() {
                         OpaqueCall::from_tuple(&propose_call)
                     };
 
-                    send_and_wait_for_in_block(&api, xt(&api, privileged_call));
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                    send_and_wait_for_in_block(&api, xt(&api, privileged_call), tx_payment_cid_arg);
                     Ok(())
                 }),
         )

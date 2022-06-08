@@ -72,8 +72,9 @@ class Client:
         ret = subprocess.run(command, stdout=subprocess.PIPE, **kwargs)
         return ret
 
-    def next_phase(self):
-        ret = self.run_cli_command(["next-phase"])
+    def next_phase(self, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
     def get_phase(self):
@@ -128,8 +129,9 @@ class Client:
                 (cindex, cid, rep.strip().split('::')[1]))
         return reputation_history
 
-    def new_community(self, specfile):
-        ret = self.run_cli_command(["new-community", specfile])
+    def new_community(self, specfile, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["new-community", specfile], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 

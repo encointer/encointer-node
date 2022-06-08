@@ -60,12 +60,20 @@ pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
-pub fn send_and_wait_for_in_block<C: Encode>(api: &Api, xt: EncointerXt<C>) -> Option<H256> {
-	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode())
+pub fn send_and_wait_for_in_block<C: Encode>(
+	api: &Api,
+	xt: EncointerXt<C>,
+	tx_payment_cid: Option<&str>,
+) -> Option<H256> {
+	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode(), tx_payment_cid)
 }
 
-pub fn send_xt_hex_and_wait_for_in_block(api: &Api, xt_hex: String) -> Option<H256> {
-	ensure_payment(&api, &xt_hex, None);
+pub fn send_xt_hex_and_wait_for_in_block(
+	api: &Api,
+	xt_hex: String,
+	tx_payment_cid: Option<&str>,
+) -> Option<H256> {
+	ensure_payment(&api, &xt_hex, tx_payment_cid);
 	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
