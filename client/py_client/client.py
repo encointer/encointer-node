@@ -68,7 +68,7 @@ class Client:
         cid_part = ["--cid", cid] if cid else []
         fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
         ipfs_cid_part = ["--ipfs-cid", ipfs_cid] if ipfs_cid else []
-        command = self.cli + cid_part + fee_part + ipfs_cid_part + command
+        command = self.cli + cid_part + fee_part + command + ipfs_cid_part
         ret = subprocess.run(command, stdout=subprocess.PIPE, **kwargs)
         return ret
 
