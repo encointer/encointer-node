@@ -73,8 +73,7 @@ class Client:
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
     def get_phase(self):
@@ -130,8 +129,7 @@ class Client:
         return reputation_history
 
     def new_community(self, specfile, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["new-community", specfile], pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(["new-community", specfile], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
@@ -147,8 +145,7 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def register_participant(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["register-participant", account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["register-participant", account], cid, pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
     def new_claim(self, account, vote, cid, pay_fees_in_cc=False):
@@ -172,8 +169,7 @@ class Client:
         return meetups
 
     def attest_claims(self, account, claims, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["attest-claims", account] +
-                                   claims, pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(["attest-claims", account] + claims, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
     def list_attestees(self, cid):
@@ -181,26 +177,22 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def claim_reward(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["claim-reward", account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["claim-reward", account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["create-business", account], cid, pay_fees_in_cc, ipfs_cid)
+        ret = self.run_cli_command(["create-business", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def update_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
         """ Update has not been tested """
-        ret = self.run_cli_command(
-            ["update-business", account], cid, pay_fees_in_cc, ipfs_cid)
+        ret = self.run_cli_command(["update-business", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
     def create_offering(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["create-offering", account], cid, pay_fees_in_cc, ipfs_cid)
+        ret = self.run_cli_command(["create-offering", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
@@ -213,8 +205,7 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def list_offerings_for_business(self, cid, account):
-        ret = self.run_cli_command(
-            ["list-business-offerings", account], cid=cid)
+        ret = self.run_cli_command(["list-business-offerings", account], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def endorse_newcomers(self, cid, endorser, endorsees, pay_fees_in_cc=False):
@@ -226,16 +217,13 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def get_bootstrappers_with_remaining_newbie_tickets(self, cid):
-        ret = self.run_cli_command(
-            ["get-bootstrappers-with-remaining-newbie-tickets"], cid=cid)
+        ret = self.run_cli_command(["get-bootstrappers-with-remaining-newbie-tickets"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def transfer_all(self, cid, source, dest, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["transfer_all", source, dest], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["transfer_all", source, dest], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def transfer(self, cid, source, dest, amount, pay_fees_in_cc=False):
-        ret = self.run_cli_command(
-            ["transfer", source, dest, amount], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["transfer", source, dest, amount], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
