@@ -1,3 +1,9 @@
+
+###############################################
+#  Needs the following dependencies:
+# pip install pillow
+# pip install qrcode
+
 import qrcode
 import click
 import secrets
