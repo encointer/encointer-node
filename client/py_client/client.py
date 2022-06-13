@@ -234,3 +234,8 @@ class Client:
         ret = self.run_cli_command(
             ["transfer_all", source, dest], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
+
+    def transfer(self, cid, source, dest, amount, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["transfer", source, dest, amount], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()

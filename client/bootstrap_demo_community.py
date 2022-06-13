@@ -82,16 +82,14 @@ def main(ipfs_local, client, port, spec_file):
     client.faucet([account3], is_faucet=True)
 
     blocks_to_wait = 3
-    print(
-        f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
     print(f'Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
     blocks_to_wait = 3
-    print(
-        f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
     print(client.list_participants(cid))
@@ -104,8 +102,7 @@ def main(ipfs_local, client, port, spec_file):
     print(f'Performing meetups for cid {cid}')
     perform_meetup(client, cid)
 
-    print(
-        f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
     print(client.list_attestees(cid))
@@ -118,8 +115,7 @@ def main(ipfs_local, client, port, spec_file):
 
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
-    [print(f'Account balance for {ab[0]} is {ab[1]}.')
-     for ab in list(zip(accounts, bal))]
+    [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
 
     if not round(bal[0]) > 0:
         print("balance is wrong")
@@ -130,12 +126,12 @@ def main(ipfs_local, client, port, spec_file):
         print("no reputation gained")
         exit(1)
 
-    a1 = accounts[1]
-    a2 = accounts[2]
-    print(
-        f'Transfering all ccommunity currency from {a1} to {a2}')
-    client.transfer_all(cid, a1, a2, pay_fees_in_cc=True)
-    if client.balance(a1, cid=cid) > 0:
+    print(f'Transfering 0.5CC from //Alice to //Eve')
+    client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
+
+    print(f'Transfering all CC from //Eve to //Ferdie')
+    client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
+    if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
         print("transfer_all failed")
         exit(1)
 
