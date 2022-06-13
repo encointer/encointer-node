@@ -23,7 +23,7 @@ def main(issuer, cid, network, n):
             voucher_uri = f"//{batch_token}/{voucher_token}"
             f.write(voucher_uri)
             print(f"generating voucher {i}: {voucher_uri}")
-            payload = f"encointer-voucher\nV1.0\n{voucher_uri}\n{cid}@{network}\n\n{issuer}"
+            payload = f"encointer-voucher\nV1.0\n{voucher_uri}\n{cid}\n{network}\n{issuer}"
             img = qrcode.make(payload)
             img.save(f"voucher-{batch_token}-{voucher_token}.png")
 
