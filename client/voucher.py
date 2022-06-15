@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 ###############################################
 #  Needs the following dependencies:
 # pip install pillow
