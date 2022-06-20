@@ -48,7 +48,7 @@ frame-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/sub
 pallet-asset-tx-payment = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 
 # These dependencies are used for the node's RPCs
-jsonrpsee = { version = "0.13.1", features = ["server"] }
+jsonrpsee = { version = "0.14.0", features = ["server"] }
 sc-rpc = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sp-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
 sc-rpc-api = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git",branch = "master" }
