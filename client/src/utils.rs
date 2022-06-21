@@ -1,7 +1,7 @@
-use crate::exit_code;
+use crate::{exit_code, verify_cid};
 use codec::{Compact, Encode};
 use encointer_api_client_extension::{Api, EncointerXt};
-use encointer_node_notee_runtime::AccountId;
+use encointer_node_notee_runtime::{AccountId, BalanceEntry, BlockNumber};
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
 use sp_core::{Pair, H256};
@@ -60,12 +60,20 @@ pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
-pub fn send_and_wait_for_in_block<C: Encode>(api: &Api, xt: EncointerXt<C>) -> Option<H256> {
-	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode())
+pub fn send_and_wait_for_in_block<C: Encode>(
+	api: &Api,
+	xt: EncointerXt<C>,
+	tx_payment_cid: Option<&str>,
+) -> Option<H256> {
+	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode(), tx_payment_cid)
 }
 
-pub fn send_xt_hex_and_wait_for_in_block(api: &Api, xt_hex: String) -> Option<H256> {
-	ensure_payment(&api, &xt_hex);
+pub fn send_xt_hex_and_wait_for_in_block(
+	api: &Api,
+	xt_hex: String,
+	tx_payment_cid: Option<&str>,
+) -> Option<H256> {
+	ensure_payment(&api, &xt_hex, tx_payment_cid);
 	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
@@ -92,7 +100,35 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, xt: &str) {
+pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
+	if let Some(cid_str) = tx_payment_cid {
+		ensure_payment_cc(api, cid_str);
+	} else {
+		ensure_payment_native(api, xt);
+	}
+}
+
+fn ensure_payment_cc(api: &Api, cid_str: &str) {
+	let cid = verify_cid(&api, cid_str);
+	match api
+		.get_storage_double_map::<_, _, BalanceEntry<BlockNumber>>(
+			"EncointerBalances",
+			"Balance",
+			cid,
+			&api.signer_account().unwrap(),
+			None,
+		)
+		.unwrap()
+	{
+		None => {
+			error!("No balance available in community {}", cid);
+			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
+		},
+		_ => (),
+	}
+}
+
+fn ensure_payment_native(api: &Api, xt: &str) {
 	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
 		Some(bal) => bal.free,
 		None => {

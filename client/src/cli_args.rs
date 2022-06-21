@@ -13,6 +13,7 @@ const TO_CINDEX_ARG: &'static str = "to-cindex";
 const ENDORSEES_ARG: &'static str = "endorsees";
 const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
+const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -28,6 +29,7 @@ pub trait EncointerArgs<'b> {
 	fn endorsees_arg(self) -> Self;
 	fn time_offset_arg(self) -> Self;
 	fn all_flag(self) -> Self;
+	fn tx_payment_cid_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -44,6 +46,7 @@ pub trait EncointerArgsExtractor {
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
 	fn time_offset_arg(&self) -> Option<i32>;
 	fn all_flag(&self) -> bool;
+	fn tx_payment_cid_arg(&self) -> Option<&str>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -182,6 +185,17 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("list all community currency balances for account"),
 		)
 	}
+	fn tx_payment_cid_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(TX_PAYMENT_CID_ARG)
+				.long("tx-payment-cid")
+				.global(true)
+				.takes_value(true)
+				.required(false)
+				.value_name("STRING")
+				.help("cid of the community currency in which tx fees should be paid"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -233,5 +247,8 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn all_flag(&self) -> bool {
 		self.is_present(ALL_FLAG)
+	}
+	fn tx_payment_cid_arg(&self) -> Option<&str> {
+		self.value_of(TX_PAYMENT_CID_ARG)
 	}
 }

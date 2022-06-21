@@ -26,6 +26,7 @@ accounts = [account1, account2, account3]
 TEST_DATA_DIR = './test-data/'
 TEST_LOCATIONS_MEDITERRANEAN = 'test-locations-mediterranean.json'
 
+
 def perform_meetup(client, cid):
     print('Starting meetup...')
     print('Creating claims...')
@@ -78,7 +79,7 @@ def main(ipfs_local, client, port, spec_file):
 
     # charlie has no genesis funds
     print('Faucet is dripping to Charlie...')
-    client.faucet([account3], is_faucet = True)
+    client.faucet([account3], is_faucet=True)
 
     blocks_to_wait = 3
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
@@ -123,6 +124,15 @@ def main(ipfs_local, client, port, spec_file):
     print(rep)
     if not len(rep) > 0:
         print("no reputation gained")
+        exit(1)
+
+    print(f'Transfering 0.5CC from //Alice to //Eve')
+    client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
+
+    print(f'Transfering all CC from //Eve to //Ferdie')
+    client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
+    if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
+        print("transfer_all failed")
         exit(1)
 
     print("tests passed")
