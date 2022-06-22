@@ -1,0 +1,109 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "Decoded Buenos Aires",
+      "symbol": "DBA",
+      "assets": "QmTy1X1JmeipMzXknWSPrRyP8dRucxHkbAxh1X9VAMHrg7",
+      "url": "encointer.org"
+    },
+    "bootstrappers": [
+      "5Fy7hyV4FKvD55iPwT7yR712xXKMXKvvw1uVGA1BE4nK1Wys",
+      "5C7sBVsXUj6PntX3rgcM2afH2iv4Y16gJkhc7iXS2joBAuoF",
+      "5D7UZTTF7XU4Z1hD7TuLWK2bjZxZSacwyZqWoHAK9EXSfsCM",
+      "5E2LdRbN3ihbSB13te4JN1A7KxEPx3JgPomHNGSDeiuopMQ6"
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 22
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.4477698802948,
+          -34.59170042846387
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.44837874174118,
+          -34.5911197107598
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.44901174306869,
+          -34.590503659785064
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.44905734062195,
+          -34.591386885568866
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.448617458343506,
+          -34.59178212606613
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.44965815544129,
+          -34.59078187691994
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.449553549289696,
+          -34.59155911350273
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -58.44866573810577,
+          -34.59243349596714
+        ]
+      }
+    }
+  ]
+}
