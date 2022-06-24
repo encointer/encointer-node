@@ -109,7 +109,7 @@ pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
 }
 
 fn ensure_payment_cc(api: &Api, cid_str: &str) {
-	let cid = verify_cid(&api, cid_str);
+	let cid = verify_cid(&api, cid_str, None);
 	match api
 		.get_storage_double_map::<_, _, BalanceEntry<BlockNumber>>(
 			"EncointerBalances",

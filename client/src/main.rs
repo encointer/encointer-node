@@ -218,18 +218,20 @@ fn main() {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
                     .all_flag()
+                    .at_block_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
                     let account = matches.account_arg().unwrap();
+                    let maybe_at = matches.at_block_arg();
                     let accountid = get_accountid_from_str(account);
                     match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&api, cid_str);
+                            let cid = verify_cid(&api, cid_str, maybe_at);
                             let bn = get_block_number(&api);
                             let dr = get_demurrage_per_block(&api, cid);
                             let balance = if let Some(entry) = api
-                                .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, None).unwrap() {
+                                .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, maybe_at).unwrap() {
                                     apply_demurrage(entry, bn, dr)
                             } else { BalanceType::from_num(0) };
                             println!("{}", balance);
@@ -293,7 +295,7 @@ fn main() {
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&_api, cid_str);
+                            let cid = verify_cid(&_api, cid_str, None);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
@@ -359,7 +361,7 @@ fn main() {
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&_api, cid_str);
+                            let cid = verify_cid(&_api, cid_str, None);
                             _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
@@ -379,7 +381,7 @@ fn main() {
                     };
                     info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
                     let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
-                    println!("balance for {} is now {}", to, result.free); 
+                    println!("balance for {} is now {}", to, result.free);
                     Ok(())
 
                 }),
@@ -492,12 +494,18 @@ fn main() {
         .add_cmd(
             Command::new("list-locations")
                 .description("list all meetup locations for a community")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .at_block_arg()
+                })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
+                    let maybe_at = matches.at_block_arg();
                     let cid = verify_cid(&api,
                                          matches
                                              .cid_arg()
                                              .expect("please supply argument --cid"),
+                        maybe_at
                     );
                     println!("listing locations for cid {}", cid);
                     let loc = api.get_locations(cid).unwrap();
@@ -762,6 +770,7 @@ fn main() {
                         matches
                             .cid_arg()
                             .expect("please supply argument --cid"),
+                        None
                     );
                     let rep = get_reputation(&api, &accountid, cid, cindex -1);
                     info!("{} has reputation {:?}", accountid, rep);
@@ -858,6 +867,7 @@ fn main() {
                     let cid = verify_cid(
                         &api,
                      matches.cid_arg().expect("please supply argument --cid"),
+                        None
                     );
 
                     debug!("Getting proof for ceremony index: {:?}", cindex);
@@ -1105,6 +1115,7 @@ fn main() {
                                          matches
                                              .cid_arg()
                                              .expect("please supply argument --cid"),
+                        None
                     );
                     println!("purging ceremony index range [{}  {}] for community {}", from_cindex, to_cindex, cid);
 
@@ -1337,12 +1348,12 @@ fn extract_and_execute<T>(
 	closure: impl FnOnce(Api, CommunityIdentifier) -> T,
 ) -> T {
 	let api = get_chain_api(matches);
-	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
+	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
 	closure(api, cid)
 }
 
-fn verify_cid(api: &Api, cid: &str) -> CommunityIdentifier {
-	let cids = get_community_identifiers(&api).expect("no community registered");
+fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifier {
+	let cids = get_community_identifiers(&api, maybe_at).expect("no community registered");
 	let cid = CommunityIdentifier::from_str(cid).unwrap();
 	if !cids.contains(&cid) {
 		panic!("cid {} does not exist on chain", cid);
@@ -1445,8 +1456,8 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(api: &Api) -> Option<Vec<CommunityIdentifier>> {
-	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", None)
+fn get_community_identifiers(api: &Api, maybe_at: Option<Hash>) -> Option<Vec<CommunityIdentifier>> {
+	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", maybe_at)
 		.unwrap()
 }
 
@@ -1608,7 +1619,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
 	let mut api = get_chain_api(matches).set_signer(business_owner.clone().into());
-	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"));
+	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
@@ -1733,7 +1744,7 @@ fn set_api_extrisic_params_builder(api: Api, tx_payment_cid_arg: Option<&str>) -
 	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
 	if let Some(tx_payment_cid) = tx_payment_cid_arg {
 		tx_params = tx_params
-			.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&api, tx_payment_cid)));
+			.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&api, tx_payment_cid, None)));
 	}
 	api.set_extrinsic_params_builder(tx_params)
 }
