@@ -431,7 +431,12 @@ fn main() {
 
                     let cid = verify_cid(&api, matches.cid_arg().unwrap());
 
-                    let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
+                    let add_location_calls = spec.locations().into_iter().map(|l|
+                                                                                  {
+                                                                                      info!("adding location {:?}", l);
+                                                                                      add_location_call(&api.metadata, cid, l)
+                                                                                  }
+                        ).collect();
                     let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
 
                     // return calls as `OpaqueCall`s to get the same return type in both branches
