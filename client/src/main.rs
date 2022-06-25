@@ -497,7 +497,9 @@ fn main() {
                     let sudoer = AccountKeyring::Alice.pair();
                     let api = get_chain_api(matches).set_signer(sudoer);
 
-                    let cid = verify_cid(&api, matches.cid_arg().unwrap());
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+
+                    let cid = verify_cid(&api, matches.cid_arg().unwrap(), None);
 
                     let add_location_calls = spec.locations().into_iter().map(|l|
                                                                                   {
@@ -526,7 +528,7 @@ fn main() {
                         error!("Aborting without registering additional locations");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call));
+                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call), tx_payment_cid_arg);
                     Ok(())
                 }),
         )
