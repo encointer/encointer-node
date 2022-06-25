@@ -158,11 +158,11 @@ class Client:
         meetups = []
         lines = ret.stdout.decode("utf-8").splitlines()
         while len(lines) > 0:
-            if 'participants are:' in lines.pop(0):
+            if 'participants:' in lines.pop(0):
                 participants = []
                 while len(lines) > 0:
                     l = lines.pop(0)
-                    if 'MeetupRegistry' in l:
+                    if ('MeetupRegistry' in l) or ('total' in l):
                         break
                     participants.append(l.strip())
                 meetups.append(participants)
