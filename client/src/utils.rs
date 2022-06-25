@@ -216,7 +216,12 @@ pub mod keys {
 		debug!("getting pair for {}", account);
 		match &account[..2] {
 			"//" => sr25519::AppPair::from_string(account, None).unwrap(),
+			"0x" => sr25519::AppPair::from_string_with_seed(account, None).unwrap().0,
 			_ => {
+				if sr25519::Public::from_ss58check(account).is_err() {
+					// could be mnemonic phrase
+					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0
+				}
 				debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 				// open store without password protection
 				let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)

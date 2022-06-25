@@ -177,7 +177,7 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def claim_reward(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["claim-reward", account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["claim-reward", "--signer", account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):

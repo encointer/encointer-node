@@ -538,9 +538,18 @@ fn main() {
         .add_cmd(
             Command::new("next-phase")
                 .description("Advance ceremony state machine to next phase by ROOT call")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .signer_arg("account with necessary privileges (sudo or councillor)")
+                })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let signer = if let Some(sig) = matches.signer_arg() {
+                        get_pair_from_str(sig).into()
+                    } else {
+                        AccountKeyring::Alice.pair()
+                    };
                     let mut api = get_chain_api(matches)
-                        .set_signer(AccountKeyring::Alice.pair());
+                        .set_signer(signer);
                     let next_phase_call = compose_call!(
                         &api.metadata,
                         "EncointerScheduler",
@@ -963,7 +972,11 @@ fn main() {
 
                     extract_and_execute(
                         &matches, |api, cid| {
-                            let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
+                            let signer = if let Some(sig) = matches.signer_arg() {
+                                get_pair_from_str(sig)
+                            } else {
+                                panic!("please specify --signer. must be an assignee of a recent meetup")
+                            };
                             let mut api = api.set_signer(signer.clone().into());
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();

@@ -69,9 +69,11 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	fn signer_arg(self, help: &'b str) -> Self {
 		self.arg(
 			Arg::with_name(SIGNER_ARG)
+				.short("s")
+				.long("signer")
 				.takes_value(true)
-				.required(true)
-				.value_name("SS58")
+				.required(false)
+				.value_name("suri, seed , mnemonic or SS58 in keystore")
 				.help(help),
 		)
 	}

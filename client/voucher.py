@@ -21,7 +21,7 @@ def main(issuer, cid, network, n):
         for i in range(n):
             voucher_token = b58encode(secrets.token_bytes(24)).decode()
             voucher_uri = f"//{batch_token}/{voucher_token}"
-            f.write(voucher_uri)
+            f.write(voucher_uri + "\n")
             print(f"generating voucher {i}: {voucher_uri}")
             payload = f"encointer-voucher\nV2.0\n{voucher_uri}\n{cid}\n{network}\n{issuer}"
             img = qrcode.make(payload)
