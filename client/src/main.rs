@@ -482,6 +482,7 @@ fn main() {
                 .description("Register new locations for a community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
+                        .signer_arg("account with necessary privileges (sudo or councillor)")
                         .arg(
                             Arg::with_name("specfile")
                                 .takes_value(true)
@@ -494,8 +495,10 @@ fn main() {
                     let spec_file = matches.value_of("specfile").unwrap();
                     let spec = read_community_spec_from_file(spec_file);
 
-                    let sudoer = AccountKeyring::Alice.pair();
-                    let api = get_chain_api(matches).set_signer(sudoer);
+                    let signer = matches.signer_arg()
+                        .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+
+                    let api = get_chain_api(matches).set_signer(signer);
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 
