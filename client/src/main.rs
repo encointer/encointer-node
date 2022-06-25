@@ -1469,7 +1469,10 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(api: &Api, maybe_at: Option<Hash>) -> Option<Vec<CommunityIdentifier>> {
+fn get_community_identifiers(
+	api: &Api,
+	maybe_at: Option<Hash>,
+) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", maybe_at)
 		.unwrap()
 }
@@ -1756,8 +1759,11 @@ impl ToString for BazaarCalls {
 fn set_api_extrisic_params_builder(api: Api, tx_payment_cid_arg: Option<&str>) -> Api {
 	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
 	if let Some(tx_payment_cid) = tx_payment_cid_arg {
-		tx_params = tx_params
-			.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(&api, tx_payment_cid, None)));
+		tx_params = tx_params.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(
+			&api,
+			tx_payment_cid,
+			None,
+		)));
 	}
 	api.set_extrinsic_params_builder(tx_params)
 }

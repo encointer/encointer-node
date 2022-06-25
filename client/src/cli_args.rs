@@ -1,6 +1,5 @@
 use clap::{App, Arg, ArgMatches};
-use substrate_api_client::Hash;
-use substrate_api_client::FromHexString;
+use substrate_api_client::{FromHexString, Hash};
 
 const ACCOUNT_ARG: &'static str = "accountid";
 const SIGNER_ARG: &'static str = "signer";
@@ -17,7 +16,6 @@ const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
 const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
 const AT_BLOCK_ARG: &'static str = "at";
-
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -271,7 +269,7 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(TX_PAYMENT_CID_ARG)
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
-		if let Some(hexhashstr)= self.value_of(AT_BLOCK_ARG) {
+		if let Some(hexhashstr) = self.value_of(AT_BLOCK_ARG) {
 			Some(Hash::from_hex(hexhashstr.to_string()).unwrap())
 		} else {
 			None
