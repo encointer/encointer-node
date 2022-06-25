@@ -158,11 +158,11 @@ class Client:
         meetups = []
         lines = ret.stdout.decode("utf-8").splitlines()
         while len(lines) > 0:
-            if 'participants are:' in lines.pop(0):
+            if 'participants:' in lines.pop(0):
                 participants = []
                 while len(lines) > 0:
                     l = lines.pop(0)
-                    if 'MeetupRegistry' in l:
+                    if ('MeetupRegistry' in l) or ('total' in l):
                         break
                     participants.append(l.strip())
                 meetups.append(participants)
@@ -177,7 +177,7 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def claim_reward(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["claim-reward", account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["claim-reward", "--signer", account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):

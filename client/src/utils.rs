@@ -109,7 +109,7 @@ pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
 }
 
 fn ensure_payment_cc(api: &Api, cid_str: &str) {
-	let cid = verify_cid(&api, cid_str);
+	let cid = verify_cid(&api, cid_str, None);
 	match api
 		.get_storage_double_map::<_, _, BalanceEntry<BlockNumber>>(
 			"EncointerBalances",
@@ -216,7 +216,12 @@ pub mod keys {
 		debug!("getting pair for {}", account);
 		match &account[..2] {
 			"//" => sr25519::AppPair::from_string(account, None).unwrap(),
+			"0x" => sr25519::AppPair::from_string_with_seed(account, None).unwrap().0,
 			_ => {
+				if sr25519::Public::from_ss58check(account).is_err() {
+					// could be mnemonic phrase
+					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0
+				}
 				debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 				// open store without password protection
 				let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
