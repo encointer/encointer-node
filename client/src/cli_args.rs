@@ -269,10 +269,6 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(TX_PAYMENT_CID_ARG)
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
-		if let Some(hexhashstr) = self.value_of(AT_BLOCK_ARG) {
-			Some(Hash::from_hex(hexhashstr.to_string()).unwrap())
-		} else {
-			None
-		}
+		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_hex(hex.to_string()).unwrap())
 	}
 }

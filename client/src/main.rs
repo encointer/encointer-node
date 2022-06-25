@@ -502,9 +502,9 @@ fn main() {
                     let api = get_chain_api(matches);
                     let maybe_at = matches.at_block_arg();
                     let cid = verify_cid(&api,
-                                         matches
-                                             .cid_arg()
-                                             .expect("please supply argument --cid"),
+                        matches
+                             .cid_arg()
+                             .expect("please supply argument --cid"),
                         maybe_at
                     );
                     println!("listing locations for cid {}", cid);
@@ -543,11 +543,9 @@ fn main() {
                         .signer_arg("account with necessary privileges (sudo or councillor)")
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let signer = if let Some(sig) = matches.signer_arg() {
-                        get_pair_from_str(sig).into()
-                    } else {
-                        AccountKeyring::Alice.pair()
-                    };
+                    let signer = matches.signer_arg()
+                        .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+
                     let mut api = get_chain_api(matches)
                         .set_signer(signer);
                     let next_phase_call = compose_call!(
@@ -607,18 +605,23 @@ fn main() {
                             let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
                             let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None);
 
+                            let mut num_participants: Vec<u64> = vec![0, 0, 0, 0];
                             for i in 0..registries.len() {
                                 println!("Querying {}", registries[i]);
 
                                 let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
                                 println!("number of participants assigned:  {}", count);
-
+                                num_participants[i] = count.into();
                                 for p_index in 1..count +1 {
                                     let accountid: AccountId = account_query(i, p_index)?.unwrap();
                                     println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
                                 }
                             }
-
+                            println!("total: {} guaranteed seats + {} newbies = {} total participants who would like to attend",
+                                     num_participants[0..2].into_iter().sum::<u64>(),
+                                     num_participants[3],
+                                     num_participants[0..3].into_iter().sum::<u64>()
+                            );
                             Ok(())
                         }
                     ).unwrap();
@@ -648,13 +651,17 @@ fn main() {
 
                             let stats = api.get_community_ceremony_stats(community_ceremony.clone()).unwrap();
 
+                            let mut num_assignees = 0u64;
+
                             for meetup in stats.meetups.iter() {
-                                println!("MeetupRegistry[{:?}, {}] location is {:?}", &community_ceremony, meetup.index, meetup.location);
+                                println!("MeetupRegistry[{:?}, {}] location is {:?}, {:?}", &community_ceremony, meetup.index, meetup.location.lat, meetup.location.lon);
 
                                 println!("MeetupRegistry[{:?}, {}] meeting time is {:?}", &community_ceremony, meetup.index, meetup.time);
 
                                 if !meetup.registrations.is_empty() {
-                                    println!("MeetupRegistry[{:?}, {}] participants are:", &community_ceremony, meetup.index);
+                                    let num = meetup.registrations.len();
+                                    num_assignees += num as u64;
+                                    println!("MeetupRegistry[{:?}, {}] participants: {}", &community_ceremony, meetup.index, num);
                                     for (participant, _registration) in meetup.registrations.iter() {
                                         println!("   {}", participant);
                                     }
@@ -662,7 +669,7 @@ fn main() {
                                     println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
                                 }
                             }
-
+                            println!("total number of assignees: {}", num_assignees);
                             Ok(())
                         }
                     ).unwrap();
@@ -972,10 +979,9 @@ fn main() {
 
                     extract_and_execute(
                         &matches, |api, cid| {
-                            let signer = if let Some(sig) = matches.signer_arg() {
-                                get_pair_from_str(sig)
-                            } else {
-                                panic!("please specify --signer. must be an assignee of a recent meetup")
+                            let signer = match matches.signer_arg() {
+                                Some(sig) => get_pair_from_str(sig),
+                                None => panic!("please specify --signer. must be an assignee of a recent meetup")
                             };
                             let mut api = api.set_signer(signer.clone().into());
 
