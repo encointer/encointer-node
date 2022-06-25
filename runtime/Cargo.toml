@@ -7,12 +7,12 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "0.8.16"
+version = "0.8.17"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
-serde = { features = ["derive"], optional = true, version = "1.0.136" }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+serde = { features = ["derive"], optional = true, version = "1.0.136" } # added by encointer
 
 # encointer deps
 encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }

@@ -2,18 +2,19 @@
   "type": "FeatureCollection",
   "community": {
     "meta": {
-      "name": "Mediterranea",
-      "symbol": "MTA",
-      "assets": "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
+      "name": "Decoded Berlin",
+      "symbol": "DBL",
+      "assets": "QmVNg3BjzRgKaGida6jCbjFyjD4T7c8e7MCMJAUjgVx395",
+      "url": "encointer.org"
     },
     "bootstrappers": [
-      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-      "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-      "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
-      "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
-      "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
-      "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL"
-    ]
+      "5CDNJhAUVyM92BaqpfN7PynWPQs2ELbHHJ4QTxAd1m79HJkc",
+      "5CkHDVXkQ9uhYk5ncPpLPRFHJvQQaX7benpsJ93XRrxcEE8y",
+      "5DAdFqfMfTbuAUnnNc79LtgV7vj5fe9XqMXLDYCJKAYCzb15",
+      "5HdtBgqVePxCepADucrxMdN5vXwP99RAg9tHTCzU7aVneB5p"
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 22
   },
   "features": [
     {
@@ -22,8 +23,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.543548583984375,
-          35.48415637985317
+          13.36400181055069,
+          52.579916206938066
         ]
       }
     },
@@ -33,8 +34,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.40484619140625,
-          35.480801595828616
+          13.363645076751709,
+          52.579355532973466
         ]
       }
     },
@@ -44,8 +45,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.40621948242187,
-          35.357696204467516
+          13.364071547985077,
+          52.57925774026848
         ]
       }
     },
@@ -55,8 +56,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.544921875,
-          35.35993616287676
+          13.362894058227539,
+          52.57953481903273
         ]
       }
     },
@@ -66,8 +67,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.68087768554687,
-          35.48751102385376
+          13.364429622888565,
+          52.579820860272804
         ]
       }
     },
@@ -77,8 +78,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.689117431640625,
-          35.37001520672124
+          13.362475633621216,
+          52.57912083011497
         ]
       }
     },
@@ -88,8 +89,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.4075927734375,
-          35.232159412017154
+          13.363548517227173,
+          52.58007104296119
         ]
       }
     },
@@ -99,19 +100,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.551788330078125,
-          35.238889532322595
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          18.700103759765625,
-          35.24898366572645
+          13.363792598247528,
+          52.58046383505067
         ]
       }
     }

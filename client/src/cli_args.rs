@@ -1,4 +1,5 @@
 use clap::{App, Arg, ArgMatches};
+use substrate_api_client::{FromHexString, Hash};
 
 const ACCOUNT_ARG: &'static str = "accountid";
 const SIGNER_ARG: &'static str = "signer";
@@ -13,6 +14,8 @@ const TO_CINDEX_ARG: &'static str = "to-cindex";
 const ENDORSEES_ARG: &'static str = "endorsees";
 const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
+const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
+const AT_BLOCK_ARG: &'static str = "at";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -28,6 +31,8 @@ pub trait EncointerArgs<'b> {
 	fn endorsees_arg(self) -> Self;
 	fn time_offset_arg(self) -> Self;
 	fn all_flag(self) -> Self;
+	fn tx_payment_cid_arg(self) -> Self;
+	fn at_block_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -44,6 +49,8 @@ pub trait EncointerArgsExtractor {
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
 	fn time_offset_arg(&self) -> Option<i32>;
 	fn all_flag(&self) -> bool;
+	fn tx_payment_cid_arg(&self) -> Option<&str>;
+	fn at_block_arg(&self) -> Option<Hash>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -60,9 +67,11 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	fn signer_arg(self, help: &'b str) -> Self {
 		self.arg(
 			Arg::with_name(SIGNER_ARG)
+				.short("s")
+				.long("signer")
 				.takes_value(true)
-				.required(true)
-				.value_name("SS58")
+				.required(false)
+				.value_name("suri, seed , mnemonic or SS58 in keystore")
 				.help(help),
 		)
 	}
@@ -182,6 +191,28 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("list all community currency balances for account"),
 		)
 	}
+	fn tx_payment_cid_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(TX_PAYMENT_CID_ARG)
+				.long("tx-payment-cid")
+				.global(true)
+				.takes_value(true)
+				.required(false)
+				.value_name("STRING")
+				.help("cid of the community currency in which tx fees should be paid"),
+		)
+	}
+	fn at_block_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(AT_BLOCK_ARG)
+				.long("at")
+				.global(true)
+				.takes_value(true)
+				.required(false)
+				.value_name("STRING")
+				.help("block hash at which to query"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -233,5 +264,11 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn all_flag(&self) -> bool {
 		self.is_present(ALL_FLAG)
+	}
+	fn tx_payment_cid_arg(&self) -> Option<&str> {
+		self.value_of(TX_PAYMENT_CID_ARG)
+	}
+	fn at_block_arg(&self) -> Option<Hash> {
+		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_hex(hex.to_string()).unwrap())
 	}
 }
