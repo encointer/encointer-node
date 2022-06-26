@@ -568,7 +568,10 @@ fn main() {
                     println!("listing locations for cid {}", cid);
                     let loc = api.get_locations(cid).unwrap();
                     for l in loc.iter() {
-                        println!("lat: {} lon: {}", l.lat, l.lon);
+                        println!("lat: {} lon: {} (raw lat: {} lon: {})", l.lat, l.lon,
+                                 i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
+                                 i128::decode(&mut l.lon.encode().as_slice()).unwrap()
+                        );
                     }
                     Ok(())
                 }),
