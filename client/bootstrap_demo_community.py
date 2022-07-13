@@ -153,6 +153,26 @@ def main(ipfs_local, client, port, spec_file):
         print("wrong reputation")
         exit(1)
 
+
+    print(client.list_communities())
+    client.go_to_phase(CeremonyPhase.Registering)
+
+    print(f'Registering Participants for Cid: {cid}')
+    [client.register_participant(b, cid) for b in accounts]
+
+    blocks_to_wait = 3
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    client.await_block(blocks_to_wait)
+
+    rep = client.reputation(account1)
+    print(rep)
+    # after the registration the second reputation should now be linked
+    if ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+        print("reputation not linked")
+        exit(1)
+
+
+
     print("tests passed")
 
 
