@@ -51,16 +51,7 @@ def update_spec_with_cid(file, cid):
         json.dump(spec, spec_json, indent=2)
         spec_json.truncate()
 
-
-@click.command()
-@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
-@click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
-def main(ipfs_local, client, port, spec_file):
-    client = Client(rust_client=client, port=port)
-    spec_file_path = spec_file
-
+def create_community(client, spec_file_path, ipfs_local):
     cid = client.new_community(spec_file_path)
     if len(cid) > 10:
         print(f'Registered community with cid: {cid}')
@@ -74,17 +65,13 @@ def main(ipfs_local, client, port, spec_file):
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
     update_spec_with_cid(spec_file_path, ipfs_cid)
 
+    return cid
+
+def full_ceremony(client, cid, accounts):
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.Registering)
 
-    # charlie has no genesis funds
-    print('Faucet is dripping to Charlie...')
-    client.faucet([account3], is_faucet=True)
-
-    blocks_to_wait = 3
-    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
-    client.await_block(blocks_to_wait)
-
+    
     print(f'Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
@@ -113,6 +100,36 @@ def main(ipfs_local, client, port, spec_file):
     client.claim_reward(account1, cid)
     client.await_block(blocks_to_wait)
 
+def faucet(client, cid):
+    # charlie has no genesis funds
+    print('Faucet is dripping to Charlie...')
+    client.faucet([account3], is_faucet=True)
+
+    blocks_to_wait = 3
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    client.await_block(blocks_to_wait)
+
+
+def fee_payment_transfers(client, cid):
+    print(f'Transfering 0.5CC from //Alice to //Eve')
+    client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
+
+    print(f'Transfering all CC from //Eve to //Ferdie')
+    client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
+    if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
+        print("transfer_all failed")
+        exit(1)
+
+@click.command()
+@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
+@click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
+def main(ipfs_local, client, port, spec_file):
+    client = Client(rust_client=client, port=port)
+    cid = create_community(client, spec_file, ipfs_local)
+    faucet(client, cid)
+    full_ceremony(client, cid, accounts)
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
@@ -126,13 +143,14 @@ def main(ipfs_local, client, port, spec_file):
         print("no reputation gained")
         exit(1)
 
-    print(f'Transfering 0.5CC from //Alice to //Eve')
-    client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
+    fee_payment_transfers(client, cid)
 
-    print(f'Transfering all CC from //Eve to //Ferdie')
-    client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
-    if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
-        print("transfer_all failed")
+    # perform a second ceremony
+    full_ceremony(client, cid, accounts)
+    rep = client.reputation(account1)
+    print(rep)
+    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+        print("wrong reputation")
         exit(1)
 
     print("tests passed")
