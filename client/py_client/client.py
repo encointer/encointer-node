@@ -227,3 +227,7 @@ class Client:
     def transfer(self, cid, source, dest, amount, pay_fees_in_cc=False):
         ret = self.run_cli_command(["transfer", source, dest, amount], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
+
+    def purge_community_ceremony(self, cid, from_cindex, to_cindex, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["purge-community-ceremony", str(from_cindex), str(to_cindex)], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()

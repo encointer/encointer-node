@@ -140,24 +140,6 @@ def test_reputation_caching(client, cid, account):
         print("wrong reputation")
         exit(1)
 
-    register_participants_and_perform_meetup(client, cid, accounts)
-    client.next_phase()
-    client.await_block(1)
-    # here we dont query the reputation, so the last cache value was set in a previous phase
-    # this tests if reputations are updated on phase change
-    # client.reputation(account1)
-
-    claim_rewards(client, cid, account1)
-
-    # check if the reputation cache was updated
-    rep = client.reputation(account1)
-    # here the reputation should be correctly read from the cache
-    rep = client.reputation(account1)
-    print(rep)
-    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
-        print("wrong reputation")
-        exit(1)
-
     # test if reputation cache is invalidated after registration
     print(f'Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
@@ -168,8 +150,8 @@ def test_reputation_caching(client, cid, account):
 
     rep = client.reputation(account1)
     print(rep)
-    # after the registration the third reputation should now be linked
-    if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+    # after the registration the second reputation should now be linked
+    if ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
         print("reputation not linked")
         exit(1)
 
@@ -177,6 +159,17 @@ def test_reputation_caching(client, cid, account):
     client.next_phase()
     client.next_phase()
     client.await_block(1)
+
+    # check if reputation cache gets updated after phase change
+    print(client.purge_community_ceremony(cid, 1, 4))
+    client.await_block(1)
+
+    client.next_phase()
+    rep = client.reputation(account1)
+    # after phase change cache will be updated
+    if not len(rep) == 0:
+        print("reputation was not cleared")
+        exit(1)
 
 
 @click.command()
@@ -187,6 +180,7 @@ def test_reputation_caching(client, cid, account):
 def main(ipfs_local, client, port, spec_file):
     client = Client(rust_client=client, port=port)
     cid = create_community(client, spec_file, ipfs_local)
+
     faucet(client, cid)
 
     register_participants_and_perform_meetup(client, cid, accounts)
@@ -201,6 +195,7 @@ def main(ipfs_local, client, port, spec_file):
     if not round(bal[0]) > 0:
         print("balance is wrong")
         exit(1)
+
     rep = client.reputation(account1)
     print(rep)
     if not len(rep) > 0:
