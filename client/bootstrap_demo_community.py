@@ -51,6 +51,7 @@ def update_spec_with_cid(file, cid):
         json.dump(spec, spec_json, indent=2)
         spec_json.truncate()
 
+
 def create_community(client, spec_file_path, ipfs_local):
     cid = client.new_community(spec_file_path)
     if len(cid) > 10:
@@ -67,11 +68,11 @@ def create_community(client, spec_file_path, ipfs_local):
 
     return cid
 
-def full_ceremony(client, cid, accounts):
+
+def register_participants_and_perform_meetup(client, cid, accounts):
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.Registering)
 
-    
     print(f'Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
@@ -93,12 +94,7 @@ def full_ceremony(client, cid, accounts):
     client.await_block(blocks_to_wait)
 
     print(client.list_attestees(cid))
-    client.next_phase()
-    client.await_block(1)
 
-    print("Claiming rewards")
-    client.claim_reward(account1, cid)
-    client.await_block(blocks_to_wait)
 
 def faucet(client, cid):
     # charlie has no genesis funds
@@ -120,6 +116,69 @@ def fee_payment_transfers(client, cid):
         print("transfer_all failed")
         exit(1)
 
+
+def claim_rewards(client, cid, account):
+    print("Claiming rewards")
+    client.claim_reward(account, cid)
+    client.await_block(3)
+
+
+def test_reputation_caching(client, cid, account):
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    # query reputation to set the cache in the same phase as claiming rewards
+    # so we would have a valid cache value, but the cache should be invalidated
+    # anyways because of the dirty bit
+    client.reputation(account1)
+    claim_rewards(client, cid, account1)
+
+    # check if the reputation cache was updated
+    rep = client.reputation(account1)
+    print(rep)
+    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+        print("wrong reputation")
+        exit(1)
+
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    # here we dont query the reputation, so the last cache value was set in a previous phase
+    # this tests if reputations are updated on phase change
+    # client.reputation(account1)
+
+    claim_rewards(client, cid, account1)
+
+    # check if the reputation cache was updated
+    rep = client.reputation(account1)
+    # here the reputation should be correctly read from the cache
+    rep = client.reputation(account1)
+    print(rep)
+    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+        print("wrong reputation")
+        exit(1)
+
+    # test if reputation cache is invalidated after registration
+    print(f'Registering Participants for Cid: {cid}')
+    [client.register_participant(b, cid) for b in accounts]
+
+    blocks_to_wait = 3
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    client.await_block(blocks_to_wait)
+
+    rep = client.reputation(account1)
+    print(rep)
+    # after the registration the third reputation should now be linked
+    if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+        print("reputation not linked")
+        exit(1)
+
+    client.next_phase()
+    client.next_phase()
+    client.next_phase()
+    client.await_block(1)
+
+
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
@@ -129,7 +188,12 @@ def main(ipfs_local, client, port, spec_file):
     client = Client(rust_client=client, port=port)
     cid = create_community(client, spec_file, ipfs_local)
     faucet(client, cid)
-    full_ceremony(client, cid, accounts)
+
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    claim_rewards(client, cid, account1)
+
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
@@ -145,33 +209,7 @@ def main(ipfs_local, client, port, spec_file):
 
     fee_payment_transfers(client, cid)
 
-    # perform a second ceremony
-    full_ceremony(client, cid, accounts)
-    rep = client.reputation(account1)
-    print(rep)
-    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
-        print("wrong reputation")
-        exit(1)
-
-
-    print(client.list_communities())
-    client.go_to_phase(CeremonyPhase.Registering)
-
-    print(f'Registering Participants for Cid: {cid}')
-    [client.register_participant(b, cid) for b in accounts]
-
-    blocks_to_wait = 3
-    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
-    client.await_block(blocks_to_wait)
-
-    rep = client.reputation(account1)
-    print(rep)
-    # after the registration the second reputation should now be linked
-    if ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
-        print("reputation not linked")
-        exit(1)
-
-
+    test_reputation_caching(client, cid, accounts)
 
     print("tests passed")
 
