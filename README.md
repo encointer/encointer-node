@@ -44,7 +44,8 @@ Additional CLI usage options are available and may be shown by running `./target
 Join our testnet as a full node with 
 
 ```bash
-./target/release/encointer-node-notee --chain gesellv4SpecRaw.json --name giveyournodeaname
+RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer=debug
+./target/release/encointer-node-notee --chain gesellv4SpecRaw.json --enable-offchain-indexing true --rpc-cors all
 ```
 
 ## CLI client
