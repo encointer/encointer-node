@@ -51,7 +51,7 @@ use encointer_primitives::{
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
-		ParticipantIndexType, ProofOfAttendance, Reputation,
+		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
 	communities::{CidName, CommunityIdentifier},
 	fixed::transcendental::exp,
@@ -1052,7 +1052,8 @@ fn main() {
                                 api.clone(),
                                 ENCOINTER_CEREMONIES,
                                 "claim_rewards",
-                                cid
+                                cid,
+                                Option::<MeetupIndexType>::None
                             );
                             ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
 
