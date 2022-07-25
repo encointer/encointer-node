@@ -679,9 +679,9 @@ fn main() {
                                 }
                             }
                             println!("total: {} guaranteed seats + {} newbies = {} total participants who would like to attend",
-                                     num_participants[0..2].into_iter().sum::<u64>(),
+                                     num_participants[0..=2].into_iter().sum::<u64>(),
                                      num_participants[3],
-                                     num_participants[0..3].into_iter().sum::<u64>()
+                                     num_participants[0..=3].into_iter().sum::<u64>()
                             );
                             Ok(())
                         }
