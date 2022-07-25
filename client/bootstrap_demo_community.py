@@ -52,15 +52,7 @@ def update_spec_with_cid(file, cid):
         spec_json.truncate()
 
 
-@click.command()
-@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
-@click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
-def main(ipfs_local, client, port, spec_file):
-    client = Client(rust_client=client, port=port)
-    spec_file_path = spec_file
-
+def create_community(client, spec_file_path, ipfs_local):
     cid = client.new_community(spec_file_path)
     if len(cid) > 10:
         print(f'Registered community with cid: {cid}')
@@ -74,16 +66,12 @@ def main(ipfs_local, client, port, spec_file):
     print(f'Updating Community spec with ipfs cid: {ipfs_cid}')
     update_spec_with_cid(spec_file_path, ipfs_cid)
 
+    return cid
+
+
+def register_participants_and_perform_meetup(client, cid, accounts):
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.Registering)
-
-    # charlie has no genesis funds
-    print('Faucet is dripping to Charlie...')
-    client.faucet([account3], is_faucet=True)
-
-    blocks_to_wait = 3
-    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
-    client.await_block(blocks_to_wait)
 
     print(f'Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
@@ -106,26 +94,19 @@ def main(ipfs_local, client, port, spec_file):
     client.await_block(blocks_to_wait)
 
     print(client.list_attestees(cid))
-    client.next_phase()
-    client.await_block(1)
 
-    print("Claiming rewards")
-    client.claim_reward(account1, cid)
+
+def faucet(client, cid):
+    # charlie has no genesis funds
+    print('Faucet is dripping to Charlie...')
+    client.faucet([account3], is_faucet=True)
+
+    blocks_to_wait = 3
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
-    print(f'Balances for new community with cid: {cid}.')
-    bal = [client.balance(a, cid=cid) for a in accounts]
-    [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
 
-    if not round(bal[0]) > 0:
-        print("balance is wrong")
-        exit(1)
-    rep = client.reputation(account1)
-    print(rep)
-    if not len(rep) > 0:
-        print("no reputation gained")
-        exit(1)
-
+def fee_payment_transfers(client, cid):
     print(f'Transfering 0.5CC from //Alice to //Eve')
     client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
 
@@ -134,6 +115,110 @@ def main(ipfs_local, client, port, spec_file):
     if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
         print("transfer_all failed")
         exit(1)
+
+
+def claim_rewards(client, cid, account, pay_fees_in_cc=False):
+    print("Claiming rewards")
+    client.claim_reward(account, cid, pay_fees_in_cc=pay_fees_in_cc)
+    client.await_block(3)
+
+
+def test_reputation_caching(client, cid, account):
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    # query reputation to set the cache in the same phase as claiming rewards
+    # so we would have a valid cache value, but the cache should be invalidated
+    # anyways because of the dirty bit
+    client.reputation(account1)
+    claim_rewards(client, cid, account1)
+
+    # check if the reputation cache was updated
+    rep = client.reputation(account1)
+    print(rep)
+    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+        print("wrong reputation")
+        exit(1)
+
+    # test if reputation cache is invalidated after registration
+    print(f'Registering Participants for Cid: {cid}')
+    [client.register_participant(b, cid) for b in accounts]
+
+    blocks_to_wait = 3
+    print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
+    client.await_block(blocks_to_wait)
+
+    rep = client.reputation(account1)
+    print(rep)
+    # after the registration the second reputation should now be linked
+    if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+        print("reputation not linked")
+        exit(1)
+
+    client.next_phase()
+    client.next_phase()
+    client.next_phase()
+    client.await_block(1)
+
+    # check if reputation cache gets updated after phase change
+    print(client.purge_community_ceremony(cid, 1, 5))
+    client.await_block(1)
+
+    client.next_phase()
+    rep = client.reputation(account1)
+    # after phase change cache will be updated
+    if not len(rep) == 0:
+        print("reputation was not cleared")
+        exit(1)
+
+
+@click.command()
+@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
+@click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
+def main(ipfs_local, client, port, spec_file):
+    client = Client(rust_client=client, port=port)
+    cid = create_community(client, spec_file, ipfs_local)
+
+    faucet(client, cid)
+
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    balance = client.balance(account1)
+    claim_rewards(client, cid, account1)
+    if(not balance == client.balance(account1)):
+        print("claim_reward fees were not refunded if paid in native currency")
+        exit(1)
+
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    balance1 = client.balance(account1, cid=cid)
+    balance2 = client.balance(account2, cid=cid)
+    if(not balance1 == balance2):
+        print("claim_reward fees were not refunded if paid in cc")
+        exit(1)
+
+    print(f'Balances for new community with cid: {cid}.')
+    bal = [client.balance(a, cid=cid) for a in accounts]
+    [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
+
+    if not round(bal[0]) > 0:
+        print("balance is wrong")
+        exit(1)
+
+    rep = client.reputation(account1)
+    print(rep)
+    if not len(rep) > 0:
+        print("no reputation gained")
+        exit(1)
+
+    fee_payment_transfers(client, cid)
+
+    test_reputation_caching(client, cid, accounts)
 
     print("tests passed")
 
