@@ -117,9 +117,9 @@ def fee_payment_transfers(client, cid):
         exit(1)
 
 
-def claim_rewards(client, cid, account):
+def claim_rewards(client, cid, account, pay_fees_in_cc=False):
     print("Claiming rewards")
-    client.claim_reward(account, cid)
+    client.claim_reward(account, cid, pay_fees_in_cc=pay_fees_in_cc)
     client.await_block(3)
 
 
@@ -136,7 +136,7 @@ def test_reputation_caching(client, cid, account):
     # check if the reputation cache was updated
     rep = client.reputation(account1)
     print(rep)
-    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
         print("wrong reputation")
         exit(1)
 
@@ -151,7 +151,7 @@ def test_reputation_caching(client, cid, account):
     rep = client.reputation(account1)
     print(rep)
     # after the registration the second reputation should now be linked
-    if ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+    if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
         print("reputation not linked")
         exit(1)
 
@@ -161,7 +161,7 @@ def test_reputation_caching(client, cid, account):
     client.await_block(1)
 
     # check if reputation cache gets updated after phase change
-    print(client.purge_community_ceremony(cid, 1, 4))
+    print(client.purge_community_ceremony(cid, 1, 5))
     client.await_block(1)
 
     client.next_phase()
@@ -186,7 +186,21 @@ def main(ipfs_local, client, port, spec_file):
     register_participants_and_perform_meetup(client, cid, accounts)
     client.next_phase()
     client.await_block(1)
+    balance = client.balance(account1)
     claim_rewards(client, cid, account1)
+    if(not balance == client.balance(account1)):
+        print("claim_reward fees were not refunded if paid in native currency")
+        exit(1)
+
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    balance1 = client.balance(account1, cid=cid)
+    balance2 = client.balance(account2, cid=cid)
+    if(not balance1 == balance2):
+        print("claim_reward fees were not refunded if paid in cc")
+        exit(1)
 
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
