@@ -1514,9 +1514,9 @@ dependencies = [
 name = "encointer-balances-tx-payment-rpc-runtime-api"
 version = "1.0.0"
 dependencies = [
- "encointer-balances-tx-payment",
  "encointer-primitives",
  "frame-support",
+ "parity-scale-codec",
  "sp-api",
  "sp-std",
 ]

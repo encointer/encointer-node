@@ -7,7 +7,9 @@
 
 use std::sync::Arc;
 
-use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index, Moment, AssetBalance, AssetId};
+use encointer_node_notee_runtime::{
+	opaque::Block, AccountId, AssetBalance, AssetId, Balance, BlockNumber, Index, Moment,
+};
 use jsonrpsee::RpcModule;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -47,7 +49,12 @@ where
 	C::Api:
 		pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block, AccountId, BlockNumber>,
 	C::Api: pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId>,
-	C::Api: encointer_balances_tx_payment_rpc_runtime_api::BalancesTxPaymentApi<Block, Balance, AssetId, AssetBalance>,
+	C::Api: encointer_balances_tx_payment_rpc_runtime_api::BalancesTxPaymentApi<
+		Block,
+		Balance,
+		AssetId,
+		AssetBalance,
+	>,
 	P: TransactionPool + 'static,
 	TBackend: sc_client_api::Backend<Block>,
 	<TBackend as sc_client_api::Backend<Block>>::OffchainStorage: 'static,
