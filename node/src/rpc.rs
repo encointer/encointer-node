@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index, Moment};
+use encointer_node_notee_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index, Moment, AssetBalance, AssetId};
 use jsonrpsee::RpcModule;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -47,10 +47,12 @@ where
 	C::Api:
 		pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block, AccountId, BlockNumber>,
 	C::Api: pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId>,
+	C::Api: encointer_balances_tx_payment_rpc_runtime_api::BalancesTxPaymentApi<Block, Balance, AssetId, AssetBalance>,
 	P: TransactionPool + 'static,
 	TBackend: sc_client_api::Backend<Block>,
 	<TBackend as sc_client_api::Backend<Block>>::OffchainStorage: 'static,
 {
+	use encointer_balances_tx_payment_rpc::{BalancesTxPaymentApiServer, BalancesTxPaymentRpc};
 	use pallet_encointer_bazaar_rpc::{BazaarApiServer, BazaarRpc};
 	use pallet_encointer_ceremonies_rpc::{CeremoniesApiServer, CeremoniesRpc};
 	use pallet_encointer_communities_rpc::{CommunitiesApiServer, CommunitiesRpc};
@@ -61,7 +63,10 @@ where
 	let FullDeps { client, pool, backend, offchain_indexing_enabled, deny_unsafe } = deps;
 
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	let transaction_payment = TransactionPayment::new(client.clone());
+
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
+	module.merge(BalancesTxPaymentRpc::new(client.clone(), transaction_payment).into_rpc())?;
 
 	module.merge(BazaarRpc::new(client.clone(), deny_unsafe).into_rpc())?;
 
