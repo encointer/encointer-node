@@ -7,8 +7,9 @@ homepage = "https://encointer.org"
 license = "GPL-3.0"
 name = "encointer-node-notee"
 repository = "https://github.com/encointer/encointer-node"
-#keep with client version
-version = "0.8.8"
+# keep with client version
+# follow parachain major and minor revision
+version = "1.2.0"
 
 [[bin]]
 name = "encointer-node-notee"
