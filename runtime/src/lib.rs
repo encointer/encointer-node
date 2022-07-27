@@ -727,7 +727,7 @@ impl_runtime_apis! {
 
 	impl encointer_balances_tx_payment_rpc_runtime_api::BalancesTxPaymentApi<Block, Balance, AssetId, AssetBalance> for Runtime {
 		fn balance_to_asset_balance(amount: Balance, asset_id: AssetId) -> Result<AssetBalance, encointer_balances_tx_payment_rpc_runtime_api::Error> {
-			BalanceToCommunityBalance::<Runtime>::to_asset_balance(amount, asset_id).map_err(|_e| 
+			BalanceToCommunityBalance::<Runtime>::to_asset_balance(amount, asset_id).map_err(|_e|
 				encointer_balances_tx_payment_rpc_runtime_api::Error::RuntimeError
 			)
 		}

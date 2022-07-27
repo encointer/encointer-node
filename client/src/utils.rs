@@ -1,15 +1,17 @@
-use crate::{exit_code, verify_cid};
+use crate::{
+	exit_code, get_asset_fee_details, get_community_balance, BalanceType,
+};
 use codec::{Compact, Encode};
 use encointer_api_client_extension::{Api, EncointerXt};
-use encointer_node_notee_runtime::{AccountId, BalanceEntry, BlockNumber};
-use encointer_primitives::scheduler::CeremonyIndexType;
+use encointer_node_notee_runtime::{AccountId};
+use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
 use log::{debug, error, info};
 use sp_core::{Pair, H256};
+use sp_runtime::traits::Convert;
 use substrate_api_client::{
 	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, ExtrinsicParams,
 	Metadata, XtStatus,
 };
-
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
 pub fn offline_xt<C: Encode + Clone>(api: &Api, call: C, nonce: u32) -> EncointerXt<C> {
 	compose_extrinsic_offline!(api.clone().signer.unwrap(), call, api.extrinsic_params(nonce))
@@ -102,30 +104,26 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 /// Checks if the account has sufficient funds. Exits the process if not.
 pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
-		ensure_payment_cc(api, cid_str);
+		ensure_payment_cc(api, cid_str, xt);
 	} else {
 		ensure_payment_native(api, xt);
 	}
 }
 
-fn ensure_payment_cc(api: &Api, cid_str: &str) {
-	let cid = verify_cid(&api, cid_str, None);
-	match api
-		.get_storage_double_map::<_, _, BalanceEntry<BlockNumber>>(
-			"EncointerBalances",
-			"Balance",
-			cid,
-			&api.signer_account().unwrap(),
-			None,
-		)
+fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
+	let balance: BalanceType =
+		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
+	let asset_balance: u128 = EncointerBalanceConverter::convert(balance);
+
+	let fee: u128 = get_asset_fee_details(&api, cid_str, xt)
 		.unwrap()
-	{
-		None => {
-			error!("No balance available in community {}", cid);
-			std::process::exit(exit_code::FEE_PAYMENT_FAILED);
-		},
-		_ => (),
+		.inclusion_fee
+		.map_or_else(|| 0u128, |details| details.base_fee.into_u256().as_u128());
+	if asset_balance < fee {
+		error!("insufficient funds: fee: {} bal: {:?}", fee, balance);
+		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
 	}
+	debug!("account can pay fees: fee: {} bal: {}", fee, balance);
 }
 
 fn ensure_payment_native(api: &Api, xt: &str) {
