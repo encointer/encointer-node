@@ -836,11 +836,16 @@ fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                     .account_arg()
+                    .signer_arg("Account which signs the tx.")
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
-                    let signer = get_pair_from_str(arg_who);
+                    let signer = match matches.signer_arg() {
+                        Some(sig) => get_pair_from_str(sig),
+                        None => get_pair_from_str(arg_who)
+                    };
+
                     let api = get_chain_api(matches);
                     let cindex = get_ceremony_index(&api);
                     let cid = verify_cid(&api,
@@ -861,7 +866,8 @@ fn main() {
                         },
                     };
                     debug!("proof: {:x?}", proof.encode());
-                    if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
+                    let current_phase = api.get_current_phase().unwrap();
+                    if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
                         error!("wrong ceremony phase for registering participant");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
@@ -1034,7 +1040,9 @@ fn main() {
                 .description("Claim the rewards for all meetup participants of the last ceremony.")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .signer_arg("account that was part of the meetup")
+                        .signer_arg("Account which signs the tx.")
+                        .meetup_index_arg()
+                        .all_upto_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
@@ -1042,23 +1050,54 @@ fn main() {
                         &matches, |api, cid| {
                             let signer = match matches.signer_arg() {
                                 Some(sig) => get_pair_from_str(sig),
-                                None => panic!("please specify --signer. must be an assignee of a recent meetup")
+                                None => panic!("please specify --signer.")
                             };
                             let mut api = api.set_signer(signer.clone().into());
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                            api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
-                            let xt: EncointerXt<_> = compose_extrinsic!(
-                                api.clone(),
-                                ENCOINTER_CEREMONIES,
-                                "claim_rewards",
-                                cid,
-                                Option::<MeetupIndexType>::None
-                            );
-                            ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                            let meetup_index_arg = matches.meetup_index_arg();
+                            let all_upto_arg = matches.all_upto_arg();
+                            
 
-                            let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-                            println!("Claiming reward for {}. xt-status: 'ready'", signer.public());
+                            api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                            if let Some(all_upto) = all_upto_arg {
+                                let calls: Vec<_> = (1..=all_upto)
+                                .map(|idx| compose_call!(
+                                    api.metadata,
+                                    ENCOINTER_CEREMONIES,
+                                    "claim_rewards",
+                                    cid,
+                                    Option::<MeetupIndexType>::Some(idx.into())
+                                ))
+                                .collect();
+                                let batch_call = compose_call!(
+                                    api.metadata,
+                                    "Utility",
+                                    "batch",
+                                    calls
+                                );
+                                send_and_wait_for_in_block(&api, xt(&api, batch_call), tx_payment_cid_arg);
+                                println!("Claiming reward for meetup_indexes 1..={}. xt-status: 'ready'", all_upto);
+                            } else {
+                                let meetup_index = match meetup_index_arg {
+                                    Some(idx)=>Option::<MeetupIndexType>::Some(idx.into()),
+                                    None=>Option::<MeetupIndexType>::None
+                                };
+                                let xt: EncointerXt<_> = compose_extrinsic!(
+                                    api.clone(),
+                                    ENCOINTER_CEREMONIES,
+                                    "claim_rewards",
+                                    cid,
+                                    meetup_index
+                                );
+                                ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                                let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                                match meetup_index_arg {
+                                    Some(idx)=>{println!("Claiming reward for meetup_index {}. xt-status: 'ready'", idx);}
+                                    None=>{println!("Claiming reward for {}. xt-status: 'ready'", signer.public());}
+                                }
+                            }
                         }
                     );
 

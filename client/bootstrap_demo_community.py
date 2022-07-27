@@ -118,9 +118,9 @@ def fee_payment_transfers(client, cid):
         exit(1)
 
 
-def claim_rewards(client, cid, account, pay_fees_in_cc=False):
+def claim_rewards(client, cid, account, meetup_index=None, all_upto=None, pay_fees_in_cc=False):
     print("Claiming rewards")
-    client.claim_reward(account, cid, pay_fees_in_cc=pay_fees_in_cc)
+    client.claim_reward(account, cid, meetup_index=meetup_index, all_upto=all_upto, pay_fees_in_cc=pay_fees_in_cc)
     client.await_block(3)
 
 

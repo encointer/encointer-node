@@ -15,6 +15,8 @@ const ENDORSEES_ARG: &'static str = "endorsees";
 const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
 const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
+const MEETUP_INDEX_ARG: &'static str = "meetup-index";
+const ALL_UPTO_ARG: &'static str = "all-upto";
 const AT_BLOCK_ARG: &'static str = "at";
 
 pub trait EncointerArgs<'b> {
@@ -32,6 +34,8 @@ pub trait EncointerArgs<'b> {
 	fn time_offset_arg(self) -> Self;
 	fn all_flag(self) -> Self;
 	fn tx_payment_cid_arg(self) -> Self;
+	fn meetup_index_arg(self) -> Self;
+	fn all_upto_arg(self) -> Self;
 	fn at_block_arg(self) -> Self;
 }
 
@@ -50,6 +54,8 @@ pub trait EncointerArgsExtractor {
 	fn time_offset_arg(&self) -> Option<i32>;
 	fn all_flag(&self) -> bool;
 	fn tx_payment_cid_arg(&self) -> Option<&str>;
+	fn meetup_index_arg(&self) -> Option<u64>;
+	fn all_upto_arg(&self) -> Option<u64>;
 	fn at_block_arg(&self) -> Option<Hash>;
 }
 
@@ -202,6 +208,28 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("cid of the community currency in which tx fees should be paid"),
 		)
 	}
+	fn meetup_index_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(MEETUP_INDEX_ARG)
+				.long("meetup-index")
+				.takes_value(true)
+				.required(false)
+				.value_name("MEETUP_INDEX")
+				.help("the meetup index for which to claim rewards"),
+		)
+	}
+
+	fn all_upto_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(MEETUP_INDEX_ARG)
+				.long("all-upto")
+				.takes_value(true)
+				.required(false)
+				.value_name("MEETUP_INDEX")
+				.help("claim rewards for meetup indexes 1..=all-upto"),
+		)
+	}
+
 	fn at_block_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(AT_BLOCK_ARG)
@@ -267,6 +295,12 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn tx_payment_cid_arg(&self) -> Option<&str> {
 		self.value_of(TX_PAYMENT_CID_ARG)
+	}
+	fn meetup_index_arg(&self) -> Option<u64> {
+		self.value_of(MEETUP_INDEX_ARG).map(|v| v.parse().unwrap())
+	}
+	fn all_upto_arg(&self) -> Option<u64> {
+		self.value_of(ALL_UPTO_ARG).map(|v| v.parse().unwrap())
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
 		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_hex(hex.to_string()).unwrap())

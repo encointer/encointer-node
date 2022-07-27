@@ -176,8 +176,14 @@ class Client:
         ret = self.run_cli_command(["list-attestees"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
-    def claim_reward(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["claim-reward", "--signer", account], cid, pay_fees_in_cc)
+    def claim_reward(self, account, cid, meetup_index=None, all_upto=None, pay_fees_in_cc=False):
+        optional_args = []
+        if meetup_index:
+            optional_args += ["--meetup-index", str(meetup_index)]
+        if all_upto:
+            optional_args += ["--all-upto", str(all_upto)]
+
+        ret = self.run_cli_command(["claim-reward", "--signer", account] + optional_args, cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
