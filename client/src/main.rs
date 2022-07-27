@@ -73,7 +73,7 @@ use substrate_api_client::{
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
-use pallet_transaction_payment::{FeeDetails};
+use pallet_transaction_payment::FeeDetails;
 use sp_rpc::number::NumberOrHex;
 
 type AccountPublic = <Signature as Verify>::Signer;

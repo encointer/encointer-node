@@ -1,9 +1,7 @@
-use crate::{
-	exit_code, get_asset_fee_details, get_community_balance, BalanceType,
-};
+use crate::{exit_code, get_asset_fee_details, get_community_balance, BalanceType};
 use codec::{Compact, Encode};
 use encointer_api_client_extension::{Api, EncointerXt};
-use encointer_node_notee_runtime::{AccountId};
+use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
 use log::{debug, error, info};
 use sp_core::{Pair, H256};
