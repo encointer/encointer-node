@@ -1057,8 +1057,6 @@ fn main() {
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                             let meetup_index_arg = matches.meetup_index_arg();
                             let all_upto_arg = matches.all_upto_arg();
-                            
-
                             api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 
                             if let Some(all_upto) = all_upto_arg {
