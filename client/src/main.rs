@@ -1065,7 +1065,7 @@ fn main() {
                                 }
                                 let meetup_count = api
                                 .get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), None)
-                                .unwrap().unwrap();
+                                .unwrap().unwrap_or(0u64);
                                 let calls: Vec<_> = (1u64..=meetup_count)
                                 .map(|idx| compose_call!(
                                     api.metadata,
