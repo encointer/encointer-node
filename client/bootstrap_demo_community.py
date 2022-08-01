@@ -118,9 +118,9 @@ def fee_payment_transfers(client, cid):
         exit(1)
 
 
-def claim_rewards(client, cid, account, meetup_index=None, all_upto=None, pay_fees_in_cc=False):
+def claim_rewards(client, cid, account, meetup_index=None, all=False, pay_fees_in_cc=False):
     print("Claiming rewards")
-    client.claim_reward(account, cid, meetup_index=meetup_index, all_upto=all_upto, pay_fees_in_cc=pay_fees_in_cc)
+    client.claim_reward(account, cid, meetup_index=meetup_index, all=all, pay_fees_in_cc=pay_fees_in_cc)
     client.await_block(3)
 
 
@@ -193,16 +193,6 @@ def main(ipfs_local, client, port, spec_file):
         print("claim_reward fees were not refunded if paid in native currency")
         exit(1)
 
-    register_participants_and_perform_meetup(client, cid, accounts)
-    client.next_phase()
-    client.await_block(1)
-    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
-    balance1 = client.balance(account1, cid=cid)
-    balance2 = client.balance(account2, cid=cid)
-    if(not balance1 == balance2):
-        print("claim_reward fees were not refunded if paid in cc")
-        exit(1)
-
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
     [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
@@ -215,6 +205,16 @@ def main(ipfs_local, client, port, spec_file):
     print(rep)
     if not len(rep) > 0:
         print("no reputation gained")
+        exit(1)
+        
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    balance1 = client.balance(account1, cid=cid)
+    balance2 = client.balance(account2, cid=cid)
+    if(not balance1 == balance2):
+        print("claim_reward fees were not refunded if paid in cc")
         exit(1)
 
     fee_payment_transfers(client, cid)

@@ -16,7 +16,6 @@ const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
 const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
 const MEETUP_INDEX_ARG: &'static str = "meetup-index";
-const ALL_UPTO_ARG: &'static str = "all-upto";
 const AT_BLOCK_ARG: &'static str = "at";
 
 pub trait EncointerArgs<'b> {
@@ -35,7 +34,6 @@ pub trait EncointerArgs<'b> {
 	fn all_flag(self) -> Self;
 	fn tx_payment_cid_arg(self) -> Self;
 	fn meetup_index_arg(self) -> Self;
-	fn all_upto_arg(self) -> Self;
 	fn at_block_arg(self) -> Self;
 }
 
@@ -55,7 +53,6 @@ pub trait EncointerArgsExtractor {
 	fn all_flag(&self) -> bool;
 	fn tx_payment_cid_arg(&self) -> Option<&str>;
 	fn meetup_index_arg(&self) -> Option<u64>;
-	fn all_upto_arg(&self) -> Option<u64>;
 	fn at_block_arg(&self) -> Option<Hash>;
 }
 
@@ -216,18 +213,8 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.takes_value(true)
 				.required(false)
 				.value_name("MEETUP_INDEX")
+				.conflicts_with(ALL_FLAG)
 				.help("the meetup index for which to claim rewards"),
-		)
-	}
-
-	fn all_upto_arg(self) -> Self {
-		self.arg(
-			Arg::with_name(ALL_UPTO_ARG)
-				.long("all-upto")
-				.takes_value(true)
-				.required(false)
-				.value_name("ALL_UPTO")
-				.help("claim rewards for meetup indexes 1..=all-upto"),
 		)
 	}
 
@@ -299,9 +286,6 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn meetup_index_arg(&self) -> Option<u64> {
 		self.value_of(MEETUP_INDEX_ARG).map(|v| v.parse().unwrap())
-	}
-	fn all_upto_arg(&self) -> Option<u64> {
-		self.value_of(ALL_UPTO_ARG).map(|v| v.parse().unwrap())
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
 		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_hex(hex.to_string()).unwrap())

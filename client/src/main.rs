@@ -1042,7 +1042,7 @@ fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .signer_arg("Account which signs the tx.")
                         .meetup_index_arg()
-                        .all_upto_arg()
+                        .all_flag()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
 
@@ -1056,11 +1056,17 @@ fn main() {
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                             let meetup_index_arg = matches.meetup_index_arg();
-                            let all_upto_arg = matches.all_upto_arg();
                             api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 
-                            if let Some(all_upto) = all_upto_arg {
-                                let calls: Vec<_> = (1..=all_upto)
+                            if matches.all_flag() {
+                                let mut cindex = get_ceremony_index(&api);
+                                if api.get_current_phase().unwrap() == CeremonyPhaseType::Registering {
+                                    cindex -= 1;
+                                }
+                                let meetup_count = api
+                                .get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), None)
+                                .unwrap().unwrap();
+                                let calls: Vec<_> = (1u64..=meetup_count)
                                 .map(|idx| compose_call!(
                                     api.metadata,
                                     ENCOINTER_CEREMONIES,
@@ -1076,7 +1082,7 @@ fn main() {
                                     calls
                                 );
                                 send_and_wait_for_in_block(&api, xt(&api, batch_call), tx_payment_cid_arg);
-                                println!("Claiming reward for meetup_indexes 1..={}. xt-status: 'ready'", all_upto);
+                                println!("Claiming reward for all meetup indexes. xt-status: 'ready'");
                             } else {
                                 let meetup_index = match meetup_index_arg {
                                     Some(idx)=>Option::<MeetupIndexType>::Some(idx.into()),
