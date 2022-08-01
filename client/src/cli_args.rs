@@ -221,11 +221,11 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 
 	fn all_upto_arg(self) -> Self {
 		self.arg(
-			Arg::with_name(MEETUP_INDEX_ARG)
+			Arg::with_name(ALL_UPTO_ARG)
 				.long("all-upto")
 				.takes_value(true)
 				.required(false)
-				.value_name("MEETUP_INDEX")
+				.value_name("ALL_UPTO")
 				.help("claim rewards for meetup indexes 1..=all-upto"),
 		)
 	}
