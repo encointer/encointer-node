@@ -78,7 +78,8 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.takes_value(true)
 				.required(false)
 				.value_name("suri, seed , mnemonic or SS58 in keystore")
-				.help(help),
+				.help(help)
+				.conflicts_with(MEETUP_INDEX_ARG),
 		)
 	}
 
