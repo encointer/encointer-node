@@ -4,10 +4,10 @@ use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::{AccountId, BalanceEntry, BlockNumber};
 use encointer_primitives::scheduler::CeremonyIndexType;
 use log::{debug, error, info};
-use sp_core::{Pair, H256};
+use sp_core::H256;
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, ExtrinsicParams,
-	Metadata, XtStatus,
+	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, Metadata,
+	XtStatus,
 };
 
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.

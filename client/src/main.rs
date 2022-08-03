@@ -68,8 +68,8 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, ApiClientError, ApiResult, EventsDecoder, ExtrinsicParams,
-	GenericAddress, Metadata, Raw, XtStatus,
+	utils::FromHexString, ApiClientError, ApiResult, EventsDecoder, GenericAddress, Metadata,
+	XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -1405,8 +1405,8 @@ fn listen(matches: &ArgMatches<'_>) {
 						},
 						Event::System(ee) => match ee {
 							frame_system::Event::ExtrinsicFailed {
-								dispatch_error,
-								dispatch_info,
+								dispatch_error: _,
+								dispatch_info: _,
 							} => {
 								let ed = EventsDecoder::new(api.clone().metadata);
 								let mut v = Vec::<frame_system::EventRecord<Event, Hash>>::new();
