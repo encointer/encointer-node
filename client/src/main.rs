@@ -1410,7 +1410,7 @@ fn listen(matches: &ArgMatches<'_>) {
 							} => {
 								let ed = EventsDecoder::new(api.clone().metadata);
 								let mut v = Vec::<frame_system::EventRecord<Event, Hash>>::new();
-								v.push(evr.clone());
+								v.push(evr);
 								let event_record =
 									Vec::<frame_system::EventRecord<Event, Hash>>::encode(&v);
 								let decoded_event =
