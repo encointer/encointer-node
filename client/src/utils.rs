@@ -118,7 +118,7 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
 		.inclusion_fee
 		.map_or_else(|| 0u128, |details| details.base_fee.into_u256().as_u128());
 	if asset_balance < fee {
-		error!("insufficient funds: fee: {} bal: {:?}", fee, balance);
+		error!("insufficient funds: fee: {} bal: {:?}", fee, asset_balance);
 		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
 	}
 	debug!("account can pay fees: fee: {} bal: {}", fee, balance);

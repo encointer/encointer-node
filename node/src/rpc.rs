@@ -70,10 +70,9 @@ where
 	let FullDeps { client, pool, backend, offchain_indexing_enabled, deny_unsafe } = deps;
 
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
-	let transaction_payment = TransactionPayment::new(client.clone());
 
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-	module.merge(BalancesTxPaymentRpc::new(client.clone(), transaction_payment).into_rpc())?;
+	module.merge(BalancesTxPaymentRpc::new(client.clone()).into_rpc())?;
 
 	module.merge(BazaarRpc::new(client.clone(), deny_unsafe).into_rpc())?;
 
