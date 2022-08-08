@@ -1332,7 +1332,7 @@ fn listen(matches: &ArgMatches<'_>) {
 		blocks += 1;
 		match _events {
 			Ok(evts) =>
-				for evr in &evts {
+				for evr in evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
 						Event::EncointerCeremonies(ee) => {
