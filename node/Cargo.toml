@@ -72,8 +72,8 @@ pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets
 pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master"}
 pallet-encointer-bazaar-rpc = {git = "https://github.com/encointer/pallets", branch = "master"}
 pallet-encointer-bazaar-rpc-runtime-api = {git = "https://github.com/encointer/pallets", branch = "master"}
-encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, path = "../../pallets/balances-tx-payment/rpc/runtime-api" }
-encointer-balances-tx-payment-rpc = { default-features = false, path = "../../pallets/balances-tx-payment/rpc" }
+encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
+encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
 
 # CLI-specific dependencies
 try-runtime-cli = { version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git",branch = "master" }
