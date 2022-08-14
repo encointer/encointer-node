@@ -111,14 +111,16 @@ pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
 fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
 	let balance: BalanceType =
 		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
-	let asset_balance: u128 = EncointerBalanceConverter::convert(balance);
 
-	let fee: u128 = get_asset_fee_details(&api, cid_str, xt)
+	let fee: BalanceType = get_asset_fee_details(&api, cid_str, xt)
 		.unwrap()
 		.inclusion_fee
-		.map_or_else(|| 0u128, |details| details.base_fee.into_u256().as_u128());
-	if asset_balance < fee {
-		error!("insufficient funds: fee: {} bal: {:?}", fee, asset_balance);
+		.map(|details| details.base_fee.into_u256().as_u128())
+		.map(EncointerBalanceConverter::convert)
+		.unwrap_or_default();
+
+	if balance < fee {
+		error!("insufficient funds in CC: fee: {} bal: {:?}", fee, balance);
 		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
 	}
 	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
