@@ -121,7 +121,7 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
 		error!("insufficient funds: fee: {} bal: {:?}", fee, asset_balance);
 		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
 	}
-	debug!("account can pay fees: fee: {} bal: {}", fee, balance);
+	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
 }
 
 fn ensure_payment_native(api: &Api, xt: &str) {
@@ -143,7 +143,7 @@ fn ensure_payment_native(api: &Api, xt: &str) {
 		error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
 		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
 	}
-	debug!("account can pay fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
+	debug!("account can pay native fees: fee: {} ed: {} bal: {}", fee, ed, signer_balance);
 }
 
 /// Handles the potential case of a negative ceremony index CLI.
