@@ -261,6 +261,7 @@ fn main() {
                 .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
+                    .dryrun_flag()
                     .arg(
                         Arg::with_name("from")
                             .takes_value(true)
@@ -284,48 +285,59 @@ fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches);
                     let arg_from = matches.value_of("from").unwrap();
                     let arg_to = matches.value_of("to").unwrap();
-                    let from = get_pair_from_str(arg_from);
+                    
+                    if !matches.dryrun_flag() {
+                        let from = get_pair_from_str(arg_from);
+                        info!("from ss58 is {}", from.public().to_ss58check());
+                        api = api.set_signer(sr25519_core::Pair::from(from));
+                    }
                     let to = get_accountid_from_str(arg_to);
-                    info!("from ss58 is {}", from.public().to_ss58check());
                     info!("to ss58 is {}", to.to_ss58check());
-                    let mut _api = api.set_signer(sr25519_core::Pair::from(from));
+                    
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&_api, cid_str, None);
+                            let cid = verify_cid(&api, cid_str, None);
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
-                            _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+                            api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
-                                _api.clone(),
+                                api.clone(),
                                 "EncointerBalances",
                                 "transfer",
                                 to.clone(),
                                 cid,
                                 amount
                             );
-                            ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
-                            _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                            if matches.dryrun_flag() {
+                                println!("0x{}", hex::encode(xt.function.encode()));
+                                None
+                            } else {
+                                ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                                api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                            }
                         },
                         None => {
                             let amount = u128::from_str_radix(matches.value_of("amount").unwrap(), 10)
                                 .expect("amount can be converted to u128");
-                            let xt = _api.balance_transfer(
+                            let xt = api.balance_transfer(
                                 GenericAddress::Id(to.clone()),
                                 amount
                             );
-                            ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
-                            _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                            ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                            api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
                         }
                     };
-                    info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
-                    let result = _api.get_account_data(&to.clone()).unwrap().unwrap();
-                    println!("balance for {} is now {}", to, result.free);
+                    if let Some(txh) = tx_hash {
+                        info!("[+] Transaction included. Hash: {:?}\n", txh);
+                        let result = api.get_account_data(&to.clone()).unwrap().unwrap();
+                        println!("balance for {} is now {}", to, result.free);
+                    }
                     Ok(())
                 }),
         )

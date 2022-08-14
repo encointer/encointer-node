@@ -14,6 +14,7 @@ const TO_CINDEX_ARG: &'static str = "to-cindex";
 const ENDORSEES_ARG: &'static str = "endorsees";
 const TIME_OFFSET_ARG: &'static str = "time-offset";
 const ALL_FLAG: &'static str = "all";
+const DRYRUN_FLAG: &'static str = "dryrun";
 const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
 const MEETUP_INDEX_ARG: &'static str = "meetup-index";
 const AT_BLOCK_ARG: &'static str = "at";
@@ -32,6 +33,7 @@ pub trait EncointerArgs<'b> {
 	fn endorsees_arg(self) -> Self;
 	fn time_offset_arg(self) -> Self;
 	fn all_flag(self) -> Self;
+	fn dryrun_flag(self) -> Self;
 	fn tx_payment_cid_arg(self) -> Self;
 	fn meetup_index_arg(self) -> Self;
 	fn at_block_arg(self) -> Self;
@@ -51,6 +53,7 @@ pub trait EncointerArgsExtractor {
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
 	fn time_offset_arg(&self) -> Option<i32>;
 	fn all_flag(&self) -> bool;
+	fn dryrun_flag(&self) -> bool;
 	fn tx_payment_cid_arg(&self) -> Option<&str>;
 	fn meetup_index_arg(&self) -> Option<u64>;
 	fn at_block_arg(&self) -> Option<Hash>;
@@ -195,6 +198,16 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("list all community currency balances for account"),
 		)
 	}
+	fn dryrun_flag(self) -> Self {
+		self.arg(
+			Arg::with_name(DRYRUN_FLAG)
+				.short("d")
+				.long("dryrun")
+				.takes_value(false)
+				.required(false)
+				.help("print the encoded call instead of signing and sending an extrinsic"),
+		)
+	}
 	fn tx_payment_cid_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(TX_PAYMENT_CID_ARG)
@@ -280,6 +293,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn all_flag(&self) -> bool {
 		self.is_present(ALL_FLAG)
+	}
+	fn dryrun_flag(&self) -> bool {
+		self.is_present(DRYRUN_FLAG)
 	}
 	fn tx_payment_cid_arg(&self) -> Option<&str> {
 		self.value_of(TX_PAYMENT_CID_ARG)
