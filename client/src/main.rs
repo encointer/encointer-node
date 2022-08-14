@@ -329,8 +329,13 @@ fn main() {
                                 GenericAddress::Id(to.clone()),
                                 amount
                             );
-                            ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
-                            api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                            if matches.dryrun_flag() {
+                                println!("0x{}", hex::encode(xt.function.encode()));
+                                None
+                            } else {
+                                ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                                api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                            }
                         }
                     };
                     if let Some(txh) = tx_hash {
