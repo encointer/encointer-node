@@ -8,6 +8,7 @@
       "url": "https://leu.zuerich"
     },
     "bootstrappers": [
+      "5Hq1naLbJFSYzeVxPySmxH2qHgUBULQW9hPyNxKSuBGEJzSZ",
       "5HTJ7uvBZgp4VcXsWqMSz5r6C5vCzfodB3oYgJikmbesmGAQ",
       "5ELFUAhU3qNijJeWi9vDHR8Q8GTmdeQ7vCmhwHYBTKLfkiVt",
       "5F4WftsrF1Wqtbm7kK5FRRrvUf4w8syazFJH3Mz5JkdcZqs7",
@@ -16,11 +17,10 @@
       "5FvNKkMDRb8pBsXfxRBphY9ZmkkCNUHWnq5Dpw7hKpvBU1L4",
       "5F23TQ7ReiDj3fDKra9QwWSy94XAsmF4AKVdBFLmn4bmUYAD",
       "5C86aoJWYuuHxYsi5d74ddJ6tYNhwnLeXHe5qqBWui2cmmPh",
-      "5Hq1naLbJFSYzeVxPySmxH2qHgUBULQW9hPyNxKSuBGEJzSZ",
       "5E9bTMkC6tJUKBxw7Jz9qQ1t1yVAU2j3ctXbsE7JVccfaK4X"
     ],
     "demurrage_halving_blocks": 2628000,
-    "ceremony_income": 1077
+    "ceremony_income": 1520
   },
   "features": [
     {
