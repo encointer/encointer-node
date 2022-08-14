@@ -13,7 +13,8 @@ import csv
 @click.command()
 @click.argument('filename')
 @click.option('--endpoint', default="ws://localhost:9944", help='rpc websocket endpoint to talk to the chain')
-def batch(filename, endpoint):
+@click.option('--maxcalls', default=100, help='maximum number of calls in same batch')
+def batch(filename, endpoint, maxcalls):
     substrate = SubstrateInterface(
         url=endpoint
     )
@@ -25,16 +26,18 @@ def batch(filename, endpoint):
             call = GenericCall(ScaleBytes(row[0]))
             calls.append(call)
     
-    print(calls)
-    
-    batch_call = substrate.compose_call(
-        call_module='Utility',
-        call_function='batch_all',
-        call_params={
-            'calls': calls
-        }
-    )
-    print(batch_call.encode())
+    print(f"read {len(calls)} calls from {filename}")
+
+    chunks = [calls[i:i + maxcalls] for i in range(0, len(calls), maxcalls)]
+    for chunk in chunks:
+        batch_call = substrate.compose_call(
+            call_module='Utility',
+            call_function='batch_all',
+            call_params={
+                'calls': chunk
+            }
+        )
+        print(batch_call.encode())
 
 if __name__ == '__main__':
     batch()
