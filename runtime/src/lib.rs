@@ -61,7 +61,7 @@ pub use encointer_primitives::{
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSigned};
 
 mod weights;
 
@@ -440,7 +440,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
 	type CommunityMaster = EnsureRoot<AccountId>;
-	type TrustableForNonDestructiveAction = EnsureRoot<AccountId>;
+	type TrustableForNonDestructiveAction = EnsureSigned<AccountId>;
 	type WeightInfo = weights::pallet_encointer_communities::WeightInfo<Runtime>;
 }
 

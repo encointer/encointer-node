@@ -54,7 +54,8 @@ def update_spec_with_cid(file, cid):
 
 
 def create_community(client, spec_file_path, ipfs_local):
-    cid = client.new_community(spec_file_path)
+    # non sudoer can create community
+    cid = client.new_community(spec_file_path, signer=account2)
     if len(cid) > 10:
         print(f'Registered community with cid: {cid}')
     else:

@@ -423,6 +423,7 @@ fn main() {
                             .required(true)
                             .help("enhanced geojson file that specifies a community"),
                     )
+                    .signer_arg("account with necessary privileges")
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     // -----setup
@@ -430,36 +431,41 @@ fn main() {
                     let spec = read_community_spec_from_file(spec_file);
                     let cid = spec.community_identifier();
 
-                    let sudoer = AccountKeyring::Alice.pair();
-                    let mut api = get_chain_api(matches).set_signer(sudoer);
+                    let signer = matches.signer_arg()
+                        .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+
+                    let mut api = get_chain_api(matches).set_signer(signer);
+
 
                     // ------- create calls for xt's
-
-                    let new_community_call = new_community_call(&spec, &api.metadata);
+                    let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, &api.metadata));
                     // only the first meetup location has been registered now. register all others one-by-one
                     let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
-                    let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
+                    let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(&api.metadata, add_location_calls));
 
-                    // return calls as `OpaqueCall`s to get the same return type in both branches
-                    let (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata) {
-                        let sudo_new_community = sudo_call(&api.metadata, new_community_call);
-                        let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
-                        info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-                        print_raw_call("sudo(new_community)", &sudo_new_community);
-                        print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 
-                        (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
+                    if let None = matches.signer_arg() {
+                        // return calls as `OpaqueCall`s to get the same return type in both branches
+                        (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata) {
+                            let sudo_new_community = sudo_call(&api.metadata, new_community_call);
+                            let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
+                            info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+                            print_raw_call("sudo(new_community)", &sudo_new_community);
+                            print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 
-                    } else {
-                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
-                        info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-                        let propose_new_community = collective_propose_call(&api.metadata, threshold, new_community_call);
-                        let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
-                        print_raw_call("collective_propose(new_community)", &propose_new_community);
-                        print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+                            (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
 
-                        (OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
-                    };
+                        } else {
+                            let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                            info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+                            let propose_new_community = collective_propose_call(&api.metadata, threshold, new_community_call);
+                            let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
+                            print_raw_call("collective_propose(new_community)", &propose_new_community);
+                            print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+
+                            (OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
+                        };
+                    }
 
                     // ---- send xt's to chain
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
@@ -482,7 +488,7 @@ fn main() {
                 .description("Register new locations for a community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                        .signer_arg("account with necessary privileges (sudo or councillor)")
+                        .signer_arg("account with necessary privileges")
                         .arg(
                             Arg::with_name("specfile")
                                 .takes_value(true)
@@ -510,21 +516,24 @@ fn main() {
                                                                                       add_location_call(&api.metadata, cid, l)
                                                                                   }
                         ).collect();
-                    let add_location_batch_call = batch_call(&api.metadata, add_location_calls);
+                    let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(&api.metadata, add_location_calls));
 
-                    // return calls as `OpaqueCall`s to get the same return type in both branches
-                    let add_location_batch_call = if contains_sudo_pallet(&api.metadata) {
-                        let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
-                        info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-                        print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
-                        OpaqueCall::from_tuple(&sudo_add_location_batch)
-                    } else {
-                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
-                        info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-                        let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
-                        print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
-                        OpaqueCall::from_tuple(&propose_add_location_batch)
-                    };
+
+                    if let None = matches.signer_arg() {
+                        // return calls as `OpaqueCall`s to get the same return type in both branches
+                        add_location_batch_call = if contains_sudo_pallet(&api.metadata) {
+                            let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
+                            info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+                            print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
+                            OpaqueCall::from_tuple(&sudo_add_location_batch)
+                        } else {
+                            let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                            info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+                            let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
+                            print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+                            OpaqueCall::from_tuple(&propose_add_location_batch)
+                        };
+                    }
                     // ---- send xt's to chain
                     if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
                         error!("Wrong ceremony phase for registering new locations for {}", cid);
