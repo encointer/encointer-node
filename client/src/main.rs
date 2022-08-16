@@ -288,7 +288,6 @@ fn main() {
                     let mut api = get_chain_api(matches);
                     let arg_from = matches.value_of("from").unwrap();
                     let arg_to = matches.value_of("to").unwrap();
-                    
                     if !matches.dryrun_flag() {
                         let from = get_pair_from_str(arg_from);
                         info!("from ss58 is {}", from.public().to_ss58check());
@@ -296,7 +295,6 @@ fn main() {
                     }
                     let to = get_accountid_from_str(arg_to);
                     info!("to ss58 is {}", to.to_ss58check());
-                    
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
