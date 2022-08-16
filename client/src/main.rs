@@ -73,6 +73,9 @@ use substrate_api_client::{
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
+use pallet_transaction_payment::FeeDetails;
+use sp_rpc::number::NumberOrHex;
+
 type AccountPublic = <Signature as Verify>::Signer;
 const KEYSTORE_PATH: &str = "my_keystore";
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
@@ -227,14 +230,8 @@ fn main() {
                     let accountid = get_accountid_from_str(account);
                     match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&api, cid_str, maybe_at);
-                            let bn = get_block_number(&api);
-                            let dr = get_demurrage_per_block(&api, cid);
-                            let balance = if let Some(entry) = api
-                                .get_storage_double_map("EncointerBalances", "Balance", cid, accountid, maybe_at).unwrap() {
-                                    apply_demurrage(entry, bn, dr)
-                            } else { BalanceType::from_num(0) };
-                            println!("{}", balance);
+                            let balance = get_community_balance(&api, &cid_str, &accountid, maybe_at);
+                            println!{"{:?}", balance};
                         }
                         None => {
                             if matches.all_flag() {
@@ -1507,6 +1504,26 @@ fn get_block_number(api: &Api) -> BlockNumber {
 	hdr.number
 }
 
+pub fn get_community_balance(
+	api: &Api,
+	cid_str: &str,
+	account_id: &AccountId,
+	maybe_at: Option<Hash>,
+) -> BalanceType {
+	let cid = verify_cid(&api, cid_str, maybe_at);
+	let bn = get_block_number(&api);
+	let dr = get_demurrage_per_block(&api, cid);
+	let balance = if let Some(entry) = api
+		.get_storage_double_map("EncointerBalances", "Balance", cid, account_id, maybe_at)
+		.unwrap()
+	{
+		apply_demurrage(entry, bn, dr)
+	} else {
+		BalanceType::from_num(0)
+	};
+	balance
+}
+
 fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 	let d: Option<Demurrage> = api
 		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
@@ -1698,6 +1715,24 @@ fn get_all_balances(
 	let n = api.get_request(req.into()).unwrap().unwrap(); //expect("Could not query all balances...");
 
 	serde_json::from_str(&n).ok()
+}
+
+fn get_asset_fee_details(
+	api: &Api,
+	cid_str: &str,
+	encoded_xt: &str,
+) -> Option<FeeDetails<NumberOrHex>> {
+	let cid = verify_cid(&api, cid_str, None);
+	let req = json!({
+		"method": "encointer_queryAssetFeeDetails",
+		"params": vec![to_value(cid).unwrap(), to_value(encoded_xt).unwrap()],
+		"jsonrpc": "2.0",
+		"id": "1",
+	});
+
+	let n = api.get_request(req.into()).unwrap().expect("Could not query asset fee details");
+
+	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn prove_attendance(
