@@ -1525,7 +1525,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-client-notee"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "clap 2.34.0",
  "clap-nested",
@@ -1571,7 +1571,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "clap 3.1.18",
  "encointer-balances-tx-payment-rpc",
