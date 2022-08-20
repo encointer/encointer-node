@@ -33,7 +33,8 @@ with open(f'account-events-{account}-{start_block}_to_{end_block}.csv', 'w', new
     for block in range(start_block, end_block):
         page = 0
         while True:
-            response = requests.post('https://encointer.api.subscan.io/api/scan/events',
+            try: 
+                response = requests.post('https://encointer.api.subscan.io/api/scan/events',
                                      headers={
                                          'Content-Type': 'application/json',
                                          'X-API-Key': api_key,
@@ -46,8 +47,6 @@ with open(f'account-events-{account}-{start_block}_to_{end_block}.csv', 'w', new
                                          'block_num': block
                                      }
                                      )
-
-            try:
                 events = response.json()['data']['events']
             except:
                 print(response)
