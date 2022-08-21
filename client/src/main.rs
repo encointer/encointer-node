@@ -1451,13 +1451,13 @@ fn listen(matches: &ArgMatches<'_>) {
 								dispatch_error: _,
 								dispatch_info: _,
 							} => {
-								let ed = EventsDecoder::new(api.clone().metadata);
-								let mut v = Vec::<frame_system::EventRecord<Event, Hash>>::new();
-								v.push(evr);
-								let event_record =
-									Vec::<frame_system::EventRecord<Event, Hash>>::encode(&v);
-								let decoded_event =
-									&ed.decode_events(&mut event_record.as_slice()).unwrap()[0];
+								let ed = EventsDecoder::new(api.metadata.clone());
+								let event_records = vec![evr];
+
+								let decoded_event = &ed
+									.decode_events(&mut event_records.encode().as_slice())
+									.unwrap()[0];
+
 								error!("ExtrinsicFailed: {:?}", decoded_event);
 							},
 							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
