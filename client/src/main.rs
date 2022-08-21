@@ -68,7 +68,7 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, ApiClientError, ApiResult, ExtrinsicParams, GenericAddress, Metadata,
+	utils::FromHexString, ApiClientError, ApiResult, EventsDecoder, GenericAddress, Metadata,
 	XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
@@ -1387,7 +1387,7 @@ fn listen(matches: &ArgMatches<'_>) {
 		blocks += 1;
 		match _events {
 			Ok(evts) =>
-				for evr in &evts {
+				for evr in evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
 						Event::EncointerCeremonies(ee) => {
@@ -1460,10 +1460,17 @@ fn listen(matches: &ArgMatches<'_>) {
 						},
 						Event::System(ee) => match ee {
 							frame_system::Event::ExtrinsicFailed {
-								dispatch_error,
-								dispatch_info,
+								dispatch_error: _,
+								dispatch_info: _,
 							} => {
-								error!("ExtrinsicFailed: {:?} {:?}", dispatch_error, dispatch_info);
+								let ed = EventsDecoder::new(api.metadata.clone());
+								let event_records = vec![evr];
+
+								let decoded_event = &ed
+									.decode_events(&mut event_records.encode().as_slice())
+									.unwrap()[0];
+
+								error!("ExtrinsicFailed: {:?}", decoded_event);
 							},
 							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
 								println!("ExtrinsicSuccess: {:?}", dispatch_info);

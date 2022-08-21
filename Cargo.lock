@@ -15,11 +15,13 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "ac-primitives",
  "log",
  "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -27,10 +29,11 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "ac-primitives",
- "frame-metadata",
+ "derive_more",
+ "frame-metadata 15.0.0 (git+https://github.com/integritee-network/frame-metadata)",
  "frame-support",
  "frame-system",
  "hex",
@@ -39,15 +42,17 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "sp-application-crypto",
  "sp-core",
  "sp-runtime",
- "thiserror",
+ "sp-runtime-interface",
+ "sp-std",
 ]
 
 [[package]]
 name = "ac-primitives"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "hex",
  "parity-scale-codec",
@@ -906,6 +911,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1263,8 +1274,10 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
+ "convert_case",
  "proc-macro2",
  "quote",
+ "rustc_version 0.4.0",
  "syn",
 ]
 
@@ -2033,12 +2046,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "frame-metadata"
+version = "15.0.0"
+source = "git+https://github.com/integritee-network/frame-metadata#3b43da9821238681f9431276d55b92a079142083"
+dependencies = [
+ "cfg-if 1.0.0",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "frame-support"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=master#b195d0a5e20be4dfa5d29283bfb3a7417f94e4cd"
 dependencies = [
  "bitflags",
- "frame-metadata",
+ "frame-metadata 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "frame-support-procedural",
  "impl-trait-for-tuples",
  "k256",
@@ -2598,9 +2622,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.6"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31f4c6746584866f0feabcc69893c5b51beef3831656a968ed7ae254cdc4fd03"
+checksum = "75f43d41e26995c17e71ee126451dd3941010b0514a81a9d11f3b341debc2399"
 dependencies = [
  "bytes 1.1.0",
  "fnv",
@@ -4867,9 +4891,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.0.0"
+version = "3.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a7f3fcf5e45fc28b84dcdab6b983e77f197ec01f325a33f404ba6855afd1070"
+checksum = "9182e4a71cae089267ab03e67c99368db7cd877baf50f931e5d6d4b71e195ac0"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -4881,9 +4905,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.0.0"
+version = "3.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c6e626dc84025ff56bf1476ed0e30d10c84d7f89a475ef46ebabee1095a8fba"
+checksum = "9299338969a3d2f491d65f140b00ddec470858402f888af98e8642fb5e8965cd"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -5712,9 +5736,9 @@ dependencies = [
 
 [[package]]
 name = "retain_mut"
-version = "0.1.7"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c31b5c4033f8fdde8700e4657be2c497e7288f01515be52168c631e2e4d4086"
+checksum = "4389f1d5789befaf6029ebd9f7dac4af7f7e3d61b69d4f30e2ac02b57e7712b0"
 
 [[package]]
 name = "rfc6979"
@@ -7901,12 +7925,12 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
  "ac-primitives",
- "frame-metadata",
+ "frame-metadata 15.0.0 (git+https://github.com/integritee-network/frame-metadata)",
  "frame-support",
  "frame-system",
  "hex",
@@ -7917,10 +7941,10 @@ dependencies = [
  "primitive-types",
  "serde",
  "serde_json",
- "sp-application-crypto",
  "sp-core",
  "sp-rpc",
  "sp-runtime",
+ "sp-runtime-interface",
  "sp-std",
  "sp-version",
  "thiserror",
@@ -7952,7 +7976,7 @@ dependencies = [
 [[package]]
 name = "substrate-client-keystore"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "async-trait",
  "hex",
@@ -8325,9 +8349,9 @@ checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "tracing"
-version = "0.1.32"
+version = "0.1.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a1bdf54a7c28a2bbf701e1d2233f6c77f473486b94bee4f9678da5a148dca7f"
+checksum = "a400e31aa60b9d44a52a8ee0343b5b18566b03a8321e0d321f695cf56e940160"
 dependencies = [
  "cfg-if 1.0.0",
  "pin-project-lite 0.2.8",
