@@ -15,11 +15,13 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "ac-primitives",
  "log",
  "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -27,10 +29,11 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "ac-primitives",
- "frame-metadata",
+ "derive_more",
+ "frame-metadata 15.0.0 (git+https://github.com/integritee-network/frame-metadata)",
  "frame-support",
  "frame-system",
  "hex",
@@ -39,15 +42,17 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "sp-application-crypto",
  "sp-core",
  "sp-runtime",
- "thiserror",
+ "sp-runtime-interface",
+ "sp-std",
 ]
 
 [[package]]
 name = "ac-primitives"
 version = "0.1.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "hex",
  "parity-scale-codec",
@@ -906,6 +911,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1263,8 +1274,10 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
+ "convert_case",
  "proc-macro2",
  "quote",
+ "rustc_version 0.4.0",
  "syn",
 ]
 
@@ -2033,12 +2046,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "frame-metadata"
+version = "15.0.0"
+source = "git+https://github.com/integritee-network/frame-metadata#3b43da9821238681f9431276d55b92a079142083"
+dependencies = [
+ "cfg-if 1.0.0",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "frame-support"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=master#b195d0a5e20be4dfa5d29283bfb3a7417f94e4cd"
 dependencies = [
  "bitflags",
- "frame-metadata",
+ "frame-metadata 15.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "frame-support-procedural",
  "impl-trait-for-tuples",
  "k256",
@@ -7901,12 +7925,12 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
  "ac-primitives",
- "frame-metadata",
+ "frame-metadata 15.0.0 (git+https://github.com/integritee-network/frame-metadata)",
  "frame-support",
  "frame-system",
  "hex",
@@ -7917,10 +7941,10 @@ dependencies = [
  "primitive-types",
  "serde",
  "serde_json",
- "sp-application-crypto",
  "sp-core",
  "sp-rpc",
  "sp-runtime",
+ "sp-runtime-interface",
  "sp-std",
  "sp-version",
  "thiserror",
@@ -7952,7 +7976,7 @@ dependencies = [
 [[package]]
 name = "substrate-client-keystore"
 version = "0.6.0"
-source = "git+https://github.com/scs/substrate-api-client?branch=master#714fb1d1d89bce6e6322ef1e5aebfbb6919618dc"
+source = "git+https://github.com/scs/substrate-api-client?branch=master#66d9734d7a88ec475514062a6b3499230de990a4"
 dependencies = [
  "async-trait",
  "hex",

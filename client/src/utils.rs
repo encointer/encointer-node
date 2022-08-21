@@ -4,11 +4,11 @@ use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
 use log::{debug, error, info};
-use sp_core::{Pair, H256};
+use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, ExtrinsicParams,
-	Metadata, XtStatus,
+	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, Metadata,
+	XtStatus,
 };
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
 pub fn offline_xt<C: Encode + Clone>(api: &Api, call: C, nonce: u32) -> EncointerXt<C> {
