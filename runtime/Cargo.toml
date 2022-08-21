@@ -17,6 +17,7 @@ serde = { features = ["derive"], optional = true, version = "1.0.136" } # added 
 # encointer deps
 encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
@@ -97,6 +98,7 @@ std = [
     "sp-transaction-pool/std",
     "sp-version/std",
     "encointer-balances-tx-payment/std",
+    "encointer-balances-tx-payment-rpc-runtime-api/std",
     "encointer-primitives/std",
     "encointer-primitives/serde_derive",
     "pallet-encointer-balances/std",

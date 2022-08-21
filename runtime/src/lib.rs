@@ -30,6 +30,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
+use frame_support::traits::tokens::BalanceConversion;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Contains, KeyOwnerProofSystem, Randomness, StorageInfo},
@@ -53,6 +54,7 @@ pub use pallet_encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
 pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
 
+pub use encointer_balances_tx_payment::{AssetBalanceOf, AssetIdOf, BalanceToCommunityBalance};
 pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
@@ -87,6 +89,9 @@ pub type Hash = sp_core::H256;
 /// A type to hold UTC unix epoch [ms]
 pub type Moment = u64;
 pub const ONE_DAY: Moment = 86_400_000;
+
+pub type AssetId = AssetIdOf<Runtime>;
+pub type AssetBalance = AssetBalanceOf<Runtime>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -717,6 +722,14 @@ impl_runtime_apis! {
 
 		fn get_businesses(community: &CommunityIdentifier) -> Vec<(AccountId, BusinessData)>{
 			EncointerBazaar::get_businesses(community)
+		}
+	}
+
+	impl encointer_balances_tx_payment_rpc_runtime_api::BalancesTxPaymentApi<Block, Balance, AssetId, AssetBalance> for Runtime {
+		fn balance_to_asset_balance(amount: Balance, asset_id: AssetId) -> Result<AssetBalance, encointer_balances_tx_payment_rpc_runtime_api::Error> {
+			BalanceToCommunityBalance::<Runtime>::to_asset_balance(amount, asset_id).map_err(|_e|
+				encointer_balances_tx_payment_rpc_runtime_api::Error::RuntimeError
+			)
 		}
 	}
 
