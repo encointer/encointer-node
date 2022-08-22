@@ -63,7 +63,7 @@ pub use encointer_primitives::{
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSigned};
 
 mod weights;
 
@@ -128,7 +128,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 18,
+	spec_version: 19,
 	impl_version: 0,
 
 	apis: RUNTIME_API_VERSIONS,
@@ -445,6 +445,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 impl pallet_encointer_communities::Config for Runtime {
 	type Event = Event;
 	type CommunityMaster = EnsureRoot<AccountId>;
+	type TrustableForNonDestructiveAction = EnsureSigned<AccountId>;
 	type WeightInfo = weights::pallet_encointer_communities::WeightInfo<Runtime>;
 }
 

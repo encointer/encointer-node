@@ -87,7 +87,7 @@ def init(ctx):
         print(f"waiting for ceremony phase Registering. now is {phase}")
         client.await_block()
 
-    cid = client.new_community(specfile)
+    cid = client.new_community(specfile, signer='//Alice')
     print(f'created community with cid: {cid}')
     write_cid(cid)
     client.await_block()

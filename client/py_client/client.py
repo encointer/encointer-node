@@ -128,8 +128,11 @@ class Client:
                 (cindex, cid, rep.strip().split('::')[1]))
         return reputation_history
 
-    def new_community(self, specfile, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["new-community", specfile], pay_fees_in_cc=pay_fees_in_cc)
+    def new_community(self, specfile, signer=None, pay_fees_in_cc=False):
+        cmd = ["new-community", specfile]
+        if signer:
+            cmd += ["--signer", signer]
+        ret = self.run_cli_command(cmd, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
         return ret.stdout.decode("utf-8").strip()
 
