@@ -225,13 +225,16 @@ pub mod keys {
 				let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None)
 					.expect("store should exist");
 				trace!("store opened");
-				let pair = store
+				let maybe_pair = store
 					.key_pair::<sr25519::AppPair>(
 						&sr25519::Public::from_ss58check(account).unwrap().into(),
 					)
 					.unwrap();
 				drop(store);
-				pair.unwrap()
+				match maybe_pair {
+					Some(pair) => pair,
+					None => panic!("account not in keystore")
+				}
 			},
 		}
 	}

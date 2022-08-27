@@ -326,7 +326,7 @@ impl CeremoniesApi for Api {
 		// get stats of every meetup
 		for m in 1..=mcount {
 			let m_location = self.get_meetup_location(&community_ceremony, m)?.unwrap();
-			let time = self.get_meetup_time(m_location, ONE_DAY)?;
+			let time = self.get_meetup_time(m_location, ONE_DAY).unwrap_or(0);
 			let participants = self.get_meetup_participants(&community_ceremony, m)?;
 
 			let mut registrations = vec![];
