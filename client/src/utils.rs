@@ -233,7 +233,7 @@ pub mod keys {
 				drop(store);
 				match maybe_pair {
 					Some(pair) => pair,
-					None => panic!("account not in keystore")
+					None => panic!("account not in keystore"),
 				}
 			},
 		}
