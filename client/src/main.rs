@@ -501,6 +501,7 @@ fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .signer_arg("account with necessary privileges")
+                        .dryrun_flag()
                         .arg(
                             Arg::with_name("specfile")
                                 .takes_value(true)
@@ -513,10 +514,13 @@ fn main() {
                     let spec_file = matches.value_of("specfile").unwrap();
                     let spec = read_community_spec_from_file(spec_file);
 
-                    let signer = matches.signer_arg()
-                        .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-
-                    let api = get_chain_api(matches).set_signer(signer);
+                    let mut api = get_chain_api(matches);
+                    if !matches.dryrun_flag() {
+                        let signer = matches.signer_arg()
+                            .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+                        info!("signer ss58 is {}", signer.public().to_ss58check());
+                        api = api.set_signer(signer);
+                    }
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 
@@ -546,13 +550,18 @@ fn main() {
                             OpaqueCall::from_tuple(&propose_add_location_batch)
                         };
                     }
-                    // ---- send xt's to chain
-                    if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
-                        error!("Wrong ceremony phase for registering new locations for {}", cid);
-                        error!("Aborting without registering additional locations");
-                        std::process::exit(exit_code::WRONG_PHASE);
+
+                    if matches.dryrun_flag() {
+                        println!("0x{}", hex::encode(add_location_batch_call.encode()));
+                    } else {
+                        // ---- send xt's to chain
+                        if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
+                            error!("Wrong ceremony phase for registering new locations for {}", cid);
+                            error!("Aborting without registering additional locations");
+                            std::process::exit(exit_code::WRONG_PHASE);
+                        }
+                        send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call), tx_payment_cid_arg);
                     }
-                    send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call), tx_payment_cid_arg);
                     Ok(())
                 }),
         )
