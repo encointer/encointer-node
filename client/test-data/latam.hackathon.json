@@ -8,10 +8,57 @@
       "url": "encointer.org"
     },
     "bootstrappers": [
+      "5H1CeCqNSpJPRLScQb9jz5ES7j6vL8sP8Ai7J7f3sJHWkTek",
+      "5GjJjBPg8XzD2RMzFSV2Qq42CxBdJsND9fRoBtxCqmYNJA4M",
+      "5D83c6U4cpnJRUFi9hZZroBPzB2g2sd91eFT3Rm2QTp7ZJau"
     ],
     "demurrage_halving_blocks": 2628000,
     "ceremony_income": 22
   },
   "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -91.25381469726562,
+          -0.7470491450051796
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -91.17416381835936,
+          -0.9530200167955291
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -90.89126586914062,
+          -0.7319442020676312
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -90.44357299804688,
+          -0.641313512826644
+        ]
+      }
+    }
   ]
 }
