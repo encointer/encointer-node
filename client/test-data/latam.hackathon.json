@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "LATAM Hackathon",
+      "symbol": "LAT",
+      "assets": "QmYgZrnVpuZRU2TVjqzjvetAnPrz4SRwqTiMaayYk7sPtS",
+      "url": "encointer.org"
+    },
+    "bootstrappers": [
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 22
+  },
+  "features": [
+  ]
+}
