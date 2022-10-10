@@ -23,9 +23,9 @@ nctr-dev new-community ./test-data/latam.hackathon.json --signer //LATAM1
 
 // register //LATAM1, //LATAM2, LATAM3
 // (register the //LATAM1 IN THE APP)
-nctr-dev register-participant //LATAM1 --cid 3zz5g4jWojt
-nctr-dev register-participant //LATAM2 --cid 3zz5g4jWojt
-nctr-dev register-participant //LATAM3 --cid 3zz5g4jWojt
+nctr-dev register-participant //LATAM1 --cid 3zz704jWojt
+nctr-dev register-participant //LATAM2 --cid 3zz704jWojt
+nctr-dev register-participant //LATAM3 --cid 3zz704jWojt
  
 // go to assigning phase and show the meetup location in app
 nctr-dev next-phase

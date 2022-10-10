@@ -7,6 +7,7 @@ import click
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 
+latam_cid = '3zz704jWojt'
 latam1 = '//LATAM1'
 latam2 = '//LATAM2'
 latam3 = '//LATAM3'
@@ -84,7 +85,7 @@ def register_alice_bob_charlie(ctx, cid: str):
 
 @cli.command()
 @click.option('--cid',
-              default='3zz5g4jWojt',
+              default=latam_cid,
               help='CommunityIdentifier. Default is Mediterranean test currency')
 @click.pass_context
 def register_latam_accounts(ctx, cid: str):
@@ -96,25 +97,6 @@ def register_latam_accounts(ctx, cid: str):
     accounts = ['//LATAM1', '//LATAM2', '//LATAM3']
 
     register(accounts, client, cid, should_faucet=False)
-
-@cli.command()
-@click.option('--cid',
-              default='3zz5g4jWojt',
-              help='CommunityIdentifier. Default is Mediterranean test currency')
-@click.pass_context
-def perform_latam_meetup(ctx, cid: str):
-    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
-
-    client = ctx.obj['client']
-
-    _attest_latam_meetup(client, cid)
-
-    print(f"Waiting for {1} block, such that xt's are processed...")
-    client.await_block(1)
-
-    # print(f"Listing Attestees")
-    # print(client.list_attestees(cid))
-
 
 @cli.command()
 @click.option('--cid',
@@ -135,6 +117,25 @@ def register_gina_harry_ian(ctx, cid: str, should_faucet: bool):
     accounts = ['//Gina', '//Harry', '//Ian']
 
     register(accounts, client, cid, should_faucet)
+
+
+@cli.command()
+@click.option('--cid',
+              default=latam_cid,
+              help='CommunityIdentifier. Default is Mediterranean test currency')
+@click.pass_context
+def perform_latam_meetup(ctx, cid: str):
+    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
+
+    client = ctx.obj['client']
+
+    _attest_latam_meetup(client, cid)
+
+    print(f"Waiting for {1} block, such that xt's are processed...")
+    client.await_block(1)
+
+    # print(f"Listing Attestees")
+    # print(client.list_attestees(cid))
 
 
 def register(accounts, client: Client, cid: str, should_faucet=False):
