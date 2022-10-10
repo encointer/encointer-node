@@ -7,6 +7,25 @@ import click
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 
+latam1 = '//LATAM1'
+latam2 = '//LATAM2'
+latam3 = '//LATAM3'
+latam_accounts = [latam1, latam2, latam3]
+
+
+def _attest_latam_meetup(client, cid):
+    print('Starting meetup...')
+    print('Creating claims...')
+    vote = len(latam_accounts)
+    claim1 = client.new_claim(latam1, vote, cid)
+    claim2 = client.new_claim(latam2, vote, cid)
+    claim3 = client.new_claim(latam3, vote, cid)
+
+    print('Sending claims of attestees to chain...')
+    client.attest_claims(latam1, [claim2, claim3])
+    client.attest_claims(latam2, [claim1, claim3])
+    client.attest_claims(latam3, [claim1, claim2])
+
 
 @click.group()
 @click.pass_context
@@ -30,7 +49,7 @@ def cli(ctx, client, url, port):
 def register_alice_bob_charlie_and_go_to_attesting(ctx, cid: str):
     client = ctx.obj['client']
 
-    _register_alice_bob_charlie(client, cid)
+    register_alice_bob_charlie(client, cid)
 
     print(client.go_to_phase(CeremonyPhase.Attesting))
 
@@ -43,7 +62,7 @@ def register_alice_bob_charlie_and_go_to_attesting(ctx, cid: str):
 def register_alice_bob_charlie_and_go_to_assigning(ctx, cid: str):
     client = ctx.obj['client']
 
-    _register_alice_bob_charlie(client, cid)
+    register_alice_bob_charlie(client, cid)
 
     print(client.go_to_phase(CeremonyPhase.Assigning))
 
@@ -61,6 +80,40 @@ def register_alice_bob_charlie(ctx, cid: str):
     accounts = ['//Alice', '//Bob', '//Charlie']
 
     register(accounts, client, cid, should_faucet=False)
+
+
+@cli.command()
+@click.option('--cid',
+              default='3zz5g4jWojt',
+              help='CommunityIdentifier. Default is Mediterranean test currency')
+@click.pass_context
+def register_latam_accounts(ctx, cid: str):
+    # The demo should do this manually this is just for testing convenience
+    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
+
+    client = ctx.obj['client']
+
+    accounts = ['//LATAM1', '//LATAM2', '//LATAM3']
+
+    register(accounts, client, cid, should_faucet=False)
+
+@cli.command()
+@click.option('--cid',
+              default='3zz5g4jWojt',
+              help='CommunityIdentifier. Default is Mediterranean test currency')
+@click.pass_context
+def perform_latam_meetup(ctx, cid: str):
+    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
+
+    client = ctx.obj['client']
+
+    _attest_latam_meetup(client, cid)
+
+    print(f"Waiting for {1} block, such that xt's are processed...")
+    client.await_block(1)
+
+    # print(f"Listing Attestees")
+    # print(client.list_attestees(cid))
 
 
 @cli.command()
