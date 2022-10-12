@@ -44,7 +44,7 @@ nctr-gsl next-phase --signer 5CSLXnYZQeVDvNmanYEJn4YXXhgFLKYwp2f216NsDehR8mVU
 nctr-gsl next-phase --signer 5CSLXnYZQeVDvNmanYEJn4YXXhgFLKYwp2f216NsDehR8mVU
 
 # perform latam meetup with rust cli-wrapper.
-./cli.py perform-latam-meetup-gsl
+./cli.py perform-latam-meetup-gsl --cid 3zz714jWojt
 
 # go to registering phase and claim meetup with the app
 nctr-gsl next-phase --signer 5CSLXnYZQeVDvNmanYEJn4YXXhgFLKYwp2f216NsDehR8mVU
