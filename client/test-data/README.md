@@ -1,6 +1,6 @@
 Contains info about the individual communities.
 
-# LATAM
+# Polkadot LATAM DEMO
 * Bootstrappers are the seeds with:
    * //LATAM1
    * //LATAM2
@@ -11,9 +11,9 @@ Contains info about the individual communities.
 Demo is based on the encointer book: https://book.encointer.org/tutorials-register-community.html
 
 ### Preliminaries
-1. Fill out bootstrappers
+1. Fill out bootstrappers in the community spec file
 2. Pick locations with https://geojson.io and insert them into the spec file
-3. Upload assets to IPFS
+3. Upload assets to IPFS and insert the CID into the spec file
 4. Prepare the App with //LATAM1 account
 ### Demo
 ```bash
