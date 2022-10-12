@@ -8,10 +8,13 @@ Contains info about the individual communities.
 
 
 ## Demo Flow 1:1
+Demo is based on the encointer book: https://book.encointer.org/tutorials-register-community.html
+
 ### Preliminaries
-1. Pick locations with https://geojson.io and insert them into the spec file
-2. Upload assets to IPFS
-3. Prepare the App with //LATAM1 account
+1. Fill out bootstrappers
+2. Pick locations with https://geojson.io and insert them into the spec file
+3. Upload assets to IPFS
+4. Prepare the App with //LATAM1 account
 ### Demo
 ```bash
 # launch de encointer-node
