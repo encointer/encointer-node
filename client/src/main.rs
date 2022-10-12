@@ -30,7 +30,7 @@ use crate::{
 	utils::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
 		into_effective_cindex,
-		keys::{get_accountid_from_str, get_pair_from_str},
+		keys::{get_accountid_from_str, get_pair_from_str, KEYSTORE_PATH, SR25519},
 		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
@@ -62,7 +62,8 @@ use serde_json::{json, to_value};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
-use sp_runtime::{traits::Verify, MultiSignature};
+use sp_keystore::SyncCryptoStore;
+use sp_runtime::MultiSignature;
 use std::{
 	collections::HashMap, convert::TryInto, path::PathBuf, str::FromStr, sync::mpsc::channel,
 };
@@ -76,8 +77,6 @@ use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 use pallet_transaction_payment::FeeDetails;
 use sp_rpc::number::NumberOrHex;
 
-type AccountPublic = <Signature as Verify>::Signer;
-const KEYSTORE_PATH: &str = "my_keystore";
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -126,12 +125,28 @@ fn main() {
         .args(|_args, _matches| "")
         .add_cmd(
             Command::new("new-account")
-                .description("generates a new account")
-                .runner(|_args: &str, _matches: &ArgMatches<'_>| {
+                .description("Imports account into the key store. Either a new account or with the supplied seed.")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .seed_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+
                     let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-                    let key: sr25519::AppPair = store.generate().unwrap();
+
+                    // this does not place the key into the keystore if we have a seed, but it does
+                    // place it into the keystore if the seed is none.
+                    let key = store.sr25519_generate_new(
+                        SR25519,
+                        matches.seed_arg(),
+                    ).unwrap();
+
+                    if let Some(suri) = matches.seed_arg() {
+                        store.insert_unknown(SR25519, suri, &key.0).unwrap();
+                    }
+
                     drop(store);
-                    println!("{}", key.public().to_ss58check());
+                    println!("{}", key.to_ss58check());
                     Ok(())
                 }),
         )
