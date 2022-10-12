@@ -123,11 +123,14 @@ def register_gina_harry_ian(ctx, cid: str, should_faucet: bool):
 @click.option('--cid',
               default=latam_cid,
               help='CommunityIdentifier. Default is Mediterranean test currency')
-@click.pass_context
-def perform_latam_meetup(ctx, cid: str):
-    click.echo(f'Registering Alice, Bob and Charlie for cid: {cid}')
+def perform_latam_meetup_gsl(cid: str):
+    click.echo(f'Performing meetup for //LATAM1, //LATAM2, //LATAM3 cid: {cid}')
 
-    client = ctx.obj['client']
+    client = Client(
+        node_url="wss://gesell.encointer.org",
+        rust_client="../target/release/encointer-client-notee",
+        port=443
+    )
 
     _attest_latam_meetup(client, cid)
 

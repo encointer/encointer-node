@@ -37,16 +37,13 @@ nctr-gsl register-participant //LATAM2 --cid 3zz704jWojt
 nctr-gsl register-participant //LATAM3 --cid 3zz704jWojt
  
 # go to assigning phase and show the meetup location in app
-nctr-gsl next-phase
 
 # go to attesting phase
-nctr-gsl next-phase
 
 # perform latam meetup with rust cli-wrapper.
-./cli.py perform-latam-meetup --client $ENCOINTER_CLIENT_BINARY --url $NURL --port $PORT
+./cli.py perform-latam-meetup-gsl
 
 
 # go to registering phase and claim meetup with the app
-nctr-gsl next-phase
 ```
 
