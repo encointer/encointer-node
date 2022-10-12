@@ -7,7 +7,7 @@ import click
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 
-latam_cid = '3zz704jWojt'
+latam_cid = '3zz714jWojt'
 latam1 = '//LATAM1'
 latam2 = '//LATAM2'
 latam3 = '//LATAM3'
