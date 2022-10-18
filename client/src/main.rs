@@ -125,7 +125,7 @@ fn main() {
         .args(|_args, _matches| "")
         .add_cmd(
             Command::new("new-account")
-                .description("Imports account into the key store. Either a new account or with the supplied seed.")
+                .description("Imports account into the key store. Either creates a new account or with the supplied seed.")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .seed_arg()
