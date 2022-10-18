@@ -201,12 +201,12 @@ pub mod keys {
 
 	type AccountPublic = <Signature as Verify>::Signer;
 
-	/// Key type for generic Sr 25519 key.
+	/// Key type for the generic Sr25519 key.
 	pub const SR25519: KeyTypeId = KeyTypeId(*b"sr25");
 
 	pub const KEYSTORE_PATH: &str = "my_keystore";
 
-	/// Get the account id from public SS58 or from dev-seed
+	/// Get the account id from public SS58 or from dev-seed.
 	pub fn get_accountid_from_str(account: &str) -> AccountId {
 		debug!("getting AccountId from -{}-", account);
 		match &account[..2] {
@@ -218,7 +218,7 @@ pub mod keys {
 		}
 	}
 
-	/// Get a pair either from keyring (well-known keys) or from the store
+	/// Get a pair either from keyring (well-known keys) or from the store.
 	pub fn get_pair_from_str(account: &str) -> sr25519::AppPair {
 		debug!("getting pair for {}", account);
 		match &account[..2] {
