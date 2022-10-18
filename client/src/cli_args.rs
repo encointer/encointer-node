@@ -77,7 +77,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 		self.arg(
 			Arg::with_name(SEED_ARG)
 				.takes_value(true)
-				.required(true)
+				.required(false)
 				.value_name("SS58")
 				.help("Seed, mnemonic of suri"),
 		)
