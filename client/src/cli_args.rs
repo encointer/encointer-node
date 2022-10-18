@@ -2,6 +2,7 @@ use clap::{App, Arg, ArgMatches};
 use substrate_api_client::{FromHexString, Hash};
 
 const ACCOUNT_ARG: &'static str = "accountid";
+const SEED_ARG: &'static str = "seed";
 const SIGNER_ARG: &'static str = "signer";
 const CID_ARG: &'static str = "cid";
 const CLAIMS_ARG: &'static str = "claims";
@@ -21,6 +22,7 @@ const AT_BLOCK_ARG: &'static str = "at";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
+	fn seed_arg(self) -> Self;
 	fn signer_arg(self, help: &'b str) -> Self;
 	fn optional_cid_arg(self) -> Self;
 	fn claims_arg(self) -> Self;
@@ -41,6 +43,7 @@ pub trait EncointerArgs<'b> {
 
 pub trait EncointerArgsExtractor {
 	fn account_arg(&self) -> Option<&str>;
+	fn seed_arg(&self) -> Option<&str>;
 	fn signer_arg(&self) -> Option<&str>;
 	fn cid_arg(&self) -> Option<&str>;
 	fn claims_arg(&self) -> Option<Vec<&str>>;
@@ -67,6 +70,16 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.required(true)
 				.value_name("SS58")
 				.help("AccountId in ss58check format"),
+		)
+	}
+
+	fn seed_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(SEED_ARG)
+				.takes_value(true)
+				.required(false)
+				.value_name("SS58")
+				.help("Seed, mnemonic of suri"),
 		)
 	}
 
@@ -247,6 +260,10 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	fn account_arg(&self) -> Option<&str> {
 		self.value_of(ACCOUNT_ARG)
+	}
+
+	fn seed_arg(&self) -> Option<&str> {
+		self.value_of(SEED_ARG)
 	}
 
 	fn signer_arg(&self) -> Option<&str> {

@@ -188,16 +188,25 @@ impl Encode for OpaqueCall {
 
 /// Utils around key management for
 pub mod keys {
-	use crate::{AccountPublic, KEYSTORE_PATH};
-	use encointer_node_notee_runtime::AccountId;
+	use encointer_node_notee_runtime::{AccountId, Signature};
 	use log::{debug, trace};
 	use sp_application_crypto::sr25519;
-	use sp_core::{crypto::Ss58Codec, Pair};
-	use sp_runtime::traits::IdentifyAccount;
+	use sp_core::{
+		crypto::{KeyTypeId, Ss58Codec},
+		Pair,
+	};
+	use sp_runtime::traits::{IdentifyAccount, Verify};
 	use std::path::PathBuf;
 	use substrate_client_keystore::LocalKeystore;
 
-	/// Get the account id from public SS58 or from dev-seed
+	type AccountPublic = <Signature as Verify>::Signer;
+
+	/// Key type for the generic Sr25519 key.
+	pub const SR25519: KeyTypeId = KeyTypeId(*b"sr25");
+
+	pub const KEYSTORE_PATH: &str = "my_keystore";
+
+	/// Get the account id from public SS58 or from dev-seed.
 	pub fn get_accountid_from_str(account: &str) -> AccountId {
 		debug!("getting AccountId from -{}-", account);
 		match &account[..2] {
@@ -209,7 +218,7 @@ pub mod keys {
 		}
 	}
 
-	/// Get a pair either from keyring (well-known keys) or from the store
+	/// Get a pair either from keyring (well-known keys) or from the store.
 	pub fn get_pair_from_str(account: &str) -> sr25519::AppPair {
 		debug!("getting pair for {}", account);
 		match &account[..2] {
