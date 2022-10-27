@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "Aslah",
+      "symbol": "ASL",
+      "assets": "QmXgvpsF5CzwFb7c1kobFQ3q4hutRFtKDMkYGDE3Bmmnu6",
+      "url": ""
+    },
+    "bootstrappers": [
+      "5GsC8FS9t6EEWoMsD3v8JET49cEUjG8TgqHL3h9auj55JyWh",
+      "5D54sFePpbgkNnFJ915n6kv6AUChw1az2DsdQ5Tmra7ZSB29",
+      "5HQq7oDe9sc6HPvPhpbqEZcxeADGjE3NEy5cDSnK7FgtYYhd",
+      "5D72w17pg78PWhfskt52LCXTPwsu3xeXasua91KL4MzripuH",
+      "5EkLpGDrRZy1hngGeDY1RCPE5sRMHYGedBacLzjba6j9dWbN",
+      "5Cypm1FpPF4X2TFwx7hhDBEKByvvX6xgp7iNdRetbMJL61WJ",
+      "5FEy1KpKNfAG7RJqYfYFaJPrD2pWbb76bCyGt6tfoQ4bRG2E",
+      "5EToCtEN7BHKahXdF3tg7zrU2AWdcZifc41zqVsYsiSFfAr1",
+      "5EqDhRXrDFc5qkUGipqiNaNhveWJPQowCiYxUzGiAB3k7VkU",
+      "5FFAYtshC7UwQEfmDsHzUcdxop23cpEKGE2V88xkgmeARp7T"
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 25
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.1053349,
+          -1.962683
+        ]
+      }
+    }
+  ]
+}
