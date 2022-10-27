@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
-	traits::{EqualPrivilegeOnly, InstanceFilter},
+	traits::{ConstU128, EqualPrivilegeOnly, InstanceFilter},
 	RuntimeDebug,
 };
 use pallet_grandpa::{
@@ -345,8 +345,9 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
 
+pub const EXISTENTIAL_DEPOSIT: u128 = 500;
+
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -359,7 +360,7 @@ impl pallet_balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type Event = Event;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
 	type AccountStore = System;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
@@ -463,6 +464,7 @@ impl pallet_encointer_bazaar::Config for Runtime {
 }
 
 impl pallet_asset_tx_payment::Config for Runtime {
+	type Event = Event;
 	type Fungibles = pallet_encointer_balances::Pallet<Runtime>;
 	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
 		encointer_balances_tx_payment::BalanceToCommunityBalance<Runtime>,
@@ -472,10 +474,10 @@ impl pallet_asset_tx_payment::Config for Runtime {
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
-	pub enum Runtime where
+	pub struct Runtime where
 		Block = Block,
 		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
+		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 0,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 2,
@@ -484,7 +486,7 @@ construct_runtime!(
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Config, Event<T>} = 11,
-		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage} = 12,
+		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 12,
 
 
 		Aura: pallet_aura::{Pallet, Config<T>} = 23,
@@ -682,6 +684,23 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+	}
+
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, Call>
+		for Runtime
+	{
+		fn query_call_info(
+			call: Call,
+			len: u32,
+		) -> pallet_transaction_payment::RuntimeDispatchInfo<Balance> {
+			TransactionPayment::query_call_info(call, len)
+		}
+		fn query_call_fee_details(
+			call: Call,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_call_fee_details(call, len)
 		}
 	}
 
