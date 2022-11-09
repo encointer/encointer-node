@@ -1,7 +1,7 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
 	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
-	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	GrandpaConfig, Signature, SudoConfig, SystemConfig, TeerexConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -199,5 +199,6 @@ fn testnet_genesis(
 			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
 			fee_conversion_factor: 100_000,
 		},
+		teerex: TeerexConfig { allow_sgx_debug_mode: true },
 	}
 }
