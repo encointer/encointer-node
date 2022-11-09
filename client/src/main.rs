@@ -1007,34 +1007,47 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("attest-claims")
+            Command::new("attest-attendees")
                 .description("Register encointer ceremony claim of attendances for supplied community")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
-                    .account_arg()
-                    .claims_arg()
+                        .account_arg()
+                        .optional_cid_arg()
+                        .attestees_arg()
                 })
                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
 
-                    let claims: Vec<ClaimOfAttendance<MultiSignature, AccountId, Moment>> = matches.claims_arg().unwrap()
+                    let attestees: Vec<_> = matches.attestees_arg().unwrap()
                         .into_iter()
-                        .map(|c| Decode::decode(&mut &hex::decode(c).unwrap()[..]).unwrap())
+                        .map(get_accountid_from_str)
                         .collect();
 
-                    debug!("claims: {:?}", claims);
+                    let vote = attestees.len() as u32 + 1u32;
 
-                    info!("send attest_claims by {}", who.public());
+                    debug!("attestees: {:?}", attestees);
+
+                    info!("send attest_attendees by {}", who.public());
 
                     let mut api = get_chain_api(matches).set_signer(who.clone().into());
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    let cid = verify_cid(&api,
+                                         matches
+                                             .cid_arg()
+                                             .expect("please supply argument --cid"),
+                                         None
+                    );
+
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api.clone(),
                         "EncointerCeremonies",
-                        "attest_claims",
-                        claims.clone()
+                        "attest_attendees",
+                        cid,
+                        vote,
+                        attestees.clone()
                     );
 
                     ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
