@@ -187,6 +187,7 @@ fn testnet_genesis(
 			reputation_lifetime: 337,   // 7.02 days at 30min ceremony cycle
 			inactivity_timeout: 168500, // 10 years at 30min ceremony cycle
 			meetup_time_offset: 0,
+			endorsement_tickets_per_reputable: 5,
 		},
 		encointer_communities: EncointerCommunitiesConfig {
 			min_solar_trip_time_s: 1, // [s]

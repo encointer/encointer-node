@@ -200,4 +200,7 @@ impl<T: frame_system::Config> pallet_encointer_ceremonies::WeightInfo for Weight
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+    fn set_endorsement_tickets_per_reputable() -> Weight {
+        (38_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+    }
 }
