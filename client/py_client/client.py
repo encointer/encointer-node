@@ -171,8 +171,8 @@ class Client:
                 meetups.append(participants)
         return meetups
 
-    def attest_claims(self, account, claims, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["attest-claims", account] + claims, pay_fees_in_cc=pay_fees_in_cc)
+    def attest_attendees(self, account, cid, attendees, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["attest-attendees", account] + attendees, cid=cid, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret.returncode)
 
     def list_attestees(self, cid):
