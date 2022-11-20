@@ -862,11 +862,13 @@ fn main() {
                             }
 
                             for w in 1..wcount + 1 {
+                                let attestor = participants_windex[&w].clone();
                                 let attestees = api.get_attestees((cid, cindex), w).unwrap();
+                                let vote = api.get_meetup_participant_count_vote((cid, cindex), attestor.clone()).unwrap();
                                 let attestation_state = AttestationState::new(
                                     (cid, cindex),
-                                    participants_windex[&w].clone(),
-                                        0,
+                                    attestor,
+                                        vote,
                                     attestees,
                                 );
                                 println!("{:?}", attestation_state);

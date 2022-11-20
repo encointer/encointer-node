@@ -89,6 +89,12 @@ pub trait CeremoniesApi {
 		community_ceremony: CommunityCeremony,
 		participant_index: ParticipantIndexType,
 	) -> Result<Vec<AccountId>>;
+
+	fn get_meetup_participant_count_vote(
+		&self,
+		community_ceremony: CommunityCeremony,
+		account_id: AccountId,
+	) -> Result<u32>;
 }
 
 impl CeremoniesApi for Api {
@@ -367,6 +373,21 @@ impl CeremoniesApi for Api {
 			None,
 		)?
 		.ok_or_else(|| ApiClientError::Other("Attestees don't exist".into()))
+	}
+
+	fn get_meetup_participant_count_vote(
+		&self,
+		community_ceremony: CommunityCeremony,
+		account_id: AccountId,
+	) -> Result<u32> {
+		self.get_storage_double_map(
+			"EncointerCeremonies",
+			"MeetupParticipantCountVote",
+			community_ceremony,
+			account_id,
+			None,
+		)?
+		.ok_or_else(|| ApiClientError::Other("MeetupParticipantCountVote don't exist".into()))
 	}
 }
 
