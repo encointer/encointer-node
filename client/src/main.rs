@@ -39,7 +39,7 @@ use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
-	Api, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
+	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
 	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
@@ -862,11 +862,14 @@ fn main() {
                             }
 
                             for w in 1..wcount + 1 {
-                                let attestees = get_attestees(&api, (cid, cindex), w);
-                                println!(
-                                    "AttestationRegistry[{}, {} ({})] = {:?}",
-                                    cindex, w, participants_windex[&w], attestees
+                                let attestees = api.get_attestees((cid, cindex), w).unwrap();
+                                let attestation_state = AttestationState::new(
+                                    (cid, cindex),
+                                    participants_windex[&w].clone(),
+                                        0,
+                                    attestees,
                                 );
+                                println!("{:?}", attestation_state);
                             }
                             Ok(())
                         }
@@ -1605,15 +1608,6 @@ fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
-		.unwrap()
-}
-
-fn get_attestees(
-	api: &Api,
-	key: CommunityCeremony,
-	windex: ParticipantIndexType,
-) -> Option<Vec<AccountId>> {
-	api.get_storage_double_map("EncointerCeremonies", "AttestationRegistry", key, windex, None)
 		.unwrap()
 }
 

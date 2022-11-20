@@ -83,6 +83,12 @@ pub trait CeremoniesApi {
 		&self,
 		community_ceremony: CommunityCeremony,
 	) -> Result<CommunityCeremonyStats>;
+
+	fn get_attestees(
+		&self,
+		community_ceremony: CommunityCeremony,
+		participant_index: ParticipantIndexType,
+	) -> Result<Vec<AccountId>>;
 }
 
 impl CeremoniesApi for Api {
@@ -347,6 +353,21 @@ impl CeremoniesApi for Api {
 			meetups,
 		))
 	}
+
+	fn get_attestees(
+		&self,
+		community_ceremony: CommunityCeremony,
+		p_index: ParticipantIndexType,
+	) -> Result<Vec<AccountId>> {
+		self.get_storage_double_map(
+			"EncointerCeremonies",
+			"AttestationRegistry",
+			community_ceremony,
+			p_index,
+			None,
+		)?
+		.ok_or_else(|| ApiClientError::Other("Attestees don't exist".into()))
+	}
 }
 
 fn get_bootstrapper_or_reputable(
@@ -383,6 +404,25 @@ impl CommunityCeremonyStats {
 		meetups: Vec<Meetup>,
 	) -> Self {
 		Self { community_ceremony, assignment, assignment_count, meetup_count, meetups }
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttestationState {
+	pub community_ceremony: CommunityCeremony,
+	pub attestor: AccountId,
+	pub vote: u32,
+	pub attestees: Vec<AccountId>,
+}
+
+impl AttestationState {
+	pub fn new(
+		community_ceremony: CommunityCeremony,
+		attestor: AccountId,
+		vote: u32,
+		attestees: Vec<AccountId>,
+	) -> Self {
+		Self { community_ceremony, attestor, vote, attestees }
 	}
 }
 
