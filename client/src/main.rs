@@ -871,8 +871,9 @@ fn main() {
                                 let attestation_state = AttestationState::new(
                                     (cid, cindex),
                                     meetup_index,
+                                    vote,
+
                                     attestor,
-                                        vote,
                                     attestees,
                                 );
 
