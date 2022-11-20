@@ -872,7 +872,7 @@ fn main() {
                                     (cid, cindex),
                                     meetup_index,
                                     vote,
-
+                                    w,
                                     attestor,
                                     attestees,
                                 );

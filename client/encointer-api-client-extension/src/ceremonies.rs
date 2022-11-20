@@ -433,6 +433,7 @@ pub struct AttestationState {
 	pub community_ceremony: CommunityCeremony,
 	pub meetup_index: MeetupIndexType,
 	pub vote: u32,
+	pub attestation_index: u64,
 	pub attestor: AccountId,
 	pub attestees: Vec<AccountId>,
 }
@@ -442,10 +443,11 @@ impl AttestationState {
 		community_ceremony: CommunityCeremony,
 		meetup_index: MeetupIndexType,
 		vote: u32,
+		attestation_index: u64,
 		attestor: AccountId,
 		attestees: Vec<AccountId>,
 	) -> Self {
-		Self { community_ceremony, meetup_index, vote, attestor, attestees }
+		Self { community_ceremony, meetup_index, vote, attestation_index, attestor, attestees }
 	}
 }
 
