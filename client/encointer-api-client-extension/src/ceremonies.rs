@@ -431,6 +431,7 @@ impl CommunityCeremonyStats {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AttestationState {
 	pub community_ceremony: CommunityCeremony,
+	pub meetup_index: MeetupIndexType,
 	pub attestor: AccountId,
 	pub vote: u32,
 	pub attestees: Vec<AccountId>,
@@ -439,11 +440,12 @@ pub struct AttestationState {
 impl AttestationState {
 	pub fn new(
 		community_ceremony: CommunityCeremony,
+		meetup_index: MeetupIndexType,
 		attestor: AccountId,
 		vote: u32,
 		attestees: Vec<AccountId>,
 	) -> Self {
-		Self { community_ceremony, attestor, vote, attestees }
+		Self { community_ceremony, meetup_index, attestor, vote, attestees }
 	}
 }
 

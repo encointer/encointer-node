@@ -861,18 +861,31 @@ fn main() {
                                 }
                             }
 
+                            let mut attestation_states = Vec::with_capacity(wcount as usize);
+
                             for w in 1..wcount + 1 {
                                 let attestor = participants_windex[&w].clone();
+                                let meetup_index = api.get_meetup_index(&(cid, cindex), &attestor).unwrap().unwrap();
                                 let attestees = api.get_attestees((cid, cindex), w).unwrap();
                                 let vote = api.get_meetup_participant_count_vote((cid, cindex), attestor.clone()).unwrap();
                                 let attestation_state = AttestationState::new(
                                     (cid, cindex),
+                                    meetup_index,
                                     attestor,
                                         vote,
                                     attestees,
                                 );
-                                println!("{:?}", attestation_state);
+
+                                attestation_states.push(attestation_state);
                             }
+
+                            // Group attestation states by meetup index
+                            attestation_states.sort_by(|a, b| a.meetup_index.partial_cmp(&b.meetup_index).unwrap());
+
+                            for a in attestation_states.iter() {
+                                println!("{:?}", a);
+                            }
+
                             Ok(())
                         }
                     ).unwrap();
