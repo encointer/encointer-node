@@ -7,7 +7,7 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "1.2.19"
+version = "1.3.20"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
