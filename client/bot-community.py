@@ -312,12 +312,10 @@ def perform_meetup(client: Client, meetup, cid):
     n = len(meetup)
     print(f'Performing meetup with {n} participants')
 
-    claims = [client.new_claim(p, n, cid) for p in meetup]
-
     for p_index in range(len(meetup)):
         attestor = meetup[p_index]
-        attestees_claims = claims[:p_index] + claims[p_index + 1:]
-        client.attest_claims(attestor, attestees_claims)
+        attendees = meetup[:p_index] + meetup[p_index + 1:]
+        client.attest_attendees(attestor, cid, attendees)
 
 
 if __name__ == '__main__':

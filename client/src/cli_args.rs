@@ -5,7 +5,7 @@ const ACCOUNT_ARG: &'static str = "accountid";
 const SEED_ARG: &'static str = "seed";
 const SIGNER_ARG: &'static str = "signer";
 const CID_ARG: &'static str = "cid";
-const CLAIMS_ARG: &'static str = "claims";
+const ATTESTEES_ARG: &'static str = "attestees";
 const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
 const IPFS_CID_ARG: &'static str = "ipfs-cid";
 const BOOTSTRAPPER_ARG: &'static str = "bootstrapper";
@@ -25,7 +25,7 @@ pub trait EncointerArgs<'b> {
 	fn seed_arg(self) -> Self;
 	fn signer_arg(self, help: &'b str) -> Self;
 	fn optional_cid_arg(self) -> Self;
-	fn claims_arg(self) -> Self;
+	fn attestees_arg(self) -> Self;
 	fn ceremony_index_arg(self) -> Self;
 	fn ipfs_cid_arg(self) -> Self;
 	fn bootstrapper_arg(self) -> Self;
@@ -46,7 +46,7 @@ pub trait EncointerArgsExtractor {
 	fn seed_arg(&self) -> Option<&str>;
 	fn signer_arg(&self) -> Option<&str>;
 	fn cid_arg(&self) -> Option<&str>;
-	fn claims_arg(&self) -> Option<Vec<&str>>;
+	fn attestees_arg(&self) -> Option<Vec<&str>>;
 	fn ceremony_index_arg(&self) -> Option<i32>;
 	fn ipfs_cid_arg(&self) -> Option<&str>;
 	fn bootstrapper_arg(&self) -> Option<&str>;
@@ -108,9 +108,9 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 		)
 	}
 
-	fn claims_arg(self) -> Self {
+	fn attestees_arg(self) -> Self {
 		self.arg(
-			Arg::with_name(CLAIMS_ARG)
+			Arg::with_name(ATTESTEES_ARG)
 				.takes_value(true)
 				.required(true)
 				.multiple(true)
@@ -274,8 +274,8 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(CID_ARG)
 	}
 
-	fn claims_arg(&self) -> Option<Vec<&str>> {
-		self.values_of(CLAIMS_ARG).map(|c| c.collect())
+	fn attestees_arg(&self) -> Option<Vec<&str>> {
+		self.values_of(ATTESTEES_ARG).map(|c| c.collect())
 	}
 
 	fn ceremony_index_arg(&self) -> Option<i32> {

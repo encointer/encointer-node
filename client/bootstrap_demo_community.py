@@ -30,16 +30,11 @@ TEST_LOCATIONS_MEDITERRANEAN = 'test-locations-mediterranean.json'
 
 def perform_meetup(client, cid):
     print('Starting meetup...')
-    print('Creating claims...')
-    vote = len(accounts)
-    claim1 = client.new_claim(account1, vote, cid)
-    claim2 = client.new_claim(account2, vote, cid)
-    claim3 = client.new_claim(account3, vote, cid)
 
-    print('Sending claims of attestees to chain...')
-    client.attest_claims(account1, [claim2, claim3])
-    client.attest_claims(account2, [claim1, claim3])
-    client.attest_claims(account3, [claim1, claim2])
+    print('Attest other attendees...')
+    client.attest_attendees(account1, cid, [account2, account3])
+    client.attest_attendees(account2, cid, [account1, account3])
+    client.attest_attendees(account3, cid, [account1, account2])
 
 
 def update_spec_with_cid(file, cid):
@@ -186,13 +181,17 @@ def main(ipfs_local, client, port, spec_file):
     faucet(client, cid)
 
     register_participants_and_perform_meetup(client, cid, accounts)
-    client.next_phase()
-    client.await_block(1)
+
     balance = client.balance(account1)
+
+    print("Claiming early rewards")
     claim_rewards(client, cid, account1)
     if(not balance == client.balance(account1)):
         print("claim_reward fees were not refunded if paid in native currency")
         exit(1)
+
+    client.next_phase()
+    client.await_block(1)
 
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
