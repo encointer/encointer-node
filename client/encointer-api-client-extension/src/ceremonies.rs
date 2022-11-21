@@ -83,6 +83,18 @@ pub trait CeremoniesApi {
 		&self,
 		community_ceremony: CommunityCeremony,
 	) -> Result<CommunityCeremonyStats>;
+
+	fn get_attestees(
+		&self,
+		community_ceremony: CommunityCeremony,
+		participant_index: ParticipantIndexType,
+	) -> Result<Vec<AccountId>>;
+
+	fn get_meetup_participant_count_vote(
+		&self,
+		community_ceremony: CommunityCeremony,
+		account_id: AccountId,
+	) -> Result<u32>;
 }
 
 impl CeremoniesApi for Api {
@@ -347,6 +359,36 @@ impl CeremoniesApi for Api {
 			meetups,
 		))
 	}
+
+	fn get_attestees(
+		&self,
+		community_ceremony: CommunityCeremony,
+		p_index: ParticipantIndexType,
+	) -> Result<Vec<AccountId>> {
+		self.get_storage_double_map(
+			"EncointerCeremonies",
+			"AttestationRegistry",
+			community_ceremony,
+			p_index,
+			None,
+		)?
+		.ok_or_else(|| ApiClientError::Other("Attestees don't exist".into()))
+	}
+
+	fn get_meetup_participant_count_vote(
+		&self,
+		community_ceremony: CommunityCeremony,
+		account_id: AccountId,
+	) -> Result<u32> {
+		self.get_storage_double_map(
+			"EncointerCeremonies",
+			"MeetupParticipantCountVote",
+			community_ceremony,
+			account_id,
+			None,
+		)?
+		.ok_or_else(|| ApiClientError::Other("MeetupParticipantCountVote don't exist".into()))
+	}
 }
 
 fn get_bootstrapper_or_reputable(
@@ -383,6 +425,29 @@ impl CommunityCeremonyStats {
 		meetups: Vec<Meetup>,
 	) -> Self {
 		Self { community_ceremony, assignment, assignment_count, meetup_count, meetups }
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttestationState {
+	pub community_ceremony: CommunityCeremony,
+	pub meetup_index: MeetupIndexType,
+	pub vote: u32,
+	pub attestation_index: u64,
+	pub attestor: AccountId,
+	pub attestees: Vec<AccountId>,
+}
+
+impl AttestationState {
+	pub fn new(
+		community_ceremony: CommunityCeremony,
+		meetup_index: MeetupIndexType,
+		vote: u32,
+		attestation_index: u64,
+		attestor: AccountId,
+		attestees: Vec<AccountId>,
+	) -> Self {
+		Self { community_ceremony, meetup_index, vote, attestation_index, attestor, attestees }
 	}
 }
 

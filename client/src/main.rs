@@ -39,7 +39,7 @@ use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
-	Api, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
+	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
 	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
@@ -861,13 +861,32 @@ fn main() {
                                 }
                             }
 
+                            let mut attestation_states = Vec::with_capacity(wcount as usize);
+
                             for w in 1..wcount + 1 {
-                                let attestees = get_attestees(&api, (cid, cindex), w);
-                                println!(
-                                    "AttestationRegistry[{}, {} ({})] = {:?}",
-                                    cindex, w, participants_windex[&w], attestees
+                                let attestor = participants_windex[&w].clone();
+                                let meetup_index = api.get_meetup_index(&(cid, cindex), &attestor).unwrap().unwrap();
+                                let attestees = api.get_attestees((cid, cindex), w).unwrap();
+                                let vote = api.get_meetup_participant_count_vote((cid, cindex), attestor.clone()).unwrap();
+                                let attestation_state = AttestationState::new(
+                                    (cid, cindex),
+                                    meetup_index,
+                                    vote,
+                                    w,
+                                    attestor,
+                                    attestees,
                                 );
+
+                                attestation_states.push(attestation_state);
                             }
+
+                            // Group attestation states by meetup index
+                            attestation_states.sort_by(|a, b| a.meetup_index.partial_cmp(&b.meetup_index).unwrap());
+
+                            for a in attestation_states.iter() {
+                                println!("{:?}", a);
+                            }
+
                             Ok(())
                         }
                     ).unwrap();
@@ -1605,15 +1624,6 @@ fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.or(Some(0))
-		.unwrap()
-}
-
-fn get_attestees(
-	api: &Api,
-	key: CommunityCeremony,
-	windex: ParticipantIndexType,
-) -> Option<Vec<AccountId>> {
-	api.get_storage_double_map("EncointerCeremonies", "AttestationRegistry", key, windex, None)
 		.unwrap()
 }
 
