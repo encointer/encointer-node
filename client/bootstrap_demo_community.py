@@ -222,14 +222,47 @@ def test_unregister_and_upgrade_registration(client, cid):
     check_reputation(client, cid, newbie, 6, "VerifiedUnlinked")
 
 
+def test_endorsements_by_reputables(client, cid):
+    newbies = client.create_accounts(7)
+    faucet(client, cid, newbies)
 
+    register_participants_and_perform_meetup(client, cid, accounts + newbies[:1])
+    client.next_phase()
+    client.await_block(1)
+    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    client.await_block(1)
+    # newbies[0] is now reputable
+    check_participant_count(client, cid, "Endorsee", 0)
+
+    # endorsement works before registration
+    client.endorse_newcomers(cid, newbies[0], [newbies[1]])
+    client.await_block(1)
+    client.register_participant(newbies[1], cid)
+    client.await_block(1)
+    check_participant_count(client, cid, "Endorsee", 1)
+
+    # endorsement works after registration
+    for i in range(2, 6):
+        client.register_participant(newbies[i], cid)
+        client.await_block(1)
+        client.endorse_newcomers(cid, newbies[0], [newbies[i]])
+        client.await_block(1)
+
+        check_participant_count(client, cid, "Endorsee", i)
+
+    # all tickets used, should fail
+    print(client.endorse_newcomers(cid, newbies[0], [newbies[6]]))
+    client.await_block(2)
+    # endorsee count is still 5
+    check_participant_count(client, cid, "Endorsee", 5)
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
-def main(ipfs_local, client, port, spec_file):
+@click.option('-t', '--test', is_flag=True, help='if set, run integration tests.')
+def main(ipfs_local, client, port, spec_file, test):
     client = Client(rust_client=client, port=port)
     cid = create_community(client, spec_file, ipfs_local)
 
@@ -242,12 +275,17 @@ def main(ipfs_local, client, port, spec_file):
 
     print("Claiming early rewards")
     claim_rewards(client, cid, account1)
+
     if(not balance == client.balance(account1)):
         print("claim_reward fees were not refunded if paid in native currency")
         exit(1)
 
     client.next_phase()
     client.await_block(1)
+
+    if(not test):
+        print(f"Community {cid} sucessfullly bootatrapped")
+        return(0)
 
     print(f'Balances for new community with cid: {cid}.')
     bal = [client.balance(a, cid=cid) for a in accounts]
@@ -278,6 +316,8 @@ def main(ipfs_local, client, port, spec_file):
     test_reputation_caching(client, cid, accounts)
 
     test_unregister_and_upgrade_registration(client, cid)
+
+    test_endorsements_by_reputables(client, cid)
 
     print("tests passed")
 
