@@ -28,13 +28,29 @@ TEST_DATA_DIR = './test-data/'
 TEST_LOCATIONS_MEDITERRANEAN = 'test-locations-mediterranean.json'
 
 
-def perform_meetup(client, cid):
+def check_participant_count(client, cid, type, number):
+    participants_list = client.list_participants(cid)
+    print(participants_list)
+    expected_string = f"""Querying {type}Registry
+number of participants assigned:  {number}"""
+    if not expected_string in participants_list:
+        print(f"ERROR: Not {number} {type}s registered")
+        exit(1)
+
+def check_reputation(client, cid, account, cindex, reputation):
+    rep = client.reputation(account)
+    print(rep)
+    if (str(cindex), f" {cid}", reputation) not in rep:
+        print(f"Reputation for {account} in cid {cid} cindex {cindex} is not {reputation}")
+        exit(1)
+
+
+def perform_meetup(client, cid, accounts):
     print('Starting meetup...')
 
     print('Attest other attendees...')
-    client.attest_attendees(account1, cid, [account2, account3])
-    client.attest_attendees(account2, cid, [account1, account3])
-    client.attest_attendees(account3, cid, [account1, account2])
+    for account in accounts:
+        client.attest_attendees(account, cid, [a for a in accounts if a != account])
 
 
 def update_spec_with_cid(file, cid):
@@ -85,7 +101,7 @@ def register_participants_and_perform_meetup(client, cid, accounts):
     client.next_phase()
 
     print(f'Performing meetups for cid {cid}')
-    perform_meetup(client, cid)
+    perform_meetup(client, cid, accounts)
 
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
@@ -93,10 +109,10 @@ def register_participants_and_perform_meetup(client, cid, accounts):
     print(client.list_attestees(cid))
 
 
-def faucet(client, cid):
+def faucet(client, cid, accounts):
     # charlie has no genesis funds
-    print('Faucet is dripping to Charlie...')
-    client.faucet([account3], is_faucet=True)
+    print('Faucet is dripping...')
+    client.faucet(accounts, is_faucet=True)
 
     blocks_to_wait = 3
     print(f"Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
@@ -168,6 +184,45 @@ def test_reputation_caching(client, cid, account):
         print("reputation was not cleared")
         exit(1)
 
+    client.next_phase()
+    client.next_phase()
+    client.await_block(1)
+    # registering
+
+
+def test_unregister_and_upgrade_registration(client, cid):
+    newbie = client.create_accounts(1)[0]
+    faucet(client, cid, [newbie])
+
+    register_participants_and_perform_meetup(client, cid, accounts + [newbie])
+    client.next_phase()
+    client.await_block(1)
+
+    client.register_participant(newbie, cid)
+    client.await_block(1)
+    print(client.list_participants(cid))
+    check_participant_count(client, cid, "Newbie", 1)
+
+    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    client.await_block(1)
+
+    check_reputation(client, cid, newbie, 6, "VerifiedUnlinked")
+    client.upgrade_registration(newbie, cid)
+    client.await_block(1)
+
+    check_participant_count(client, cid, "Newbie", 0)
+    check_participant_count(client, cid, "Reputable", 1)
+
+    check_reputation(client, cid, newbie, 6, "VerifiedLinked")
+
+    client.unregister_participant(newbie, cid, cindex=6)
+    client.await_block(3)
+    check_participant_count(client, cid, "Reputable", 0)
+
+    check_reputation(client, cid, newbie, 6, "VerifiedUnlinked")
+
+
+
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
@@ -178,7 +233,8 @@ def main(ipfs_local, client, port, spec_file):
     client = Client(rust_client=client, port=port)
     cid = create_community(client, spec_file, ipfs_local)
 
-    faucet(client, cid)
+    newbie = client.create_accounts(1)[0]
+    faucet(client, cid, [account3, newbie])
 
     register_participants_and_perform_meetup(client, cid, accounts)
 
@@ -220,6 +276,8 @@ def main(ipfs_local, client, port, spec_file):
     fee_payment_transfers(client, cid)
 
     test_reputation_caching(client, cid, accounts)
+
+    test_unregister_and_upgrade_registration(client, cid)
 
     print("tests passed")
 

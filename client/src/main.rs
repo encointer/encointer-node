@@ -955,6 +955,127 @@ fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("upgrade-registration")
+                .description("Upgrade registration to repuable for encointer ceremony participant for supplied community")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                    .account_arg()
+                    .signer_arg("Account which signs the tx.")
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let arg_who = matches.account_arg().unwrap();
+                    let accountid = get_accountid_from_str(arg_who);
+                    let signer = match matches.signer_arg() {
+                        Some(sig) => get_pair_from_str(sig),
+                        None => get_pair_from_str(arg_who)
+                    };
+
+                    let api = get_chain_api(matches);
+                    let cindex = get_ceremony_index(&api);
+                    let cid = verify_cid(&api,
+                        matches
+                            .cid_arg()
+                            .expect("please supply argument --cid"),
+                        None
+                    );
+
+                    let current_phase = api.get_current_phase().unwrap();
+                    if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
+                        error!("wrong ceremony phase for registering participant");
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+                    let mut reputation_cindex = cindex;
+                    if current_phase == CeremonyPhaseType::Registering {
+                        reputation_cindex -= 1;
+                    }
+                    let rep = get_reputation(&api, &accountid, cid, reputation_cindex);
+                    info!("{} has reputation {:?}", accountid, rep);
+                    let proof = match rep {
+                        Reputation::VerifiedUnlinked => prove_attendance(accountid, cid, reputation_cindex, arg_who),
+                        _ => {
+                            error!("No valid reputation in last ceremony.");
+                            std::process::exit(exit_code::INVALID_REPUTATION);
+                        },
+                    };
+
+                    let mut _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+
+                    let xt: EncointerXt<_> = compose_extrinsic!(
+                        _api.clone(),
+                        "EncointerCeremonies",
+                        "upgrade_registration",
+                        cid,
+                        proof
+                    );
+                    ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
+                    // send and watch extrinsic until finalized
+                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("unregister-participant")
+                .description("Unregister encointer ceremony participant for supplied community")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                    .account_arg()
+                    .signer_arg("Account which signs the tx.")
+                    .ceremony_index_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let arg_who = matches.account_arg().unwrap();
+                    let signer = match matches.signer_arg() {
+                        Some(sig) => get_pair_from_str(sig),
+                        None => get_pair_from_str(arg_who)
+                    };
+
+                    let api = get_chain_api(matches);
+
+                    let cid = verify_cid(&api,
+                        matches
+                            .cid_arg()
+                            .expect("please supply argument --cid"),
+                        None
+                    );
+
+
+                    let  mut cc: Option<CommunityCeremony> = None;
+                    if let Some(cindex_arg) = matches.ceremony_index_arg() {
+                        let current_ceremony_index = get_ceremony_index(&api);
+                        let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
+                        cc = Some((cid, cindex));
+                    }
+                    
+                    let current_phase = api.get_current_phase().unwrap();
+                    if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
+                        error!("wrong ceremony phase for unregistering");
+                        std::process::exit(exit_code::WRONG_PHASE);
+                    }
+                    
+                    let mut _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+
+                    let xt: EncointerXt<_> = compose_extrinsic!(
+                        _api.clone(),
+                        "EncointerCeremonies",
+                        "unregister_participant",
+                        cid,
+                        cc
+                    );
+                    ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
+                    // send and watch extrinsic until finalized
+                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
+                    Ok(())
+                }),
+        )
+        .add_cmd(
             Command::new("endorse-newcomers")
                 .description("Endorse newbies with a bootstrapper account")
                 .options(|app| {
