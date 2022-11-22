@@ -1049,13 +1049,11 @@ fn main() {
                         let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
                         cc = Some((cid, cindex));
                     }
-                    
                     let current_phase = api.get_current_phase().unwrap();
                     if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
                         error!("wrong ceremony phase for unregistering");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    
                     let mut _api = api.clone().set_signer(sr25519_core::Pair::from(signer.clone()));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
