@@ -381,7 +381,7 @@ jobs:
   publish-runtimes:
     name: Publish Runtimes
     runs-on: ubuntu-latest
-#    needs: [release, build-runtimes]
+    needs: [release, build-runtimes]
     strategy:
       matrix:
         runtime: ["encointer-node-notee"]
