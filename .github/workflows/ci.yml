@@ -227,7 +227,7 @@ jobs:
     - name: bootstrap community
       run: |
         cd client
-        python bootstrap_demo_community.py
+        python bootstrap_demo_community.py --test
 
   test-community-growing:
     runs-on: ubuntu-latest

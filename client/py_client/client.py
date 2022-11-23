@@ -31,9 +31,11 @@ class UnknownError(Error):
     pass
 
 
-def ensure_clean_exit(returncode):
+def ensure_clean_exit(ret):
+    returncode = ret.returncode
     if returncode == 0:
         return
+    print(ret)
     if returncode == 50:
         raise ExtrinsicWrongPhase
     if returncode == 51:
@@ -74,7 +76,7 @@ class Client:
 
     def next_phase(self, pay_fees_in_cc=False):
         ret = self.run_cli_command(["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
 
     def get_phase(self):
         ret = self.run_cli_command(["get-phase"])
@@ -108,7 +110,7 @@ class Client:
             ret = self.run_cli_command(
                 ['faucet'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
             print(ret.stdout.decode("utf-8"))
-            ensure_clean_exit(ret.returncode)
+            ensure_clean_exit(ret)
         else:
             payload = {'accounts': accounts}
             requests.get(faucet_url, params=payload)
@@ -119,7 +121,7 @@ class Client:
 
     def reputation(self, account):
         ret = self.run_cli_command(["reputation", account])
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
         reputation_history = []
         lines = ret.stdout.decode("utf-8").splitlines()
         while len(lines) > 0:
@@ -133,7 +135,7 @@ class Client:
         if signer:
             cmd += ["--signer", signer]
         ret = self.run_cli_command(cmd, pay_fees_in_cc=pay_fees_in_cc)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def list_communities(self):
@@ -149,7 +151,18 @@ class Client:
 
     def register_participant(self, account, cid, pay_fees_in_cc=False):
         ret = self.run_cli_command(["register-participant", account], cid, pay_fees_in_cc)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
+
+    def upgrade_registration(self, account, cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["upgrade-registration", account], cid, pay_fees_in_cc)
+        ensure_clean_exit(ret)
+
+    def unregister_participant(self, account, cid, cindex=None, pay_fees_in_cc=False):
+        command = ["unregister-participant", account]
+        if cindex:
+            command += [str(cindex)]
+        ret = self.run_cli_command(command, cid, pay_fees_in_cc)
+        ensure_clean_exit(ret)
 
     def new_claim(self, account, vote, cid, pay_fees_in_cc=False):
         ret = self.run_cli_command(["new-claim", account, str(vote)], cid=cid)
@@ -173,7 +186,7 @@ class Client:
 
     def attest_attendees(self, account, cid, attendees, pay_fees_in_cc=False):
         ret = self.run_cli_command(["attest-attendees", account] + attendees, cid=cid, pay_fees_in_cc=pay_fees_in_cc)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
 
     def list_attestees(self, cid):
         ret = self.run_cli_command(["list-attestees"], cid=cid)
@@ -191,18 +204,18 @@ class Client:
 
     def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
         ret = self.run_cli_command(["create-business", account], cid, pay_fees_in_cc, ipfs_cid)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def update_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
         """ Update has not been tested """
         ret = self.run_cli_command(["update-business", account], cid, pay_fees_in_cc, ipfs_cid)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def create_offering(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
         ret = self.run_cli_command(["create-offering", account], cid, pay_fees_in_cc, ipfs_cid)
-        ensure_clean_exit(ret.returncode)
+        ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def list_businesses(self, cid):
