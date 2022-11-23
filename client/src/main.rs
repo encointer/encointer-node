@@ -1043,12 +1043,15 @@ fn main() {
                     );
 
 
-                    let  mut cc: Option<CommunityCeremony> = None;
-                    if let Some(cindex_arg) = matches.ceremony_index_arg() {
-                        let current_ceremony_index = get_ceremony_index(&api);
-                        let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
-                        cc = Some((cid, cindex));
-                    }
+                    let cc = match matches.ceremony_index_arg() {
+                        Some(cindex_arg) => {
+                            let current_ceremony_index = get_ceremony_index(&api);
+                            let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
+                            Some((cid, cindex))
+                        },
+                        None => None,
+                     };
+
                     let current_phase = api.get_current_phase().unwrap();
                     if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
                         error!("wrong ceremony phase for unregistering");
