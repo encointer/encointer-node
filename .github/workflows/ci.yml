@@ -23,13 +23,13 @@ jobs:
     name: Cancel Previous Runs
     runs-on: ubuntu-20.04
     steps:
-      - uses: styfle/cancel-workflow-action@0.4.1
+      - uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
       # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
       # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -49,12 +49,12 @@ jobs:
     - name: Build
       run: cargo build --release
     - name: Upload node
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: encointer-node-notee-${{ github.sha }}
         path: target/release/encointer-node-notee
     - name: Upload CLI client
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: encointer-client-notee-${{ github.sha }}
         path: target/release/encointer-client-notee
@@ -66,7 +66,7 @@ jobs:
       matrix:
         runtime: ["encointer-node-notee"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Cache target dir
         uses: actions/cache@v2
@@ -115,7 +115,7 @@ jobs:
       #          cat ${{ matrix.chain }}-diff.txt
 
       - name: Upload ${{ matrix.runtime }} srtool json
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.runtime }}-srtool-json-${{ github.sha }}
           path: |
@@ -127,7 +127,7 @@ jobs:
 
 
       - name: Upload ${{ matrix.runtime }} runtime
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.runtime }}-runtime-${{ github.sha }}
           path: |
@@ -137,7 +137,7 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
       # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
       # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -171,7 +171,7 @@ jobs:
       RUSTV: ${{ matrix.rust }}
       TARGET: ${{ matrix.rust-target }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
       # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -342,15 +342,15 @@ jobs:
       release_url: ${{ steps.create-release.outputs.html_url }}
       asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download Encointer Node
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: encointer-node-notee-${{ github.sha }}
 
       - name: Download Encointer Client
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: encointer-client-notee-${{ github.sha }}
 
@@ -386,12 +386,12 @@ jobs:
       matrix:
         runtime: ["encointer-node-notee"]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-      - name: Set up Ruby 2.7
-        uses: actions/setup-ruby@v1
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+      - name: Set up Ruby 3
+        uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7
+          ruby-version: '3.0'
 
       - name: Get runtime version
         id: get-runtime-ver
