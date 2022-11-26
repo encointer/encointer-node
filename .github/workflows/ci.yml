@@ -266,9 +266,9 @@ jobs:
             encointer-node-notee
             encointer-client-notee
             client/py_client
-            bootstrap_demo_community.py
-            cli.py
-            test-data
+            client/bootstrap_demo_community.py
+            client/cli.py
+            client/test-data
 
   release:
     name: Draft Release
