@@ -232,6 +232,34 @@ jobs:
       working-directory: ./scripts/ci
       run: source ./init_env.sh && ./${{ matrix.test }}
 
+  publish-test-package:
+    needs: [build, unit-tests, check, integration-test]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Encointer Node
+        uses: actions/download-artifact@v3
+        with:
+          name: encointer-node-notee-${{ github.sha }}
+
+      - name: Download Encointer Client
+        uses: actions/download-artifact@v3
+        with:
+          name: encointer-client-notee-${{ github.sha }}
+
+      - name: Upload test package
+        uses: actions/upload-artifact@v3
+        with:
+          name: demo_package
+          path: |
+            encointer-node-notee
+            encointer-client-notee
+            client/py_client
+            bootstrap_demo_community.py
+            cli.py
+            bot-community.py
+            test-data
+
   release:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
