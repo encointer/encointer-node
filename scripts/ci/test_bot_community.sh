@@ -8,8 +8,8 @@ CURRENT_DIR=$(pwd)
 
 cd "$CLIENT_DIR"
 
-python "bot-community.py" --client $CLIENT_BIN init
-python "bot-community.py" --client $CLIENT_BIN test
-diff bot-stats.csv "bot-stats-golden.csv"
+python bot-community.py --client $CLIENT_BIN init
+python bot-community.py --client $CLIENT_BIN test
+diff bot-stats.csv bot-stats-golden.csv
 
 cd "$CURRENT_DIR"
