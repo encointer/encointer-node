@@ -186,6 +186,7 @@ jobs:
         run: cargo ${{ matrix.check }}
 
   integration-test:
+    name: ${{ matrix.test }}
     runs-on: ubuntu-latest
     needs: build
     strategy:
