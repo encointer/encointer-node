@@ -228,6 +228,16 @@ jobs:
       run:
         ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
 
+    - name: start faucet service
+      run: |
+        cd client
+        python faucet.py &
+
+    - name: start phase accelerator service
+      run: |
+        cd client
+        python phase.py --idle-blocks 3 &
+
     - name: Test ${{ matrix.test }}
       working-directory: ./scripts/ci
       run: source ./init_env.sh && ./${{ matrix.test }}
