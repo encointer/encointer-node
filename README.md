@@ -17,7 +17,8 @@ curl https://sh.rustup.rs -sSf | sh
 Install required tools:
 
 ```bash
-./scripts/init.sh
+// with a rust-toolchain.toml rustup automatically installs the correct tools.
+rustup show
 ```
 
 Build the node:
