@@ -234,6 +234,7 @@ jobs:
 
   publish-test-package:
     needs: [build, unit-tests, check, integration-test]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
