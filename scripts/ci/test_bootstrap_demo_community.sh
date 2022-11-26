@@ -3,4 +3,10 @@ set -euo pipefail
 
 echo "Bootstrapping demo community and running tests"
 
-python "$CLIENT_DIR/bootstrap_demo_community.py" --client $CLIENT_BIN --test
+CURRENT_DIR=$(pwd)
+
+cd "$CLIENT_DIR"
+
+python "bootstrap_demo_community.py" --client $CLIENT_BIN --test
+
+cd "$CURRENT_DIR"

@@ -3,6 +3,13 @@ set -euo pipefail
 
 echo "grow community for 2 entire ceremony cycles"
 
-python "$CLIENT_DIR/bot-community.py" --client $CLIENT_BIN init
-python "$CLIENT_DIR/bot-community.py" --client $CLIENT_BIN test
-diff bot-stats.csv "$CLIENT_DIR/bot-stats-golden.csv"
+
+CURRENT_DIR=$(pwd)
+
+cd "$CLIENT_DIR"
+
+python "bot-community.py" --client $CLIENT_BIN init
+python "bot-community.py" --client $CLIENT_BIN test
+diff bot-stats.csv "bot-stats-golden.csv"
+
+cd "$CURRENT_DIR"
