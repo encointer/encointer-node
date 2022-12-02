@@ -18,6 +18,7 @@ page_rows = 100
 
 t_start = time.time()
 
+# TODO: edit these numbers to what you need. should be turned into cli arguments with defaults to 0..HEAD
 start_block = 1689688 # 1187284 #781981 #535620
 end_block = 1690155 #660815
 blocks_total = end_block - start_block
