@@ -19,7 +19,7 @@ page_rows = 100
 t_start = time.time()
 
 # TODO: edit these numbers to what you need. should be turned into cli arguments with defaults to 0..HEAD
-start_block = 784682# 1689688 # 1187284 #781981 #535620
+start_block = 1689688 #784682# # 1187284 #781981 #535620
 end_block = 1690155 #660815
 blocks_total = end_block - start_block
 
@@ -29,7 +29,7 @@ def decode_cid(cid_raw):
     if digest_raw.startswith('0x'):
         digest = b58encode(bytearray.fromhex(digest_raw[2:])).decode("utf-8")
     else:
-        digest = digest_raw
+        digest = b58encode(digest_raw).decode("utf-8")
     return geohash + digest
 
 
