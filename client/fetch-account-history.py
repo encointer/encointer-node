@@ -19,9 +19,19 @@ page_rows = 100
 t_start = time.time()
 
 # TODO: edit these numbers to what you need. should be turned into cli arguments with defaults to 0..HEAD
-start_block = 1111286
-end_block = 1204517
+start_block = 1689688 #784682# # 1187284 #781981 #535620
+end_block = 1690155 #660815
 blocks_total = end_block - start_block
+
+def decode_cid(cid_raw):
+    geohash = cid_raw['geohash']
+    digest_raw = cid_raw['digest']
+    if digest_raw.startswith('0x'):
+        digest = b58encode(bytearray.fromhex(digest_raw[2:])).decode("utf-8")
+    else:
+        digest = b58encode(digest_raw).decode("utf-8")
+    return geohash + digest
+
 
 with open(f'account-events-{account}-{start_block}_to_{end_block}.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
@@ -75,8 +85,7 @@ with open(f'account-events-{account}-{start_block}_to_{end_block}.csv', 'w', new
                     noteworthy=False
                     if event['event_id'] == 'Transferred':
                         params = json.loads(event['params'])
-                        cid_raw = params[0]['value']
-                        cid = cid_raw['geohash'] + b58encode(bytearray.fromhex(cid_raw['digest'][2:])).decode("utf-8")
+                        cid = decode_cid(params[0]['value'])
                         account_from = ss58_encode(params[1]['value'], ss58_format=2)
                         account_to = ss58_encode(params[2]['value'], ss58_format=2)
                         amount = params[3]['value']
@@ -85,8 +94,7 @@ with open(f'account-events-{account}-{start_block}_to_{end_block}.csv', 'w', new
 
                     if event['event_id'] == 'Issued':
                         params = json.loads(event['params'])
-                        cid_raw = params[0]['value']
-                        cid = cid_raw['geohash'] + b58encode(bytearray.fromhex(cid_raw['digest'][2:])).decode("utf-8")
+                        cid = decode_cid(params[0]['value'])
                         account_from = 'community-issued-income'
                         account_to = ss58_encode(params[1]['value'], ss58_format=2)
                         amount = params[2]['value']
