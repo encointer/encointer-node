@@ -53,6 +53,9 @@ pub use pallet_encointer_bazaar::Call as EncointerBazaarCall;
 pub use pallet_encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
 pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
+/// Integritee
+pub use pallet_sidechain;
+pub use pallet_teerex;
 
 pub use encointer_balances_tx_payment::{AssetBalanceOf, AssetIdOf, BalanceToCommunityBalance};
 pub use encointer_primitives::{
@@ -335,7 +338,7 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = (Aura, EncointerScheduler);
+	type OnTimestampSet = (Aura, EncointerScheduler, Teerex);
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
@@ -380,6 +383,30 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const MaxSilenceTime: Moment =172_800_000; // 48h
+}
+
+/// added by Integritee
+impl pallet_teerex::Config for Runtime {
+	type Event = Event;
+	type Currency = pallet_balances::Pallet<Runtime>;
+	type MomentsPerDay = MomentsPerDay;
+	type MaxSilenceTime = MaxSilenceTime;
+	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const EarlyBlockProposalLenience: u64 = 100;
+}
+
+/// added by Integritee
+impl pallet_sidechain::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
+}
+
+parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 		BlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
@@ -407,9 +434,7 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
-	/// 0.000005
+	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);	/// 0.000005
 	pub const EncointerExistentialDeposit: BalanceType = BalanceType::from_bits(0x0000000000000000000053e2d6238da4_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
@@ -491,6 +516,10 @@ construct_runtime!(
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 44,
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 48,
 
+		//Integritee
+		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 50,
+		Sidechain: pallet_sidechain::{Pallet, Call, Storage, Event<T>} = 53,
+
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
 		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config, Event<T>} = 62,
@@ -511,6 +540,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -543,6 +573,8 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
+		[pallet_teerex, Teerex]
+		[pallet_sidechain, Sidechain]
 		[pallet_encointer_balances, EncointerBalances]
 		[pallet_encointer_bazaar, EncointerBazaar]
 		[pallet_encointer_ceremonies, EncointerCeremonies]

@@ -87,3 +87,5 @@ runtime-benchmarks = [
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = ["try-runtime-cli"]
+# allow workers to register without remote attestation for dev purposes
+skip-ias-check = ["encointer-node-notee-runtime/skip-ias-check"]
