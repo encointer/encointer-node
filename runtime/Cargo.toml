@@ -30,8 +30,10 @@ pallet-encointer-faucet = { default-features = false, git = "https://github.com/
 pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 #use the develop branch for compatibility reason with polkadot-v.0.9.28
+pallet-enclave-bridge = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "polkadot-v0.9.42" }
 pallet-sidechain = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "polkadot-v0.9.42" }
 pallet-teerex = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "polkadot-v0.9.42" }
+
 
 # substrate deps
 frame-executive = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -125,10 +127,10 @@ std = [
     "pallet-encointer-scheduler/std",
     "pallet-sidechain/std",
     "pallet-teerex/std",
+    "pallet-enclave-bridge/std",
     "frame-try-runtime/std",
 ]
 default = ["std"]
-skip-ias-check = ["pallet-teerex/skip-ias-check"]
 
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
@@ -150,6 +152,8 @@ runtime-benchmarks = [
     "pallet-encointer-scheduler/runtime-benchmarks",
     "pallet-sidechain/runtime-benchmarks",
     "pallet-teerex/runtime-benchmarks",
+    "pallet-enclave-bridge/runtime-benchmarks",
+
 ]
 
 try-runtime = [
@@ -174,4 +178,5 @@ try-runtime = [
     "pallet-encointer-ceremonies/try-runtime",
     "pallet-encointer-communities/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
+    "pallet-encointer-reputation-commitments/try-runtime",
 ]

@@ -26,6 +26,7 @@ encointer-primitives = { git = "https://github.com/encointer/pallets", branch = 
 pallet-encointer-balances = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-ceremonies = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-communities = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
+pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 
 # scs deps
