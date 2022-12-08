@@ -26,6 +26,7 @@ pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = 
 pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "master" }
+#use the develop branch for compatibility reason with polkadot-v.0.9.28
 pallet-sidechain = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "develop" }
 pallet-teerex = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "develop" }
 
