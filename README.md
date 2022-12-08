@@ -1,5 +1,5 @@
-# Encointer Testnet Cantillon branch 
-Encointer-node branch to build a Testnet Cantillon with the encointer [community-sidechain](https://github.com/encointer/community-sidechain).
+# Encointer-Testnet Community Sidechain Branch 
+Encointer-node branch to build a Testnet with the encointer [community-sidechain](https://github.com/encointer/community-sidechain).
 This node has the Integritee [teerex](https://github.com/integritee-network/pallets/tree/master/teerex) and [sidechain](https://github.com/integritee-network/pallets/tree/master/sidechain) pallets.
 
 Cargo build feature that is highly relevant for developers:
