@@ -147,14 +147,13 @@ jobs:
     - name: Setup Rust toolchain
       run: rustup show
 
-    - name: Cache Rust Dependecies
+    - name: Cache Rust Dependencies
       uses: actions/cache@v2
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           target
-          enclave/target
         key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
 
     - name: cargo test
