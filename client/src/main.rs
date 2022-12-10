@@ -251,7 +251,7 @@ fn main() {
                         None => {
                             if matches.all_flag() {
                                 let community_balances = get_all_balances(&api, &accountid).unwrap();
-                                let bn = get_block_number(&api);
+                                let bn = get_block_number(&api, maybe_at);
                                 for b in community_balances.iter() {
                                     let dr = get_demurrage_per_block(&api, b.0);
                                     println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
@@ -265,6 +265,22 @@ fn main() {
                             println!("{}", balance);
                         }
                     };
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("issuance")
+                .description("query total issuance for community. must supply --cid")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                    .at_block_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let maybe_at = matches.at_block_arg();
+                    let cid_str = matches.cid_arg().expect("please supply argument --cid");
+                    let issuance = get_community_issuance(&api, &cid_str, maybe_at);
+                    println!{"{:?}", issuance};
                     Ok(())
                 }),
         )
@@ -628,7 +644,7 @@ fn main() {
                     let api = get_chain_api(matches);
 
                     // >>>> add some debug info as well
-                    let bn = get_block_number(&api);
+                    let bn = get_block_number(&api, None);
                     debug!("block number: {}", bn);
                     let cindex = get_ceremony_index(&api);
                     info!("ceremony index: {}", cindex);
@@ -1691,8 +1707,8 @@ fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifi
 	cid
 }
 
-fn get_block_number(api: &Api) -> BlockNumber {
-	let hdr: Header = api.get_header(None).unwrap().unwrap();
+fn get_block_number(api: &Api, maybe_at: Option<Hash>) -> BlockNumber {
+	let hdr: Header = api.get_header(maybe_at).unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
 	hdr.number
@@ -1705,10 +1721,29 @@ pub fn get_community_balance(
 	maybe_at: Option<Hash>,
 ) -> BalanceType {
 	let cid = verify_cid(&api, cid_str, maybe_at);
-	let bn = get_block_number(&api);
+	let bn = get_block_number(&api, maybe_at);
 	let dr = get_demurrage_per_block(&api, cid);
 	let balance = if let Some(entry) = api
 		.get_storage_double_map("EncointerBalances", "Balance", cid, account_id, maybe_at)
+		.unwrap()
+	{
+		apply_demurrage(entry, bn, dr)
+	} else {
+		BalanceType::from_num(0)
+	};
+	balance
+}
+
+pub fn get_community_issuance(
+	api: &Api,
+	cid_str: &str,
+	maybe_at: Option<Hash>,
+) -> BalanceType {
+	let cid = verify_cid(&api, cid_str, maybe_at);
+	let bn = get_block_number(&api, maybe_at);
+	let dr = get_demurrage_per_block(&api, cid);
+	let balance = if let Some(entry) = api
+		.get_storage_map("EncointerBalances", "TotalIssuance", cid, maybe_at)
 		.unwrap()
 	{
 		apply_demurrage(entry, bn, dr)
