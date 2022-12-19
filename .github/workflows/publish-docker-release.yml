@@ -17,7 +17,7 @@ jobs:
         with:
           version: "tags/${{ github.event.release.tag_name }}"
           file: "encointer-client-notee"
-          target: "target/release/encointer-client-notee"
+          target: "encointer-client-notee"
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
