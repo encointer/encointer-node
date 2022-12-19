@@ -27,7 +27,20 @@ jobs:
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
   build:
-    runs-on: ubuntu-latest
+    name: Primary build ${{ matrix.binary }} for ${{ matrix.rust-target }} on (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        rust: [stable]
+        binary: [release]
+    env:
+      RUST_BACKTRACE: full
+      RUSTV: ${{ matrix.rust }}
+      TARGET: ${{ matrix.rust-target }}
+      RUST_BIN_DIR: target/${{ matrix.rust-target }}/debug
+      RELEASE_NAME: debug
+      
     steps:
     - uses: actions/checkout@v3
 
