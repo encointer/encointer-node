@@ -72,6 +72,13 @@ To run a full demo (you may need to fix ports in the scripts if you change them)
 encointer-node/client> ./bootstrap_demo_community.sh
 ```
 
+### Run with docker
+```
+Usage: docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
+Example:
+docker run -it encointer/encointer-client-notee:<version> encointer-client-notee --version
+```
+
 ### Grow Bot Community
 
 Assuming a local node is running with default ports:
