@@ -13,9 +13,10 @@ case $1 in
     /bootstrap_demo_community.py --client /encointer-client-notee $PARAMS
     ;;
 
-  cli.py)
-    /cli.py $PARAMS
-    ;;
+# Does not work yet because the script is cli.py --client <client> -u url -p port <cmd> <command params>
+#  cli.py)
+#    /cli.py $PARAMS
+#    ;;
 
   *)
     echo -e 'Usage: docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>'
