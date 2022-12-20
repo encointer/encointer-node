@@ -54,7 +54,7 @@ We currently have limited support for the [polkadot-js apps](https://polkadot.js
 
 ### Run Client
 
-```
+```bash
 encointer-node/client> cargo build --release
 encointer-node/client> ../target/release/encointer-client-notee transfer //Alice 5GziKpBELV7fuYNy7quQfWGgVARn8onchS86azuPQkFj9nEZ 1000000
 encointer-node/client> ../target/release/encointer-client-notee list_participant_registry
@@ -63,7 +63,7 @@ encointer-node/client> ../target/release/encointer-client-notee list_witnesses_r
 encointer-node/client> ../target/release/encointer-client-notee --help
 ``` 
 The master of ceremony can play fast-forward for demo purposes (ceremonies only happen ~monthly. not good for demos)
-```
+```bash
 encointer-node/client> ./encointer-client-notee next_phase
 ```
 
@@ -86,7 +86,7 @@ docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://ho
 ### Grow Bot Community
 
 Assuming a local node is running with default ports:
-```
+```bash
 pip3 install random_word pyproj geojson
 # in first terminal, do this to accelerate phase progress
 ./phase.py --idle-blocks 3
