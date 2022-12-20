@@ -10,7 +10,7 @@ case $1 in
     ;;
 
   bootstrap_demo_community.py)
-    /bootstrap_demo_community.py $PARAMS
+    /bootstrap_demo_community.py --client /encointer-client-notee $PARAMS
     ;;
 
   cli.py)
