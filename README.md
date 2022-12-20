@@ -73,10 +73,14 @@ encointer-node/client> ./bootstrap_demo_community.sh
 ```
 
 ### Run with docker
-```
-Usage: docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
-Example:
-docker run -it encointer/encointer-client-notee:<version> encointer-client-notee --version
+```bash
+docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
+
+# Example to talk to a node on the host.
+docker run -it encointer/encointer-client-notee:<version> encointer-client-notee list-communities -u ws://host.docker.internal -p 9944
+
+# Bootstrap demo community on a node on the host machine.
+docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://host.docker.internal -p 9944
 ```
 
 ### Grow Bot Community
