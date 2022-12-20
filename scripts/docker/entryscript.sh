@@ -13,7 +13,7 @@ case $1 in
     /bootstrap_demo_community.py --client /encointer-client-notee $PARAMS
     ;;
 
-# Does not work yet because the script is cli.py --client <client> -u url -p port <cmd> <command params>
+# Does not work yet because the script wants the options like: cli.py --client <client> -u url -p port <cmd> <command params>
 #  cli.py)
 #    /cli.py $PARAMS
 #    ;;
