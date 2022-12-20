@@ -10,8 +10,16 @@ from py_client.scheduler import CeremonyPhase
 
 @click.group()
 @click.pass_context
-def cli(ctx):
-    ctx.obj['client'] = Client()
+@click.option('--client', default='../target/release/encointer-client-notee',
+              help='Client binary to communicate with the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
+def cli(ctx, client, url, port):
+    ctx.obj['client'] = Client(
+        rust_client=client,
+        node_url=url,
+        port=port
+    )
 
 
 @cli.command()

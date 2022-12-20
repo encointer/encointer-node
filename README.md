@@ -54,7 +54,7 @@ We currently have limited support for the [polkadot-js apps](https://polkadot.js
 
 ### Run Client
 
-```
+```bash
 encointer-node/client> cargo build --release
 encointer-node/client> ../target/release/encointer-client-notee transfer //Alice 5GziKpBELV7fuYNy7quQfWGgVARn8onchS86azuPQkFj9nEZ 1000000
 encointer-node/client> ../target/release/encointer-client-notee list_participant_registry
@@ -63,7 +63,7 @@ encointer-node/client> ../target/release/encointer-client-notee list_witnesses_r
 encointer-node/client> ../target/release/encointer-client-notee --help
 ``` 
 The master of ceremony can play fast-forward for demo purposes (ceremonies only happen ~monthly. not good for demos)
-```
+```bash
 encointer-node/client> ./encointer-client-notee next_phase
 ```
 
@@ -73,16 +73,20 @@ encointer-node/client> ./bootstrap_demo_community.sh
 ```
 
 ### Run with docker
-```
-Usage: docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
-Example:
-docker run -it encointer/encointer-client-notee:<version> encointer-client-notee --version
+```bash
+docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
+
+# Example to talk to a node on the host.
+docker run -it encointer/encointer-client-notee:<version> encointer-client-notee list-communities -u ws://host.docker.internal -p 9944
+
+# Bootstrap demo community on a node on the host machine.
+docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://host.docker.internal -p 9944
 ```
 
 ### Grow Bot Community
 
 Assuming a local node is running with default ports:
-```
+```bash
 pip3 install random_word pyproj geojson
 # in first terminal, do this to accelerate phase progress
 ./phase.py --idle-blocks 3
