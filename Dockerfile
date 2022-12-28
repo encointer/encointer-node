@@ -1,4 +1,3 @@
-#FROM phusion/baseimage:focal-1.0.0
 FROM ubuntu:22.04
 LABEL description="This is the 2nd stage: a very small image where we copy the Substrate binary."
 
