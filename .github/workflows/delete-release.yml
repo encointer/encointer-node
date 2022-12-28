@@ -53,6 +53,27 @@ jobs:
           -X DELETE \
           -H "Authorization: JWT ${TOKEN}"
 
+      - name: Delete docker tag node
+        run: |
+          ORGANIZATION="encointer"
+          IMAGE="encointer-node-notee"
+          TAG="${{ steps.vars.outputs.tag }}"
+
+          login_data() {
+          cat <<EOF
+          {
+            "username": "${{ secrets.DOCKER_HUB_USERNAME }}",
+            "password": "${{ secrets.DOCKERHUB_PASSWORD }}"
+          }
+          EOF
+          }
+
+          TOKEN=`curl -s -H "Content-Type: application/json" -X POST -d "$(login_data)" "https://hub.docker.com/v2/users/login/" | jq -r .token`
+
+          curl "https://hub.docker.com/v2/repositories/${ORGANIZATION}/${IMAGE}/tags/${TAG}/" \
+          -X DELETE \
+          -H "Authorization: JWT ${TOKEN}"
+
       - name: Delete tag as well
         uses: dev-drprasad/delete-tag-and-release@v0.2.0
         with:
