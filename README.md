@@ -41,6 +41,20 @@ Offchain-indexing is needed for the custom rpc `encointer_getAllCommunities`. If
 
 Additional CLI usage options are available and may be shown by running `./target/release/encointer-node-notee --help`.
 
+### Run with docker
+
+```bash
+# Expose the node's ports to the host with the -p flag.
+docker run -p 30333:30333 -p 9944:9944 -p 9933:9933 -p 9615:9615 \
+  encointer/encointer-node-notee:0.0.2 \
+  --dev \
+  --enable-offchain-indexing true \
+  --rpc-methods unsafe \
+  -lencointer=debug,parity_ws=warn \
+  --ws-external \
+  --rpc-external
+```
+
 ## Run Testnet Gesell Node
 Join our testnet as a full node with 
 
