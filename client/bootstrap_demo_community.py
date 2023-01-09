@@ -258,12 +258,13 @@ def test_endorsements_by_reputables(client, cid):
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
-@click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
 @click.option('-t', '--test', is_flag=True, help='if set, run integration tests.')
-def main(ipfs_local, client, port, spec_file, test):
-    client = Client(rust_client=client, port=port)
+def main(ipfs_local, client, url, port, spec_file, test):
+    client = Client(rust_client=client, node_url=url, port=port)
     cid = create_community(client, spec_file, ipfs_local)
 
     newbie = client.create_accounts(1)[0]
