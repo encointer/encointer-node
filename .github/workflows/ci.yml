@@ -47,7 +47,7 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build
-      run: cargo build --release
+      run: cargo build --release --features skip-ias-check
     - name: Upload node
       uses: actions/upload-artifact@v3
       with:
