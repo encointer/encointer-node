@@ -1,0 +1,33 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "Green Bay Dollar",
+      "symbol": "GBD",
+      "assets": "QmYJnuJCnsw2kgXQXF5Cq6k3ey5U6goRcKffraVXkeXrem"
+    },
+    "bootstrappers": [
+      "5GKaNnyZctdLR9WfnFdbV4BDoFqqhe7AJqNfKnJsNezg2JnW",
+      "5H3kJ8WxtFid9LjPSBvJpakUwiAaXb4LUuyn5ttkLQKDKAwU",
+      "5H65HQgHeh2sNcJHcsqK4Gh5ZrFk1gKWFotn1aiYx17i8ZwH",
+      "5FUYZwNQGoBos1c58nH7BNZPngbKcKLbMBkuwCpjJHy6s8pK",
+      "5DUcVCwG1At4FVgW5yakgpLYKdkAn6YL4nDV5bo9HnyXWSY5",
+      "5DXJFBLXN7Bdeo9rzqo9goGCvnVDRh2thYnMdwGhDAnWiHG2"
+    ],
+    "demurrage_halving_blocks": 1296000,
+    "ceremony_income": 35
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -88.00985418615059,
+          44.51464671337695
+        ]
+      },
+      "properties": {}
+    }
+  ]
+}
