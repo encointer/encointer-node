@@ -16,16 +16,9 @@ latam_accounts = [latam1, latam2, latam3]
 
 def _attest_latam_meetup(client, cid):
     print('Starting meetup...')
-    print('Creating claims...')
-    vote = len(latam_accounts)
-    claim1 = client.new_claim(latam1, vote, cid)
-    claim2 = client.new_claim(latam2, vote, cid)
-    claim3 = client.new_claim(latam3, vote, cid)
-
-    print('Sending claims of attestees to chain...')
-    client.attest_claims(latam1, [claim2, claim3])
-    client.attest_claims(latam2, [claim1, claim3])
-    client.attest_claims(latam3, [claim1, claim2])
+    client.attest_attendees(latam1, cid, [latam2, latam3])
+    client.attest_attendees(latam2, cid, [latam1, latam3])
+    client.attest_attendees(latam3, cid, [latam1, latam2])
 
 
 @click.group()
