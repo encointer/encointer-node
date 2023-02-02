@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "Polkadot Blockchain Academy",
+      "symbol": "PBA",
+      "assets": "QmYgZrnVpuZRU2TVjqzjvetAnPrz4SRwqTiMaayYk7sPtS",
+      "url": "encointer.org"
+    },
+    "bootstrappers": [
+      "5H1CeCqNSpJPRLScQb9jz5ES7j6vL8sP8Ai7J7f3sJHWkTek",
+      "5GjJjBPg8XzD2RMzFSV2Qq42CxBdJsND9fRoBtxCqmYNJA4M",
+      "5D83c6U4cpnJRUFi9hZZroBPzB2g2sd91eFT3Rm2QTp7ZJau"
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 22
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          -58.39265544281548,
+          -34.5826976022132
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          -58.391620690115886,
+          -34.58314767192622
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          -58.39385940035871,
+          -34.581942122570936
+        ],
+        "type": "Point"
+      }
+    }
+  ]
+}

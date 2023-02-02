@@ -1,6 +1,6 @@
 Contains info about the individual communities.
 
-# Polkadot LATAM DEMO
+# Polkadot PBA DEMO
 * Bootstrappers are the seeds with:
    * //LATAM1
    * //LATAM2
@@ -28,7 +28,7 @@ alias nctr-gsl="$ENCOINTER_CLIENT_BINARY -u $NURL -p $NPORT"
 # faucet //LATAM1, //LATAM2, LATAM3
 nctr-gsl faucet 5H1CeCqNSpJPRLScQb9jz5ES7j6vL8sP8Ai7J7f3sJHWkTek 5GjJjBPg8XzD2RMzFSV2Qq42CxBdJsND9fRoBtxCqmYNJA4M 5D83c6U4cpnJRUFi9hZZroBPzB2g2sd91eFT3Rm2QTp7ZJau
 
-nctr-gsl new-community ./test-data/latam.hackathon.json --signer //LATAM1
+nctr-gsl new-community ./test-data/polkadot.academy.json --signer //LATAM1
 
 # register //LATAM1, //LATAM2, LATAM3
 # (register the //LATAM1 IN THE APP)
