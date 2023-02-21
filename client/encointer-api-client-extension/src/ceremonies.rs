@@ -2,6 +2,7 @@ use crate::{Api, CommunitiesApi, Result, SchedulerApi};
 use encointer_ceremonies_assignment::{
 	assignment_fn_inverse, meetup_index, meetup_location, meetup_time,
 };
+use encointer_node_notee_runtime::Moment;
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, MeetupTimeOffsetType,
@@ -11,7 +12,7 @@ use encointer_primitives::{
 };
 use log::warn;
 use serde::{Deserialize, Serialize};
-use substrate_api_client::{AccountId, ApiClientError, Moment};
+use substrate_api_client::{AccountId, ApiClientError};
 
 pub const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
 
