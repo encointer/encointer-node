@@ -43,8 +43,8 @@ use encointer_api_client_extension::{
 	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
-	AccountId, BalanceEntry, BalanceType, BlockNumber, Event, Hash, Header, Moment, Signature,
-	ONE_DAY,
+	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Header, Moment, RuntimeEvent,
+	Signature, ONE_DAY,
 };
 use encointer_primitives::{
 	balances::Demurrage,
@@ -69,8 +69,7 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, ApiClientError, ApiResult, EventsDecoder, GenericAddress, Metadata,
-	XtStatus,
+	utils::FromHexString, ApiClientError, ApiResult, GenericAddress, Metadata, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -1570,14 +1569,14 @@ fn listen(matches: &ArgMatches<'_>) {
 		let event_str = events_out.recv().unwrap();
 		let _unhex = Vec::from_hex(event_str).unwrap();
 		let mut _er_enc = _unhex.as_slice();
-		let _events = Vec::<frame_system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
+		let _events = Vec::<frame_system::EventRecord<RuntimeEvent, Hash>>::decode(&mut _er_enc);
 		blocks += 1;
 		match _events {
 			Ok(evts) =>
 				for evr in evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
-						Event::EncointerCeremonies(ee) => {
+						RuntimeEvent::EncointerCeremonies(ee) => {
 							count += 1;
 							info!(">>>>>>>>>> ceremony event: {:?}", ee);
 							match &ee {
@@ -1594,7 +1593,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								_ => println!("Unsupported EncointerCommunities event"),
 							}
 						},
-						Event::EncointerScheduler(ee) => {
+						RuntimeEvent::EncointerScheduler(ee) => {
 							count += 1;
 							info!(">>>>>>>>>> scheduler event: {:?}", ee);
 							match &ee {
@@ -1606,7 +1605,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								},
 							}
 						},
-						Event::EncointerCommunities(ee) => {
+						RuntimeEvent::EncointerCommunities(ee) => {
 							count += 1;
 							info!(">>>>>>>>>> community event: {:?}", ee);
 							match &ee {
@@ -1637,15 +1636,15 @@ fn listen(matches: &ArgMatches<'_>) {
 								_ => println!("Unsupported EncointerCommunities event"),
 							}
 						},
-						Event::EncointerBalances(ee) => {
+						RuntimeEvent::EncointerBalances(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> encointer balances event: {:?}", ee);
 						},
-						Event::EncointerBazaar(ee) => {
+						RuntimeEvent::EncointerBazaar(ee) => {
 							count += 1;
 							println!(">>>>>>>>>> encointer bazaar event: {:?}", ee);
 						},
-						Event::System(ee) => match ee {
+						RuntimeEvent::System(ee) => match ee {
 							frame_system::Event::ExtrinsicFailed {
 								dispatch_error: _,
 								dispatch_info: _,
