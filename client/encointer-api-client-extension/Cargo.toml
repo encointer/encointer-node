@@ -14,8 +14,8 @@ encointer-primitives = { git = "https://github.com/encointer/pallets", branch = 
 encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "master" }
 
 # scs deps
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28"}
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.28"}
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37"}
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37"}
 
 # substrate deps
-sp-core = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
+sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
