@@ -1762,6 +1762,7 @@ name = "encointer-api-client-extension"
 version = "0.8.2"
 dependencies = [
  "encointer-ceremonies-assignment",
+ "encointer-node-notee-runtime",
  "encointer-primitives",
  "log",
  "parity-scale-codec",
