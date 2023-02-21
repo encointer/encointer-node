@@ -3,13 +3,10 @@ use substrate_api_client::rpc::WsRpcClient;
 
 pub use substrate_api_client::{ApiClientError, ApiResult as Result};
 
-use encointer_node_notee_runtime::Runtime;
-
 pub type Api = substrate_api_client::Api<
 	sr25519::Pair,
 	WsRpcClient,
 	extrinsic_params::CommunityCurrencyTipExtrinsicParams,
-	Runtime,
 >;
 
 pub use ceremonies::*;
