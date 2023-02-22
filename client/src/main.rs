@@ -64,9 +64,7 @@ use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_keystore::SyncCryptoStore;
 use sp_runtime::MultiSignature;
-use std::{
-	collections::HashMap, convert::TryInto, path::PathBuf, str::FromStr, sync::mpsc::channel,
-};
+use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
 	utils::FromHexString, ApiClientError, ApiResult, Events, GenericAddress, Metadata, XtStatus,
@@ -332,7 +330,7 @@ fn main() {
                             }
                         },
                         None => {
-                            let amount = u128::from_str_radix(matches.value_of("amount").unwrap(), 10)
+                            let amount = matches.value_of("amount").unwrap().parse::<u128>()
                                 .expect("amount can be converted to u128");
                             let xt = api.balance_transfer(
                                 GenericAddress::Id(to.clone()),
@@ -842,8 +840,8 @@ fn main() {
 
                             let mut participants_windex = HashMap::new();
 
-                            for i in 0..registries.len() {
-                                println!("Querying {}", registries[i]);
+                            for (i, item) in registries.iter().enumerate() {
+                                println!("Querying {item}");
 
                                 let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
                                 println!("number of participants assigned:  {count}");
@@ -1100,7 +1098,7 @@ fn main() {
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let bs_with_tickets : Vec<BootstrapperWithTickets> = extract_and_execute(
-                        matches, |mut api, cid| get_bootstrappers_with_remaining_newbie_tickets(&mut api, cid)
+                        matches, |api, cid| get_bootstrappers_with_remaining_newbie_tickets(&api, cid)
                     ).unwrap();
 
                     info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
@@ -1705,7 +1703,7 @@ pub fn get_community_balance(
 	let cid = verify_cid(api, cid_str, maybe_at);
 	let bn = get_block_number(api);
 	let dr = get_demurrage_per_block(api, cid);
-	
+
 	if let Some(entry) = api
 		.get_storage_double_map("EncointerBalances", "Balance", cid, account_id, maybe_at)
 		.unwrap()
@@ -1837,10 +1835,7 @@ fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData
 		"id": "1",
 	});
 
-	let n = api
-		.get_request(req)
-		.unwrap()
-		.expect("Could not find any business offerings...");
+	let n = api.get_request(req).unwrap().expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
@@ -1858,10 +1853,7 @@ fn get_offerings_for_business(
 		"id": "1",
 	});
 
-	let n = api
-		.get_request(req)
-		.unwrap()
-		.expect("Could not find any business offerings...");
+	let n = api.get_request(req).unwrap().expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
@@ -1876,10 +1868,7 @@ fn get_reputation_history(
 		"id": "1",
 	});
 
-	let n = api
-		.get_request(req)
-		.unwrap()
-		.expect("Could not query reputation history...");
+	let n = api.get_request(req).unwrap().expect("Could not query reputation history...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
@@ -1962,7 +1951,7 @@ fn apply_demurrage(
 	demurrage_per_block: BalanceType,
 ) -> BalanceType {
 	let elapsed_time_block_number = current_block.checked_sub(entry.last_update).unwrap();
-	let elapsed_time_u32: u32 = elapsed_time_block_number.try_into().unwrap();
+	let elapsed_time_u32: u32 = elapsed_time_block_number;
 	let elapsed_time = BalanceType::from_num(elapsed_time_u32);
 	let exponent: BalanceType = -demurrage_per_block * elapsed_time;
 	debug!(
@@ -1982,13 +1971,8 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 	api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
-	let xt: EncointerXt<_> = compose_extrinsic!(
-		api,
-		"EncointerBazaar",
-		&business_call.to_string(),
-		cid,
-		ipfs_cid
-	);
+	let xt: EncointerXt<_> =
+		compose_extrinsic!(api, "EncointerBazaar", &business_call.to_string(), cid, ipfs_cid);
 	ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
