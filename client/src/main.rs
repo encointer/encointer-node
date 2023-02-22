@@ -1654,7 +1654,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								let decoded_event = Events::new(
 									api.metadata.clone(),
 									Hash::default(),
-									&mut event_records.encode().as_slice(),
+									event_records.encode(),
 								)
 								.iter()
 								.next()
