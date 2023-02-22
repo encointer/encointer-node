@@ -30,6 +30,7 @@ pub trait EncointerArgs<'b> {
 	fn ipfs_cid_arg(self) -> Self;
 	fn bootstrapper_arg(self) -> Self;
 	fn fundees_arg(self) -> Self;
+	#[allow(clippy::wrong_self_convention)]
 	fn from_cindex_arg(self) -> Self;
 	fn to_cindex_arg(self) -> Self;
 	fn endorsees_arg(self) -> Self;
@@ -51,6 +52,7 @@ pub trait EncointerArgsExtractor {
 	fn ipfs_cid_arg(&self) -> Option<&str>;
 	fn bootstrapper_arg(&self) -> Option<&str>;
 	fn fundees_arg(&self) -> Option<Vec<&str>>;
+	#[allow(clippy::wrong_self_convention)]
 	fn from_cindex_arg(&self) -> Option<i32>;
 	fn to_cindex_arg(&self) -> Option<i32>;
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
