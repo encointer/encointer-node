@@ -94,7 +94,7 @@ where
 			)?;
 
 			module.merge(
-				CeremoniesRpc::new(client.clone(), deny_unsafe, storage, offchain_indexing_enabled)
+				CeremoniesRpc::new(client, deny_unsafe, storage, offchain_indexing_enabled)
 					.into_rpc(),
 			)?;
 		},

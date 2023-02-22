@@ -65,7 +65,7 @@ impl CommunitySpec for serde_json::Value {
 			.as_array()
 			.expect("bootstrappers must be array")
 			.iter()
-			.map(|a| crate::utils::keys::get_accountid_from_str(&a.as_str().unwrap()))
+			.map(|a| crate::utils::keys::get_accountid_from_str(a.as_str().unwrap()))
 			.collect()
 	}
 

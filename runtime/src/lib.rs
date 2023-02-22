@@ -702,10 +702,10 @@ impl_runtime_apis! {
 
 	impl pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId, Moment> for Runtime {
 		fn get_reputations(account: &AccountId) -> Vec<(CeremonyIndexType, CommunityReputation)> {
-			EncointerCeremonies::get_reputations(&account)
+			EncointerCeremonies::get_reputations(account)
 		}
 		fn get_aggregated_account_data(cid:CommunityIdentifier, account: &AccountId) -> AggregatedAccountData<AccountId, Moment> {
-			EncointerCeremonies::get_aggregated_account_data(cid, &account)
+			EncointerCeremonies::get_aggregated_account_data(cid, account)
 		}
 		fn get_ceremony_info() -> CeremonyInfo {
 			EncointerCeremonies::get_ceremony_info()

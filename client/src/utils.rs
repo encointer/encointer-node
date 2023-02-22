@@ -73,7 +73,7 @@ pub fn send_xt_hex_and_wait_for_in_block(
 	xt_hex: String,
 	tx_payment_cid: Option<&str>,
 ) -> Option<H256> {
-	ensure_payment(&api, &xt_hex, tx_payment_cid);
+	ensure_payment(api, &xt_hex, tx_payment_cid);
 	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
@@ -112,7 +112,7 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
 	let balance: BalanceType =
 		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
 
-	let fee: BalanceType = get_asset_fee_details(&api, cid_str, xt)
+	let fee: BalanceType = get_asset_fee_details(api, cid_str, xt)
 		.unwrap()
 		.inclusion_fee
 		.map(|details| details.base_fee.into_u256().as_u128())
@@ -160,7 +160,7 @@ pub fn into_effective_cindex(
 	current_ceremony_index: CeremonyIndexType,
 ) -> CeremonyIndexType {
 	match ceremony_index {
-		i32::MIN..=-1 => current_ceremony_index - ceremony_index.abs() as u32,
+		i32::MIN..=-1 => current_ceremony_index - ceremony_index.unsigned_abs(),
 		1..=i32::MAX => ceremony_index as CeremonyIndexType,
 		0 => panic!("Zero not allowed as ceremony index"),
 	}
