@@ -1880,6 +1880,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
+ "futures",
  "jsonrpsee",
  "log",
  "pallet-asset-tx-payment",
