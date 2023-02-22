@@ -69,7 +69,8 @@ use std::{
 };
 use substrate_api_client::{
 	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, ApiClientError, ApiResult, GenericAddress, Metadata, XtStatus,
+	utils::FromHexString, ApiClientError, ApiResult, EventsDecoder, GenericAddress, Metadata,
+	XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
