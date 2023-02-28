@@ -83,7 +83,9 @@ try-runtime-cli = { version = "0.10.0-dev", optional = true, git = "https://gith
 [features]
 default = []
 runtime-benchmarks = [
-    "encointer-node-notee-runtime/runtime-benchmarks"
+    "encointer-node-notee-runtime/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+	"frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
