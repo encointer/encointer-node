@@ -1717,7 +1717,7 @@ pub fn get_community_balance(
 	maybe_at: Option<Hash>,
 ) -> BalanceType {
 	let cid = verify_cid(api, cid_str, maybe_at);
-	let bn = get_block_number(api);
+	let bn = get_block_number(api, maybe_at);
 	let dr = get_demurrage_per_block(api, cid);
 
 	if let Some(entry) = api
