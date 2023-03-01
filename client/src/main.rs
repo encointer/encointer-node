@@ -276,8 +276,8 @@ fn main() {
                     let api = get_chain_api(matches);
                     let maybe_at = matches.at_block_arg();
                     let cid_str = matches.cid_arg().expect("please supply argument --cid");
-                    let issuance = get_community_issuance(&api, &cid_str, maybe_at);
-                    println!{"{:?}", issuance};
+                    let issuance = get_community_issuance(&api, cid_str, maybe_at);
+                    println!{"{issuance:?}"};
                     Ok(())
                 }),
         )
@@ -1731,18 +1731,18 @@ pub fn get_community_balance(
 }
 
 pub fn get_community_issuance(api: &Api, cid_str: &str, maybe_at: Option<Hash>) -> BalanceType {
-	let cid = verify_cid(&api, cid_str, maybe_at);
-	let bn = get_block_number(&api, maybe_at);
-	let dr = get_demurrage_per_block(&api, cid);
-	let balance = if let Some(entry) = api
+	let cid = verify_cid(api, cid_str, maybe_at);
+	let bn = get_block_number(api, maybe_at);
+	let dr = get_demurrage_per_block(api, cid);
+	
+	if let Some(entry) = api
 		.get_storage_map("EncointerBalances", "TotalIssuance", cid, maybe_at)
 		.unwrap()
 	{
 		apply_demurrage(entry, bn, dr)
 	} else {
 		BalanceType::from_num(0)
-	};
-	balance
+	}
 }
 
 fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
