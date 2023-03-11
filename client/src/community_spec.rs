@@ -152,7 +152,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 	)
 }
 
-type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
+pub type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
 
 /// Create an `add_location` call to be used in an extrinsic.
 pub fn add_location_call(
