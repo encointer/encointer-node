@@ -25,7 +25,8 @@ mod utils;
 
 use crate::{
 	community_spec::{
-		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec, AddLocationCall
+		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
+		CommunitySpec,
 	},
 	utils::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
