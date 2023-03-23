@@ -43,18 +43,15 @@ impl CommunitySpec for serde_json::Value {
 		let geoloc = GeoJson::from_json_value(self.clone()).unwrap();
 		let mut loc = vec![];
 
-		match geoloc {
-			GeoJson::FeatureCollection(ref ctn) =>
-				for feature in &ctn.features {
-					let val = &feature.geometry.as_ref().unwrap().value;
-					if let geojson::Value::Point(pt) = val {
-						let l =
-							Location { lon: Degree::from_num(pt[0]), lat: Degree::from_num(pt[1]) };
-						loc.push(l);
-						debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
-					}
-				},
-			_ => (),
+		if let GeoJson::FeatureCollection(ref ctn) = geoloc {
+			for feature in &ctn.features {
+				let val = &feature.geometry.as_ref().unwrap().value;
+				if let geojson::Value::Point(pt) = val {
+					let l = Location { lon: Degree::from_num(pt[0]), lat: Degree::from_num(pt[1]) };
+					loc.push(l);
+					debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
+				}
+			}
 		};
 
 		loc
@@ -65,7 +62,7 @@ impl CommunitySpec for serde_json::Value {
 			.as_array()
 			.expect("bootstrappers must be array")
 			.iter()
-			.map(|a| crate::utils::keys::get_accountid_from_str(&a.as_str().unwrap()))
+			.map(|a| crate::utils::keys::get_accountid_from_str(a.as_str().unwrap()))
 			.collect()
 	}
 

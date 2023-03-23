@@ -16,8 +16,8 @@ impl CommunitiesApi for Api {
 		"id": "1",
 		});
 
-		let locations = self.get_request(req.into())?.ok_or_else(|| {
-			ApiClientError::Other(format!("No locations founds. Does the cid {} exist", cid).into())
+		let locations = self.get_request(req)?.ok_or_else(|| {
+			ApiClientError::Other(format!("No locations founds. Does the cid {cid} exist").into())
 		})?;
 
 		serde_json::from_str(&locations).map_err(|e| ApiClientError::Other(e.into()))

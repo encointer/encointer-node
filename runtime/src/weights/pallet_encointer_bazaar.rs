@@ -31,39 +31,39 @@ impl<T: frame_system::Config> pallet_encointer_bazaar::WeightInfo for WeightInfo
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	fn create_business() -> Weight {
-		(26_500_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(26_500_000)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	fn update_business() -> Weight {
-		(24_200_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(24_200_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	fn delete_business() -> Weight {
-		(27_900_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(27_900_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	// Storage: EncointerBazaar OfferingRegistry (r:0 w:1)
 	fn create_offering() -> Weight {
-		(29_600_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(29_600_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: EncointerBazaar OfferingRegistry (r:1 w:1)
 	fn update_offering() -> Weight {
-		(25_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(25_000_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar OfferingRegistry (r:1 w:1)
 	fn delete_offering() -> Weight {
-		(23_500_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(23_500_000)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }
