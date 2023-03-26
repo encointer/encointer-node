@@ -1,24 +1,24 @@
 use clap::{App, Arg, ArgMatches};
 use substrate_api_client::{FromHexString, Hash};
 
-const ACCOUNT_ARG: &'static str = "accountid";
-const SEED_ARG: &'static str = "seed";
-const SIGNER_ARG: &'static str = "signer";
-const CID_ARG: &'static str = "cid";
-const ATTESTEES_ARG: &'static str = "attestees";
-const CEREMONY_INDEX_ARG: &'static str = "ceremony-index";
-const IPFS_CID_ARG: &'static str = "ipfs-cid";
-const BOOTSTRAPPER_ARG: &'static str = "bootstrapper";
-const FUNDEES_ARG: &'static str = "fundees";
-const FROM_CINDEX_ARG: &'static str = "from-cindex";
-const TO_CINDEX_ARG: &'static str = "to-cindex";
-const ENDORSEES_ARG: &'static str = "endorsees";
-const TIME_OFFSET_ARG: &'static str = "time-offset";
-const ALL_FLAG: &'static str = "all";
-const DRYRUN_FLAG: &'static str = "dryrun";
-const TX_PAYMENT_CID_ARG: &'static str = "tx-payment-cid";
-const MEETUP_INDEX_ARG: &'static str = "meetup-index";
-const AT_BLOCK_ARG: &'static str = "at";
+const ACCOUNT_ARG: &str = "accountid";
+const SEED_ARG: &str = "seed";
+const SIGNER_ARG: &str = "signer";
+const CID_ARG: &str = "cid";
+const ATTESTEES_ARG: &str = "attestees";
+const CEREMONY_INDEX_ARG: &str = "ceremony-index";
+const IPFS_CID_ARG: &str = "ipfs-cid";
+const BOOTSTRAPPER_ARG: &str = "bootstrapper";
+const FUNDEES_ARG: &str = "fundees";
+const FROM_CINDEX_ARG: &str = "from-cindex";
+const TO_CINDEX_ARG: &str = "to-cindex";
+const ENDORSEES_ARG: &str = "endorsees";
+const TIME_OFFSET_ARG: &str = "time-offset";
+const ALL_FLAG: &str = "all";
+const DRYRUN_FLAG: &str = "dryrun";
+const TX_PAYMENT_CID_ARG: &str = "tx-payment-cid";
+const MEETUP_INDEX_ARG: &str = "meetup-index";
+const AT_BLOCK_ARG: &str = "at";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -30,6 +30,7 @@ pub trait EncointerArgs<'b> {
 	fn ipfs_cid_arg(self) -> Self;
 	fn bootstrapper_arg(self) -> Self;
 	fn fundees_arg(self) -> Self;
+	#[allow(clippy::wrong_self_convention)]
 	fn from_cindex_arg(self) -> Self;
 	fn to_cindex_arg(self) -> Self;
 	fn endorsees_arg(self) -> Self;
@@ -51,6 +52,7 @@ pub trait EncointerArgsExtractor {
 	fn ipfs_cid_arg(&self) -> Option<&str>;
 	fn bootstrapper_arg(&self) -> Option<&str>;
 	fn fundees_arg(&self) -> Option<Vec<&str>>;
+	#[allow(clippy::wrong_self_convention)]
 	fn from_cindex_arg(&self) -> Option<i32>;
 	fn to_cindex_arg(&self) -> Option<i32>;
 	fn endorsees_arg(&self) -> Option<Vec<&str>>;
