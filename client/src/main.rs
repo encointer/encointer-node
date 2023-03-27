@@ -25,7 +25,8 @@ mod utils;
 
 use crate::{
 	community_spec::{
-		add_location_call, new_community_call, read_community_spec_from_file, CommunitySpec,
+		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
+		CommunitySpec,
 	},
 	utils::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
@@ -554,33 +555,36 @@ fn main() {
 
                     let cid = verify_cid(&api, matches.cid_arg().unwrap(), None);
 
-                    let add_location_calls = spec.locations().into_iter().map(|l|
+                    let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
                                                                                   {
                                                                                       info!("adding location {:?}", l);
                                                                                       add_location_call(&api.metadata, cid, l)
                                                                                   }
                         ).collect();
-                    let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(&api.metadata, add_location_calls));
 
+                    let mut add_location_maybe_batch_call = match  add_location_calls.as_slice() {
+                        [call] => OpaqueCall::from_tuple(call),
+                        _ => OpaqueCall::from_tuple(&batch_call(&api.metadata, add_location_calls.clone()))
+                    };
 
                     if matches.signer_arg().is_none() {
                         // return calls as `OpaqueCall`s to get the same return type in both branches
-                        add_location_batch_call = if contains_sudo_pallet(&api.metadata) {
-                            let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
+                        add_location_maybe_batch_call = if contains_sudo_pallet(&api.metadata) {
+                            let sudo_add_location_batch = sudo_call(&api.metadata, add_location_maybe_batch_call);
                             info!("Printing raw sudo calls for js/apps for cid: {}", cid);
                             print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
                             OpaqueCall::from_tuple(&sudo_add_location_batch)
                         } else {
                             let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
                             info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-                            let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
+                            let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_maybe_batch_call);
                             print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
                             OpaqueCall::from_tuple(&propose_add_location_batch)
                         };
                     }
 
                     if matches.dryrun_flag() {
-                        println!("0x{}", hex::encode(add_location_batch_call.encode()));
+                        println!("0x{}", hex::encode(add_location_maybe_batch_call.encode()));
                     } else {
                         // ---- send xt's to chain
                         if api.get_current_phase().unwrap() != CeremonyPhaseType::Registering {
@@ -588,7 +592,7 @@ fn main() {
                             error!("Aborting without registering additional locations");
                             std::process::exit(exit_code::WRONG_PHASE);
                         }
-                        send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call), tx_payment_cid_arg);
+                        send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call), tx_payment_cid_arg);
                     }
                     Ok(())
                 }),
