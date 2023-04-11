@@ -79,7 +79,8 @@ encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/enco
 encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.37" }
 
 # CLI-specific dependencies
-try-runtime-cli = { version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+frame-try-runtime = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 
 [features]
@@ -91,4 +92,12 @@ runtime-benchmarks = [
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
-try-runtime = ["try-runtime-cli"]
+try-runtime = [
+    "encointer-node-notee-runtime/try-runtime",
+    "try-runtime-cli",
+    "frame-try-runtime"
+]
+
+cli = [
+    'try-runtime-cli',
+]
