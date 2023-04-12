@@ -47,6 +47,7 @@ sp-runtime = { version = "7.0.0", git = "https://github.com/paritytech/substrate
 sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-inherents = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-keyring = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-io = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 frame-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 # encointer-specific
 pallet-asset-tx-payment = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -94,8 +95,7 @@ runtime-benchmarks = [
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = [
     "encointer-node-notee-runtime/try-runtime",
-    "try-runtime-cli",
-    #"frame-try-runtime"
+    "try-runtime-cli/try-runtime",
 ]
 
 cli = [

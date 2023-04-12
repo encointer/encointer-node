@@ -2,7 +2,7 @@ use codec::Encode;
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
-	communities::{CommunityIdentifier, CommunityMetadata, Degree, Location},
+	communities::{BoundedCommunityMetadata, CommunityIdentifier, Degree, Location},
 	fixed::transcendental::ln,
 };
 use geojson::GeoJson;
@@ -23,7 +23,7 @@ pub trait CommunitySpec {
 	fn bootstrappers(&self) -> Vec<AccountId>;
 
 	/// The community's metadata.
-	fn metadata(&self) -> CommunityMetadata;
+	fn metadata(&self) -> BoundedCommunityMetadata;
 
 	/// The community field of the json
 	fn community(&self) -> &serde_json::Value;
@@ -66,7 +66,7 @@ impl CommunitySpec for serde_json::Value {
 			.collect()
 	}
 
-	fn metadata(&self) -> CommunityMetadata {
+	fn metadata(&self) -> BoundedCommunityMetadata {
 		serde_json::from_value(self["community"]["meta"].clone()).unwrap()
 	}
 
@@ -110,8 +110,14 @@ impl CommunitySpec for serde_json::Value {
 	}
 }
 
-type NewCommunityCall =
-	([u8; 2], Location, Vec<AccountId>, CommunityMetadata, Option<Demurrage>, Option<BalanceType>);
+type NewCommunityCall = (
+	[u8; 2],
+	Location,
+	Vec<AccountId>,
+	BoundedCommunityMetadata,
+	Option<Demurrage>,
+	Option<BalanceType>,
+);
 
 /// Extracts all the info from `spec` to create a `new_community` call.
 pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> NewCommunityCall {
@@ -125,7 +131,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 	info!("Metadata: {:?}", meta);
 
 	info!("bootstrappers: {:?}", bootstrappers);
-	info!("name: {}", meta.name);
+	info!("name: {:?}", meta.name);
 
 	let maybe_demurrage = spec.demurrage();
 	if maybe_demurrage.is_none() {
