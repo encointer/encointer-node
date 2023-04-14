@@ -1997,7 +1997,7 @@ fn apply_demurrage(
 	entry.principal.checked_mul(exp_result).unwrap()
 }
 
-fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Result<(), ()> {
+fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result<(), ()> {
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
 	let mut api = get_chain_api(matches).set_signer(business_owner.clone().into());
@@ -2007,11 +2007,11 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, business_call: &BazaarCalls) -> Resu
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 	api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 	let xt: EncointerXt<_> =
-		compose_extrinsic!(api, "EncointerBazaar", &business_call.to_string(), cid, ipfs_cid);
+		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid);
 	ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
 	// send and watch extrinsic until finalized
 	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
-	println!("Creating business for {}. xt-status: 'ready'", business_owner.public());
+	println!("{} for {}. xt-status: 'ready'", bazaar_call.to_string(), business_owner.public());
 	Ok(())
 }
 
