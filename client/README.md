@@ -81,7 +81,7 @@ ipfs daemon
 ./register-businesses.py --ipfs-local
 ```
 
-In IPFS, the community icons and data of businesses and offerings are stored.
+In IPFS, the community assets and data of businesses and offerings are stored.
 
 You can cat/get the data stored in ipfs locally:
 ```
@@ -90,4 +90,49 @@ ipfs cat <CONTENT_IDENTIFIER>
 Or if it was stored remotely (on Infura):
 ```
 curl -X POST "https://ipfs.infura.io:5001/api/v0/cat?arg=<CONTENT_IDENTIFIER>" 
+```
+
+# run bot-community against parachain
+
+The same client can be used against an encointer parachain. Please start the parachain with polkadot-launch from the encointer-parachain repo:
+```
+node ../polkadot-launch/dist/cli.js polkadot-launch/launch-kusama-local-with-encointer.json
+```
+
+then you can run bootstrapping or bot-community exactly like for solo-node
+
+# register real community
+
+## upload assets to IPFS
+
+Make sure your SVG community icon doesn't include `<style>` attributes
+
+```
+cargo install svgcleaner
+svgcleaner community_icon.svg community_icon.svg
+```
+
+using infura:
+```
+ipfs-upload-client --id <your infura id> --secret <your infura secret> --pin leu.rococo 
+```
+
+using your own ipfs server
+```
+ipfs add -rw --pin leu.rococo
+```
+test if you can fetch the cid through the encointer gateway which will be used by the app
+
+```
+wget http://ipfs.encointer.org:8080/api/v0/object/get?arg=QmXydp7gdTGwxkCn24vEtvtSXbR7wSAGBDLQpc8buF6T92/community_icon.svg
+```
+it may take a while to sync from the server you used for uploading and pinning
+
+## create you community spec file
+
+insert your asset ipfs cid from above
+
+create a proposal:
+```
+RUST_LOG=info ../target/release/encointer-client-notee -u wss://rococo.api.encointer.org -p 443 new-community test-data/leu.rococo.json
 ```

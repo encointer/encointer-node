@@ -18,6 +18,7 @@
 /client/cid.txt
 /client/communityspec.json
 /client/.communities/
+/client/voucher-*
 
 **/__pycache__/
 

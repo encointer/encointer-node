@@ -23,18 +23,25 @@ def main(ipfs_local, icon):
 
     with tempfile.TemporaryDirectory() as tmp:
         print('created temporary directory', tmp)
-        os.mkdir(tmp + "/icons/")
-        os.mkdir(tmp + "/icons/2.0x")
-        os.mkdir(tmp + "/icons/3.0x")
+        asset_dir = f'{tmp}/assets'
+        icon_dir = f'{asset_dir}/icons'
+        icon_dir_2x = f'{icon_dir}/2.0x'
+        icon_dir_3x = f'{icon_dir}/3.0x'
+
+        os.mkdir(asset_dir)
+        os.mkdir(icon_dir)
+        os.mkdir(icon_dir_2x)
+        os.mkdir(icon_dir_3x)
+
         icon1x = icon.resize((36, 36), Image.ANTIALIAS)
         icon2x = icon.resize((72, 72), Image.ANTIALIAS)
         icon3x = icon.resize((108, 108), Image.ANTIALIAS)
 
-        icon1x.save(fp=tmp+"/icons/community_icon.png")
-        icon2x.save(fp=tmp+"/icons/2.0x/community_icon.png")
-        icon3x.save(fp=tmp+"/icons/3.0x/community_icon.png")
+        icon1x.save(fp=f'{icon_dir}/community_icon.png')
+        icon2x.save(fp=f'{icon_dir_2x}/community_icon.png')
+        icon3x.save(fp=f'{icon_dir_3x}/community_icon.png')
 
-        Ipfs.add_recursive(tmp+"/icons", ipfs_local)
+        Ipfs.add_recursive(asset_dir, ipfs_local)
 
 
 if __name__ == '__main__':

@@ -1,9 +1,8 @@
 use encointer_node_notee_runtime::{
-	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType,
-	EncointerCeremoniesConfig, EncointerSchedulerConfig, GenesisConfig, GrandpaConfig, Signature,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
+	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
-use jsonrpc_core::serde_from_str;
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
@@ -18,7 +17,7 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
+	TPublic::Pair::from_string(&format!("//{seed}"), None)
 		.expect("static values are valid; qed")
 		.public()
 }
@@ -39,7 +38,7 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 }
 
 fn properties() -> Option<Properties> {
-	serde_from_str(
+	serde_json::from_str(
 		r#"{
     "ss58Format": 42,
     "tokenDecimals": 12,
@@ -172,18 +171,33 @@ fn testnet_genesis(
 		},
 		transaction_payment: Default::default(),
 		encointer_scheduler: EncointerSchedulerConfig {
-			current_phase: CeremonyPhaseType::REGISTERING,
+			current_phase: CeremonyPhaseType::Registering,
 			current_ceremony_index: 1,
 			phase_durations: vec![
-				(CeremonyPhaseType::REGISTERING, 57600000),
-				(CeremonyPhaseType::ASSIGNING, 28800000),
-				(CeremonyPhaseType::ATTESTING, 172800000),
+				(CeremonyPhaseType::Registering, 57600000),
+				(CeremonyPhaseType::Assigning, 28800000),
+				(CeremonyPhaseType::Attesting, 172800000),
 			],
 		},
 		encointer_ceremonies: EncointerCeremoniesConfig {
 			ceremony_reward: BalanceType::from_num(1),
 			time_tolerance: 600_000,   // +-10min
 			location_tolerance: 1_000, // [m]
+			endorsement_tickets_per_bootstrapper: 5,
+			reputation_lifetime: 337,   // 7.02 days at 30min ceremony cycle
+			inactivity_timeout: 168500, // 10 years at 30min ceremony cycle
+			meetup_time_offset: 0,
+			endorsement_tickets_per_reputable: 5,
+		},
+		encointer_communities: EncointerCommunitiesConfig {
+			min_solar_trip_time_s: 1, // [s]
+			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
+		},
+
+		encointer_balances: EncointerBalancesConfig {
+			// Lower values lead to lower fees in CC proportionally.
+			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
+			fee_conversion_factor: 100_000,
 		},
 	}
 }

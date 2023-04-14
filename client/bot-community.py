@@ -16,6 +16,17 @@ and init and grow a community
 on testnet Gesell, execute the current ceremony phase (it does not advance the phase).
    ./bot-community.py --port 9945 execute-current-phase
 
+
+NOTE: There are a few extrinsic errors, which are (sometimes) ok to be thrown:
+    * Only ok in the first ceremony:
+        Module(ModuleError { index: 61, error: 1, message: None }) DispatchInfo { weight: 10000, class: DispatchClass::Normal, pays_fee: Pays::Yes }
+        Meaning: Tried to claim rewards when account was not registered. This happens in the first ceremony because no previous meetup took place.
+
+    * Always Ok:
+        Module(ModuleError { index: 61, error: 21, message: None }) DispatchInfo { weight: 10000, class: DispatchClass::Normal, pays_fee: Pays::Yes }
+        Meaning: Reward was already claimed. This happens because only one participant needs to claim the reward for the whole meetup, afterwards
+        above error is thrown.
+
 """
 import os
 
@@ -28,10 +39,10 @@ from py_client.communities import random_community_spec, COMMUNITY_SPECS_PATH
 from py_client.helpers import purge_prompt, read_cid, write_cid, set_local_or_remote_chain
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
     ParticipantAlreadyLinked
-from py_client.ipfs import Ipfs, ICONS_PATH
+from py_client.ipfs import Ipfs, ASSETS_PATH
 
 KEYSTORE_PATH = './my_keystore'
-NUMBER_OF_LOCATIONS = 10
+NUMBER_OF_LOCATIONS = 100
 MAX_POPULATION = 10 * NUMBER_OF_LOCATIONS
 NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 
@@ -58,7 +69,7 @@ def init(ctx):
     client = ctx['client']
     purge_keystore_prompt()
 
-    root_dir = os.path.realpath(ICONS_PATH)
+    root_dir = os.path.realpath(ASSETS_PATH)
     try:
         ipfs_cid = Ipfs.add_recursive(root_dir, ctx['ipfs_local'])
     except:
@@ -71,12 +82,12 @@ def init(ctx):
 
     while True:
         phase = client.get_phase()
-        if phase == 'REGISTERING':
+        if phase == 'Registering':
             break
-        print(f"waiting for ceremony phase REGISTERING. now is {phase}")
+        print(f"waiting for ceremony phase Registering. now is {phase}")
         client.await_block()
 
-    cid = client.new_community(specfile)
+    cid = client.new_community(specfile, signer='//Alice')
     print(f'created community with cid: {cid}')
     write_cid(cid)
     client.await_block()
@@ -100,11 +111,11 @@ def _execute_current_phase(client: Client):
     print(f'phase is {phase}')
     accounts = client.list_accounts()
     print(f'number of known accounts: {len(accounts)}')
-    if phase == 'REGISTERING':
+    if phase == 'Registering':
         print("all participants claim their potential reward")
         for account in accounts:
             client.claim_reward(account, cid)
-        client.await_block()
+        client.await_block(3)
 
         total_supply = write_current_stats(client, accounts, cid)
 
@@ -117,11 +128,11 @@ def _execute_current_phase(client: Client):
         register_participants(client, accounts, cid)
         client.await_block()
 
-    if phase == "ASSIGNING":
+    if phase == "Assigning":
         meetups = client.list_meetups(cid)
         meetup_sizes = list(map(lambda x: len(x), meetups))
         print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
-    if phase == 'ATTESTING':
+    if phase == 'Attesting':
         meetups = client.list_meetups(cid)
         print(f'****** Performing {len(meetups)} meetups')
         for meetup in meetups:
@@ -138,6 +149,7 @@ def benchmark(ctx):
     while True:
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
+            print("awaiting next phase...")
             py_client.await_block()
 
 
@@ -149,6 +161,7 @@ def test(ctx):
     for i in range(3*2+1):
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
+            print("awaiting next phase...")
             py_client.await_block()
 
 
@@ -222,7 +235,8 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
 
 def get_newbie_amount(current_population: int):
     return min(
-        floor(current_population / 4.0),
+        # register more than can participate, to test restrictions
+        floor(current_population / 1.5),
         MAX_POPULATION - current_population
     )
 
@@ -258,7 +272,7 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
         print(f'Added endorsees to community: {len(endorsees)}')
 
 
-    newbies = client.create_accounts(get_newbie_amount(current_community_size))
+    newbies = client.create_accounts(get_newbie_amount(current_community_size + len(endorsees)))
 
     print(f'Add newbies to community {len(newbies)}')
 
@@ -298,12 +312,10 @@ def perform_meetup(client: Client, meetup, cid):
     n = len(meetup)
     print(f'Performing meetup with {n} participants')
 
-    claims = [client.new_claim(p, n, cid) for p in meetup]
-
     for p_index in range(len(meetup)):
         attestor = meetup[p_index]
-        attestees_claims = claims[:p_index] + claims[p_index + 1:]
-        client.attest_claims(attestor, attestees_claims)
+        attendees = meetup[:p_index] + meetup[p_index + 1:]
+        client.attest_attendees(attestor, cid, attendees)
 
 
 if __name__ == '__main__':

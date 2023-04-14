@@ -10,14 +10,14 @@ pub trait CommunitiesApi {
 impl CommunitiesApi for Api {
 	fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>> {
 		let req = json!({
-		"method": "communities_getLocations",
+		"method": "encointer_getLocations",
 		"params": vec![cid],
 		"jsonrpc": "2.0",
 		"id": "1",
 		});
 
-		let locations = self.get_request(req.into())?.ok_or_else(|| {
-			ApiClientError::Other(format!("No locations founds. Does the cid {} exist", cid).into())
+		let locations = self.get_request(req)?.ok_or_else(|| {
+			ApiClientError::Other(format!("No locations founds. Does the cid {cid} exist").into())
 		})?;
 
 		serde_json::from_str(&locations).map_err(|e| ApiClientError::Other(e.into()))

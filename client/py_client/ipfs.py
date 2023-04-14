@@ -5,7 +5,7 @@ import json
 
 from .helpers import take_only_last_cid, generate_file_list
 
-ICONS_PATH = './test-data/icons'
+ASSETS_PATH = './test-data/assets'
 use_ipfs_gateway = True
 try:
     ipfs_api_key = os.environ['IPFS_API_KEY']

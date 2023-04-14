@@ -29,13 +29,13 @@ impl SchedulerApi for Api {
 		let next_phase_timestamp = self.get_next_phase_timestamp()?;
 
 		match self.get_current_phase()? {
-			CeremonyPhaseType::ASSIGNING => Ok(next_phase_timestamp), // - next_phase_timestamp.rem(ONE_DAY),
-			CeremonyPhaseType::ATTESTING => {
-				self.get_phase_duration(CeremonyPhaseType::ATTESTING)
+			CeremonyPhaseType::Assigning => Ok(next_phase_timestamp), // - next_phase_timestamp.rem(ONE_DAY),
+			CeremonyPhaseType::Attesting => {
+				self.get_phase_duration(CeremonyPhaseType::Attesting)
 					.map(|dur| next_phase_timestamp - dur) //- next_phase_timestamp.rem(ONE_DAY)
 			},
-			CeremonyPhaseType::REGISTERING => Err(ApiClientError::Other(
-				"ceremony phase must be ASSIGNING or ATTESTING to request meetup location.".into(),
+			CeremonyPhaseType::Registering => Err(ApiClientError::Other(
+				"ceremony phase must be Assigning or Attesting to request meetup location.".into(),
 			)),
 		}
 	}
