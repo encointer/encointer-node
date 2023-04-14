@@ -71,11 +71,18 @@ def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
         print(client.create_offering(owners[0], cid, c))
         client.await_block()
 
-    # Todo: parse the results and evaluate them. Then we can use this script in integration tests
-    print(client.list_businesses(cid))
-    print(client.list_offerings(cid))
+    # a few tests for CI
+    bizliststr = client.list_businesses(cid)
+    print(bizliststr)
+    if bizliststr.count('BusinessData') < 2:
+        print("registering businesses failed")
+        exit(1)
+    offliststr = client.list_offerings(cid)
+    print(offliststr)
+    if offliststr.count('OfferingData') < 5:
+        print("registering offerings failed")
+        exit(1)
     print(client.list_offerings_for_business(cid, owners[0]))
-
 
 def create_businesses(amount: int):
     """
