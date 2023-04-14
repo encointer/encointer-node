@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+This is a test script that registers random businesses and offerings in a community which has been previously created with ./bot-community.py init
+"""
+
+
 import glob
 import json
 import random
