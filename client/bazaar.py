@@ -25,8 +25,6 @@ export IPFS_API_KEY=key:secret
 from py_client.ipfs import Ipfs
 import json
 import click
-import tkinter as tk
-from tkinter import filedialog
 from py_client.helpers import set_local_or_remote_chain
 import tempfile
 import os
@@ -45,8 +43,6 @@ import os
 def cli(ctx, client, port, cid, bizaccount, price, remote_chain):
     ctx.ensure_object(dict)
     cl = set_local_or_remote_chain(client, port, remote_chain)
-    root = tk.Tk()
-    root.withdraw()
     ctx.obj['client'] = cl
     ctx.obj['port'] = port
     ctx.obj['cid'] = cid
