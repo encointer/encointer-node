@@ -439,6 +439,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	type MeetupMinSize = MeetupMinSize;
 	type MeetupNewbieLimitDivider = MeetupNewbieLimitDivider;
 	type WeightInfo = weights::pallet_encointer_ceremonies::WeightInfo<Runtime>;
+	type MaxAttestations = ConstU32<100>;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
