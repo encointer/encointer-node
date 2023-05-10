@@ -78,9 +78,12 @@ jobs:
             srtool-target-
       - name: Srtool build
         id: srtool_build
-        uses: chevdor/srtool-actions@v0.3.0
+        uses: chevdor/srtool-actions@v0.7.0
         with:
+          image: paritytech/srtool
           chain: ${{ matrix.runtime }}
+          # Can remove that when we can build with stable, see: https://github.com/integritee-network/parachain/issues/200
+          tag: 1.66.1
           runtime_dir: runtime
 
       - name: Summary
