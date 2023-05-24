@@ -74,7 +74,7 @@ where
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	module.merge(BalancesTxPaymentRpc::new(client.clone()).into_rpc())?;
 
-	module.merge(BazaarRpc::new(client.clone(), deny_unsafe).into_rpc())?;
+	module.merge(BazaarRpc::new(client.clone()).into_rpc())?;
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
@@ -88,13 +88,12 @@ where
 					client.clone(),
 					storage.clone(),
 					offchain_indexing_enabled,
-					deny_unsafe,
 				)
 				.into_rpc(),
 			)?;
 
 			module.merge(
-				CeremoniesRpc::new(client, deny_unsafe, storage, offchain_indexing_enabled)
+				CeremoniesRpc::new(client, storage, offchain_indexing_enabled)
 					.into_rpc(),
 			)?;
 		},
