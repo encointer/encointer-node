@@ -61,7 +61,7 @@ pub use encointer_primitives::{
 	balances::{BalanceEntry, BalanceType, Demurrage},
 	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
 	ceremonies::{AggregatedAccountData, CeremonyIndexType, CeremonyInfo, CommunityReputation},
-	common::BoundedPalletString,
+	common::PalletString,
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
@@ -729,7 +729,7 @@ impl_runtime_apis! {
 			EncointerCommunities::get_cids()
 		}
 
-		fn get_name(cid: &CommunityIdentifier) -> Option<BoundedPalletString> {
+		fn get_name(cid: &CommunityIdentifier) -> Option<PalletString> {
 			EncointerCommunities::get_name(cid)
 		}
 
