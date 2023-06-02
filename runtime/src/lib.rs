@@ -539,6 +539,10 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	(
+		pallet_encointer_communities::migrations::v1::Migration<Runtime>,
+		pallet_encointer_ceremonies::migrations::v1::Migration<Runtime>,
+	),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
