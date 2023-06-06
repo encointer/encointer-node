@@ -49,7 +49,7 @@ use encointer_node_notee_runtime::{
 };
 use encointer_primitives::{
 	balances::Demurrage,
-	bazaar::{BusinessData, BusinessIdentifier, OfferingData},
+	bazaar::{Business, BusinessIdentifier, OfferingData},
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
 		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
@@ -1850,7 +1850,7 @@ fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
 	Some(serde_json::from_str(&n).unwrap())
 }
 
-fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<BusinessData>> {
+fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
 	let req = json!({
 		"method": "encointer_bazaarGetBusinesses",
 		"params": vec![cid],
