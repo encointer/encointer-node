@@ -17,7 +17,7 @@ use pallet_grandpa::{
 use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, ConstU32, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
@@ -439,6 +439,7 @@ impl pallet_encointer_ceremonies::Config for Runtime {
 	type MeetupMinSize = MeetupMinSize;
 	type MeetupNewbieLimitDivider = MeetupNewbieLimitDivider;
 	type WeightInfo = weights::pallet_encointer_ceremonies::WeightInfo<Runtime>;
+	type MaxAttestations = ConstU32<100>;
 }
 
 impl pallet_encointer_communities::Config for Runtime {
@@ -446,6 +447,10 @@ impl pallet_encointer_communities::Config for Runtime {
 	type CommunityMaster = EnsureRoot<AccountId>;
 	type TrustableForNonDestructiveAction = EnsureSigned<AccountId>;
 	type WeightInfo = weights::pallet_encointer_communities::WeightInfo<Runtime>;
+	type MaxCommunityIdentifiers = ConstU32<10000>;
+	type MaxBootstrappers = ConstU32<10000>;
+	type MaxLocationsPerGeohash = ConstU32<10000>;
+	type MaxCommunityIdentifiersPerGeohash = ConstU32<10000>;
 }
 
 impl pallet_encointer_balances::Config for Runtime {
@@ -534,6 +539,10 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	(
+		pallet_encointer_communities::migrations::v1::Migration<Runtime>,
+		pallet_encointer_ceremonies::migrations::v1::Migration<Runtime>,
+	),
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -806,16 +815,23 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> (Weight, Weight) {
+		fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
-			let weight = Executive::try_runtime_upgrade().unwrap();
+			let weight = Executive::try_runtime_upgrade(checks).unwrap();
 			(weight, BlockWeights::get().max_block)
 		}
 
-		fn execute_block_no_check(block: Block) -> Weight {
-			Executive::execute_block_no_check(block)
+		fn execute_block(
+			block: Block,
+			state_root_check: bool,
+			signature_check: bool,
+			select: frame_try_runtime::TryStateSelect
+		) -> Weight {
+			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+			// have a backtrace here.
+			Executive::try_execute_block(block, state_root_check, signature_check, select).expect("execute-block failed")
 		}
 	}
 }

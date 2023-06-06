@@ -41,6 +41,23 @@ Offchain-indexing is needed for the custom rpc `encointer_getAllCommunities`. If
 
 Additional CLI usage options are available and may be shown by running `./target/release/encointer-node-notee --help`.
 
+### Test state migrations
+
+Compile the node with:
+
+```bash
+cargo build --release --features try-runtime
+```
+
+Then test state migrations with against live data on the Gesell network with:
+
+```bash
+./target/release/encointer-node-notee try-runtime \
+  --runtime ./target/release/wbuild/encointer-node-notee-runtime/encointer_node_notee_runtime.wasm \
+  on-runtime-upgrade --checks=all \
+  live --uri wss://gesell.encointer.org:443
+```
+
 ### Run with docker
 
 ```bash

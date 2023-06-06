@@ -45,6 +45,7 @@ sp-consensus-aura = { version = "0.10.0-dev", git = "https://github.com/parityte
 sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-finality-grandpa = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-inherents = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-io = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-keyring = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-runtime = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -79,7 +80,8 @@ pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets
 pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.37" }
 
 # CLI-specific dependencies
-try-runtime-cli = { version = "0.10.0-dev", optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+frame-try-runtime = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 
 [features]
@@ -91,4 +93,11 @@ runtime-benchmarks = [
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
-try-runtime = ["try-runtime-cli"]
+try-runtime = [
+    "encointer-node-notee-runtime/try-runtime",
+    "try-runtime-cli/try-runtime",
+]
+
+cli = [
+    'try-runtime-cli',
+]

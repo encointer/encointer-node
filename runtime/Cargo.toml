@@ -55,6 +55,10 @@ sp-std = { version = "5.0.0", default-features = false, git = "https://github.co
 sp-transaction-pool = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-version = { version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
+frame-try-runtime = { git = 'https://github.com/paritytech/substrate.git', default-features = false, branch = "polkadot-v0.9.37", optional = true }
+try-runtime-cli = { git = 'https://github.com/paritytech/substrate.git', default-features = false, branch = "polkadot-v0.9.37", optional = true }
+
+
 # Used for the node's RPCs
 frame-system-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -110,6 +114,8 @@ std = [
     "pallet-encointer-communities/std",
     "pallet-encointer-communities-rpc-runtime-api/std",
     "pallet-encointer-scheduler/std",
+    #"frame-try-runtime?/std",
+    "frame-try-runtime/std",
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
@@ -127,4 +133,28 @@ runtime-benchmarks = [
     "pallet-encointer-ceremonies/runtime-benchmarks",
     "pallet-encointer-communities/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
+]
+
+try-runtime = [
+    "frame-try-runtime/try-runtime",
+    "frame-executive/try-runtime",
+    "frame-system/try-runtime",
+    "frame-support/try-runtime",
+    "pallet-aura/try-runtime",
+    "pallet-balances/try-runtime",
+    "pallet-grandpa/try-runtime",
+    "pallet-randomness-collective-flip/try-runtime",
+    "pallet-sudo/try-runtime",
+    "pallet-timestamp/try-runtime",
+    "pallet-transaction-payment/try-runtime",
+    "pallet-proxy/try-runtime",
+    "pallet-scheduler/try-runtime",
+    "pallet-utility/try-runtime",
+    "pallet-asset-tx-payment/try-runtime",
+
+    "pallet-encointer-balances/try-runtime",
+    "pallet-encointer-bazaar/try-runtime",
+    "pallet-encointer-ceremonies/try-runtime",
+    "pallet-encointer-communities/try-runtime",
+    "pallet-encointer-scheduler/try-runtime",
 ]

@@ -2,6 +2,7 @@ use codec::Encode;
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
+	common::{BoundedIpfsCid, FromStr, PalletString},
 	communities::{CommunityIdentifier, CommunityMetadata, Degree, Location},
 	fixed::transcendental::ln,
 };
@@ -67,7 +68,33 @@ impl CommunitySpec for serde_json::Value {
 	}
 
 	fn metadata(&self) -> CommunityMetadata {
-		serde_json::from_value(self["community"]["meta"].clone()).unwrap()
+		CommunityMetadata {
+			name: PalletString::from_str(
+				&serde_json::from_value::<String>(self["community"]["meta"]["name"].clone())
+					.unwrap(),
+			)
+			.unwrap(),
+			symbol: PalletString::from_str(
+				&serde_json::from_value::<String>(self["community"]["meta"]["symbol"].clone())
+					.unwrap(),
+			)
+			.unwrap(),
+			assets: BoundedIpfsCid::from_str(
+				&serde_json::from_value::<String>(self["community"]["meta"]["assets"].clone())
+					.unwrap(),
+			)
+			.unwrap(),
+			theme: match serde_json::from_value::<String>(
+				self["community"]["meta"]["theme"].clone(),
+			) {
+				Ok(theme) => Some(BoundedIpfsCid::from_str(&theme).unwrap()),
+				Err(_) => None,
+			},
+			url: match serde_json::from_value::<String>(self["community"]["meta"]["url"].clone()) {
+				Ok(url) => Some(BoundedIpfsCid::from_str(&url).unwrap()),
+				Err(_) => None,
+			},
+		}
 	}
 
 	fn community(&self) -> &serde_json::Value {
@@ -125,7 +152,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 	info!("Metadata: {:?}", meta);
 
 	info!("bootstrappers: {:?}", bootstrappers);
-	info!("name: {}", meta.name);
+	info!("name: {:?}", meta.name);
 
 	let maybe_demurrage = spec.demurrage();
 	if maybe_demurrage.is_none() {
