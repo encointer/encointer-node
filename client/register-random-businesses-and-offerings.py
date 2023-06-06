@@ -74,7 +74,7 @@ def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
     # a few tests for CI
     bizliststr = client.list_businesses(cid)
     print(bizliststr)
-    if bizliststr.count('Business') < 2:
+    if bizliststr.count('BusinessData') < 2:
         print("registering businesses failed")
         exit(1)
     offliststr = client.list_offerings(cid)
