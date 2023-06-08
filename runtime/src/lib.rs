@@ -32,7 +32,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 use frame_support::traits::tokens::BalanceConversion;
 pub use frame_support::{
-	construct_runtime, parameter_types, PalletId,
+	construct_runtime, parameter_types,
 	traits::{Contains, KeyOwnerProofSystem, Randomness, StorageInfo},
 	weights::{
 		constants::{
@@ -40,7 +40,7 @@ pub use frame_support::{
 		},
 		IdentityFee, Weight,
 	},
-	StorageValue,
+	PalletId, StorageValue,
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -96,7 +96,6 @@ pub const ONE_DAY: Moment = 86_400_000;
 
 pub type AssetId = AssetIdOf<Runtime>;
 pub type AssetBalance = AssetBalanceOf<Runtime>;
-
 
 const MILLICENTS: Balance = 1_000_000_000;
 const CENTS: Balance = 1_000 * MILLICENTS;
@@ -513,6 +512,7 @@ impl pallet_treasury::Config for Runtime {
 
 impl pallet_encointer_reputation_commitments::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_encointer_reputation_commitments::WeightInfo<Runtime>;
 }
 
 impl pallet_encointer_faucet::Config for Runtime {
@@ -520,6 +520,7 @@ impl pallet_encointer_faucet::Config for Runtime {
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type Currency = Balances;
 	type PalletId = FaucetPalletId;
+	type WeightInfo = weights::pallet_encointer_faucet::WeightInfo<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
