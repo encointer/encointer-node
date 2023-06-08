@@ -6,3 +6,4 @@ pub mod pallet_encointer_bazaar;
 pub mod pallet_encointer_ceremonies;
 pub mod pallet_encointer_communities;
 pub mod pallet_encointer_scheduler;
+pub mod pallet_treasury;
