@@ -73,7 +73,7 @@ use substrate_api_client::{
 	api::error::Error as ApiClientError, compose_call, compose_extrinsic,
 	compose_extrinsic_offline, rpc::WsRpcClient, Events, GetAccountInformation, GetBalance,
 	GetHeader, GetStorage, GetTransactionPayment, Metadata, Result as ApiResult, SubmitAndWatch,
-	SubscribeEvents, XtStatus,
+	SubscribeEvents, XtStatus, FetchEvents,
 };
 use substrate_client_keystore::LocalKeystore;
 
@@ -219,7 +219,7 @@ fn main() {
                             Compact(amount)
                         );
                         let xt: EncointerXt<_> = compose_extrinsic_offline!(
-                            api.clone().signer.unwrap(),
+                            api.clone().signer().unwrap(),
                             call.clone(),
                             api.extrinsic_params(nonce)
                         );
@@ -324,7 +324,7 @@ fn main() {
                     if !matches.dryrun_flag() {
                         let from = get_pair_from_str(arg_from);
                         info!("from ss58 is {}", from.public().to_ss58check());
-                        api = api.set_signer(sr25519_core::Pair::from(from));
+                        api.set_signer(sr25519_core::Pair::from(from));
                     }
                     let to = get_accountid_from_str(arg_to);
                     info!("to ss58 is {}", to.to_ss58check());
@@ -335,7 +335,7 @@ fn main() {
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
-                            api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                            set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 api,
@@ -349,7 +349,7 @@ fn main() {
                                 println!("0x{}", hex::encode(xt.function.encode()));
                                 None
                             } else {
-                                ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                                ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
                                 api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap()
                             }
                         },
@@ -398,29 +398,30 @@ fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches);
                     let arg_from = matches.value_of("from").unwrap();
                     let arg_to = matches.value_of("to").unwrap();
                     let from = get_pair_from_str(arg_from);
                     let to = get_accountid_from_str(arg_to);
                     info!("from ss58 is {}", from.public().to_ss58check());
                     info!("to ss58 is {}", to.to_ss58check());
-                    let mut _api = api.set_signer(sr25519_core::Pair::from(from));
+                    
+                    api.set_signer(sr25519_core::Pair::from(from));
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&_api, cid_str, None);
-                            _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+                            let cid = verify_cid(&api, cid_str, None);
+                            set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
-                                _api,
+                                api,
                                 "EncointerBalances",
                                 "transfer_all",
                                 to.clone(),
                                 cid
                             );
-                            ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
-                            _api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap()
+                            ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
+                            api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {
                             error!("No cid specified");
@@ -482,11 +483,12 @@ fn main() {
                     let signer = matches.signer_arg()
                         .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
 
-                    let mut api = get_chain_api(matches).set_signer(signer);
+                    let mut api = get_chain_api(matches);
+                    api.set_signer(signer);
 
 
                     // ------- create calls for xt's
-                    let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, &api.metadata));
+                    let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, &api.metadata()));
                     // only the first meetup location has been registered now. register all others one-by-one
                     let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata(), cid, l)).collect();
                     let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(&api.metadata(), add_location_calls));
@@ -494,7 +496,7 @@ fn main() {
 
                     if matches.signer_arg().is_none() {
                         // return calls as `OpaqueCall`s to get the same return type in both branches
-                        (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata) {
+                        (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata()) {
                             let sudo_new_community = sudo_call(&api.metadata(), new_community_call);
                             let sudo_add_location_batch = sudo_call(&api.metadata(), add_location_batch_call);
                             info!("Printing raw sudo calls for js/apps for cid: {}", cid);
@@ -517,7 +519,7 @@ fn main() {
 
                     // ---- send xt's to chain
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                     send_and_wait_for_in_block(&api, xt(&api, new_community_call), matches.tx_payment_cid_arg());
                     println!("{cid}");
@@ -555,7 +557,7 @@ fn main() {
                         let signer = matches.signer_arg()
                             .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
                         info!("signer ss58 is {}", signer.public().to_ss58check());
-                        api = api.set_signer(signer);
+                        api.set_signer(signer);
                     }
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
@@ -676,8 +678,8 @@ fn main() {
                     let signer = matches.signer_arg()
                         .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
 
-                    let mut api = get_chain_api(matches)
-                        .set_signer(signer);
+                    let mut api = get_chain_api(matches);
+                    api.set_signer(signer);
                     let next_phase_call = compose_call!(
                         &api.metadata(),
                         "EncointerScheduler",
@@ -685,7 +687,7 @@ fn main() {
                     );
 
                     // return calls as `OpaqueCall`s to get the same return type in both branches
-                    let next_phase_call = if contains_sudo_pallet(&api.metadata) {
+                    let next_phase_call = if contains_sudo_pallet(&api.metadata()) {
                         let sudo_next_phase_call = sudo_call(&api.metadata(), next_phase_call);
                         info!("Printing raw sudo call for js/apps:");
                         print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
@@ -702,7 +704,7 @@ fn main() {
                     };
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                     send_and_wait_for_in_block(&api, xt(&api, next_phase_call), tx_payment_cid_arg);
 
@@ -959,21 +961,22 @@ fn main() {
                         error!("wrong ceremony phase for registering participant");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    let mut _api = api.set_signer(sr25519_core::Pair::from(signer));
+                    let mut api = api;
+                    api.set_signer(sr25519_core::Pair::from(signer));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
-                        _api,
+                        api,
                         "EncointerCeremonies",
                         "register_participant",
                         cid,
                         proof
                     );
-                    ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
+                    ensure_payment(&_api, xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
-                    let _ = _api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
+                    let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
@@ -1022,21 +1025,22 @@ fn main() {
                         },
                     };
 
-                    let mut _api = api.set_signer(sr25519_core::Pair::from(signer));
+                    let mut api = api;
+                    api.set_signer(sr25519_core::Pair::from(signer));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
-                        _api,
+                        api,
                         "EncointerCeremonies",
                         "upgrade_registration",
                         cid,
                         proof
                     );
-                    ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
+                    ensure_payment(&_api, xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
-                    let _ = _api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
+                    let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
@@ -1095,7 +1099,7 @@ fn main() {
                         cid,
                         cc
                     );
-                    ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                    ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
                     let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
@@ -1219,7 +1223,7 @@ fn main() {
                         attestees
                     );
 
-                    ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                    ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
                     let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
 
                     println!("Claims sent by {}. status: 'ready'", who.public());
@@ -1584,7 +1588,7 @@ fn listen(matches: &ArgMatches<'_>) {
 	let (events_in, events_out) = channel();
 	let mut count = 0u32;
 	let mut blocks = 0u32;
-	api.subscribe_events(events_in).unwrap();
+	api.subscribe_events().unwrap();
 	loop {
 		if matches.is_present("events") &&
 			count >= value_t!(matches.value_of("events"), u32).unwrap()
