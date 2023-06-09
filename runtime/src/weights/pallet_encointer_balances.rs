@@ -32,7 +32,7 @@ impl<T: frame_system::Config> pallet_encointer_balances::WeightInfo for WeightIn
 	// Storage: EncointerBalances DemurragePerBlock (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		Weight::from_ref_time(113_000_000)
+		Weight::from_parts(113_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
@@ -40,13 +40,13 @@ impl<T: frame_system::Config> pallet_encointer_balances::WeightInfo for WeightIn
 	// Storage: EncointerBalances DemurragePerBlock (r:1 w:0)
 	// Storage: System Account (r:2 w:2)
 	fn transfer_all() -> Weight {
-		Weight::from_ref_time(158_000_000)
+		Weight::from_parts(158_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(4))
 	}
 
 	fn set_fee_conversion_factor() -> Weight {
-		Weight::from_ref_time(6_000_000)
+		Weight::from_parts(6_000_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }

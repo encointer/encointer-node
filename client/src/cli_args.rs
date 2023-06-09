@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches};
-use substrate_api_client::{FromHexString, Hash};
+use sp_core::H256 as Hash;
 
 const ACCOUNT_ARG: &str = "accountid";
 const SEED_ARG: &str = "seed";

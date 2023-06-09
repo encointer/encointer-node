@@ -2,8 +2,7 @@ use codec::{Decode, Encode};
 use encointer_node_notee_runtime::{Address, Hash, Index, Signature};
 use encointer_primitives::communities::CommunityIdentifier;
 use substrate_api_client::{
-	ExtrinsicParams, GenericAdditionalParams, GenericExtrinsicParams, GenericSignedExtra,
-	UncheckedExtrinsicV4,
+	GenericAdditionalParams, GenericExtrinsicParams, GenericSignedExtra, UncheckedExtrinsicV4,
 };
 
 /// A struct representing the signed extra and additional parameters required

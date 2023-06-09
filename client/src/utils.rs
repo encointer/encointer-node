@@ -7,7 +7,7 @@ use log::{debug, error, info};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, Metadata,
+	api::error::Error as ApiClientError, compose_call, compose_extrinsic_offline, Metadata, Result,
 	XtStatus,
 };
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
@@ -100,7 +100,7 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
+pub fn ensure_payment(api: &Api, xt_encoded: Vec<u8>, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
 		ensure_payment_cc(api, cid_str, xt);
 	} else {
@@ -108,11 +108,11 @@ pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
 	}
 }
 
-fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
+fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Vec<u8>) {
 	let balance: BalanceType =
 		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
 
-	let fee: BalanceType = get_asset_fee_details(api, cid_str, xt)
+	let fee: BalanceType = get_asset_fee_details(api, cid_str, encoded_xt)
 		.unwrap()
 		.inclusion_fee
 		.map(|details| details.base_fee.into_u256().as_u128())
@@ -126,7 +126,7 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
 	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
 }
 
-fn ensure_payment_native(api: &Api, xt: &str) {
+fn ensure_payment_native(api: &Api, encoded_xt: Vec<u8>) {
 	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
 		Some(bal) => bal.free,
 		None => {
@@ -135,7 +135,7 @@ fn ensure_payment_native(api: &Api, xt: &str) {
 		},
 	};
 	let fee = api
-		.get_fee_details(xt, None)
+		.get_fee_details(xt.into(), None)
 		.unwrap()
 		.unwrap()
 		.inclusion_fee

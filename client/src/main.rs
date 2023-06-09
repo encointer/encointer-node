@@ -63,14 +63,15 @@ use serde_json::{json, to_value};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
-use sp_keystore::SyncCryptoStore;
+use sp_keystore::KeystoreExt;
 use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
-	compose_call, compose_extrinsic, compose_extrinsic_offline, rpc::WsRpcClient,
-	utils::FromHexString, ApiClientError, ApiResult, Events, GenericAddress, Metadata, XtStatus,
+	api::error::Error as ApiClientError, compose_call, compose_extrinsic,
+	compose_extrinsic_offline, rpc::WsRpcClient, Events, GetStorage, Metadata, Result as ApiResult,
+	SubmitAndWatch, XtStatus,
 };
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+use substrate_client_keystore::LocalKeystore;
 
 use pallet_transaction_payment::FeeDetails;
 use sp_rpc::number::NumberOrHex;
@@ -2000,17 +2001,18 @@ fn apply_demurrage(
 fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result<(), ()> {
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
-	let mut api = get_chain_api(matches).set_signer(business_owner.clone().into());
+	let mut api = get_chain_api(matches);
+	api.set_signer(business_owner.clone().into());
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-	api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 	let xt: EncointerXt<_> =
 		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid);
-	ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+	ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
 	// send and watch extrinsic until finalized
-	let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+	let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
 	println!("{} for {}. xt-status: 'ready'", bazaar_call.to_string(), business_owner.public());
 	Ok(())
 }
@@ -2023,29 +2025,24 @@ fn endorse_newcomers(
 	let bootstrapper = matches.bootstrapper_arg().map(get_pair_from_str).unwrap();
 	let endorsees = matches.endorsees_arg().expect("Please supply at least one endorsee");
 
-	api.signer = Some(bootstrapper.into());
+	api.set_signer(bootstrapper.into());
 
 	let mut nonce = api.get_nonce()?;
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-	let updated_api = set_api_extrisic_params_builder(api.clone(), tx_payment_cid_arg);
+	set_api_extrisic_params_builder(api, tx_payment_cid_arg);
 
 	for e in endorsees.into_iter() {
 		let endorsee = get_accountid_from_str(e);
 
-		let call = compose_call!(
-			updated_api.metadata,
-			"EncointerCeremonies",
-			"endorse_newcomer",
-			cid,
-			endorsee
-		);
+		let call =
+			compose_call!(api.metadata(), "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
 
-		let xt = offline_xt(&updated_api, call, nonce);
+		let xt = offline_xt(&api, call, nonce);
 
-		ensure_payment(&updated_api, &xt.hex_encode(), tx_payment_cid_arg);
+		ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
 
-		let _tx_hash = updated_api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+		let _tx_hash = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
 
 		nonce += 1;
 	}
@@ -2117,7 +2114,7 @@ impl ToString for BazaarCalls {
 	}
 }
 
-fn set_api_extrisic_params_builder(api: Api, tx_payment_cid_arg: Option<&str>) -> Api {
+fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&str>) {
 	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
 	if let Some(tx_payment_cid) = tx_payment_cid_arg {
 		tx_params = tx_params.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(
@@ -2126,5 +2123,5 @@ fn set_api_extrisic_params_builder(api: Api, tx_payment_cid_arg: Option<&str>) -
 			None,
 		)));
 	}
-	api.set_extrinsic_params_builder(tx_params)
+	&api.set_additional_params(tx_params);
 }
