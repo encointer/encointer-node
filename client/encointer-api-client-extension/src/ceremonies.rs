@@ -11,7 +11,10 @@ use encointer_primitives::{
 };
 use log::warn;
 use serde::{Deserialize, Serialize};
-use substrate_api_client::{AccountId, ApiClientError, Moment};
+
+use sp_runtime::AccountId32 as AccountId;
+use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
+pub type Moment = u64;
 
 pub const ENCOINTER_CEREMONIES: &str = "EncointerCeremonies";
 

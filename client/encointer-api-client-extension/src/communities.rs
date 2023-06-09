@@ -1,7 +1,7 @@
 use crate::{Api, Result};
 use encointer_primitives::communities::{CommunityIdentifier, Location};
 use serde_json::json;
-use substrate_api_client::ApiClientError;
+use substrate_api_client::api::error::Error as ApiClientError;
 
 pub trait CommunitiesApi {
 	fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>>;

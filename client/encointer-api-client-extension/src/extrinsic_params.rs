@@ -1,20 +1,22 @@
 use codec::{Decode, Encode};
+use encointer_node_notee_runtime::{Address, Hash, Index, Signature};
 use encointer_primitives::communities::CommunityIdentifier;
 use substrate_api_client::{
-	BaseExtrinsicParams, BaseExtrinsicParamsBuilder, SubstrateDefaultSignedExtra,
+	ExtrinsicParams, GenericAdditionalParams, GenericExtrinsicParams, GenericSignedExtra,
 	UncheckedExtrinsicV4,
 };
 
 /// A struct representing the signed extra and additional parameters required
 /// to construct a transaction and pay in asset fees
-pub type CommunityCurrencyTipExtrinsicParams = BaseExtrinsicParams<CommunityCurrencyTip>;
+pub type CommunityCurrencyTipExtrinsicParams =
+	GenericExtrinsicParams<CommunityCurrencyTip, Index, Hash>;
 /// A builder which leads to [`CommunityCurrencyTipExtrinsicParams`] being constructed.
 /// This is what you provide to methods like `sign_and_submit()`.
 pub type CommunityCurrencyTipExtrinsicParamsBuilder =
-	BaseExtrinsicParamsBuilder<CommunityCurrencyTip>;
+	GenericAdditionalParams<CommunityCurrencyTip, Hash>;
 
 pub type EncointerXt<Call> =
-	UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<CommunityCurrencyTip>>;
+	UncheckedExtrinsicV4<Address, Call, Signature, GenericSignedExtra<CommunityCurrencyTip, Index>>;
 
 /// A tip payment made in the form of a specific asset.
 #[derive(Copy, Clone, Debug, Default, Decode, Encode, Eq, PartialEq)]
