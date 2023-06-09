@@ -488,15 +488,15 @@ fn main() {
                     // ------- create calls for xt's
                     let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, &api.metadata));
                     // only the first meetup location has been registered now. register all others one-by-one
-                    let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata, cid, l)).collect();
-                    let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(&api.metadata, add_location_calls));
+                    let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(&api.metadata(), cid, l)).collect();
+                    let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(&api.metadata(), add_location_calls));
 
 
                     if matches.signer_arg().is_none() {
                         // return calls as `OpaqueCall`s to get the same return type in both branches
                         (new_community_call, add_location_batch_call) = if contains_sudo_pallet(&api.metadata) {
-                            let sudo_new_community = sudo_call(&api.metadata, new_community_call);
-                            let sudo_add_location_batch = sudo_call(&api.metadata, add_location_batch_call);
+                            let sudo_new_community = sudo_call(&api.metadata(), new_community_call);
+                            let sudo_add_location_batch = sudo_call(&api.metadata(), add_location_batch_call);
                             info!("Printing raw sudo calls for js/apps for cid: {}", cid);
                             print_raw_call("sudo(new_community)", &sudo_new_community);
                             print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
@@ -506,8 +506,8 @@ fn main() {
                         } else {
                             let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
                             info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-                            let propose_new_community = collective_propose_call(&api.metadata, threshold, new_community_call);
-                            let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_batch_call);
+                            let propose_new_community = collective_propose_call(&api.metadata(), threshold, new_community_call);
+                            let propose_add_location_batch = collective_propose_call(&api.metadata(), threshold, add_location_batch_call);
                             print_raw_call("collective_propose(new_community)", &propose_new_community);
                             print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
 
@@ -679,14 +679,14 @@ fn main() {
                     let mut api = get_chain_api(matches)
                         .set_signer(signer);
                     let next_phase_call = compose_call!(
-                        &api.metadata,
+                        &api.metadata(),
                         "EncointerScheduler",
                         "next_phase"
                     );
 
                     // return calls as `OpaqueCall`s to get the same return type in both branches
                     let next_phase_call = if contains_sudo_pallet(&api.metadata) {
-                        let sudo_next_phase_call = sudo_call(&api.metadata, next_phase_call);
+                        let sudo_next_phase_call = sudo_call(&api.metadata(), next_phase_call);
                         info!("Printing raw sudo call for js/apps:");
                         print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
 
@@ -695,7 +695,7 @@ fn main() {
                     } else {
                         let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
                         info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-                        let propose_next_phase = collective_propose_call(&api.metadata, threshold, next_phase_call);
+                        let propose_next_phase = collective_propose_call(&api.metadata(), threshold, next_phase_call);
                         print_raw_call("collective_propose(next_phase)", &propose_next_phase);
 
                         OpaqueCall::from_tuple(&propose_next_phase)
@@ -1081,21 +1081,23 @@ fn main() {
                         error!("wrong ceremony phase for unregistering");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    let mut _api = api.set_signer(sr25519_core::Pair::from(signer));
+                    let mut _api = api;
+                    api.
+                    set_signer(sr25519_core::Pair::from(signer));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    _api = set_api_extrisic_params_builder(_api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut _api, tx_payment_cid_arg);
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
-                        _api,
+                        api,
                         "EncointerCeremonies",
                         "unregister_participant",
                         cid,
                         cc
                     );
-                    ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
+                    ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
-                    let _ = _api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
+                    let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
@@ -1194,10 +1196,12 @@ fn main() {
 
                     info!("send attest_attendees by {}", who.public());
 
-                    let mut api = get_chain_api(matches).set_signer(who.clone().into());
+                    let mut api =
+                     get_chain_api(matches);
+                     api.set_signer(who.clone().into());
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                     let cid = verify_cid(&api,
                                          matches
@@ -1275,11 +1279,12 @@ fn main() {
                                 Some(sig) => get_pair_from_str(sig),
                                 None => panic!("please specify --signer.")
                             };
-                            let mut api = api.set_signer(signer.clone().into());
+                            let mut api = api;
+                            api.set_signer(signer.clone().into());
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                             let meetup_index_arg = matches.meetup_index_arg();
-                            api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                            set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                             if matches.all_flag() {
                                 let mut cindex = get_ceremony_index(&api);
@@ -1291,7 +1296,7 @@ fn main() {
                                 .unwrap().unwrap_or(0u64);
                                 let calls: Vec<_> = (1u64..=meetup_count)
                                 .map(|idx| compose_call!(
-                                    api.metadata,
+                                    api.metadata(),
                                     ENCOINTER_CEREMONIES,
                                     "claim_rewards",
                                     cid,
@@ -1299,7 +1304,7 @@ fn main() {
                                 ))
                                 .collect();
                                 let batch_call = compose_call!(
-                                    api.metadata,
+                                    api.metadata(),
                                     "Utility",
                                     "batch",
                                     calls
@@ -1466,20 +1471,20 @@ fn main() {
 
                     let calls: Vec<_> = (from_cindex..=to_cindex)
                         .map(|idx| compose_call!(
-                            api.metadata,
+                            api.metadata(),
                             "EncointerCeremonies",
                             "purge_community_ceremony",
                             (cid, idx)
                         ))
                         .collect();
                     let batch_call = compose_call!(
-                        api.metadata,
+                        api.metadata(),
                         "Utility",
                         "batch",
                         calls
                     );
                     let unsigned_sudo_call = compose_call!(
-                        api.metadata,
+                        api.metadata(),
                         "Sudo",
                         "sudo",
                         batch_call.clone()
@@ -1487,14 +1492,14 @@ fn main() {
                     info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
                         "Sudo",
                         "sudo",
                         batch_call
                     );
-                    ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                    ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
                     let tx_hash = api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     Ok(())
