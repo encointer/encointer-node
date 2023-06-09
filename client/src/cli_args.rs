@@ -323,6 +323,6 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(MEETUP_INDEX_ARG).map(|v| v.parse().unwrap())
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
-		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_hex(hex.to_string()).unwrap())
+		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_slice(hex.as_bytes()))
 	}
 }

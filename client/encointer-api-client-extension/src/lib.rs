@@ -1,12 +1,15 @@
 use sp_core::sr25519;
-use substrate_api_client::rpc::WsRpcClient;
+use sp_runtime::MultiSignature;
+use substrate_api_client::{rpc::WsRpcClient, StaticExtrinsicSigner};
 
 pub use substrate_api_client::{api::error::Error as ApiClientError, Result};
 
 pub use encointer_node_notee_runtime::Runtime;
 
+pub type ParentchainExtrinsicSigner = StaticExtrinsicSigner<sp_core::sr25519::Pair, MultiSignature>;
+
 pub type Api = substrate_api_client::Api<
-	sr25519::Pair,
+	ParentchainExtrinsicSigner,
 	WsRpcClient,
 	extrinsic_params::CommunityCurrencyTipExtrinsicParams,
 	Runtime,

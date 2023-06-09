@@ -41,7 +41,8 @@ use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
 	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
-	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, SchedulerApi, ENCOINTER_CEREMONIES,
+	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ParentchainExtrinsicSigner,
+	SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Header, Moment, RuntimeEvent,
@@ -58,18 +59,21 @@ use encointer_primitives::{
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
+use hex::FromHex;
 use log::*;
 use serde_json::{json, to_value};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
-use sp_keystore::KeystoreExt;
+use sp_keystore::Keystore;
+//use sp_keystore::KeystoreExt;
 use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	api::error::Error as ApiClientError, compose_call, compose_extrinsic,
-	compose_extrinsic_offline, rpc::WsRpcClient, Events, GetStorage, Metadata, Result as ApiResult,
-	SubmitAndWatch, XtStatus,
+	compose_extrinsic_offline, rpc::WsRpcClient, Events, GetAccountInformation, GetBalance,
+	GetHeader, GetStorage, GetTransactionPayment, Metadata, Result as ApiResult, SubmitAndWatch,
+	SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::LocalKeystore;
 
@@ -176,7 +180,7 @@ fn main() {
             Command::new("print-metadata")
                 .description("query node metadata and print it as json to stdout")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let meta = get_chain_api(matches).get_metadata().unwrap();
+                    let meta = get_chain_api(matches).metadata();
                     println!("Metadata:\n {}", Metadata::pretty_format(&meta).unwrap());
                     Ok(())
                 }),
@@ -189,8 +193,10 @@ fn main() {
                     .fundees_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let mut api = get_chain_api(matches)
-                        .set_signer(AccountKeyring::Alice.pair());
+                    let mut api = get_chain_api(matches);
+                    api
+                    .set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
+                        AccountKeyring::Alice)));
                     let accounts = matches.fundees_arg().unwrap();
 
                     let existential_deposit = api.get_existential_deposit().unwrap();
@@ -201,12 +207,12 @@ fn main() {
                     let amount = reasonable_native_balance(&api);
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                     for account in accounts.into_iter() {
                         let to = get_accountid_from_str(account);
                         let call = compose_call!(
-                            api.metadata,
+                            api.metadata(),
                             "Balances",
                             "transfer",
                             GenericAddress::Id(to.clone()),
@@ -217,11 +223,11 @@ fn main() {
                             call.clone(),
                             api.extrinsic_params(nonce)
                         );
-                        ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                        ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
                         // send and watch extrinsic until finalized
                         println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
                         let _blockh = api
-                            .send_extrinsic(xt.hex_encode(), XtStatus::Ready)
+                            .send_extrinsic(xt.encode(), XtStatus::Ready)
                             .unwrap();
                         nonce += 1;
                     }
@@ -343,8 +349,8 @@ fn main() {
                                 println!("0x{}", hex::encode(xt.function.encode()));
                                 None
                             } else {
-                                ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
-                                api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                                ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                                api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap()
                             }
                         },
                         None => {
@@ -358,8 +364,8 @@ fn main() {
                                 println!("0x{}", hex::encode(xt.function.encode()));
                                 None
                             } else {
-                                ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
-                                api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                                ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                                api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap()
                             }
                         }
                     };
@@ -413,8 +419,8 @@ fn main() {
                                 to.clone(),
                                 cid
                             );
-                            ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
-                            _api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap()
+                            ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
+                            _api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap()
                         },
                         None => {
                             error!("No cid specified");
@@ -559,26 +565,26 @@ fn main() {
                     let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
                                                                                   {
                                                                                       info!("adding location {:?}", l);
-                                                                                      add_location_call(&api.metadata, cid, l)
+                                                                                      add_location_call(&api.metadata(), cid, l)
                                                                                   }
                         ).collect();
 
                     let mut add_location_maybe_batch_call = match  add_location_calls.as_slice() {
                         [call] => OpaqueCall::from_tuple(call),
-                        _ => OpaqueCall::from_tuple(&batch_call(&api.metadata, add_location_calls.clone()))
+                        _ => OpaqueCall::from_tuple(&batch_call(&api.metadata(), add_location_calls.clone()))
                     };
 
                     if matches.signer_arg().is_none() {
                         // return calls as `OpaqueCall`s to get the same return type in both branches
-                        add_location_maybe_batch_call = if contains_sudo_pallet(&api.metadata) {
-                            let sudo_add_location_batch = sudo_call(&api.metadata, add_location_maybe_batch_call);
+                        add_location_maybe_batch_call = if contains_sudo_pallet(&api.metadata()) {
+                            let sudo_add_location_batch = sudo_call(&api.metadata(), add_location_maybe_batch_call);
                             info!("Printing raw sudo calls for js/apps for cid: {}", cid);
                             print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
                             OpaqueCall::from_tuple(&sudo_add_location_batch)
                         } else {
                             let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
                             info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-                            let propose_add_location_batch = collective_propose_call(&api.metadata, threshold, add_location_maybe_batch_call);
+                            let propose_add_location_batch = collective_propose_call(&api.metadata(), threshold, add_location_maybe_batch_call);
                             print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
                             OpaqueCall::from_tuple(&propose_add_location_batch)
                         };
@@ -965,9 +971,9 @@ fn main() {
                         cid,
                         proof
                     );
-                    ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
+                    ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
-                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    let _ = _api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
@@ -1028,9 +1034,9 @@ fn main() {
                         cid,
                         proof
                     );
-                    ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
+                    ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
-                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    let _ = _api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
@@ -1087,9 +1093,9 @@ fn main() {
                         cid,
                         cc
                     );
-                    ensure_payment(&_api, &xt.hex_encode(), tx_payment_cid_arg);
+                    ensure_payment(&_api, &xt.encode(), tx_payment_cid_arg);
                     // send and watch extrinsic until finalized
-                    let _ = _api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    let _ = _api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                     info!("Upgrade registration sent for {}. status: 'ready'", arg_who);
                     Ok(())
                 }),
@@ -1209,8 +1215,8 @@ fn main() {
                         attestees
                     );
 
-                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
-                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                    ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                    let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
 
                     println!("Claims sent by {}. status: 'ready'", who.public());
                     Ok(())
@@ -1309,8 +1315,8 @@ fn main() {
                                     cid,
                                     meetup_index
                                 );
-                                ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
-                                let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+                                ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                                let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
                                 match meetup_index_arg {
                                     Some(idx)=>{println!("Claiming reward for meetup_index {idx}. xt-status: 'ready'");}
                                     None=>{println!("Claiming reward for {}. xt-status: 'ready'", signer.public());}
@@ -1436,7 +1442,8 @@ fn main() {
                     })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let sudoer = AccountKeyring::Alice.pair();
-                    let mut api = get_chain_api(matches).set_signer(sudoer);
+                    let mut api = get_chain_api(matches);
+                    api.set_signer(sudoer);
 
                     let current_ceremony_index = get_ceremony_index(&api);
 
@@ -1487,8 +1494,8 @@ fn main() {
                         "sudo",
                         batch_call
                     );
-                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
-                    let tx_hash = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+                    ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+                    let tx_hash = api.send_extrinsic(xt.encode(), XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
                     Ok(())
                 }),
@@ -1502,33 +1509,35 @@ fn main() {
                         .time_offset_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let mut api = get_chain_api(matches)
+                    let mut api = get_chain_api(matches); 
+                    api
                         .set_signer(AccountKeyring::Alice.pair());
                     let time_offset = matches.time_offset_arg().unwrap_or(0);
                     let call = compose_call!(
-                        &api.metadata,
+                        &api.metadata(),
                         "EncointerCeremonies",
                         "set_meetup_time_offset",
                         time_offset
                     );
 
                     // return calls as `OpaqueCall`s to get the same return type in both branches
-                    let privileged_call = if contains_sudo_pallet(&api.metadata) {
-                        let sudo_call = sudo_call(&api.metadata, call);
+                    let privileged_call = if contains_sudo_pallet(&api.metadata()) {
+                        let sudo_call = sudo_call(&api.metadata(), call);
                         info!("Printing raw sudo call for js/apps:");
                         print_raw_call("sudo(...)", &sudo_call);
                         OpaqueCall::from_tuple(&sudo_call)
                     } else {
                         let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
                         info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-                        let propose_call = collective_propose_call(&api.metadata, threshold, call);
+                        let propose_call = collective_propose_call(&api.metadata(), threshold, call);
                         print_raw_call("collective_propose(...)", &propose_call);
                         OpaqueCall::from_tuple(&propose_call)
                     };
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
-                    send_and_wait_for_in_block(&api, xt(&api, privileged_call), tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+                    let xt = xt(&api, privileged_call);
+                    send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg);
                     Ok(())
                 }),
         )
@@ -1547,14 +1556,14 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 		matches.value_of("node-port").unwrap()
 	);
 	debug!("connecting to {}", url);
-	let client = WsRpcClient::new(&url);
+	let client = WsRpcClient::new(&url).expect("node URL is incorrect");
 	Api::new(client).unwrap()
 }
 
 fn reasonable_native_balance(api: &Api) -> u128 {
 	let xt = api.balance_transfer(GenericAddress::Id(AccountKeyring::Alice.into()), 9999);
 	let fee = api
-		.get_fee_details(&xt.hex_encode(), None)
+		.get_fee_details(&xt.encode(), None)
 		.unwrap()
 		.unwrap()
 		.inclusion_fee
@@ -1665,7 +1674,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								let event_records = vec![evr];
 
 								let decoded_event = Events::new(
-									api.metadata.clone(),
+									api.metadata().clone(),
 									Hash::default(),
 									event_records.encode(),
 								)
@@ -2002,7 +2011,9 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
 	let mut api = get_chain_api(matches);
-	api.set_signer(business_owner.clone().into());
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
+		business_owner.clone(),
+	)));
 	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
@@ -2010,9 +2021,9 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result
 	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 	let xt: EncointerXt<_> =
 		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid);
-	ensure_payment(&api, &xt.encode(), tx_payment_cid_arg);
+	ensure_payment(&api, xt.encode(), tx_payment_cid_arg);
 	// send and watch extrinsic until finalized
-	let _ = api.send_extrinsic(xt.encode(), XtStatus::Ready).unwrap();
+	let _ = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
 	println!("{} for {}. xt-status: 'ready'", bazaar_call.to_string(), business_owner.public());
 	Ok(())
 }
@@ -2025,7 +2036,7 @@ fn endorse_newcomers(
 	let bootstrapper = matches.bootstrapper_arg().map(get_pair_from_str).unwrap();
 	let endorsees = matches.endorsees_arg().expect("Please supply at least one endorsee");
 
-	api.set_signer(bootstrapper.into());
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(bootstrapper)));
 
 	let mut nonce = api.get_nonce()?;
 

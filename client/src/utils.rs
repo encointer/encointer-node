@@ -7,12 +7,13 @@ use log::{debug, error, info};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	api::error::Error as ApiClientError, compose_call, compose_extrinsic_offline, Metadata, Result,
-	XtStatus,
+	api::error::Error as ApiClientError, compose_call, compose_extrinsic_offline,
+	GetAccountInformation, GetBalance, GetStorage, GetTransactionPayment, Metadata, Result,
+	SubmitAndWatch, XtStatus,
 };
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
 pub fn offline_xt<C: Encode + Clone>(api: &Api, call: C, nonce: u32) -> EncointerXt<C> {
-	compose_extrinsic_offline!(api.clone().signer.unwrap(), call, api.extrinsic_params(nonce))
+	compose_extrinsic_offline!(api.clone().signer().unwrap(), call, api.extrinsic_params(nonce))
 }
 
 /// Creates a signed extrinsic from a call
@@ -60,24 +61,27 @@ pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
-pub fn send_and_wait_for_in_block<C: Encode>(
+pub fn send_and_wait_for_in_block<C: Encode + Clone>(
 	api: &Api,
 	xt: EncointerXt<C>,
 	tx_payment_cid: Option<&str>,
 ) -> Option<H256> {
-	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode(), tx_payment_cid)
+	send_xt_hex_and_wait_for_in_block(api, xt, tx_payment_cid)
 }
 
-pub fn send_xt_hex_and_wait_for_in_block(
+pub fn send_xt_hex_and_wait_for_in_block<C>(
 	api: &Api,
-	xt_hex: String,
+	xt: EncointerXt<C>,
 	tx_payment_cid: Option<&str>,
-) -> Option<H256> {
-	ensure_payment(api, &xt_hex, tx_payment_cid);
-	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
+) -> Option<H256>
+where
+	C: Clone + Encode,
+{
+	ensure_payment(api, xt.encode(), tx_payment_cid);
+	let tx_hash = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
-	tx_hash
+	Some(tx_hash.extrinsic_hash)
 }
 
 /// Prints the raw call to be supplied with js/apps.
@@ -100,11 +104,11 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, xt_encoded: Vec<u8>, tx_payment_cid: Option<&str>) {
+pub fn ensure_payment(api: &Api, encoded_xt: Vec<u8>, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
-		ensure_payment_cc(api, cid_str, xt);
+		ensure_payment_cc(api, cid_str, encoded_xt);
 	} else {
-		ensure_payment_native(api, xt);
+		ensure_payment_native(api, encoded_xt);
 	}
 }
 
