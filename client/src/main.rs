@@ -1602,10 +1602,9 @@ fn reasonable_native_balance(api: &Api) -> u128 {
 fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches);
 	debug!("Subscribing to events");
-	let (events_in, events_out) = channel();
+    let mut subscription = api.subscribe_events().unwrap();
 	let mut count = 0u32;
 	let mut blocks = 0u32;
-	api.subscribe_events().unwrap();
 	loop {
 		if matches.is_present("events") &&
 			count >= value_t!(matches.value_of("events"), u32).unwrap()
@@ -1617,12 +1616,9 @@ fn listen(matches: &ArgMatches<'_>) {
 		{
 			return
 		};
-		let event_str = events_out.recv().unwrap();
-		let _unhex = Vec::from_hex(event_str).unwrap();
-		let mut _er_enc = _unhex.as_slice();
-		let _events = Vec::<frame_system::EventRecord<RuntimeEvent, Hash>>::decode(&mut _er_enc);
+        let event_results = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
 		blocks += 1;
-		match _events {
+		match event_results {
 			Ok(evts) =>
 				for evr in evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
