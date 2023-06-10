@@ -115,8 +115,9 @@ pub fn ensure_payment(api: &Api, encoded_xt: Vec<u8>, tx_payment_cid: Option<&st
 fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Vec<u8>) {
 	let balance: BalanceType =
 		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
+	let encoded_xt = hex::encode(encoded_xt);
 
-	let fee: BalanceType = get_asset_fee_details(api, cid_str, encoded_xt)
+	let fee: BalanceType = get_asset_fee_details(api, cid_str, &encoded_xt)
 		.unwrap()
 		.inclusion_fee
 		.map(|details| details.base_fee.into_u256().as_u128())
@@ -139,7 +140,7 @@ fn ensure_payment_native(api: &Api, encoded_xt: Vec<u8>) {
 		},
 	};
 	let fee = api
-		.get_fee_details(xt.into(), None)
+		.get_fee_details(encoded_xt.into(), None)
 		.unwrap()
 		.unwrap()
 		.inclusion_fee

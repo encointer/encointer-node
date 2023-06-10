@@ -2033,6 +2033,7 @@ dependencies = [
  "pallet-encointer-scheduler",
  "pallet-transaction-payment",
  "parity-scale-codec",
+ "serde",
  "serde_json",
  "sp-application-crypto",
  "sp-core",
