@@ -73,9 +73,9 @@ use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
 	api::error::Error as ApiClientError, compose_call, compose_extrinsic,
-	compose_extrinsic_offline, rpc::WsRpcClient, Events, GetAccountInformation, GetBalance,
+	compose_extrinsic_offline, rpc::{WsRpcClient, Request}, Events, GetAccountInformation, GetBalance,
 	GetHeader, GetStorage, GetTransactionPayment, Metadata, Result as ApiResult, SubmitAndWatch,
-	SubscribeEvents, XtStatus, FetchEvents, extrinsic::BalancesExtrinsics, SignExtrinsic,
+	SubscribeEvents, XtStatus, FetchEvents, extrinsic::BalancesExtrinsics, SignExtrinsic, RpcParams,
 };
 use substrate_client_keystore::LocalKeystore;
 
@@ -221,7 +221,7 @@ fn main() {
                             api.metadata(),
                             "Balances",
                             "transfer",
-                            to,
+                            to.clone(),
                             Compact(amount)
                         );
                         let xt: EncointerXt<_> = compose_extrinsic_offline!(
@@ -364,7 +364,7 @@ fn main() {
                             let amount = matches.value_of("amount").unwrap().parse::<u128>()
                                 .expect("amount can be converted to u128");
                             let xt = api.balance_transfer_allow_death(
-                                sp_runtime::MultiAddress::Id(to),
+                                sp_runtime::MultiAddress::Id(to.clone()),
                                 amount
                             );
                             if matches.dryrun_flag() {
@@ -1098,12 +1098,12 @@ fn main() {
                         error!("wrong ceremony phase for unregistering");
                         std::process::exit(exit_code::WRONG_PHASE);
                     }
-                    let mut _api = api;
+                    let mut api = api;
                     let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-                    _api.set_signer(signer);
+                    api.set_signer(signer);
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                    set_api_extrisic_params_builder(&mut _api, tx_payment_cid_arg);
+                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
@@ -1299,7 +1299,7 @@ fn main() {
                             };
                             let mut api = api;
                             let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer.clone()));
-                            api.set_signer(signer);
+                            api.set_signer(signer.clone());
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                             let meetup_index_arg = matches.meetup_index_arg();
@@ -1869,40 +1869,29 @@ fn get_community_identifiers(
 
 /// This rpc needs to have offchain indexing enabled in the node.
 fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
-	let req = json!({
-		"method": "encointer_getAllCommunities",
-		"params": [],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
-
-	let n = api.get_request(req).unwrap().expect(
+	let n = api.client().request::<String>("encointer_getAllCommunities", RpcParams::new()).expect(
 		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
 	);
 	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
-	let req = json!({
-		"method": "encointer_bazaarGetBusinesses",
-		"params": vec![cid],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
+    let mut params = RpcParams::default();
+		params.insert(cid).map_err(|_| {
+			ApiClientError::Other(format!("Could not build the request using cid: {cid}").into())
+		}).unwrap();
 
-	let n = api.get_request(req).unwrap().expect("Could not find any businesses...");
+	let n = api.client().request::<String>("encointer_bazaarGetBusinesses", params).expect("Could not find any businesses...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
 fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
-	let req = json!({
-		"method": "encointer_bazaarGetOfferings",
-		"params": vec![cid],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
+    let mut params = RpcParams::default();
+		params.insert(cid).map_err(|_| {
+			ApiClientError::Other(format!("Could not build the request using cid: {cid}").into())
+		}).unwrap();
 
-	let n = api.get_request(req).unwrap().expect("Could not find any business offerings...");
+	let n = api.client().request::<String>("encointer_bazaarGetOfferings", params).expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
@@ -1912,15 +1901,13 @@ fn get_offerings_for_business(
 	account_id: AccountId,
 ) -> Option<Vec<OfferingData>> {
 	let b_id = BusinessIdentifier::new(cid, account_id);
+    let mut params = RpcParams::default();
+    params.insert(b_id.clone()).map_err(|_| {
+        ApiClientError::Other(format!("Could not build the request using b_id: {:#?}", b_id).into())
+    }).unwrap();
 
-	let req = json!({
-		"method": "encointer_bazaarGetOfferingsForBusiness",
-		"params": vec![to_value(b_id).unwrap()],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
 
-	let n = api.get_request(req).unwrap().expect("Could not find any business offerings...");
+	let n = api.client().request::<String>("encointer_bazaarGetOfferingsForBusiness", params).expect("Could not find any business offerings...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
@@ -1928,14 +1915,13 @@ fn get_reputation_history(
 	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
-	let req = json!({
-		"method": "encointer_getReputations",
-		"params": vec![account_id],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
+    let mut params = RpcParams::default();
+    params.insert(account_id).map_err(|_| {
+        ApiClientError::Other(format!("Could not build the request using account_id: {account_id}").into())
+    }).unwrap();
+	
 
-	let n = api.get_request(req).unwrap().expect("Could not query reputation history...");
+	let n = api.client().request::<String>("encointer_getReputations", params).expect("Could not query reputation history...");
 	Some(serde_json::from_str(&n).unwrap())
 }
 
@@ -1943,14 +1929,12 @@ fn get_all_balances(
 	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
-	let req = json!({
-		"method": "encointer_getAllBalances",
-		"params": vec![account_id],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
+    let mut params = RpcParams::default();
+    params.insert(account_id).map_err(|_| {
+        ApiClientError::Other(format!("Could not build the request using account_id: {account_id}").into())
+    }).unwrap();
 
-	let n = api.get_request(req).unwrap().unwrap(); //expect("Could not query all balances...");
+    let n = api.client().request::<String>("encointer_getAllBalances", params).expect("Could not query all balances...");
 
 	serde_json::from_str(&n).ok()
 }
@@ -1961,14 +1945,15 @@ fn get_asset_fee_details(
 	encoded_xt: &str,
 ) -> Option<FeeDetails<NumberOrHex>> {
 	let cid = verify_cid(api, cid_str, None);
-	let req = json!({
-		"method": "encointer_queryAssetFeeDetails",
-		"params": vec![to_value(cid).unwrap(), to_value(encoded_xt).unwrap()],
-		"jsonrpc": "2.0",
-		"id": "1",
-	});
+    let mut params = RpcParams::default();
+    params.insert(cid).map_err(|_| {
+        ApiClientError::Other(format!("Could not build the request using cid: {cid}").into())
+    }).unwrap();
+    params.insert(encoded_xt).map_err(|_| {
+        ApiClientError::Other(format!("Could not build the request using encoded_xt: {encoded_xt}").into())
+    }).unwrap();
 
-	let n = api.get_request(req).unwrap().expect("Could not query asset fee details");
+    let n = api.client().request::<String>("encointer_queryAssetFeeDetails", params).expect("Could not query asset fee details");
 
 	Some(serde_json::from_str(&n).unwrap())
 }
@@ -2156,5 +2141,5 @@ fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&st
 			None,
 		)));
 	}
-	&api.set_additional_params(tx_params);
+	let _ = &api.set_additional_params(tx_params);
 }
