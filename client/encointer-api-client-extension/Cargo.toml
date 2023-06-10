@@ -11,8 +11,8 @@ serde_json = { version = "1.0.79" }
 
 # encointer deps
 encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "szp/polkadot-v0.9.42" }
-encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "szp/polkadot-v0.9.42" }
 encointer-node-notee-runtime = { path = "../../runtime" }
+encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "szp/polkadot-v0.9.42" }
 
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.10.0", features = ["ws-client"] }
 # scs deps
