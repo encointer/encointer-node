@@ -39,7 +39,6 @@ use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
-use serde::Serialize;
 use encointer_api_client_extension::{
 	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
 	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ParentchainExtrinsicSigner,
@@ -60,22 +59,20 @@ use encointer_primitives::{
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
-use hex::FromHex;
 use log::*;
-use serde_json::{json, to_value};
-use sp_application_crypto::{ed25519, sr25519, KeyTypeId};
+use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_core::crypto::key_types::ACCOUNT;
 use sp_keyring::AccountKeyring;
 use sp_keystore::Keystore;
 //use sp_keystore::KeystoreExt;
 use sp_runtime::MultiSignature;
-use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::mpsc::channel};
+use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use substrate_api_client::{
 	api::error::Error as ApiClientError, compose_call, compose_extrinsic,
 	compose_extrinsic_offline, rpc::{WsRpcClient, Request}, Events, GetAccountInformation, GetBalance,
-	GetHeader, GetStorage, GetTransactionPayment, Metadata, Result as ApiResult, SubmitAndWatch,
-	SubscribeEvents, XtStatus, FetchEvents, extrinsic::BalancesExtrinsics, SignExtrinsic, RpcParams,
+	GetHeader, GetStorage, GetTransactionPayment, Result as ApiResult, SubmitAndWatch,
+	SubscribeEvents, XtStatus, extrinsic::BalancesExtrinsics, SignExtrinsic, RpcParams,
 };
 use substrate_client_keystore::LocalKeystore;
 
@@ -179,7 +176,7 @@ fn main() {
         .add_cmd(
             Command::new("print-metadata")
                 .description("query node metadata and print it as json to stdout")
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                .runner(|_args: &str, _matches: &ArgMatches<'_>| {
                     // Most likely upstream bug, because a trait bound is specified, but the struct does not derive it.
                     // let meta = get_chain_api(matches).metadata();
                     // let buf = Vec::new();

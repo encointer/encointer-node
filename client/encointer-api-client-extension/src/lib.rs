@@ -1,4 +1,3 @@
-use sp_core::sr25519;
 use sp_runtime::MultiSignature;
 use substrate_api_client::{rpc::WsRpcClient, StaticExtrinsicSigner};
 
