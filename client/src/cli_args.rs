@@ -323,6 +323,15 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(MEETUP_INDEX_ARG).map(|v| v.parse().unwrap())
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
-		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_slice(hex.as_bytes()))
+		self.value_of(AT_BLOCK_ARG).map(|hex| {
+			let hexstr = hex.to_string();
+			let hexstr = hexstr.trim_matches('\"').trim_start_matches("0x");
+			let vec =
+				hex::decode(hexstr).expect(&format!("hex::decode failed, data is: {:#?}", hexstr));
+			if vec.len() != 32 {
+				panic!("in at_block_arg fn, vec is: {:#?}", vec);
+			}
+			Hash::from_slice(&vec)
+		})
 	}
 }
