@@ -2004,7 +2004,7 @@ fn get_asset_fee_details(
 		})
 		.unwrap();
 	params
-		.insert(encoded_xt)
+		.insert(hex::decode(encoded_xt).expect("hex::decode failed"))
 		.map_err(|_| {
 			ApiClientError::Other(
 				format!("Could not build the request using encoded_xt: {encoded_xt}").into(),
