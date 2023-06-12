@@ -76,7 +76,8 @@ use substrate_api_client::{
 	extrinsic::BalancesExtrinsics,
 	rpc::{Request, WsRpcClient},
 	Events, GetAccountInformation, GetBalance, GetHeader, GetStorage, GetTransactionPayment,
-	Result as ApiResult, RpcParams, SignExtrinsic, SubmitAndWatch, SubscribeEvents, XtStatus,
+	Metadata as ApiClientMetadata, Result as ApiResult, RpcParams, SignExtrinsic, SubmitAndWatch,
+	SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::LocalKeystore;
 
@@ -180,15 +181,10 @@ fn main() {
         .add_cmd(
             Command::new("print-metadata")
                 .description("query node metadata and print it as json to stdout")
-                .runner(|_args: &str, _matches: &ArgMatches<'_>| {
-                    // Most likely upstream bug, because a trait bound is specified, but the struct does not derive it.
-                    // let meta = get_chain_api(matches).metadata();
-                    // let buf = Vec::new();
-                    // let formatter = serde_json::ser::PrettyFormatter::with_indent(b" ");
-                    // let mut ser = serde_json::Serializer::with_formatter(buf, formatter);
-                    // meta.serialize(&mut ser).unwrap();
-                    // let res = String::from_utf8(ser.into_inner());
-                    // println!("Metadata:\n {}", res.unwrap());
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches);
+                    let meta = api.metadata();
+                    println!("Metadata:\n {}", ApiClientMetadata::pretty_format(&meta.metadata).unwrap());
                     Ok(())
                 }),
         )
