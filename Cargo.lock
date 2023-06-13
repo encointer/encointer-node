@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.2.3"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#686b7ef0aa8da255d3864a3fc703e32193813700"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#6215a9e22e60f0651276d3cbf5a1c7fe0eaf84ed"
 dependencies = [
  "ac-primitives",
  "log",
@@ -28,7 +28,7 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.2.3"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#686b7ef0aa8da255d3864a3fc703e32193813700"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#6215a9e22e60f0651276d3cbf5a1c7fe0eaf84ed"
 dependencies = [
  "ac-primitives",
  "bitvec",
@@ -50,7 +50,7 @@ dependencies = [
 [[package]]
 name = "ac-primitives"
 version = "0.5.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#686b7ef0aa8da255d3864a3fc703e32193813700"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#6215a9e22e60f0651276d3cbf5a1c7fe0eaf84ed"
 dependencies = [
  "frame-system",
  "hex",
@@ -2612,7 +2612,7 @@ dependencies = [
 [[package]]
 name = "frame-metadata"
 version = "15.1.0"
-source = "git+https://github.com/paritytech/frame-metadata#0c6400964fe600ea07f8233810415f6958fe4e20"
+source = "git+https://github.com/paritytech/frame-metadata#426ba93c56932f1275e15f0dfe13ccaf3b7d98fe"
 dependencies = [
  "cfg-if 1.0.0",
  "parity-scale-codec",
@@ -9081,7 +9081,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.10.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#686b7ef0aa8da255d3864a3fc703e32193813700"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#6215a9e22e60f0651276d3cbf5a1c7fe0eaf84ed"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -9128,7 +9128,7 @@ dependencies = [
 [[package]]
 name = "substrate-client-keystore"
 version = "0.7.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#686b7ef0aa8da255d3864a3fc703e32193813700"
+source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.10.0#6215a9e22e60f0651276d3cbf5a1c7fe0eaf84ed"
 dependencies = [
  "array-bytes",
  "async-trait",

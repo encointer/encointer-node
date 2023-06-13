@@ -60,14 +60,10 @@ use encointer_primitives::{
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
 use log::*;
-use sp_application_crypto::sr25519;
-use sp_core::{
-	crypto::{key_types::ACCOUNT, Ss58Codec},
-	sr25519 as sr25519_core, Pair,
-};
+use sp_application_crypto::{ed25519, sr25519};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_keystore::Keystore;
-//use sp_keystore::KeystoreExt;
 use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use substrate_api_client::{
@@ -79,7 +75,7 @@ use substrate_api_client::{
 	GetTransactionPayment, Metadata as ApiClientMetadata, Result as ApiResult, SignExtrinsic,
 	SubmitAndWatch, SubscribeEvents, XtStatus,
 };
-use substrate_client_keystore::LocalKeystore;
+use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 use pallet_transaction_payment::FeeDetails;
 use sp_rpc::number::NumberOrHex;
@@ -165,14 +161,15 @@ fn main() {
                 .runner(|_args: &str, _matches: &ArgMatches<'_>| {
                     let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
                     info!("sr25519 keys:");
-                    for pubkey in store.sr25519_public_keys(ACCOUNT)
+                    for pubkey in store.public_keys::<sr25519::AppPublic>()
+                    .unwrap()
                         .into_iter()
                     {
                         println!("{}", pubkey.to_ss58check());
                     }
                     info!("ed25519 keys:");
-                    for pubkey in store.ed25519_public_keys(ACCOUNT)
-                        .into_iter()
+                    for pubkey in store.public_keys::<ed25519::AppPublic>()
+                        .unwrap()
                     {
                         println!("{}", pubkey.to_ss58check());
                     }
