@@ -84,6 +84,8 @@ use substrate_client_keystore::LocalKeystore;
 use pallet_transaction_payment::FeeDetails;
 use sp_rpc::number::NumberOrHex;
 
+type ExtrinsicAddress = <ParentchainExtrinsicSigner as SignExtrinsic<AccountId>>::ExtrinsicAddress;
+
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -217,7 +219,7 @@ fn main() {
                             api.metadata(),
                             "Balances",
                             "transfer",
-                            to.clone(),
+                            ExtrinsicAddress::from(to.clone()),
                             Compact(amount)
                         );
                         let xt: EncointerXt<_> = compose_extrinsic_offline!(
@@ -226,7 +228,7 @@ fn main() {
                             api.extrinsic_params(nonce)
                         );
                         ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                        // send and watch extrinsic until finalized
+                        // send and watch extrinsic until ready
                         println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
                         let _blockh = api
                             .submit_and_watch_extrinsic_until(xt, XtStatus::Ready)
