@@ -7,7 +7,7 @@ use log::{debug, error, info};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	api::error::Error as ApiClientError, compose_call, compose_extrinsic_offline,
+	api::error::Error as ApiClientError, compose_call, compose_extrinsic_offline, Bytes,
 	GetAccountInformation, GetBalance, GetStorage, GetTransactionPayment, Metadata, Result,
 	SubmitAndWatch, XtStatus,
 };
@@ -77,11 +77,11 @@ pub fn send_xt_hex_and_wait_for_in_block<C>(
 where
 	C: Encode,
 {
-	let encoded_xt = xt.encode();
+	let encoded_xt: Bytes = xt.encode().into();
 	ensure_payment(api, encoded_xt.clone(), tx_payment_cid);
 	// let tx_hash = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
 	let tx_hash = api
-		.submit_and_watch_opaque_extrinsic_until(encoded_xt.into(), XtStatus::InBlock)
+		.submit_and_watch_opaque_extrinsic_until(encoded_xt, XtStatus::InBlock)
 		.unwrap();
 	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
 
@@ -108,7 +108,7 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, encoded_xt: Vec<u8>, tx_payment_cid: Option<&str>) {
+pub fn ensure_payment(api: &Api, encoded_xt: Bytes, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
 		ensure_payment_cc(api, cid_str, encoded_xt);
 	} else {
@@ -116,7 +116,7 @@ pub fn ensure_payment(api: &Api, encoded_xt: Vec<u8>, tx_payment_cid: Option<&st
 	}
 }
 
-fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Vec<u8>) {
+fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Bytes) {
 	let balance: BalanceType =
 		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
 
@@ -134,7 +134,7 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Vec<u8>) {
 	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
 }
 
-fn ensure_payment_native(api: &Api, encoded_xt: Vec<u8>) {
+fn ensure_payment_native(api: &Api, encoded_xt: Bytes) {
 	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
 		Some(bal) => bal.free,
 		None => {
