@@ -362,7 +362,7 @@ fn main() {
                             let amount = matches.value_of("amount").unwrap().parse::<u128>()
                                 .expect("amount can be converted to u128");
                             let xt = api.balance_transfer_allow_death(
-                                sp_runtime::MultiAddress::Id(to.clone()),
+                                to.clone().into(),
                                 amount
                             );
                             if matches.dryrun_flag() {
@@ -1584,10 +1584,8 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 }
 
 fn reasonable_native_balance(api: &Api) -> u128 {
-	let xt = api.balance_transfer_allow_death(
-		sp_runtime::MultiAddress::Id(AccountKeyring::Alice.into()),
-		9999,
-	);
+	let alice: AccountId = AccountKeyring::Alice.into();
+	let xt = api.balance_transfer_allow_death(alice.into(), 9999);
 	let fee = api
 		.get_fee_details(xt.encode().into(), None)
 		.unwrap()
