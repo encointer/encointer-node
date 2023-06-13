@@ -1,10 +1,10 @@
 # encointer-node
 
 Encointer-node is the implementation of the [encointer.org](https://encointer.org) blockchain.
-Use this together with the mobile phone app [encointer mobile app](https://github.com/encointer/encointer-wallet-flutter) 
+Use this together with the mobile phone app [encointer mobile app](https://github.com/encointer/encointer-wallet-flutter)
 
 The cli client is based on [substrate-api-client](https://github.com/scs/substrate-api-client)
-The Trusted Execution version for Testnet Cantillon is on branch [sgx-master](https://github.com/encointer/encointer-node/tree/sgx-master) based on [substraTEE project](https://github.com/scs/substraTEE). 
+The Trusted Execution version for Testnet Cantillon is on branch [sgx-master](https://github.com/encointer/encointer-node/tree/sgx-master) based on [substraTEE project](https://github.com/scs/substraTEE).
 
 ## Building
 
@@ -73,7 +73,7 @@ docker run -p 30333:30333 -p 9944:9944 -p 9933:9933 -p 9615:9615 \
 ```
 
 ## Run Testnet Gesell Node
-Join our testnet as a full node with 
+Join our testnet as a full node with
 
 ```bash
 RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer=debug
@@ -92,7 +92,7 @@ encointer-node/client> ../target/release/encointer-client-notee list_participant
 encointer-node/client> ../target/release/encointer-client-notee list_meetup_registry
 encointer-node/client> ../target/release/encointer-client-notee list_witnesses_registry
 encointer-node/client> ../target/release/encointer-client-notee --help
-``` 
+```
 The master of ceremony can play fast-forward for demo purposes (ceremonies only happen ~monthly. not good for demos)
 ```bash
 encointer-node/client> ./encointer-client-notee next_phase
@@ -118,7 +118,7 @@ docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://ho
 
 Assuming a local node is running with default ports:
 ```bash
-pip3 install random_word pyproj geojson
+pip3 install pip install geojson pyproj RandomWords wonderwords requests flask substrate-interface click
 # in first terminal, do this to accelerate phase progress
 ./phase.py --idle-blocks 3
 # in second terminal, launch faucet service
@@ -130,7 +130,7 @@ pip3 install random_word pyproj geojson
 
 ## Web UI
 
-There is no fully featured UI yet, but you can use [polkadot-js apps](https://github.com/polkadot-js/apps). 
+There is no fully featured UI yet, but you can use [polkadot-js apps](https://github.com/polkadot-js/apps).
 This allows you to explore chain state but it doesn't support all types of extrinsic parameters needed. Use our CLI client instead.
 
 ## Mobile App
