@@ -66,7 +66,7 @@ pub fn send_and_wait_for_in_block<C: Encode>(
 	xt: EncointerXt<C>,
 	tx_payment_cid: Option<&str>,
 ) -> Option<H256> {
-	ensure_payment(api, xt.encode().into(), tx_payment_cid);
+	ensure_payment(api, &xt.encode().into(), tx_payment_cid);
 	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
 	info!("[+] Transaction got included in Block: {:?}\n", report.block_hash.unwrap());
 	Some(report.extrinsic_hash)
@@ -92,7 +92,7 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, encoded_xt: Bytes, tx_payment_cid: Option<&str>) {
+pub fn ensure_payment(api: &Api, encoded_xt: &Bytes, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
 		ensure_payment_cc(api, cid_str, encoded_xt);
 	} else {
@@ -100,9 +100,9 @@ pub fn ensure_payment(api: &Api, encoded_xt: Bytes, tx_payment_cid: Option<&str>
 	}
 }
 
-fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Bytes) {
+fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: &Bytes) {
 	let balance: BalanceType =
-		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
+		get_community_balance(api, cid_str, api.signer_account().unwrap(), None);
 
 	let fee: BalanceType = get_asset_fee_details(api, cid_str, encoded_xt)
 		.unwrap()
@@ -118,8 +118,8 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: Bytes) {
 	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
 }
 
-fn ensure_payment_native(api: &Api, encoded_xt: Bytes) {
-	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
+fn ensure_payment_native(api: &Api, encoded_xt: &Bytes) {
+	let signer_balance = match api.get_account_data(api.signer_account().unwrap()).unwrap() {
 		Some(bal) => bal.free,
 		None => {
 			error!("account does not exist on chain");
@@ -127,7 +127,7 @@ fn ensure_payment_native(api: &Api, encoded_xt: Bytes) {
 		},
 	};
 	let fee = api
-		.get_fee_details(encoded_xt.into(), None)
+		.get_fee_details(encoded_xt.clone(), None)
 		.unwrap()
 		.unwrap()
 		.inclusion_fee

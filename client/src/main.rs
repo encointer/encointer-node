@@ -225,7 +225,7 @@ fn main() {
                             call.clone(),
                             api.extrinsic_params(nonce)
                         );
-                        ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                        ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                         // send and watch extrinsic until finalized
                         println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
                         let _blockh = api
@@ -352,7 +352,7 @@ fn main() {
                                 println!("0x{}", hex::encode(xt.function.encode()));
                                 None
                             } else {
-                                ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                                ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                                 Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap())
                             }
                         },
@@ -367,7 +367,7 @@ fn main() {
                                 println!("0x{}", hex::encode(xt.function.encode()));
                                 None
                             } else {
-                                ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                                ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                                 Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap())
                             }
                         }
@@ -424,7 +424,7 @@ fn main() {
                                 to.clone(),
                                 cid
                             );
-                            ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                            ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                             api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap()
                         },
                         None => {
@@ -982,7 +982,7 @@ fn main() {
                         cid,
                         proof
                     );
-                    ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                    ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     // send and watch extrinsic until ready
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
                     info!("Registration sent for {}. status: '{:?}'", arg_who, report.status);
@@ -1047,7 +1047,7 @@ fn main() {
                         cid,
                         proof
                     );
-                    ensure_payment(&api,  xt.encode().into(), tx_payment_cid_arg);
+                    ensure_payment(&api,  &xt.encode().into(), tx_payment_cid_arg);
                     // send and watch extrinsic until ready
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
                     info!("Upgrade registration sent for {}. status: '{:?}'", arg_who, report.status);
@@ -1108,7 +1108,7 @@ fn main() {
                         cid,
                         cc
                     );
-                    ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                    ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     // Send and watch extrinsic until ready
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
                     info!("Unregister Participant sent for {}. status: '{:?}'", arg_who, report.status);
@@ -1232,7 +1232,7 @@ fn main() {
                         vote,
                         attestees
                     );
-                    ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                    ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
 
                     println!("Claims sent by {}. status: '{:?}'", who.public(), report.status);
@@ -1334,7 +1334,7 @@ fn main() {
                                     cid,
                                     meetup_index
                                 );
-                                ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                                ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                                 let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
                                 match meetup_index_arg {
                                     Some(idx)=>{println!("Claiming reward for meetup_index {idx}. xt-status: '{:?}'", report.status);}
@@ -1514,7 +1514,7 @@ fn main() {
                         "sudo",
                         batch_call
                     );
-                    ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+                    ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
                     info!("[+] Transaction got included. Block Hash: {:?}\n", tx_report.block_hash.unwrap());
                     Ok(())
@@ -1916,7 +1916,7 @@ fn get_all_balances(
 fn get_asset_fee_details(
 	api: &Api,
 	cid_str: &str,
-	encoded_xt: Bytes,
+	encoded_xt: &Bytes,
 ) -> Option<FeeDetails<NumberOrHex>> {
 	let cid = verify_cid(api, cid_str, None);
 
@@ -1995,7 +1995,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result
 	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 	let xt: EncointerXt<_> =
 		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid);
-	ensure_payment(&api, xt.encode().into(), tx_payment_cid_arg);
+	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
 	// send and watch extrinsic until ready
 	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
 	println!(
@@ -2029,7 +2029,7 @@ fn endorse_newcomers(
 			compose_call!(api.metadata(), "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
 
 		let encoded_xt: Bytes = offline_xt(&api, call, nonce).encode().into();
-		ensure_payment(&api, encoded_xt.clone(), tx_payment_cid_arg);
+		ensure_payment(&api, &encoded_xt, tx_payment_cid_arg);
 		let _tx_report = api
 			.submit_and_watch_opaque_extrinsic_until(encoded_xt, XtStatus::Ready)
 			.unwrap();
