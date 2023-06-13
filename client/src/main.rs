@@ -1295,7 +1295,7 @@ fn main() {
                                 None => panic!("please specify --signer.")
                             };
                             let mut api = api;
-                            let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer.clone()));
+                            let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
                             api.set_signer(signer.clone());
 
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
@@ -2108,7 +2108,7 @@ fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&st
 	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
 	if let Some(tx_payment_cid) = tx_payment_cid_arg {
 		tx_params = tx_params.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(
-			&api,
+			api,
 			tx_payment_cid,
 			None,
 		)));
