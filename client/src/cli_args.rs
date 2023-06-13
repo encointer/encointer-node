@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches};
-use sp_core::H256 as Hash;
+use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
 const SEED_ARG: &str = "seed";
@@ -324,12 +324,10 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
 		self.value_of(AT_BLOCK_ARG).map(|hex| {
-			let hexstr = hex.to_string();
-			let hexstr = hexstr.trim_matches('\"').trim_start_matches("0x");
 			let vec =
-				hex::decode(hexstr).expect(&format!("hex::decode failed, data is: {:#?}", hexstr));
+				bytes::from_hex(hex).expect(&format!("hex::decode failed, data is: {:#?}", hex));
 			if vec.len() != 32 {
-				panic!("in at_block_arg fn, vec is: {:#?}", vec);
+				panic!("in at_block_arg fn, vec is: {:?}", vec);
 			}
 			Hash::from_slice(&vec)
 		})
