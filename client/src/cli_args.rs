@@ -324,10 +324,10 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
 		self.value_of(AT_BLOCK_ARG).map(|hex| {
-			let vec =
-				bytes::from_hex(hex).expect(&format!("hex::decode failed, data is: {:#?}", hex));
+			let vec = bytes::from_hex(hex)
+				.unwrap_or_else(|_| panic!("bytes::from_hex failed, data is: {hex}"));
 			if vec.len() != 32 {
-				panic!("in at_block_arg fn, vec is: {:?}", vec);
+				panic!("in at_block_arg fn, vec is: {:#?}", vec);
 			}
 			Hash::from_slice(&vec)
 		})
