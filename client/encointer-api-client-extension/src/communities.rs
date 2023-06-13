@@ -1,6 +1,6 @@
 use crate::{Api, Result};
 use encointer_primitives::communities::{CommunityIdentifier, Location};
-use substrate_api_client::{api::error::Error as ApiClientError, rpc::Request, RpcParams};
+use substrate_api_client::{api::error::Error as ApiClientError, rpc::Request, rpc_params};
 
 pub trait CommunitiesApi {
 	fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>>;
@@ -8,18 +8,14 @@ pub trait CommunitiesApi {
 
 impl CommunitiesApi for Api {
 	fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>> {
-		let mut params = RpcParams::default();
-		params.insert(cid).map_err(|_| {
-			ApiClientError::Other(format!("Could not build the request using cid: {cid}").into())
-		})?;
-
-		let locations: String =
-			self.client().request::<String>("encointer_getLocations", params).or_else(|_| {
-				Err(ApiClientError::Other(
+		let locations = self
+			.client()
+			.request::<Option<Vec<Location>>>("encointer_getLocations", rpc_params![cid])?
+			.ok_or_else(|| {
+				ApiClientError::Other(
 					format!("No locations founds. Does the cid {cid} exist").into(),
-				))
+				)
 			})?;
-
-		serde_json::from_str(&locations).map_err(|e| ApiClientError::Other(e.into()))
+		Ok(locations)
 	}
 }
