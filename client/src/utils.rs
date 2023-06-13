@@ -61,31 +61,15 @@ pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
-pub fn send_and_wait_for_in_block<C: Encode + Clone>(
+pub fn send_and_wait_for_in_block<C: Encode>(
 	api: &Api,
 	xt: EncointerXt<C>,
 	tx_payment_cid: Option<&str>,
 ) -> Option<H256> {
-	send_xt_hex_and_wait_for_in_block(api, xt, tx_payment_cid)
-}
-
-pub fn send_xt_hex_and_wait_for_in_block<C>(
-	api: &Api,
-	xt: EncointerXt<C>,
-	tx_payment_cid: Option<&str>,
-) -> Option<H256>
-where
-	C: Encode,
-{
-	let encoded_xt: Bytes = xt.encode().into();
-	ensure_payment(api, encoded_xt.clone(), tx_payment_cid);
-	// let tx_hash = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
-	let tx_hash = api
-		.submit_and_watch_opaque_extrinsic_until(encoded_xt, XtStatus::InBlock)
-		.unwrap();
-	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
-
-	Some(tx_hash.extrinsic_hash)
+	ensure_payment(api, xt.encode().into(), tx_payment_cid);
+	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
+	info!("[+] Transaction got included in Block: {:?}\n", report.block_hash.unwrap());
+	Some(report.extrinsic_hash)
 }
 
 /// Prints the raw call to be supplied with js/apps.

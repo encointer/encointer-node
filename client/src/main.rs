@@ -76,8 +76,8 @@ use substrate_api_client::{
 	extrinsic::BalancesExtrinsics,
 	rpc::{Request, WsRpcClient},
 	rpc_params, Bytes, Events, GetAccountInformation, GetBalance, GetHeader, GetStorage,
-	GetTransactionPayment, Metadata as ApiClientMetadata, Result as ApiResult, RpcParams,
-	SignExtrinsic, SubmitAndWatch, SubscribeEvents, XtStatus,
+	GetTransactionPayment, Metadata as ApiClientMetadata, Result as ApiResult, SignExtrinsic,
+	SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::LocalKeystore;
 
@@ -1867,45 +1867,21 @@ fn get_community_identifiers(
 
 /// This rpc needs to have offchain indexing enabled in the node.
 fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
-	let n = api
-		.client()
-		.request::<String>("encointer_getAllCommunities", RpcParams::new())
-		.expect(
+	api.client().request("encointer_getAllCommunities", rpc_params![]).expect(
 		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
-	);
-	Some(serde_json::from_str(&n).unwrap())
+	)
 }
 
 fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
-	let mut params = RpcParams::default();
-	params
-		.insert(cid)
-		.map_err(|_| {
-			ApiClientError::Other(format!("Could not build the request using cid: {cid}").into())
-		})
-		.unwrap();
-
-	let n = api
-		.client()
-		.request::<String>("encointer_bazaarGetBusinesses", params)
-		.expect("Could not find any businesses...");
-	Some(serde_json::from_str(&n).unwrap())
+	api.client()
+		.request("encointer_bazaarGetBusinesses", rpc_params![cid])
+		.expect("Could not find any businesses...")
 }
 
 fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
-	let mut params = RpcParams::default();
-	params
-		.insert(cid)
-		.map_err(|_| {
-			ApiClientError::Other(format!("Could not build the request using cid: {cid}").into())
-		})
-		.unwrap();
-
-	let n = api
-		.client()
-		.request::<String>("encointer_bazaarGetOfferings", params)
-		.expect("Could not find any business offerings...");
-	Some(serde_json::from_str(&n).unwrap())
+	api.client()
+		.request("encointer_bazaarGetOfferings", rpc_params![cid])
+		.expect("Could not find any business offerings...")
 }
 
 fn get_offerings_for_business(
@@ -1914,64 +1890,27 @@ fn get_offerings_for_business(
 	account_id: AccountId,
 ) -> Option<Vec<OfferingData>> {
 	let b_id = BusinessIdentifier::new(cid, account_id);
-	let mut params = RpcParams::default();
-	params
-		.insert(b_id.clone())
-		.map_err(|_| {
-			ApiClientError::Other(
-				format!("Could not build the request using b_id: {:#?}", b_id).into(),
-			)
-		})
-		.unwrap();
-
-	let n = api
-		.client()
-		.request::<String>("encointer_bazaarGetOfferingsForBusiness", params)
-		.expect("Could not find any business offerings...");
-	Some(serde_json::from_str(&n).unwrap())
+	api.client()
+		.request("encointer_bazaarGetOfferingsForBusiness", rpc_params![b_id])
+		.expect("Could not find any business offerings...")
 }
 
 fn get_reputation_history(
 	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
-	let mut params = RpcParams::default();
-	params
-		.insert(account_id)
-		.map_err(|_| {
-			ApiClientError::Other(
-				format!("Could not build the request using account_id: {account_id}").into(),
-			)
-		})
-		.unwrap();
-
-	let n = api
-		.client()
-		.request::<String>("encointer_getReputations", params)
-		.expect("Could not query reputation history...");
-	Some(serde_json::from_str(&n).unwrap())
+	api.client()
+		.request("encointer_getReputations", rpc_params![account_id])
+		.expect("Could not query reputation history...")
 }
 
 fn get_all_balances(
 	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
-	let mut params = RpcParams::default();
-	params
-		.insert(account_id)
-		.map_err(|_| {
-			ApiClientError::Other(
-				format!("Could not build the request using account_id: {account_id}").into(),
-			)
-		})
-		.unwrap();
-
-	let n = api
-		.client()
-		.request::<String>("encointer_getAllBalances", params)
-		.expect("Could not query all balances...");
-
-	serde_json::from_str(&n).ok()
+	api.client()
+		.request("encointer_getAllBalances", rpc_params![account_id])
+		.expect("Could not query all balances...")
 }
 
 fn get_asset_fee_details(
