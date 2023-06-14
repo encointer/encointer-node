@@ -118,7 +118,7 @@ docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://ho
 
 Assuming a local node is running with default ports:
 ```bash
-pip3 install pip install geojson pyproj RandomWords wonderwords requests flask substrate-interface click
+pip3 install pip install geojson pyproj RandomWords substrate-interface
 # in first terminal, do this to accelerate phase progress
 ./phase.py --idle-blocks 3
 # in second terminal, launch faucet service
