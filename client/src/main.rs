@@ -1707,7 +1707,7 @@ fn main() {
                 }),
         )
         .add_cmd(
-            Command::new("set-reserve-amount")
+            Command::new("set-faucet-reserve-amount")
                 .description("Set faucet pallet reserve amount")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
