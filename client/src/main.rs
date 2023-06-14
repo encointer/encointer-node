@@ -160,7 +160,7 @@ fn main() {
                     let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
                     info!("sr25519 keys:");
                     for pubkey in store.public_keys::<sr25519::AppPublic>()
-                    .unwrap()
+                        .unwrap()
                         .into_iter()
                     {
                         println!("{}", pubkey.to_ss58check());
@@ -168,6 +168,7 @@ fn main() {
                     info!("ed25519 keys:");
                     for pubkey in store.public_keys::<ed25519::AppPublic>()
                         .unwrap()
+                        .into_iter()
                     {
                         println!("{}", pubkey.to_ss58check());
                     }
