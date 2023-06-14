@@ -1609,82 +1609,94 @@ fn listen(matches: &ArgMatches<'_>) {
 		{
 			return
 		};
-		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
+		let event_results = subscription.next_events::<RuntimeEvent, Hash>().unwrap();
 		blocks += 1;
-		for evr in &event_records {
-			debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
-			match &evr.event {
-				RuntimeEvent::EncointerCeremonies(ee) => {
-					count += 1;
-					info!(">>>>>>>>>> ceremony event: {:?}", ee);
-					match &ee {
-						pallet_encointer_ceremonies::Event::ParticipantRegistered(
-							cid,
-							participant_type,
-							accountid,
-						) => {
-							println!(
+		match event_results {
+			Ok(evts) =>
+				for evr in evts {
+					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
+					match &evr.event {
+						RuntimeEvent::EncointerCeremonies(ee) => {
+							count += 1;
+							info!(">>>>>>>>>> ceremony event: {:?}", ee);
+							match &ee {
+								pallet_encointer_ceremonies::Event::ParticipantRegistered(
+									cid,
+									participant_type,
+									accountid,
+								) => {
+									println!(
 										"Participant registered as {participant_type:?}, for cid: {cid:?}, account: {accountid}, "
 									);
+								},
+								_ => println!("Unsupported EncointerCommunities event"),
+							}
 						},
-						_ => println!("Unsupported EncointerCommunities event"),
+						RuntimeEvent::EncointerScheduler(ee) => {
+							count += 1;
+							info!(">>>>>>>>>> scheduler event: {:?}", ee);
+							match &ee {
+								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
+									println!("Phase changed to: {phase:?}");
+								},
+								pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
+									println!("Ceremony schedule was pushed by one day");
+								},
+							}
+						},
+						RuntimeEvent::EncointerCommunities(ee) => {
+							count += 1;
+							info!(">>>>>>>>>> community event: {:?}", ee);
+							match &ee {
+								pallet_encointer_communities::Event::CommunityRegistered(cid) => {
+									println!("Community registered: cid: {cid:?}");
+								},
+								pallet_encointer_communities::Event::MetadataUpdated(cid) => {
+									println!("Community metadata updated cid: {cid:?}");
+								},
+								pallet_encointer_communities::Event::NominalIncomeUpdated(
+									cid,
+									income,
+								) => {
+									println!(
+										"Community metadata updated cid: {cid:?}, value: {income:?}"
+									);
+								},
+								pallet_encointer_communities::Event::DemurrageUpdated(
+									cid,
+									demurrage,
+								) => {
+									println!(
+										"Community metadata updated cid: {cid:?}, value: {demurrage:?}"
+									);
+								},
+								_ => println!("Unsupported EncointerCommunities event"),
+							}
+						},
+						RuntimeEvent::EncointerBalances(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> encointer balances event: {ee:?}");
+						},
+						RuntimeEvent::EncointerBazaar(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
+						},
+						RuntimeEvent::System(ee) => match ee {
+							frame_system::Event::ExtrinsicFailed {
+								dispatch_error: _,
+								dispatch_info: _,
+							} => {
+								error!("ExtrinsicFailed: {ee:?}");
+							},
+							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
+								println!("ExtrinsicSuccess: {dispatch_info:?}");
+							},
+							_ => debug!("ignoring unsupported system Event"),
+						},
+						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
 					}
 				},
-				RuntimeEvent::EncointerScheduler(ee) => {
-					count += 1;
-					info!(">>>>>>>>>> scheduler event: {:?}", ee);
-					match &ee {
-						pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
-							println!("Phase changed to: {phase:?}");
-						},
-						pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
-							println!("Ceremony schedule was pushed by one day");
-						},
-					}
-				},
-				RuntimeEvent::EncointerCommunities(ee) => {
-					count += 1;
-					info!(">>>>>>>>>> community event: {:?}", ee);
-					match &ee {
-						pallet_encointer_communities::Event::CommunityRegistered(cid) => {
-							println!("Community registered: cid: {cid:?}");
-						},
-						pallet_encointer_communities::Event::MetadataUpdated(cid) => {
-							println!("Community metadata updated cid: {cid:?}");
-						},
-						pallet_encointer_communities::Event::NominalIncomeUpdated(cid, income) => {
-							println!("Community metadata updated cid: {cid:?}, value: {income:?}");
-						},
-						pallet_encointer_communities::Event::DemurrageUpdated(cid, demurrage) => {
-							println!(
-								"Community metadata updated cid: {cid:?}, value: {demurrage:?}"
-							);
-						},
-						_ => println!("Unsupported EncointerCommunities event"),
-					}
-				},
-				RuntimeEvent::EncointerBalances(ee) => {
-					count += 1;
-					println!(">>>>>>>>>> encointer balances event: {ee:?}");
-				},
-				RuntimeEvent::EncointerBazaar(ee) => {
-					count += 1;
-					println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
-				},
-				RuntimeEvent::System(ee) => match ee {
-					frame_system::Event::ExtrinsicFailed {
-						dispatch_error: _,
-						dispatch_info: _,
-					} => {
-						error!("ExtrinsicFailed: {ee:?}");
-					},
-					frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
-						println!("ExtrinsicSuccess: {dispatch_info:?}");
-					},
-					_ => debug!("ignoring unsupported system Event"),
-				},
-				_ => debug!("ignoring unsupported module event: {:?}", evr.event),
-			}
+			Err(_) => error!("couldn't decode event record list"),
 		}
 	}
 }
