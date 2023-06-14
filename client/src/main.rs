@@ -71,7 +71,7 @@ use substrate_api_client::{
 	ac_primitives::{Bytes, SignExtrinsic},
 	api::error::Error as ApiClientError,
 	extrinsic::BalancesExtrinsics,
-	rpc::{Request, WsRpcClient},
+	rpc::{JsonrpseeClient, Request},
 	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
 	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
@@ -91,7 +91,8 @@ mod exit_code {
 	pub const NO_CID_SPECIFIED: i32 = 70;
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
 	env_logger::init();
 
 	Commander::new()
@@ -1574,7 +1575,7 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 		matches.value_of("node-port").unwrap()
 	);
 	debug!("connecting to {}", url);
-	let client = WsRpcClient::new(&url).expect("node URL is incorrect");
+	let client = JsonrpseeClient::new(&url).expect("node URL is incorrect");
 	Api::new(client).unwrap()
 }
 
