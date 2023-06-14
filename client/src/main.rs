@@ -67,13 +67,14 @@ use sp_keystore::Keystore;
 use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use substrate_api_client::{
+	ac_compose_macros::{compose_call, compose_extrinsic, compose_extrinsic_offline, rpc_params},
+	ac_primitives::{Bytes, Events},
 	api::error::Error as ApiClientError,
-	compose_call, compose_extrinsic, compose_extrinsic_offline,
 	extrinsic::BalancesExtrinsics,
 	rpc::{Request, WsRpcClient},
-	rpc_params, Bytes, Events, GetAccountInformation, GetBalance, GetHeader, GetStorage,
-	GetTransactionPayment, Metadata as ApiClientMetadata, Result as ApiResult, SignExtrinsic,
-	SubmitAndWatch, SubscribeEvents, XtStatus,
+	GetAccountInformation, GetBalance, GetHeader, GetStorage, GetTransactionPayment,
+	Metadata as ApiClientMetadata, Result as ApiResult, SignExtrinsic, SubmitAndWatch,
+	SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -1794,7 +1795,7 @@ fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 }
 
 fn get_ceremony_index(api: &Api) -> CeremonyIndexType {
-	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
+	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", None)
 		.unwrap()
 		.unwrap()
 }
@@ -1857,7 +1858,7 @@ fn get_community_identifiers(
 	api: &Api,
 	maybe_at: Option<Hash>,
 ) -> Option<Vec<CommunityIdentifier>> {
-	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", maybe_at)
+	api.get_storage("EncointerCommunities", "CommunityIdentifiers", maybe_at)
 		.unwrap()
 }
 
@@ -2048,7 +2049,7 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 = api
-		.get_storage_value("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
+		.get_storage("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
 		.unwrap()
 		.unwrap();
 

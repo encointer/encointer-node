@@ -57,7 +57,7 @@ pub fn collective_propose_call<Proposal: Encode>(
 	)
 }
 pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
-	api.get_storage_value("Membership", "Members", None)?
+	api.get_storage("Membership", "Members", None)?
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
