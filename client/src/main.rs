@@ -55,15 +55,18 @@ use encointer_primitives::{
 		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
 	},
 	communities::{CidName, CommunityIdentifier},
+	faucet::{FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
 use log::*;
+use pallet_transaction_payment::FeeDetails;
 use serde_json::{json, to_value};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_keystore::SyncCryptoStore;
+use sp_rpc::number::NumberOrHex;
 use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr, sync::mpsc::channel};
 use substrate_api_client::{
@@ -71,9 +74,6 @@ use substrate_api_client::{
 	utils::FromHexString, ApiClientError, ApiResult, Events, GenericAddress, Metadata, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
-
-use pallet_transaction_payment::FeeDetails;
-use sp_rpc::number::NumberOrHex;
 
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -1528,6 +1528,232 @@ fn main() {
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
                     send_and_wait_for_in_block(&api, xt(&api, privileged_call), tx_payment_cid_arg);
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("create-faucet")
+                .description("Create faucet")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .faucet_name_arg()
+                        .faucet_balance_arg()
+                        .faucet_drip_amount_arg()
+                        .whitelist_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+                    let mut api = get_chain_api(matches).set_signer(who.clone().into());
+
+                    let faucet_name_raw = matches.faucet_name_arg().unwrap();
+                    let faucet_balance = matches.faucet_balance_arg().unwrap();
+                    let drip_amount = matches.faucet_drip_amount_arg().unwrap();
+
+                    let whitelist_vec: Vec<_> = matches.whitelist_arg().unwrap()
+                    .into_iter()
+                    .map(|c| verify_cid(&api,
+                        c,
+                        None))
+                    .collect();
+                    let whitelist: WhiteListType = WhiteListType::try_from(whitelist_vec).unwrap();
+
+                    let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+
+                    let xt: EncointerXt<_> = compose_extrinsic!(
+                        api,
+                        "EncointerFaucet",
+                        "create_faucet",
+                        faucet_name,
+                        faucet_balance,
+                        whitelist,
+                        drip_amount
+                    );
+
+                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+
+                    println!("Faucet created by {}. status: 'ready'", who.public());
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("drip-faucet")
+                .description("Drip faucet")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .faucet_account_arg()
+                        .cindex_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+                    let mut api = get_chain_api(matches).set_signer(who.clone().into());
+
+                    let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
+
+                    let cindex = matches.cindex_arg().unwrap();
+                    let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    let xt: EncointerXt<_> = compose_extrinsic!(
+                        api,
+                        "EncointerFaucet",
+                        "drip",
+                        faucet_account,
+                        cid,
+                        cindex
+                    );
+
+                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+
+                    println!("Faucet dripped to {}. status: 'ready'", who.public());
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("dissolve-faucet")
+                .description("Dissolve faucet")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .signer_arg("account with necessary privileges (sudo or councillor)")
+                        .faucet_account_arg()
+                        .faucet_beneficiary_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let signer = matches.signer_arg()
+                        .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+
+
+                    let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
+                    let beneficiary = get_accountid_from_str(matches.faucet_beneficiary_arg().unwrap());
+
+                    let mut api = get_chain_api(matches)
+                        .set_signer(signer);
+
+
+                    let dissolve_faucet_call = compose_call!(
+                        &api.metadata,
+                        "EncointerFaucet",
+                        "dissolve_faucet",
+                        faucet_account.clone(),
+                        beneficiary
+                    );
+
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
+                    let dissolve_faucet_call = if contains_sudo_pallet(&api.metadata) {
+                        let dissolve_faucet_call = sudo_call(&api.metadata, dissolve_faucet_call);
+                        info!("Printing raw sudo call for js/apps:");
+                        print_raw_call("sudo(dissolve_faucet)", &dissolve_faucet_call);
+
+                        OpaqueCall::from_tuple(&dissolve_faucet_call)
+
+                    } else {
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+                        let propose_dissolve_faucet = collective_propose_call(&api.metadata, threshold, dissolve_faucet_call);
+                        print_raw_call("collective_propose(dissolve_faucet)", &propose_dissolve_faucet);
+
+                        OpaqueCall::from_tuple(&propose_dissolve_faucet)
+                    };
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    send_and_wait_for_in_block(&api, xt(&api, dissolve_faucet_call), tx_payment_cid_arg);
+
+                    println!("Faucet dissolved: {faucet_account:?}");
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("close-faucet")
+                .description("Close faucet")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .account_arg()
+                        .faucet_account_arg()
+                })
+                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                    let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+                    let mut api = get_chain_api(matches).set_signer(who.into());
+
+                    let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    let xt: EncointerXt<_> = compose_extrinsic!(
+                        api,
+                        "EncointerFaucet",
+                        "close_faucet",
+                        faucet_account.clone()
+                    );
+
+                    ensure_payment(&api, &xt.hex_encode(), tx_payment_cid_arg);
+                    let _ = api.send_extrinsic(xt.hex_encode(), XtStatus::Ready).unwrap();
+
+                    println!("Faucet closed: {faucet_account}. status: 'ready'");
+                    Ok(())
+                }),
+        )
+        .add_cmd(
+            Command::new("set-reserve-amount")
+                .description("Set faucet pallet reserve amount")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .signer_arg("account with necessary privileges (sudo or councillor)")
+                        .faucet_reserve_amount_arg()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                    let signer = matches.signer_arg()
+                        .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+
+
+                    let reserve_amount = matches.faucet_reserve_amount_arg().unwrap();
+
+                    let mut api = get_chain_api(matches)
+                        .set_signer(signer);
+
+
+                    let set_reserve_amount_call = compose_call!(
+                        &api.metadata,
+                        "EncointerFaucet",
+                        "set_reserve_amount",
+                        reserve_amount
+                    );
+                    // return calls as `OpaqueCall`s to get the same return type in both branches
+                    let set_reserve_amount_call = if contains_sudo_pallet(&api.metadata) {
+                        let set_reserve_amount_call = sudo_call(&api.metadata, set_reserve_amount_call);
+                        info!("Printing raw sudo call for js/apps:");
+                        print_raw_call("sudo(set_reserve_amount)", &set_reserve_amount_call);
+
+                        OpaqueCall::from_tuple(&set_reserve_amount_call)
+
+                    } else {
+                        let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+                        info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+                        let propose_set_reserve_amount = collective_propose_call(&api.metadata, threshold, set_reserve_amount_call);
+                        print_raw_call("collective_propose(set_reserve_amount)", &propose_set_reserve_amount);
+
+                        OpaqueCall::from_tuple(&propose_set_reserve_amount)
+                    };
+
+                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                    api = set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+
+                    send_and_wait_for_in_block(&api, xt(&api, set_reserve_amount_call), tx_payment_cid_arg);
+
+                    println!("Reserve amount set: {reserve_amount:?}");
                     Ok(())
                 }),
         )
