@@ -19,6 +19,7 @@ const DRYRUN_FLAG: &str = "dryrun";
 const TX_PAYMENT_CID_ARG: &str = "tx-payment-cid";
 const MEETUP_INDEX_ARG: &str = "meetup-index";
 const AT_BLOCK_ARG: &str = "at";
+const VERBOSE_FLAG: &str = "verbose";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -40,6 +41,7 @@ pub trait EncointerArgs<'b> {
 	fn tx_payment_cid_arg(self) -> Self;
 	fn meetup_index_arg(self) -> Self;
 	fn at_block_arg(self) -> Self;
+	fn verbose_flag(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -62,6 +64,7 @@ pub trait EncointerArgsExtractor {
 	fn tx_payment_cid_arg(&self) -> Option<&str>;
 	fn meetup_index_arg(&self) -> Option<u64>;
 	fn at_block_arg(&self) -> Option<Hash>;
+	fn verbose_flag(&self) -> bool;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -257,6 +260,18 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("block hash at which to query"),
 		)
 	}
+
+	fn verbose_flag(self) -> Self {
+		self.arg(
+			Arg::with_name(VERBOSE_FLAG)
+				.short("v")
+				.long("verbose")
+				.global(true)
+				.takes_value(false)
+				.required(false)
+				.help("print extra information"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -331,5 +346,8 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 			}
 			Hash::from_slice(&vec)
 		})
+	}
+	fn verbose_flag(&self) -> bool {
+		self.is_present(VERBOSE_FLAG)
 	}
 }
