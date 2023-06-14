@@ -45,8 +45,8 @@ use encointer_api_client_extension::{
 	ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
-	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Header, Moment, RuntimeEvent,
-	Signature, ONE_DAY,
+	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent, Signature,
+	ONE_DAY,
 };
 use encointer_primitives::{
 	balances::Demurrage,
@@ -68,13 +68,12 @@ use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use substrate_api_client::{
 	ac_compose_macros::{compose_call, compose_extrinsic, compose_extrinsic_offline, rpc_params},
-	ac_primitives::{Bytes, Events},
+	ac_primitives::{Bytes, SignExtrinsic},
 	api::error::Error as ApiClientError,
 	extrinsic::BalancesExtrinsics,
 	rpc::{Request, WsRpcClient},
-	GetAccountInformation, GetBalance, GetHeader, GetStorage, GetTransactionPayment,
-	Metadata as ApiClientMetadata, Result as ApiResult, SignExtrinsic, SubmitAndWatch,
-	SubscribeEvents, XtStatus,
+	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
+	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -182,8 +181,7 @@ fn main() {
                 .description("query node metadata and print it as json to stdout")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
-                    let meta = api.metadata();
-                    println!("Metadata:\n {}", ApiClientMetadata::pretty_format(&meta.metadata).unwrap());
+                    println!("Metadata:\n {}", api.metadata().pretty_format().unwrap());
                     Ok(())
                 }),
         )
@@ -1611,106 +1609,82 @@ fn listen(matches: &ArgMatches<'_>) {
 		{
 			return
 		};
-		let event_results = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
+		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
 		blocks += 1;
-		match event_results {
-			Ok(evts) =>
-				for evr in evts {
-					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
-					match &evr.event {
-						RuntimeEvent::EncointerCeremonies(ee) => {
-							count += 1;
-							info!(">>>>>>>>>> ceremony event: {:?}", ee);
-							match &ee {
-								pallet_encointer_ceremonies::Event::ParticipantRegistered(
-									cid,
-									participant_type,
-									accountid,
-								) => {
-									println!(
+		for evr in &event_records {
+			debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
+			match &evr.event {
+				RuntimeEvent::EncointerCeremonies(ee) => {
+					count += 1;
+					info!(">>>>>>>>>> ceremony event: {:?}", ee);
+					match &ee {
+						pallet_encointer_ceremonies::Event::ParticipantRegistered(
+							cid,
+							participant_type,
+							accountid,
+						) => {
+							println!(
 										"Participant registered as {participant_type:?}, for cid: {cid:?}, account: {accountid}, "
 									);
-								},
-								_ => println!("Unsupported EncointerCommunities event"),
-							}
 						},
-						RuntimeEvent::EncointerScheduler(ee) => {
-							count += 1;
-							info!(">>>>>>>>>> scheduler event: {:?}", ee);
-							match &ee {
-								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
-									println!("Phase changed to: {phase:?}");
-								},
-								pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
-									println!("Ceremony schedule was pushed by one day");
-								},
-							}
-						},
-						RuntimeEvent::EncointerCommunities(ee) => {
-							count += 1;
-							info!(">>>>>>>>>> community event: {:?}", ee);
-							match &ee {
-								pallet_encointer_communities::Event::CommunityRegistered(cid) => {
-									println!("Community registered: cid: {cid:?}");
-								},
-								pallet_encointer_communities::Event::MetadataUpdated(cid) => {
-									println!("Community metadata updated cid: {cid:?}");
-								},
-								pallet_encointer_communities::Event::NominalIncomeUpdated(
-									cid,
-									income,
-								) => {
-									println!(
-										"Community metadata updated cid: {cid:?}, value: {income:?}"
-									);
-								},
-								pallet_encointer_communities::Event::DemurrageUpdated(
-									cid,
-									demurrage,
-								) => {
-									println!(
-										"Community metadata updated cid: {cid:?}, value: {demurrage:?}"
-									);
-								},
-								_ => println!("Unsupported EncointerCommunities event"),
-							}
-						},
-						RuntimeEvent::EncointerBalances(ee) => {
-							count += 1;
-							println!(">>>>>>>>>> encointer balances event: {ee:?}");
-						},
-						RuntimeEvent::EncointerBazaar(ee) => {
-							count += 1;
-							println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
-						},
-						RuntimeEvent::System(ee) => match ee {
-							frame_system::Event::ExtrinsicFailed {
-								dispatch_error: _,
-								dispatch_info: _,
-							} => {
-								let event_records = vec![evr];
-
-								let decoded_event = Events::new(
-									api.metadata().clone(),
-									Hash::default(),
-									event_records.encode(),
-								)
-								.iter()
-								.next()
-								.unwrap()
-								.unwrap();
-
-								error!("ExtrinsicFailed: {:?}", decoded_event);
-							},
-							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
-								println!("ExtrinsicSuccess: {dispatch_info:?}");
-							},
-							_ => debug!("ignoring unsupported system Event"),
-						},
-						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
+						_ => println!("Unsupported EncointerCommunities event"),
 					}
 				},
-			Err(_) => error!("couldn't decode event record list"),
+				RuntimeEvent::EncointerScheduler(ee) => {
+					count += 1;
+					info!(">>>>>>>>>> scheduler event: {:?}", ee);
+					match &ee {
+						pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
+							println!("Phase changed to: {phase:?}");
+						},
+						pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
+							println!("Ceremony schedule was pushed by one day");
+						},
+					}
+				},
+				RuntimeEvent::EncointerCommunities(ee) => {
+					count += 1;
+					info!(">>>>>>>>>> community event: {:?}", ee);
+					match &ee {
+						pallet_encointer_communities::Event::CommunityRegistered(cid) => {
+							println!("Community registered: cid: {cid:?}");
+						},
+						pallet_encointer_communities::Event::MetadataUpdated(cid) => {
+							println!("Community metadata updated cid: {cid:?}");
+						},
+						pallet_encointer_communities::Event::NominalIncomeUpdated(cid, income) => {
+							println!("Community metadata updated cid: {cid:?}, value: {income:?}");
+						},
+						pallet_encointer_communities::Event::DemurrageUpdated(cid, demurrage) => {
+							println!(
+								"Community metadata updated cid: {cid:?}, value: {demurrage:?}"
+							);
+						},
+						_ => println!("Unsupported EncointerCommunities event"),
+					}
+				},
+				RuntimeEvent::EncointerBalances(ee) => {
+					count += 1;
+					println!(">>>>>>>>>> encointer balances event: {ee:?}");
+				},
+				RuntimeEvent::EncointerBazaar(ee) => {
+					count += 1;
+					println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
+				},
+				RuntimeEvent::System(ee) => match ee {
+					frame_system::Event::ExtrinsicFailed {
+						dispatch_error: _,
+						dispatch_info: _,
+					} => {
+						error!("ExtrinsicFailed: {ee:?}");
+					},
+					frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
+						println!("ExtrinsicSuccess: {dispatch_info:?}");
+					},
+					_ => debug!("ignoring unsupported system Event"),
+				},
+				_ => debug!("ignoring unsupported module event: {:?}", evr.event),
+			}
 		}
 	}
 }
@@ -1735,7 +1709,7 @@ fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifi
 }
 
 fn get_block_number(api: &Api, maybe_at: Option<Hash>) -> BlockNumber {
-	let hdr: Header = api.get_header(maybe_at).unwrap().unwrap();
+	let hdr = api.get_header(maybe_at).unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
 	hdr.number
