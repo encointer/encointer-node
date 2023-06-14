@@ -1,7 +1,7 @@
 use extrinsic_params::CommunityCurrencyTipExtrinsicParams;
 use substrate_api_client::{
 	ac_primitives::{Config, ExtrinsicSigner, SubstrateKitchensinkConfig, WithExtrinsicParams},
-	rpc::WsRpcClient,
+	rpc::JsonrpseeClient,
 };
 
 pub use encointer_node_notee_runtime::Runtime;
@@ -12,7 +12,7 @@ pub type EncointerConfig = WithExtrinsicParams<
 	CommunityCurrencyTipExtrinsicParams<SubstrateKitchensinkConfig>,
 >;
 
-pub type Api = substrate_api_client::Api<EncointerConfig, WsRpcClient>;
+pub type Api = substrate_api_client::Api<EncointerConfig, JsonrpseeClient>;
 
 pub type ParentchainExtrinsicSigner = ExtrinsicSigner<SubstrateKitchensinkConfig>;
 pub type ExtrinsicAddress = <EncointerConfig as Config>::Address;
