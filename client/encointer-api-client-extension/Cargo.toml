@@ -10,12 +10,14 @@ serde = { features = ["derive"], version = "1.0.132" }
 serde_json = { version = "1.0.79" }
 
 # encointer deps
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.37" }
-encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.37" }
+encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
+encointer-node-notee-runtime = { path = "../../runtime" }
+encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42", features = ["ws-client"] }
 # scs deps
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37-tag-v0.7.0" }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37-tag-v0.7.0" }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42" }
 
 # substrate deps
-sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-core = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { version = "7.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

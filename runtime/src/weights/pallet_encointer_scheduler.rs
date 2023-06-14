@@ -37,24 +37,24 @@ impl<T: frame_system::Config> pallet_encointer_scheduler::WeightInfo for WeightI
 	// Storage: EncointerCeremonies InactivityTimeout (r:1 w:0)
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	fn next_phase() -> Weight {
-		Weight::from_ref_time(81_700_000)
+		Weight::from_parts(81_700_000, 0)
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
 	// Storage: EncointerScheduler NextPhaseTimestamp (r:1 w:1)
 	fn push_by_one_day() -> Weight {
-		Weight::from_ref_time(24_800_000)
+		Weight::from_parts(24_800_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerScheduler PhaseDurations (r:0 w:1)
 	fn set_phase_duration() -> Weight {
-		Weight::from_ref_time(6_000_000)
+		Weight::from_parts(6_000_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerScheduler NextPhaseTimestamp (r:0 w:1)
 	fn set_next_phase_timestamp() -> Weight {
-		Weight::from_ref_time(3_800_000)
+		Weight::from_parts(3_800_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }

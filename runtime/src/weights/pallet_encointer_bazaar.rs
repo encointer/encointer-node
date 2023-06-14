@@ -31,38 +31,38 @@ impl<T: frame_system::Config> pallet_encointer_bazaar::WeightInfo for WeightInfo
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	fn create_business() -> Weight {
-		Weight::from_ref_time(26_500_000)
+		Weight::from_parts(26_500_000, 0)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	fn update_business() -> Weight {
-		Weight::from_ref_time(24_200_000)
+		Weight::from_parts(24_200_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	fn delete_business() -> Weight {
-		Weight::from_ref_time(27_900_000)
+		Weight::from_parts(27_900_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar BusinessRegistry (r:1 w:1)
 	// Storage: EncointerBazaar OfferingRegistry (r:0 w:1)
 	fn create_offering() -> Weight {
-		Weight::from_ref_time(29_600_000)
+		Weight::from_parts(29_600_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: EncointerBazaar OfferingRegistry (r:1 w:1)
 	fn update_offering() -> Weight {
-		Weight::from_ref_time(25_000_000)
+		Weight::from_parts(25_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerBazaar OfferingRegistry (r:1 w:1)
 	fn delete_offering() -> Weight {
-		Weight::from_ref_time(23_500_000)
+		Weight::from_parts(23_500_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
