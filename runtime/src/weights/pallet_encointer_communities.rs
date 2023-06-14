@@ -38,7 +38,7 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities Bootstrappers (r:0 w:1)
 	// Storage: EncointerBalances DemurragePerBlock (r:0 w:1)
 	fn new_community() -> Weight {
-		Weight::from_ref_time(7_998_900_000)
+		Weight::from_parts(7_998_900_000, 0)
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(7))
 	}
@@ -49,7 +49,7 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities CommunityIdentifiersByGeohash (r:1 w:0)
 	// Storage: EncointerCommunities Locations (r:1 w:1)
 	fn add_location() -> Weight {
-		Weight::from_ref_time(8_192_300_000)
+		Weight::from_parts(8_192_300_000, 0)
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -57,39 +57,39 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerCommunities Locations (r:1 w:1)
 	fn remove_location() -> Weight {
-		Weight::from_ref_time(49_500_000)
+		Weight::from_parts(49_500_000, 0)
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerCommunities CommunityMetadata (r:0 w:1)
 	fn update_community_metadata() -> Weight {
-		Weight::from_ref_time(27_400_000)
+		Weight::from_parts(27_400_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerBalances DemurragePerBlock (r:0 w:1)
 	fn update_demurrage() -> Weight {
-		Weight::from_ref_time(25_700_000)
+		Weight::from_parts(25_700_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerCommunities NominalIncome (r:0 w:1)
 	fn update_nominal_income() -> Weight {
-		Weight::from_ref_time(26_100_000)
+		Weight::from_parts(26_100_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities MinSolarTripTimeS (r:0 w:1)
 	fn set_min_solar_trip_time_s() -> Weight {
-		Weight::from_ref_time(15_900_000)
+		Weight::from_parts(15_900_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities MaxSpeedMps (r:0 w:1)
 	fn set_max_speed_mps() -> Weight {
-		Weight::from_ref_time(16_000_000)
+		Weight::from_parts(16_000_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities Locations (r:2 w:1)
@@ -99,7 +99,7 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities CommunityMetadata (r:0 w:1)
 	// Storage: EncointerCommunities Bootstrappers (r:0 w:1)
 	fn purge_community() -> Weight {
-		Weight::from_ref_time(17_795_900_000)
+		Weight::from_parts(17_795_900_000, 0)
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(6))
 	}

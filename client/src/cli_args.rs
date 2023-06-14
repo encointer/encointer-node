@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches};
-use substrate_api_client::{FromHexString, Hash};
+use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
 const SEED_ARG: &str = "seed";
@@ -323,6 +323,13 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(MEETUP_INDEX_ARG).map(|v| v.parse().unwrap())
 	}
 	fn at_block_arg(&self) -> Option<Hash> {
-		self.value_of(AT_BLOCK_ARG).map(|hex| Hash::from_hex(hex.to_string()).unwrap())
+		self.value_of(AT_BLOCK_ARG).map(|hex| {
+			let vec = bytes::from_hex(hex)
+				.unwrap_or_else(|_| panic!("bytes::from_hex failed, data is: {hex}"));
+			if vec.len() != 32 {
+				panic!("in at_block_arg fn, vec is: {:#?}", vec);
+			}
+			Hash::from_slice(&vec)
+		})
 	}
 }
