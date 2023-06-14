@@ -41,8 +41,8 @@ use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
 	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
-	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ParentchainExtrinsicSigner,
-	SchedulerApi, ENCOINTER_CEREMONIES,
+	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ExtrinsicAddress,
+	ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
 	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Header, Moment, RuntimeEvent,
@@ -79,8 +79,6 @@ use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 use pallet_transaction_payment::FeeDetails;
 use sp_rpc::number::NumberOrHex;
-
-type ExtrinsicAddress = <ParentchainExtrinsicSigner as SignExtrinsic<AccountId>>::ExtrinsicAddress;
 
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
