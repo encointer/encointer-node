@@ -1,6 +1,6 @@
 use crate::{Api, Result};
 use encointer_primitives::communities::{CommunityIdentifier, Location};
-use substrate_api_client::{rpc::Request, rpc_params};
+use substrate_api_client::{ac_compose_macros::rpc_params, rpc::Request};
 
 pub trait CommunitiesApi {
 	fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>>;

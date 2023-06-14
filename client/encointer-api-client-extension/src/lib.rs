@@ -1,20 +1,21 @@
-use sp_runtime::{AccountId32 as AccountId, MultiSignature};
-use substrate_api_client::{rpc::WsRpcClient, SignExtrinsic, StaticExtrinsicSigner};
-
-pub use substrate_api_client::{api::error::Error as ApiClientError, Result};
+use extrinsic_params::CommunityCurrencyTipExtrinsicParams;
+use substrate_api_client::{
+	ac_primitives::{Config, ExtrinsicSigner, SubstrateKitchensinkConfig, WithExtrinsicParams},
+	rpc::WsRpcClient,
+};
 
 pub use encointer_node_notee_runtime::Runtime;
+pub use substrate_api_client::{api::error::Error as ApiClientError, Result};
 
-pub type ParentchainExtrinsicSigner = StaticExtrinsicSigner<sp_core::sr25519::Pair, MultiSignature>;
-pub type ExtrinsicAddress =
-	<ParentchainExtrinsicSigner as SignExtrinsic<AccountId>>::ExtrinsicAddress;
-
-pub type Api = substrate_api_client::Api<
-	ParentchainExtrinsicSigner,
-	WsRpcClient,
-	extrinsic_params::CommunityCurrencyTipExtrinsicParams,
-	Runtime,
+pub type EncointerConfig = WithExtrinsicParams<
+	SubstrateKitchensinkConfig,
+	CommunityCurrencyTipExtrinsicParams<SubstrateKitchensinkConfig>,
 >;
+
+pub type Api = substrate_api_client::Api<EncointerConfig, WsRpcClient>;
+
+pub type ParentchainExtrinsicSigner = ExtrinsicSigner<SubstrateKitchensinkConfig>;
+pub type ExtrinsicAddress = <EncointerConfig as Config>::Address;
 
 pub use ceremonies::*;
 pub use communities::*;

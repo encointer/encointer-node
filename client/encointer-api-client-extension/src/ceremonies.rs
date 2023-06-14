@@ -317,7 +317,7 @@ impl CeremoniesApi for Api {
 	}
 
 	fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
-		self.get_storage_value(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
+		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
 	}
 
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {

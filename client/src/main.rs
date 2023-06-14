@@ -45,8 +45,8 @@ use encointer_api_client_extension::{
 	ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
-	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Header, Moment, RuntimeEvent,
-	Signature, ONE_DAY,
+	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent, Signature,
+	ONE_DAY,
 };
 use encointer_primitives::{
 	balances::Demurrage,
@@ -67,13 +67,13 @@ use sp_keystore::Keystore;
 use sp_runtime::MultiSignature;
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use substrate_api_client::{
+	ac_compose_macros::{compose_call, compose_extrinsic, compose_extrinsic_offline, rpc_params},
+	ac_primitives::{Bytes, SignExtrinsic},
 	api::error::Error as ApiClientError,
-	compose_call, compose_extrinsic, compose_extrinsic_offline,
 	extrinsic::BalancesExtrinsics,
 	rpc::{Request, WsRpcClient},
-	rpc_params, Bytes, Events, GetAccountInformation, GetBalance, GetHeader, GetStorage,
-	GetTransactionPayment, Metadata as ApiClientMetadata, Result as ApiResult, SignExtrinsic,
-	SubmitAndWatch, SubscribeEvents, XtStatus,
+	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
+	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -181,8 +181,7 @@ fn main() {
                 .description("query node metadata and print it as json to stdout")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
                     let api = get_chain_api(matches);
-                    let meta = api.metadata();
-                    println!("Metadata:\n {}", ApiClientMetadata::pretty_format(&meta.metadata).unwrap());
+                    println!("Metadata:\n {}", api.metadata().pretty_format().unwrap());
                     Ok(())
                 }),
         )
@@ -1610,7 +1609,7 @@ fn listen(matches: &ArgMatches<'_>) {
 		{
 			return
 		};
-		let event_results = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
+		let event_results = subscription.next_events::<RuntimeEvent, Hash>().unwrap();
 		blocks += 1;
 		match event_results {
 			Ok(evts) =>
@@ -1687,19 +1686,7 @@ fn listen(matches: &ArgMatches<'_>) {
 								dispatch_error: _,
 								dispatch_info: _,
 							} => {
-								let event_records = vec![evr];
-
-								let decoded_event = Events::new(
-									api.metadata().clone(),
-									Hash::default(),
-									event_records.encode(),
-								)
-								.iter()
-								.next()
-								.unwrap()
-								.unwrap();
-
-								error!("ExtrinsicFailed: {:?}", decoded_event);
+								error!("ExtrinsicFailed: {ee:?}");
 							},
 							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
 								println!("ExtrinsicSuccess: {dispatch_info:?}");
@@ -1734,7 +1721,7 @@ fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifi
 }
 
 fn get_block_number(api: &Api, maybe_at: Option<Hash>) -> BlockNumber {
-	let hdr: Header = api.get_header(maybe_at).unwrap().unwrap();
+	let hdr = api.get_header(maybe_at).unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
 	hdr.number
@@ -1794,7 +1781,7 @@ fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 }
 
 fn get_ceremony_index(api: &Api) -> CeremonyIndexType {
-	api.get_storage_value("EncointerScheduler", "CurrentCeremonyIndex", None)
+	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", None)
 		.unwrap()
 		.unwrap()
 }
@@ -1857,7 +1844,7 @@ fn get_community_identifiers(
 	api: &Api,
 	maybe_at: Option<Hash>,
 ) -> Option<Vec<CommunityIdentifier>> {
-	api.get_storage_value("EncointerCommunities", "CommunityIdentifiers", maybe_at)
+	api.get_storage("EncointerCommunities", "CommunityIdentifiers", maybe_at)
 		.unwrap()
 }
 
@@ -2048,7 +2035,7 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 = api
-		.get_storage_value("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
+		.get_storage("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
 		.unwrap()
 		.unwrap();
 

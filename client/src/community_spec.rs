@@ -8,7 +8,7 @@ use encointer_primitives::{
 };
 use geojson::GeoJson;
 use log::{debug, info};
-use substrate_api_client::{compose_call, Metadata};
+use substrate_api_client::{ac_compose_macros::compose_call, ac_node_api::Metadata};
 
 pub fn read_community_spec_from_file(path: &str) -> serde_json::Value {
 	let spec_str = std::fs::read_to_string(path).unwrap();
