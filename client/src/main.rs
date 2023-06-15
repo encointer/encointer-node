@@ -944,9 +944,9 @@ async fn main() {
                             let current_ceremony_index = get_ceremony_index(&api, at_block);
 
 
-                            let last_ceremony_index_of_interest = current_ceremony_index - lifetime;
-                            let ceremony_indeces: Vec<u32> = if last_ceremony_index_of_interest > 0 {
-                                (last_ceremony_index_of_interest..current_ceremony_index).collect()
+                            let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
+                            let ceremony_indices: Vec<u32> = if first_ceremony_index_of_interest > 0 {
+                                (first_ceremony_index_of_interest..current_ceremony_index).collect()
                             } else {
                                 (0..current_ceremony_index).collect()
                             };
@@ -955,10 +955,10 @@ async fn main() {
 
                             let mut reputables_csv = Vec::new();
 
-                            println!("Listing the number of reputables for each community and ceremony for the last {:?} cycles", ceremony_indeces.len());
+                            println!("Listing the number of reputables for each community and ceremony for the last {:?} cycles", ceremony_indices.len());
                             for community_id in community_ids {
                                 println!("Community ID: {community_id:?}");
-                                for ceremony_index in &ceremony_indeces {
+                                for ceremony_index in &ceremony_indices {
                                     let reputables = get_reputables_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
                                     println!("Ceremony ID {ceremony_index:?}: Total reputables: {:?}", reputables.len());
                                     for reputable in reputables {
