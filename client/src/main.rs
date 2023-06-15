@@ -72,7 +72,7 @@ use substrate_api_client::{
 	ac_primitives::{Bytes, SignExtrinsic},
 	api::error::Error as ApiClientError,
 	extrinsic::BalancesExtrinsics,
-	rpc::{Request, WsRpcClient},
+	rpc::{JsonrpseeClient, Request},
 	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
 	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
@@ -92,7 +92,8 @@ mod exit_code {
 	pub const NO_CID_SPECIFIED: i32 = 70;
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
 	env_logger::init();
 
 	Commander::new()
@@ -943,9 +944,9 @@ fn main() {
                             let current_ceremony_index = get_ceremony_index(&api, at_block);
 
 
-                            let last_ceremony_index_of_interest = current_ceremony_index - lifetime;
-                            let ceremony_indeces: Vec<u32> = if last_ceremony_index_of_interest > 0 {
-                                (last_ceremony_index_of_interest..current_ceremony_index).collect()
+                            let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
+                            let ceremony_indices: Vec<u32> = if first_ceremony_index_of_interest > 0 {
+                                (first_ceremony_index_of_interest..current_ceremony_index).collect()
                             } else {
                                 (0..current_ceremony_index).collect()
                             };
@@ -954,10 +955,10 @@ fn main() {
 
                             let mut reputables_csv = Vec::new();
 
-                            println!("Listing the number of reputables for each community and ceremony for the last {:?} cycles", ceremony_indeces.len());
+                            println!("Listing the number of reputables for each community and ceremony for the last {:?} cycles", ceremony_indices.len());
                             for community_id in community_ids {
                                 println!("Community ID: {community_id:?}");
-                                for ceremony_index in &ceremony_indeces {
+                                for ceremony_index in &ceremony_indices {
                                     let reputables = get_reputables_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
                                     println!("Ceremony ID {ceremony_index:?}: Total reputables: {:?}", reputables.len());
                                     for reputable in reputables {
@@ -1625,7 +1626,7 @@ fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 		matches.value_of("node-port").unwrap()
 	);
 	debug!("connecting to {}", url);
-	let client = WsRpcClient::new(&url).expect("node URL is incorrect");
+	let client = JsonrpseeClient::new(&url).expect("node URL is incorrect");
 	Api::new(client).unwrap()
 }
 
