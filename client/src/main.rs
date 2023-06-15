@@ -1721,7 +1721,7 @@ fn main() {
 
                     let mut api = get_chain_api(matches);
                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-                        who.clone(),
+                        who,
                     )));
 
                     let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
@@ -2247,8 +2247,8 @@ fn endorse_newcomers(
 		let call =
 			compose_call!(api.metadata(), "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
 
-		let encoded_xt: Bytes = offline_xt(&api, call, nonce).encode().into();
-		ensure_payment(&api, &encoded_xt, tx_payment_cid_arg);
+		let encoded_xt: Bytes = offline_xt(api, call, nonce).encode().into();
+		ensure_payment(api, &encoded_xt, tx_payment_cid_arg);
 		let _tx_report = api
 			.submit_and_watch_opaque_extrinsic_until(encoded_xt, XtStatus::Ready)
 			.unwrap();

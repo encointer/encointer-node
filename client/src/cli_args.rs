@@ -447,7 +447,7 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 			let vec = bytes::from_hex(hex)
 				.unwrap_or_else(|_| panic!("bytes::from_hex failed, data is: {hex}"));
 			if vec.len() != 32 {
-				panic!("in at_block_arg fn, vec is: {:#?}", vec);
+				panic!("in at_block_arg fn, vec is: {vec:#?}");
 			}
 			Hash::from_slice(&vec)
 		})
