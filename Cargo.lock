@@ -2039,6 +2039,7 @@ dependencies = [
  "sp-runtime",
  "substrate-api-client",
  "substrate-client-keystore",
+ "tokio",
 ]
 
 [[package]]
