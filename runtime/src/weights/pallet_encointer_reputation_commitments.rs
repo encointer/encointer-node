@@ -34,7 +34,7 @@ impl<T: frame_system::Config> pallet_encointer_reputation_commitments::WeightInf
 	// Storage: EncointerReputationCommitments Purposes (r:0 w:1)
 	fn register_purpose() -> Weight {
 		// Minimum execution time: 51_000 nanoseconds.
-		Weight::from_ref_time(54_000_000)
+		Weight::from_parts(54_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -43,7 +43,7 @@ impl<T: frame_system::Config> pallet_encointer_reputation_commitments::WeightInf
 	// Storage: EncointerReputationCommitments Commitments (r:1 w:1)
 	fn commit_reputation() -> Weight {
 		// Minimum execution time: 74_000 nanoseconds.
-		Weight::from_ref_time(76_000_000)
+		Weight::from_parts(76_000_000, 0)
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
