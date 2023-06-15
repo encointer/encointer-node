@@ -1855,18 +1855,16 @@ fn get_reputables_for_community_ceremony(
 			community_ceremony,
 		)
 		.unwrap();
-	let max_keys = u32::MAX;
+	let max_keys = 1000;
 	let storage_keys =
 		api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
 
 	let mut reputables = Vec::new();
 
 	for storage_key in storage_keys.iter() {
-		let maybe_account: Option<AccountId> =
+		let account_id: AccountId =
 			api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap();
-		if let Some(account_id) = maybe_account {
-			reputables.push(account_id);
-		};
+		reputables.push(account_id);
 	}
 	reputables
 }
