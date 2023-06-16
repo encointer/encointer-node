@@ -1,13 +1,21 @@
-use sp_core::sr25519;
-use substrate_api_client::rpc::WsRpcClient;
+use extrinsic_params::CommunityCurrencyTipExtrinsicParams;
+use substrate_api_client::{
+	ac_primitives::{Config, ExtrinsicSigner, SubstrateKitchensinkConfig, WithExtrinsicParams},
+	rpc::JsonrpseeClient,
+};
 
-pub use substrate_api_client::{ApiClientError, ApiResult as Result};
+pub use encointer_node_notee_runtime::Runtime;
+pub use substrate_api_client::{api::error::Error as ApiClientError, Result};
 
-pub type Api = substrate_api_client::Api<
-	sr25519::Pair,
-	WsRpcClient,
-	extrinsic_params::CommunityCurrencyTipExtrinsicParams,
+pub type EncointerConfig = WithExtrinsicParams<
+	SubstrateKitchensinkConfig,
+	CommunityCurrencyTipExtrinsicParams<SubstrateKitchensinkConfig>,
 >;
+
+pub type Api = substrate_api_client::Api<EncointerConfig, JsonrpseeClient>;
+
+pub type ParentchainExtrinsicSigner = ExtrinsicSigner<SubstrateKitchensinkConfig>;
+pub type ExtrinsicAddress = <EncointerConfig as Config>::Address;
 
 pub use ceremonies::*;
 pub use communities::*;

@@ -2,12 +2,13 @@ use codec::Encode;
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
+	common::{BoundedIpfsCid, FromStr, PalletString},
 	communities::{CommunityIdentifier, CommunityMetadata, Degree, Location},
 	fixed::transcendental::ln,
 };
 use geojson::GeoJson;
 use log::{debug, info};
-use substrate_api_client::{compose_call, Metadata};
+use substrate_api_client::{ac_compose_macros::compose_call, ac_node_api::Metadata};
 
 pub fn read_community_spec_from_file(path: &str) -> serde_json::Value {
 	let spec_str = std::fs::read_to_string(path).unwrap();
@@ -43,18 +44,15 @@ impl CommunitySpec for serde_json::Value {
 		let geoloc = GeoJson::from_json_value(self.clone()).unwrap();
 		let mut loc = vec![];
 
-		match geoloc {
-			GeoJson::FeatureCollection(ref ctn) =>
-				for feature in &ctn.features {
-					let val = &feature.geometry.as_ref().unwrap().value;
-					if let geojson::Value::Point(pt) = val {
-						let l =
-							Location { lon: Degree::from_num(pt[0]), lat: Degree::from_num(pt[1]) };
-						loc.push(l);
-						debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
-					}
-				},
-			_ => (),
+		if let GeoJson::FeatureCollection(ref ctn) = geoloc {
+			for feature in &ctn.features {
+				let val = &feature.geometry.as_ref().unwrap().value;
+				if let geojson::Value::Point(pt) = val {
+					let l = Location { lon: Degree::from_num(pt[0]), lat: Degree::from_num(pt[1]) };
+					loc.push(l);
+					debug!("lon: {} lat {} => {:?}", pt[0], pt[1], l);
+				}
+			}
 		};
 
 		loc
@@ -65,12 +63,38 @@ impl CommunitySpec for serde_json::Value {
 			.as_array()
 			.expect("bootstrappers must be array")
 			.iter()
-			.map(|a| crate::utils::keys::get_accountid_from_str(&a.as_str().unwrap()))
+			.map(|a| crate::utils::keys::get_accountid_from_str(a.as_str().unwrap()))
 			.collect()
 	}
 
 	fn metadata(&self) -> CommunityMetadata {
-		serde_json::from_value(self["community"]["meta"].clone()).unwrap()
+		CommunityMetadata {
+			name: PalletString::from_str(
+				&serde_json::from_value::<String>(self["community"]["meta"]["name"].clone())
+					.unwrap(),
+			)
+			.unwrap(),
+			symbol: PalletString::from_str(
+				&serde_json::from_value::<String>(self["community"]["meta"]["symbol"].clone())
+					.unwrap(),
+			)
+			.unwrap(),
+			assets: BoundedIpfsCid::from_str(
+				&serde_json::from_value::<String>(self["community"]["meta"]["assets"].clone())
+					.unwrap(),
+			)
+			.unwrap(),
+			theme: match serde_json::from_value::<String>(
+				self["community"]["meta"]["theme"].clone(),
+			) {
+				Ok(theme) => Some(BoundedIpfsCid::from_str(&theme).unwrap()),
+				Err(_) => None,
+			},
+			url: match serde_json::from_value::<String>(self["community"]["meta"]["url"].clone()) {
+				Ok(url) => Some(BoundedIpfsCid::from_str(&url).unwrap()),
+				Err(_) => None,
+			},
+		}
 	}
 
 	fn community(&self) -> &serde_json::Value {
@@ -128,7 +152,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 	info!("Metadata: {:?}", meta);
 
 	info!("bootstrappers: {:?}", bootstrappers);
-	info!("name: {}", meta.name);
+	info!("name: {:?}", meta.name);
 
 	let maybe_demurrage = spec.demurrage();
 	if maybe_demurrage.is_none() {
@@ -152,7 +176,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 	)
 }
 
-type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
+pub type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
 
 /// Create an `add_location` call to be used in an extrinsic.
 pub fn add_location_call(

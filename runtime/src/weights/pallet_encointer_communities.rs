@@ -38,9 +38,9 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities Bootstrappers (r:0 w:1)
 	// Storage: EncointerBalances DemurragePerBlock (r:0 w:1)
 	fn new_community() -> Weight {
-		(7_998_900_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(7 as Weight))
+		Weight::from_parts(7_998_900_000, 0)
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().writes(7))
 	}
 	// Storage: EncointerScheduler CurrentPhase (r:1 w:0)
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
@@ -49,48 +49,48 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities CommunityIdentifiersByGeohash (r:1 w:0)
 	// Storage: EncointerCommunities Locations (r:1 w:1)
 	fn add_location() -> Weight {
-		(8_192_300_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(8_192_300_000, 0)
+			.saturating_add(T::DbWeight::get().reads(6))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerScheduler CurrentPhase (r:1 w:0)
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerCommunities Locations (r:1 w:1)
 	fn remove_location() -> Weight {
-		(49_500_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(49_500_000, 0)
+			.saturating_add(T::DbWeight::get().reads(3))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerCommunities CommunityMetadata (r:0 w:1)
 	fn update_community_metadata() -> Weight {
-		(27_400_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(27_400_000, 0)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerBalances DemurragePerBlock (r:0 w:1)
 	fn update_demurrage() -> Weight {
-		(25_700_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(25_700_000, 0)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities CommunityIdentifiers (r:1 w:0)
 	// Storage: EncointerCommunities NominalIncome (r:0 w:1)
 	fn update_nominal_income() -> Weight {
-		(26_100_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(26_100_000, 0)
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities MinSolarTripTimeS (r:0 w:1)
 	fn set_min_solar_trip_time_s() -> Weight {
-		(15_900_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(15_900_000, 0)
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities MaxSpeedMps (r:0 w:1)
 	fn set_max_speed_mps() -> Weight {
-		(16_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_parts(16_000_000, 0)
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: EncointerCommunities Locations (r:2 w:1)
 	// Storage: EncointerCommunities CommunityIdentifiersByGeohash (r:1 w:1)
@@ -99,8 +99,8 @@ impl<T: frame_system::Config> pallet_encointer_communities::WeightInfo for Weigh
 	// Storage: EncointerCommunities CommunityMetadata (r:0 w:1)
 	// Storage: EncointerCommunities Bootstrappers (r:0 w:1)
 	fn purge_community() -> Weight {
-		(17_795_900_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		Weight::from_parts(17_795_900_000, 0)
+			.saturating_add(T::DbWeight::get().reads(4))
+			.saturating_add(T::DbWeight::get().writes(6))
 	}
 }

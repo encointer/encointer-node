@@ -19,6 +19,7 @@
 /client/communityspec.json
 /client/.communities/
 /client/voucher-*
+/client/env/
 
 **/__pycache__/
 
