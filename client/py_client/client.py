@@ -253,3 +253,23 @@ class Client:
     def purge_community_ceremony(self, cid, from_cindex, to_cindex, pay_fees_in_cc=False):
         ret = self.run_cli_command(["purge-community-ceremony", str(from_cindex), str(to_cindex)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
+
+    def create_faucet(self, account, facuet_name, amount, drip_amount, whitelist, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["create-faucet", account, facuet_name, str(amount), str(drip_amount)] + whitelist, cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+    
+    def drip_faucet(self, account, facuet_account, cindex, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["drip-faucet", account, facuet_account, str(cindex)], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+    
+    def dissolve_faucet(self, account, facuet_account, beneficiary, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["dissolve-faucet", "--signer", account, facuet_account, beneficiary], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+    
+    def close_faucet(self, account, facuet_account, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["close-faucet", account, facuet_account], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+    
+    def set_faucet_reserve_amount(self, account, amount, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["set-faucet-reserve-amount", "--signer", account, str(amount)], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
