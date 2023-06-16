@@ -36,9 +36,11 @@ pallets=(
 #  "pallet_balances" \
 #  "pallet_encointer_balances"
 #  "pallet_encointer_bazaar"
-  "pallet_encointer_ceremonies"
+#  "pallet_encointer_ceremonies"
 #  "pallet_encointer_communities"
 #  "pallet_encointer_scheduler"
+  "pallet_encointer_faucet"
+  "pallet_encointer_reputation_commitments"
 )
 
 for pallet in ${pallets[*]}; do
@@ -55,6 +57,6 @@ for pallet in ${pallets[*]}; do
   --wasm-execution=compiled \
   --heap-pages=4096 \
   --output="$WEIGHT_OUTPUT_DIR"/"$pallet".rs \
-  --template="$SCRIPTS_DIR"/frame-weight-template-full-info.hbs
+  #--template="$SCRIPTS_DIR"/frame-weight-template-full-info.hbs
 
 done

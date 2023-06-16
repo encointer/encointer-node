@@ -39,7 +39,7 @@ pub use frame_support::{
 		},
 		IdentityFee, Weight,
 	},
-	StorageValue,
+	PalletId, StorageValue,
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -53,6 +53,8 @@ pub use pallet_encointer_balances::Call as EncointerBalancesCall;
 pub use pallet_encointer_bazaar::Call as EncointerBazaarCall;
 pub use pallet_encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
+pub use pallet_encointer_faucet::Call as EncointerFaucetCall;
+pub use pallet_encointer_reputation_commitments::Call as EncointerReputationCommitmentsCall;
 pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
 
 pub use encointer_balances_tx_payment::{AssetBalanceOf, AssetIdOf, BalanceToCommunityBalance};
@@ -93,6 +95,9 @@ pub const ONE_DAY: Moment = 86_400_000;
 
 pub type AssetId = AssetIdOf<Runtime>;
 pub type AssetBalance = AssetBalanceOf<Runtime>;
+
+const MILLICENTS: Balance = 1_000_000_000;
+const CENTS: Balance = 1_000 * MILLICENTS;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -347,7 +352,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = ConstU32<128>;
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -416,6 +421,7 @@ parameter_types! {
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
 	pub const MeetupNewbieLimitDivider: u64 = 2;
+	pub const FaucetPalletId: PalletId = PalletId(*b"ectrfct0");
 }
 
 impl pallet_encointer_scheduler::Config for Runtime {
@@ -474,6 +480,48 @@ impl pallet_asset_tx_payment::Config for Runtime {
 	>;
 }
 
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: Balance = 100 * MILLICENTS;
+	pub const ProposalBondMaximum: Balance = 500 * CENTS;
+	pub const SpendPeriod: BlockNumber = 6 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(1);
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub const MaxApprovals: u32 = 10;
+}
+
+impl pallet_treasury::Config for Runtime {
+	type PalletId = TreasuryPalletId;
+	type Currency = pallet_balances::Pallet<Runtime>;
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type RuntimeEvent = RuntimeEvent;
+	type OnSlash = (); //No proposal
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
+	type SpendPeriod = SpendPeriod; //Cannot be 0: Error: Thread 'tokio-runtime-worker' panicked at 'attempt to calculate the remainder with a divisor of zero
+	type Burn = (); //No burn
+	type BurnDestination = (); //No burn
+	type SpendFunds = (); //No spend, no bounty
+	type MaxApprovals = MaxApprovals;
+	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>; //No spend, no bounty
+}
+
+impl pallet_encointer_reputation_commitments::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_encointer_reputation_commitments::WeightInfo<Runtime>;
+}
+
+impl pallet_encointer_faucet::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ControllerOrigin = EnsureRoot<AccountId>;
+	type Currency = Balances;
+	type PalletId = FaucetPalletId;
+	type WeightInfo = weights::pallet_encointer_faucet::WeightInfo<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime where
@@ -497,12 +545,15 @@ construct_runtime!(
 		Utility: pallet_utility::{Pallet, Call, Event} = 40,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 44,
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 48,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Event<T>} = 49,
 
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
 		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config, Event<T>} = 62,
 		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Config, Event<T>} = 63,
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
+		EncointerReputationCommitments: pallet_encointer_reputation_commitments::{Pallet, Call, Storage, Event<T>} = 65,
+		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Event<T>} = 66,
 	}
 );
 
@@ -559,7 +610,10 @@ mod benches {
 		[pallet_encointer_bazaar, EncointerBazaar]
 		[pallet_encointer_ceremonies, EncointerCeremonies]
 		[pallet_encointer_communities, EncointerCommunities]
+		[pallet_encointer_faucet, EncointerFaucet]
+		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
 		[pallet_encointer_scheduler, EncointerScheduler]
+
 	);
 }
 
