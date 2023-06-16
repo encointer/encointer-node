@@ -1861,7 +1861,7 @@ fn get_attendees_for_community_ceremony(
 		error!("results can be wrong because max keys reached for query")
 	}
 	let mut attendees = Vec::new();
-    let mut noshows = Vec::new();
+	let mut noshows = Vec::new();
 	for storage_key in storage_keys.iter() {
 		match api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap() {
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked => {
@@ -1870,15 +1870,15 @@ fn get_attendees_for_community_ceremony(
 					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
 				);
 			},
-			Reputation::UnverifiedReputable | Reputation::Unverified=> {
-                let key_postfix = storage_key.as_ref();
-                noshows.push(
-                    AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
-                );
-            },
+			Reputation::UnverifiedReputable | Reputation::Unverified => {
+				let key_postfix = storage_key.as_ref();
+				noshows.push(
+					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+				);
+			},
 		}
 	}
-    (attendees, noshows)
+	(attendees, noshows)
 }
 
 fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
