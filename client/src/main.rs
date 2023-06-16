@@ -945,11 +945,7 @@ async fn main() {
 
 
                             let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
-                            let ceremony_indices: Vec<u32> = if first_ceremony_index_of_interest > 0 {
-                                (first_ceremony_index_of_interest..current_ceremony_index).collect()
-                            } else {
-                                (0..current_ceremony_index).collect()
-                            };
+                            let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
 
                             let community_ids = get_cid_names(&api).unwrap().into_iter().map(|names| names.cid);
 
@@ -960,8 +956,8 @@ async fn main() {
                                 println!("Community ID: {community_id:?}");
                                 let mut reputables: HashMap<AccountId, usize> = HashMap::new();
                                 for ceremony_index in &ceremony_indices {
-                                    let attendees = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
-                                    println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:?}", attendees.len());
+                                    let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
+                                    println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:} (noshows: {:})", attendees.len(), noshows.len());
                                     for attendee in attendees {
                                         reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
                                         *reputables.entry(attendee.clone()).or_insert(0) += 1;
@@ -1849,7 +1845,7 @@ fn get_attendees_for_community_ceremony(
 	api: &Api,
 	community_ceremony: CommunityCeremony,
 	at_block: Option<Hash>,
-) -> Vec<AccountId> {
+) -> (Vec<AccountId>, Vec<AccountId>) {
 	let key_prefix = api
 		.get_storage_double_map_key_prefix(
 			"EncointerCeremonies",
@@ -1865,6 +1861,7 @@ fn get_attendees_for_community_ceremony(
 		error!("results can be wrong because max keys reached for query")
 	}
 	let mut attendees = Vec::new();
+    let mut noshows = Vec::new();
 	for storage_key in storage_keys.iter() {
 		match api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap() {
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked => {
@@ -1873,10 +1870,15 @@ fn get_attendees_for_community_ceremony(
 					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
 				);
 			},
-			_ => (),
+			Reputation::UnverifiedReputable | Reputation::Unverified=> {
+                let key_postfix = storage_key.as_ref();
+                noshows.push(
+                    AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+                );
+            },
 		}
 	}
-	attendees
+    (attendees, noshows)
 }
 
 fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
