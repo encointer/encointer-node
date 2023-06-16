@@ -955,19 +955,20 @@ async fn main() {
 
                             let mut reputables_csv = Vec::new();
 
-                            println!("Listing the number of reputables for each community and ceremony for the last {:?} cycles", ceremony_indices.len());
+                            println!("Listing the number of attested attendees for each community and ceremony for cycles [{:}:{:}]", ceremony_indices.first().unwrap(), ceremony_indices.last().unwrap());
                             for community_id in community_ids {
                                 println!("Community ID: {community_id:?}");
+                                let mut reputables: HashMap<AccountId, usize> = HashMap::new();
                                 for ceremony_index in &ceremony_indices {
-                                    let reputables = get_reputables_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
-                                    println!("Ceremony ID {ceremony_index:?}: Total reputables: {:?}", reputables.len());
-                                    for reputable in reputables {
-                                        reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", reputable.to_ss58check()));
+                                    let attendees = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
+                                    println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:?}", attendees.len());
+                                    for attendee in attendees {
+                                        reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
+                                        *reputables.entry(attendee.clone()).or_insert(0) += 1;
                                     }
-
                                 }
+                                println!("Reputables in {community_id:?} (unique accounts with at least one attendance) {:}", reputables.keys().len());
                             }
-
                             if is_verbose {
                                 for reputable in reputables_csv {
                                     println!("{reputable}");
@@ -1844,7 +1845,7 @@ fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType
 		.unwrap_or(0)
 }
 
-fn get_reputables_for_community_ceremony(
+fn get_attendees_for_community_ceremony(
 	api: &Api,
 	community_ceremony: CommunityCeremony,
 	at_block: Option<Hash>,
@@ -1852,7 +1853,7 @@ fn get_reputables_for_community_ceremony(
 	let key_prefix = api
 		.get_storage_double_map_key_prefix(
 			"EncointerCeremonies",
-			"ReputableRegistry",
+			"ParticipantReputation",
 			community_ceremony,
 		)
 		.unwrap();
@@ -1860,14 +1861,19 @@ fn get_reputables_for_community_ceremony(
 	let storage_keys =
 		api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
 
-	let mut reputables = Vec::new();
-
-	for storage_key in storage_keys.iter() {
-		let account_id: AccountId =
-			api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap();
-		reputables.push(account_id);
+	if storage_keys.len() == max_keys as usize {
+		error!("results can be wrong because max keys reached for query")
 	}
-	reputables
+	let mut attendees = Vec::new();
+	for storage_key in storage_keys.iter() {
+		match api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap() {
+			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked => {
+				attendees.push(AccountId::decode(&mut storage_key.as_ref()).unwrap());
+			},
+			_ => (),
+		}
+	}
+	attendees
 }
 
 fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
