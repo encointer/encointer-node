@@ -26,6 +26,8 @@ pallet-encointer-ceremonies = { default-features = false, git = "https://github.
 pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
+pallet-encointer-faucet = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
+pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
 #use the develop branch for compatibility reason with polkadot-v.0.9.28
 pallet-sidechain = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "polkadot-v0.9.42" }
@@ -45,6 +47,7 @@ pallet-scheduler = { version = "4.0.0-dev", default-features = false, git = "htt
 pallet-sudo = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 pallet-transaction-payment = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+pallet-treasury = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 pallet-utility = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-block-builder = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -94,6 +97,7 @@ std = [
     "pallet-timestamp/std",
     "pallet-transaction-payment-rpc-runtime-api/std",
     "pallet-transaction-payment/std",
+    "pallet-treasury/std",
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",
@@ -116,6 +120,8 @@ std = [
     "pallet-encointer-ceremonies-rpc-runtime-api/std",
     "pallet-encointer-communities/std",
     "pallet-encointer-communities-rpc-runtime-api/std",
+    "pallet-encointer-faucet/std",
+    "pallet-encointer-reputation-commitments/std",
     "pallet-encointer-scheduler/std",
     "pallet-sidechain/std",
     "pallet-teerex/std",
@@ -139,6 +145,8 @@ runtime-benchmarks = [
     "pallet-encointer-bazaar/runtime-benchmarks",
     "pallet-encointer-ceremonies/runtime-benchmarks",
     "pallet-encointer-communities/runtime-benchmarks",
+    "pallet-encointer-faucet/runtime-benchmarks",
+    "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
     "pallet-sidechain/runtime-benchmarks",
     "pallet-teerex/runtime-benchmarks",

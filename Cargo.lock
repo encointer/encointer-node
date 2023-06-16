@@ -2158,6 +2158,8 @@ dependencies = [
  "pallet-encointer-ceremonies-rpc-runtime-api",
  "pallet-encointer-communities",
  "pallet-encointer-communities-rpc-runtime-api",
+ "pallet-encointer-faucet",
+ "pallet-encointer-reputation-commitments",
  "pallet-encointer-scheduler",
  "pallet-grandpa",
  "pallet-insecure-randomness-collective-flip",
@@ -2169,6 +2171,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-treasury",
  "pallet-utility",
  "parity-scale-codec",
  "scale-info",
@@ -5431,6 +5434,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-encointer-faucet"
+version = "1.2.0"
+source = "git+https://github.com/encointer/pallets?branch=polkadot-v0.9.42#e443bdd15f38f76f01c1f17732ce8376708556f7"
+dependencies = [
+ "approx",
+ "encointer-primitives",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-encointer-communities",
+ "pallet-encointer-reputation-commitments",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-encointer-reputation-commitments"
+version = "1.2.0"
+source = "git+https://github.com/encointer/pallets?branch=polkadot-v0.9.42#e443bdd15f38f76f01c1f17732ce8376708556f7"
+dependencies = [
+ "approx",
+ "encointer-primitives",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-encointer-ceremonies",
+ "pallet-encointer-communities",
+ "pallet-encointer-scheduler",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-encointer-scheduler"
 version = "1.1.0"
 source = "git+https://github.com/encointer/pallets?branch=polkadot-v0.9.42#e443bdd15f38f76f01c1f17732ce8376708556f7"
@@ -5660,6 +5706,23 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-weights",
+]
+
+[[package]]
+name = "pallet-treasury"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#569aae5341ea0c1d10426fa1ec13a36c0b64393b"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
