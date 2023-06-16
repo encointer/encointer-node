@@ -392,7 +392,7 @@ parameter_types! {
 
 /// added by Integritee
 impl pallet_teerex::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type MomentsPerDay = MomentsPerDay;
 	type MaxSilenceTime = MaxSilenceTime;
@@ -405,7 +405,7 @@ parameter_types! {
 
 /// added by Integritee
 impl pallet_sidechain::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
 }
 
