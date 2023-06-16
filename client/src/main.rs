@@ -1868,7 +1868,10 @@ fn get_attendees_for_community_ceremony(
 	for storage_key in storage_keys.iter() {
 		match api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap() {
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked => {
-				attendees.push(AccountId::decode(&mut storage_key.as_ref()).unwrap());
+				let key_postfix = storage_key.as_ref();
+				attendees.push(
+					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+				);
 			},
 			_ => (),
 		}
