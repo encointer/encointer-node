@@ -24,6 +24,7 @@ const DRYRUN_FLAG: &str = "dryrun";
 const TX_PAYMENT_CID_ARG: &str = "tx-payment-cid";
 const MEETUP_INDEX_ARG: &str = "meetup-index";
 const AT_BLOCK_ARG: &str = "at";
+const VERBOSE_FLAG: &str = "verbose";
 const FAUCET_BALANCE_ARG: &str = "faucet-balance";
 const FAUCET_DRIP_AMOUNT_ARG: &str = "faucet-drip-amount";
 const FAUCET_RESERVE_AMOUNT_ARG: &str = "faucet-reserve-amount";
@@ -53,6 +54,7 @@ pub trait EncointerArgs<'b> {
 	fn tx_payment_cid_arg(self) -> Self;
 	fn meetup_index_arg(self) -> Self;
 	fn at_block_arg(self) -> Self;
+	fn verbose_flag(self) -> Self;
 	fn faucet_balance_arg(self) -> Self;
 	fn faucet_drip_amount_arg(self) -> Self;
 	fn faucet_reserve_amount_arg(self) -> Self;
@@ -83,6 +85,7 @@ pub trait EncointerArgsExtractor {
 	fn tx_payment_cid_arg(&self) -> Option<&str>;
 	fn meetup_index_arg(&self) -> Option<u64>;
 	fn at_block_arg(&self) -> Option<Hash>;
+	fn verbose_flag(&self) -> bool;
 	fn faucet_balance_arg(&self) -> Option<u128>;
 	fn faucet_drip_amount_arg(&self) -> Option<u128>;
 	fn faucet_reserve_amount_arg(&self) -> Option<u128>;
@@ -318,7 +321,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("the meetup index for which to claim rewards"),
 		)
 	}
-
 	fn at_block_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(AT_BLOCK_ARG)
@@ -330,7 +332,17 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("block hash at which to query"),
 		)
 	}
-
+	fn verbose_flag(self) -> Self {
+		self.arg(
+			Arg::with_name(VERBOSE_FLAG)
+				.short("v")
+				.long("verbose")
+				.global(true)
+				.takes_value(false)
+				.required(false)
+				.help("print extra information"),
+		)
+	}
 	fn faucet_balance_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(FAUCET_BALANCE_ARG)
@@ -340,7 +352,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("faucet balance"),
 		)
 	}
-
 	fn faucet_drip_amount_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(FAUCET_DRIP_AMOUNT_ARG)
@@ -451,6 +462,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 			}
 			Hash::from_slice(&vec)
 		})
+	}
+	fn verbose_flag(&self) -> bool {
+		self.is_present(VERBOSE_FLAG)
 	}
 	fn faucet_balance_arg(&self) -> Option<u128> {
 		self.value_of(FAUCET_BALANCE_ARG).map(|v| v.parse().unwrap())

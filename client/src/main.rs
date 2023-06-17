@@ -54,6 +54,7 @@ use encointer_primitives::{
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
 		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
+		ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
 	faucet::{FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
@@ -660,7 +661,7 @@ async fn main() {
                     // >>>> add some debug info as well
                     let bn = get_block_number(&api, None);
                     debug!("block number: {}", bn);
-                    let cindex = get_ceremony_index(&api);
+                    let cindex = get_ceremony_index(&api, None);
                     info!("ceremony index: {}", cindex);
                     let tnext: Moment = api.get_next_phase_timestamp().unwrap();
                     debug!("next phase timestamp: {}", tnext);
@@ -729,7 +730,7 @@ async fn main() {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
-                            let current_ceremony_index = get_ceremony_index(&api);
+                            let current_ceremony_index = get_ceremony_index(&api, None);
 
                             let cindex = matches.ceremony_index_arg()
                                 .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
@@ -777,7 +778,7 @@ async fn main() {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
-                            let current_ceremony_index = get_ceremony_index(&api);
+                            let current_ceremony_index = get_ceremony_index(&api, None);
 
                             let cindex = matches.ceremony_index_arg()
                                 .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
@@ -825,7 +826,7 @@ async fn main() {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
-                            let current_ceremony_index = get_ceremony_index(&api);
+                            let current_ceremony_index = get_ceremony_index(&api, None);
 
                             let cindex = matches.ceremony_index_arg()
                                 .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
@@ -854,7 +855,7 @@ async fn main() {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
-                            let current_ceremony_index = get_ceremony_index(&api);
+                            let current_ceremony_index = get_ceremony_index(&api, None);
 
                             let cindex = matches.ceremony_index_arg()
                                 .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
@@ -926,6 +927,53 @@ async fn main() {
                 }),
         )
         .add_cmd(
+            Command::new("list-reputables")
+                .description("list all reputables for all cycles within the current reputation-lifetime for all communities")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .at_block_arg()
+                        .verbose_flag()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                            let api = get_chain_api(matches);
+
+                            let is_verbose = matches.verbose_flag();
+                            let at_block = matches.at_block_arg();
+
+                            let lifetime = get_reputation_lifetime(&api, at_block);
+                            let current_ceremony_index = get_ceremony_index(&api, at_block);
+
+
+                            let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
+                            let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
+
+                            let community_ids = get_cid_names(&api).unwrap().into_iter().map(|names| names.cid);
+
+                            let mut reputables_csv = Vec::new();
+
+                            println!("Listing the number of attested attendees for each community and ceremony for cycles [{:}:{:}]", ceremony_indices.first().unwrap(), ceremony_indices.last().unwrap());
+                            for community_id in community_ids {
+                                println!("Community ID: {community_id:?}");
+                                let mut reputables: HashMap<AccountId, usize> = HashMap::new();
+                                for ceremony_index in &ceremony_indices {
+                                    let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block);
+                                    println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:} (noshows: {:})", attendees.len(), noshows.len());
+                                    for attendee in attendees {
+                                        reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
+                                        *reputables.entry(attendee.clone()).or_insert(0) += 1;
+                                    }
+                                }
+                                println!("Reputables in {community_id:?} (unique accounts with at least one attendance) {:}", reputables.keys().len());
+                            }
+                            if is_verbose {
+                                for reputable in reputables_csv {
+                                    println!("{reputable}");
+                                }
+                            }
+                            Ok(())
+                        }),
+                )
+        .add_cmd(
             Command::new("register-participant")
                 .description("Register encointer ceremony participant for supplied community")
                 .options(|app| {
@@ -942,7 +990,7 @@ async fn main() {
                     };
 
                     let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
+                    let cindex = get_ceremony_index(&api, None);
                     let cid = verify_cid(&api,
                         matches
                             .cid_arg()
@@ -1004,7 +1052,7 @@ async fn main() {
                     };
 
                     let api = get_chain_api(matches);
-                    let cindex = get_ceremony_index(&api);
+                    let cindex = get_ceremony_index(&api, None);
                     let cid = verify_cid(&api,
                         matches
                             .cid_arg()
@@ -1080,7 +1128,7 @@ async fn main() {
 
                     let cc = match matches.ceremony_index_arg() {
                         Some(cindex_arg) => {
-                            let current_ceremony_index = get_ceremony_index(&api);
+                            let current_ceremony_index = get_ceremony_index(&api, None);
                             let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
                             Some((cid, cindex))
                         },
@@ -1165,7 +1213,7 @@ async fn main() {
                     let accountid = get_accountid_from_str(arg_who);
                     let api = get_chain_api(matches);
 
-                    let current_ceremony_index = get_ceremony_index(&api);
+                    let current_ceremony_index = get_ceremony_index(&api, None);
 
                     let cindex_arg = matches.ceremony_index_arg().unwrap_or(-1);
                     let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
@@ -1299,7 +1347,7 @@ async fn main() {
                             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                             if matches.all_flag() {
-                                let mut cindex = get_ceremony_index(&api);
+                                let mut cindex = get_ceremony_index(&api, None);
                                 if api.get_current_phase().unwrap() == CeremonyPhaseType::Registering {
                                     cindex -= 1;
                                 }
@@ -1463,7 +1511,7 @@ async fn main() {
                     let mut api = get_chain_api(matches);
                     api.set_signer(signer);
 
-                    let current_ceremony_index = get_ceremony_index(&api);
+                    let current_ceremony_index = get_ceremony_index(&api, None);
 
                     let from_cindex_arg = matches.from_cindex_arg().unwrap_or(0);
                     let to_cindex_arg = matches.to_cindex_arg().unwrap_or(0);
@@ -2017,8 +2065,8 @@ fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 	}
 }
 
-fn get_ceremony_index(api: &Api) -> CeremonyIndexType {
-	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", None)
+fn get_ceremony_index(api: &Api, at_block: Option<Hash>) -> CeremonyIndexType {
+	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", at_block)
 		.unwrap()
 		.unwrap()
 }
@@ -2027,6 +2075,52 @@ fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
 		.unwrap()
 		.unwrap_or(0)
+}
+
+fn get_attendees_for_community_ceremony(
+	api: &Api,
+	community_ceremony: CommunityCeremony,
+	at_block: Option<Hash>,
+) -> (Vec<AccountId>, Vec<AccountId>) {
+	let key_prefix = api
+		.get_storage_double_map_key_prefix(
+			"EncointerCeremonies",
+			"ParticipantReputation",
+			community_ceremony,
+		)
+		.unwrap();
+	let max_keys = 1000;
+	let storage_keys =
+		api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
+
+	if storage_keys.len() == max_keys as usize {
+		error!("results can be wrong because max keys reached for query")
+	}
+	let mut attendees = Vec::new();
+	let mut noshows = Vec::new();
+	for storage_key in storage_keys.iter() {
+		match api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap() {
+			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked => {
+				let key_postfix = storage_key.as_ref();
+				attendees.push(
+					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+				);
+			},
+			Reputation::UnverifiedReputable | Reputation::Unverified => {
+				let key_postfix = storage_key.as_ref();
+				noshows.push(
+					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+				);
+			},
+		}
+	}
+	(attendees, noshows)
+}
+
+fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
+	api.get_storage("EncointerCeremonies", "ReputationLifetime", at_block)
+		.unwrap()
+		.unwrap_or(5)
 }
 
 fn get_participant_attestation_index(
@@ -2044,7 +2138,7 @@ fn new_claim_for(
 	cid: CommunityIdentifier,
 	n_participants: u32,
 ) -> Vec<u8> {
-	let cindex = get_ceremony_index(api);
+	let cindex = get_ceremony_index(api, None);
 	let mindex = api
 		.get_meetup_index(&(cid, cindex), &claimant.public().into())
 		.unwrap()
