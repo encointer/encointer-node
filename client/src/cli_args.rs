@@ -321,7 +321,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("the meetup index for which to claim rewards"),
 		)
 	}
-
 	fn at_block_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(AT_BLOCK_ARG)
@@ -333,7 +332,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("block hash at which to query"),
 		)
 	}
-
 	fn verbose_flag(self) -> Self {
 		self.arg(
 			Arg::with_name(VERBOSE_FLAG)
@@ -343,7 +341,8 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.takes_value(false)
 				.required(false)
 				.help("print extra information"),
-
+		)
+	}
 	fn faucet_balance_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(FAUCET_BALANCE_ARG)
@@ -353,7 +352,6 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("faucet balance"),
 		)
 	}
-
 	fn faucet_drip_amount_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(FAUCET_DRIP_AMOUNT_ARG)
@@ -467,6 +465,7 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn verbose_flag(&self) -> bool {
 		self.is_present(VERBOSE_FLAG)
+	}
 	fn faucet_balance_arg(&self) -> Option<u128> {
 		self.value_of(FAUCET_BALANCE_ARG).map(|v| v.parse().unwrap())
 	}
