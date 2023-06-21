@@ -172,8 +172,8 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 			Arg::with_name(WHITELIST_ARG)
 				.takes_value(true)
 				.required(false)
-				.multiple(true)
-				.min_values(1),
+				.value_name("WHITELIST")
+				.help("comma separated list of cids in whitelist"),
 		)
 	}
 
@@ -402,7 +402,7 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 
 	fn whitelist_arg(&self) -> Option<Vec<&str>> {
-		self.values_of(WHITELIST_ARG).map(|c| c.collect())
+		self.value_of(WHITELIST_ARG).map(|s| s.split(",").collect())
 	}
 
 	fn ceremony_index_arg(&self) -> Option<i32> {
