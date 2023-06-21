@@ -1631,13 +1631,15 @@ async fn main() {
                     let faucet_balance = matches.faucet_balance_arg().unwrap();
                     let drip_amount = matches.faucet_drip_amount_arg().unwrap();
 
-                    let whitelist_vec: Vec<_> = matches.whitelist_arg().unwrap()
-                    .into_iter()
-                    .map(|c| verify_cid(&api,
-                        c,
-                        None))
-                    .collect();
-                    let whitelist: WhiteListType = WhiteListType::try_from(whitelist_vec).unwrap();
+                    let whitelist = matches.whitelist_arg().map(|wl| {
+                        let whitelist_vec: Vec<_> = wl
+                        .into_iter()
+                        .map(|c| verify_cid(&api,
+                            c,
+                            None))
+                        .collect();
+                        WhiteListType::try_from(whitelist_vec).unwrap()
+                    });
 
                     let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
