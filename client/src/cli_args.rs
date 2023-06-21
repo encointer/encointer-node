@@ -173,7 +173,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.takes_value(true)
 				.required(false)
 				.value_name("WHITELIST")
-				.help("comma separated list of cids in whitelist"),
+				.help("comma separated list of cids in whitelist. no spaces allowed."),
 		)
 	}
 
