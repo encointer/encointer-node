@@ -1663,15 +1663,14 @@ async fn main() {
 
                     match result {
                         Ok(report) => {
-                            let events = report
-                            .events
-                            .unwrap();
-
-                            println!("{}", AccountId::decode(&mut events[5].field_bytes()[0..32].as_ref()).unwrap().to_ss58check());
-
+                            for event in report.events.unwrap().iter() {
+                                if event.pallet_name() == "EncointerFaucet" && event.variant_name() == "FaucetCreated" {
+                                    println!("{}", AccountId::decode(&mut event.field_bytes()[0..32].as_ref()).unwrap().to_ss58check());
+                                }
+                            }
                         },
                         Err(e) => {
-                            println!("[+] Couldn't execute the extrinsic due to {:?}\n", e); 
+                            println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
                         },
                     };
 
@@ -1723,7 +1722,7 @@ async fn main() {
 
                         },
                         Err(e) => {
-                            println!("[+] Couldn't execute the extrinsic due to {:?}\n", e); 
+                            println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
                         },
                     };
 
