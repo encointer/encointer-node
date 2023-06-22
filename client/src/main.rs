@@ -45,8 +45,8 @@ use encointer_api_client_extension::{
 	ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{
-	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent, Signature,
-	ONE_DAY,
+	AccountId, Balance, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent,
+	Signature, ONE_DAY,
 };
 use encointer_primitives::{
 	balances::Demurrage,
@@ -57,7 +57,7 @@ use encointer_primitives::{
 		ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
-	faucet::{FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
+	faucet::{Faucet, FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
@@ -77,7 +77,7 @@ use substrate_api_client::{
 	extrinsic::BalancesExtrinsics,
 	rpc::{JsonrpseeClient, Request},
 	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
-	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
+	Result as ApiResult, SubmitAndWatch, SubmitAndWatchUntilSuccess, SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -1657,14 +1657,29 @@ async fn main() {
                     );
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
-                    println!("Faucet created by {}. status: '{:?}'", who.public(), report.status);
+
+
+                    let result = api.submit_and_watch_extrinsic_until_success(xt, false);
+
+                    match result {
+                        Ok(report) => {
+                            for event in report.events.unwrap().iter() {
+                                if event.pallet_name() == "EncointerFaucet" && event.variant_name() == "FaucetCreated" {
+                                    println!("{}", AccountId::decode(&mut event.field_bytes()[0..32].as_ref()).unwrap().to_ss58check());
+                                }
+                            }
+                        },
+                        Err(e) => {
+                            println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
+                        },
+                    };
+
                     Ok(())
                 }),
         )
         .add_cmd(
             Command::new("drip-faucet")
-                .description("Drip faucet")
+                .description("Drip faucet. args: 1. faucet account, 2. cindex of the reputation. use --cid to specify the community.")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .account_arg()
@@ -1698,15 +1713,25 @@ async fn main() {
 
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
 
-                    println!("Faucet dripped to {}. status: '{:?}'", who.public(), report.status);
+                    let result = api.submit_and_watch_extrinsic_until_success(xt, false);
+
+                    match result {
+                        Ok(_report) => {
+                            println!("Faucet dripped to {}", who.public());
+
+                        },
+                        Err(e) => {
+                            println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
+                        },
+                    };
+
                     Ok(())
                 }),
         )
         .add_cmd(
             Command::new("dissolve-faucet")
-                .description("Dissolve faucet")
+                .description("can only be called by root. args: 1. faucet address, 2. beneficiary of the remaining funds.")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .signer_arg("account with necessary privileges (sudo or councillor)")
@@ -1761,7 +1786,7 @@ async fn main() {
         )
         .add_cmd(
             Command::new("close-faucet")
-                .description("Close faucet")
+                .description("lazy garbage collection. can only be called by faucet creator and only once the faucet is empty")
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .account_arg()
@@ -1846,6 +1871,63 @@ async fn main() {
                     Ok(())
                 }),
         )
+        .add_cmd(
+            Command::new("list-faucets")
+                .description("list all faucets. use -v to get faucet details.")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .at_block_arg()
+                        .verbose_flag()
+                })
+                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                            let api = get_chain_api(matches);
+
+                            let is_verbose = matches.verbose_flag();
+                            let at_block = matches.at_block_arg();
+
+                            let key_prefix = api
+                            .get_storage_map_key_prefix(
+                                "EncointerFaucet",
+                                "Faucets",
+                            )
+                            .unwrap();
+
+                        let max_keys = 1000;
+                        let storage_keys =
+                            api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
+
+                        if storage_keys.len() == max_keys as usize {
+                            error!("results can be wrong because max keys reached for query")
+                        }
+
+                        for storage_key in storage_keys.iter() {
+                            let key_postfix = storage_key.as_ref();
+                            let faucet_address = AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap();
+                            let faucet: Faucet<AccountId, Balance> = api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap();
+
+                            if is_verbose {
+                                println!("address: {}", faucet_address.to_ss58check());
+                                println!("name: {}", String::from_utf8(faucet.name.to_vec()).unwrap());
+                                println!("creator: {}", AccountId::decode(&mut faucet.creator.as_ref()).unwrap().to_ss58check());
+                                println!("balance: {}", api.get_account_data(&faucet_address).unwrap().unwrap().free);
+                                println!("drip amount: {}", faucet.drip_amount);
+                                if let Some(whitelist) = faucet.whitelist {
+                                    println!("whitelist:");
+                                    for cid in whitelist.to_vec() {
+                                        println!("{}", cid);
+                                    }
+                                } else {
+                                    println!("whitelist: None");
+                                }
+                                println!("");
+                            } else {
+                                println!{"{}", faucet_address};
+                            }
+
+                        }
+                            Ok(())
+                        }),
+                )
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
             println!("No subcommand matched");
