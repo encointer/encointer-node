@@ -218,7 +218,7 @@ jobs:
       matrix:
         test: [ test_bootstrap_demo_community.sh, test_bot_community.sh, test_register_business.sh ]
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
 
     - name: download build artifacts
       uses: actions/download-artifact@master
