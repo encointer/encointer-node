@@ -208,7 +208,7 @@ jobs:
 
       - name: Fail-fast; cancel other jobs
         if: failure()
-        uses: andymckay/cancel-action@0.2
+        uses: andymckay/cancel-action@0.3
 
   integration-test:
     name: ${{ matrix.test }}
