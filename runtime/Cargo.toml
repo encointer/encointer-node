@@ -164,5 +164,7 @@ try-runtime = [
     "pallet-encointer-bazaar/try-runtime",
     "pallet-encointer-ceremonies/try-runtime",
     "pallet-encointer-communities/try-runtime",
+    "pallet-encointer-faucet/try-runtime",
+    "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
 ]
