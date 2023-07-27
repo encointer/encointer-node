@@ -2,10 +2,6 @@
 Encointer-node branch to build a Testnet with the encointer [community-sidechain](https://github.com/encointer/community-sidechain).
 This node has the Integritee [teerex](https://github.com/integritee-network/pallets/tree/master/teerex) and [sidechain](https://github.com/integritee-network/pallets/tree/master/sidechain) pallets.
 
-## Notes for developers:
-  - The `my-node-runtime` should point to the `encointer-node` [encointer-node](https://github.com/encointer/encointer-node) or you will have a hard time with decoding things.
-  - The type definitions (`ParentchainExtrinsicParams, ParentchainAdditionalParams, ParentchainSignedExtra`) should should be checked that they are compatible with `pallet_asset_tx_payment` (i.e. `ParentchainPlainTip` changed to `ParentchainAssetTip`).
-
 Cargo build feature that is highly relevant for developers:
 
     skip-ias-check: allow registering enclaves without attestation report.
