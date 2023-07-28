@@ -590,7 +590,7 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 	(
-		pallet_encointer_communities::migrations::v1::Migration<Runtime>,
+		pallet_encointer_communities::migrations::v2::MigrateV0orV1toV2<Runtime>,
 		pallet_encointer_ceremonies::migrations::v1::Migration<Runtime>,
 	),
 >;
