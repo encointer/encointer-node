@@ -62,6 +62,42 @@ jobs:
         name: encointer-client-notee-${{ github.sha }}
         path: target/release/encointer-client-notee
 
+  build-try-runtime-and-benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install protoc
+        run: sudo apt-get install protobuf-compiler
+
+        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: rustup show
+
+      - name: Cache Rust Dependecies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            enclave/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build
+        run: cargo build --release --features try-runtime,runtime-benchmarks
+      - name: Upload node
+        uses: actions/upload-artifact@v3
+        with:
+          name: encointer-node-notee-try-runtime-and-benchmarks-${{ github.sha }}
+          path: target/release/encointer-node-notee
+      - name: Upload CLI client
+        uses: actions/upload-artifact@v3
+        with:
+          name: encointer-client-notee-try-runtime-and-benchmarks-${{ github.sha }}
+          path: target/release/encointer-client-notee
+
   build-runtimes:
     name: Build Runtimes
     runs-on: ubuntu-latest
