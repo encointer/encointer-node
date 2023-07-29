@@ -29,8 +29,8 @@ pallet-encointer-communities = { git = "https://github.com/encointer/pallets", b
 pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
 
 # scs deps
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42" }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42" }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0" }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0" }
 
 # substrate deps
 frame-support = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }

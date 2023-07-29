@@ -7,24 +7,20 @@ use log::{debug, error, info};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	ac_compose_macros::{compose_call, compose_extrinsic_offline},
+	ac_compose_macros::{compose_call},
 	ac_node_api::Metadata,
 	ac_primitives::Bytes,
-	api::error::Error as ApiClientError,
-	GetAccountInformation, GetBalance, GetStorage, GetTransactionPayment, Result, SubmitAndWatch,
+	api::{error::Error as ApiClientError, rpc_api::state::GetStorage},
+	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch,
 	XtStatus,
 };
-/// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
-pub fn offline_xt<C: Encode + Clone>(api: &Api, call: C, nonce: u32) -> EncointerXt<C> {
-	compose_extrinsic_offline!(api.clone().signer().unwrap(), call, api.extrinsic_params(nonce))
-}
 
 /// Creates a signed extrinsic from a call
 ///
 /// Panics if no signer is set.
 pub fn xt<C: Encode + Clone>(api: &Api, call: C) -> EncointerXt<C> {
 	let nonce = api.get_nonce().unwrap();
-	offline_xt(api, call, nonce)
+	api.compose_extrinsic_offline(call, nonce)
 }
 
 /// Wraps the supplied call in a sudo call
