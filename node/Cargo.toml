@@ -11,7 +11,7 @@ repository = "https://github.com/encointer/encointer-node"
 #   * Align minor version with the runtime.
 #   * Bump patch version for new releases, and make it the release tag.
 #   * The client should follow this version.
-version = "1.4.2"
+version = "1.4.3"
 
 [[bin]]
 name = "encointer-node-notee"
