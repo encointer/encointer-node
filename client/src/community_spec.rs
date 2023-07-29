@@ -3,7 +3,7 @@ use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
 	common::{BoundedIpfsCid, FromStr, PalletString},
-	communities::{CommunityIdentifier, CommunityMetadata, Degree, Location, CommunityRules},
+	communities::{CommunityIdentifier, CommunityMetadata, CommunityRules, Degree, Location},
 	fixed::transcendental::ln,
 };
 use geojson::GeoJson;
