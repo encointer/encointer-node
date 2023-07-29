@@ -155,6 +155,7 @@ try-runtime = [
     "pallet-sudo/try-runtime",
     "pallet-timestamp/try-runtime",
     "pallet-transaction-payment/try-runtime",
+    "pallet-treasury/try-runtime",
     "pallet-proxy/try-runtime",
     "pallet-scheduler/try-runtime",
     "pallet-utility/try-runtime",
@@ -164,5 +165,7 @@ try-runtime = [
     "pallet-encointer-bazaar/try-runtime",
     "pallet-encointer-ceremonies/try-runtime",
     "pallet-encointer-communities/try-runtime",
+    "pallet-encointer-faucet/try-runtime",
+    "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
 ]
