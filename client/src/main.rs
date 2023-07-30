@@ -620,7 +620,7 @@ async fn main() {
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
                         let loc = api.get_locations(n.cid).unwrap();
-                        println!("{}: {} locations: {}", n.cid, n.name, loc.len());
+                        println!("{}: {} locations: {}", n.cid, String::from_utf8(n.name.to_vec()).unwrap(), loc.len());
                     }
                     Ok(())
                 }),

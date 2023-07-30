@@ -7,7 +7,7 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "1.4.25"
+version = "1.5.26"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -16,19 +16,19 @@ scale-info = { version = "2.1.1", default-features = false, features = ["derive"
 serde = { features = ["derive"], optional = true, version = "1.0.136" }
 
 # encointer deps
-encointer-balances-tx-payment = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-ceremonies = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-faucet = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
-pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42" }
+encointer-balances-tx-payment = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-ceremonies = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-faucet = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
+pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v0.9.42-pallets-v1.3.0" }
 
 # substrate deps
 frame-executive = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
