@@ -40,7 +40,7 @@ jobs:
       run: rustup show
 
     - name: Cache Rust Dependecies
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.cargo/registry
@@ -76,7 +76,7 @@ jobs:
         run: rustup show
 
       - name: Cache Rust Dependecies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Cache target dir
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: "${{ github.workspace }}/runtime/target"
           key: srtool-target-${{ matrix.runtime }}-${{ github.sha }}
@@ -190,7 +190,7 @@ jobs:
       run: rustup show
 
     - name: Cache Rust Dependecies
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/.cargo/registry
@@ -226,7 +226,7 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.rust-target }}-${{ matrix.check }}
 
@@ -244,7 +244,7 @@ jobs:
 
       - name: Fail-fast; cancel other jobs
         if: failure()
-        uses: andymckay/cancel-action@0.2
+        uses: andymckay/cancel-action@0.3
 
   integration-test:
     name: ${{ matrix.test }}
@@ -254,15 +254,15 @@ jobs:
       matrix:
         test: [ test_bootstrap_demo_community.sh, test_bot_community.sh, test_register_business.sh ]
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
 
     - name: download build artifacts
-      uses: actions/download-artifact@master
+      uses: actions/download-artifact@v3
       with:
         name: encointer-node-notee-${{ github.sha }}
 
     - name: download build artifacts
-      uses: actions/download-artifact@master
+      uses: actions/download-artifact@v3
       with:
         name: encointer-client-notee-${{ github.sha }}
 
@@ -274,7 +274,7 @@ jobs:
         mv encointer-*-notee target/release
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.7
     - name: install py dependencies
@@ -369,7 +369,7 @@ jobs:
           ls
           ls "${{ matrix.runtime }}-runtime-${{ github.sha }}"
           runtime_ver="$(ruby -e 'require "./scripts/github/lib.rb"; puts get_runtime()')"
-          echo "::set-output name=runtime_ver::$runtime_ver"
+          echo "{runtime_ver}={$runtime_ver}" >> $GITHUB_OUTPUT
       - name: Upload compact ${{ matrix.runtime }} wasm
         uses: actions/upload-release-asset@v1
         env:
