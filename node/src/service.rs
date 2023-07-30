@@ -1,6 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use encointer_node_notee_runtime::{self, opaque::Block, RuntimeApi};
+use futures::FutureExt;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::SharedVoterState;
@@ -11,7 +12,6 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
-use futures::FutureExt;
 
 // Our native executor instance.
 pub struct ExecutorDispatch;
@@ -210,8 +210,8 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 				enable_http_requests: true,
 				custom_extensions: |_| vec![],
 			})
-				.run(client.clone(), task_manager.spawn_handle())
-				.boxed(),
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
 		);
 	}
 

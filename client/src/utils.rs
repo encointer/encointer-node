@@ -7,12 +7,11 @@ use log::{debug, error, info};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	ac_compose_macros::{compose_call},
+	ac_compose_macros::compose_call,
 	ac_node_api::Metadata,
 	ac_primitives::Bytes,
 	api::{error::Error as ApiClientError, rpc_api::state::GetStorage},
-	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch,
-	XtStatus,
+	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch, XtStatus,
 };
 
 /// Creates a signed extrinsic from a call

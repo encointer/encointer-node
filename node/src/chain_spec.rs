@@ -1,7 +1,8 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
-	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, EncointerFaucetConfig, RuntimeGenesisConfig,
-	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerFaucetConfig,
+	EncointerSchedulerConfig, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -154,7 +155,7 @@ fn testnet_genesis(
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
-			_config: Default::default()
+			_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
@@ -165,7 +166,7 @@ fn testnet_genesis(
 		},
 		grandpa: GrandpaConfig {
 			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
-			_config: Default::default()
+			_config: Default::default(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
@@ -180,7 +181,7 @@ fn testnet_genesis(
 				(CeremonyPhaseType::Assigning, 28800000),
 				(CeremonyPhaseType::Attesting, 172800000),
 			],
-			_config: Default::default()
+			_config: Default::default(),
 		},
 		encointer_ceremonies: EncointerCeremoniesConfig {
 			ceremony_reward: BalanceType::from_num(1),
@@ -191,22 +192,22 @@ fn testnet_genesis(
 			inactivity_timeout: 168500, // 10 years at 30min ceremony cycle
 			meetup_time_offset: 0,
 			endorsement_tickets_per_reputable: 5,
-			_config: Default::default()
+			_config: Default::default(),
 		},
 		encointer_communities: EncointerCommunitiesConfig {
 			min_solar_trip_time_s: 1, // [s]
 			max_speed_mps: 1,
-			_config: Default::default()// [m/s] suggested would be 83m/s,
+			_config: Default::default(), // [m/s] suggested would be 83m/s,
 		},
 		encointer_balances: EncointerBalancesConfig {
 			// Lower values lead to lower fees in CC proportionally.
 			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
 			fee_conversion_factor: 100_000,
-			_config: Default::default()
+			_config: Default::default(),
 		},
 		encointer_faucet: EncointerFaucetConfig {
 			reserve_amount: 100_000_000_000_000,
-			_config: Default::default()
+			_config: Default::default(),
 		},
 	}
 }
