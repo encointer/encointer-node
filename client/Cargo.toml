@@ -3,7 +3,7 @@ name = "encointer-client-notee"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 #keep with node version. major, minor and patch
-version = "1.4.2"
+version = "1.5.0"
 
 [dependencies]
 clap = "2.33"
@@ -21,12 +21,12 @@ encointer-api-client-extension = { path = "./encointer-api-client-extension" }
 encointer-node-notee-runtime = { path = "../runtime" }
 
 # encointer deps
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
-encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
-pallet-encointer-balances = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
-pallet-encointer-ceremonies = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
-pallet-encointer-communities = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
-pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
+encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+pallet-encointer-balances = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+pallet-encointer-ceremonies = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+pallet-encointer-communities = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 
 # scs deps
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0" }

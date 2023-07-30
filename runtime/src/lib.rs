@@ -131,10 +131,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node-notee"),
 	impl_name: create_runtime_str!("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 25,
+	spec_version: 26,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 4,
+	transaction_version: 5,
 	state_version: 0,
 };
 
@@ -588,8 +588,10 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 	(
-		pallet_encointer_communities::migrations::v1::Migration<Runtime>,
-		pallet_encointer_ceremonies::migrations::v1::Migration<Runtime>,
+		// can migrate from v0 or v1 to v2
+		pallet_encointer_communities::migrations::v2::MigrateV0orV1toV2<Runtime>,
+		// expected to be noop. but need to try-runtime checks first!
+		pallet_encointer_ceremonies::migrations::v1::MigrateToV1<Runtime>,
 	),
 >;
 

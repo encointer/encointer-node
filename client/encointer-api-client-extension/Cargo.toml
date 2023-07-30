@@ -10,9 +10,9 @@ serde = { features = ["derive"], version = "1.0.132" }
 serde_json = { version = "1.0.79" }
 
 # encointer deps
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
+encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 encointer-node-notee-runtime = { path = "../../runtime" }
-encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0" }
+encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0", features = ["ws-client"] }
 # scs deps
