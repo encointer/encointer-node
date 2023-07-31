@@ -196,8 +196,8 @@ fn testnet_genesis(
 		},
 		encointer_communities: EncointerCommunitiesConfig {
 			min_solar_trip_time_s: 1, // [s]
-			max_speed_mps: 1,
-			_config: Default::default(), // [m/s] suggested would be 83m/s,
+			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
+			_config: Default::default(),
 		},
 		encointer_balances: EncointerBalancesConfig {
 			// Lower values lead to lower fees in CC proportionally.
