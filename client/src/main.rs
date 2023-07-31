@@ -32,7 +32,7 @@ use crate::{
 		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
 		into_effective_cindex,
 		keys::{get_accountid_from_str, get_pair_from_str, KEYSTORE_PATH, SR25519},
-		offline_xt, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
@@ -2426,7 +2426,7 @@ fn endorse_newcomers(
 		let call =
 			compose_call!(api.metadata(), "EncointerCeremonies", "endorse_newcomer", cid, endorsee);
 
-		let encoded_xt: Bytes = offline_xt(api, call, nonce).encode().into();
+		let encoded_xt: Bytes = api.compose_extrinsic_offline(call, nonce).encode().into();
 		ensure_payment(api, &encoded_xt, tx_payment_cid_arg);
 		let _tx_report = api
 			.submit_and_watch_opaque_extrinsic_until(encoded_xt, XtStatus::Ready)

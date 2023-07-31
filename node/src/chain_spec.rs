@@ -1,7 +1,8 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
-	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerSchedulerConfig, GenesisConfig,
-	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerFaucetConfig,
+	EncointerSchedulerConfig, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
+	SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -13,7 +14,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -149,11 +150,12 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
-) -> GenesisConfig {
-	GenesisConfig {
+) -> RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
+			_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
@@ -164,6 +166,7 @@ fn testnet_genesis(
 		},
 		grandpa: GrandpaConfig {
 			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
+			_config: Default::default(),
 		},
 		sudo: SudoConfig {
 			// Assign network admin rights.
@@ -178,6 +181,7 @@ fn testnet_genesis(
 				(CeremonyPhaseType::Assigning, 28800000),
 				(CeremonyPhaseType::Attesting, 172800000),
 			],
+			_config: Default::default(),
 		},
 		encointer_ceremonies: EncointerCeremoniesConfig {
 			ceremony_reward: BalanceType::from_num(1),
@@ -188,16 +192,22 @@ fn testnet_genesis(
 			inactivity_timeout: 168500, // 10 years at 30min ceremony cycle
 			meetup_time_offset: 0,
 			endorsement_tickets_per_reputable: 5,
+			_config: Default::default(),
 		},
 		encointer_communities: EncointerCommunitiesConfig {
 			min_solar_trip_time_s: 1, // [s]
 			max_speed_mps: 1,         // [m/s] suggested would be 83m/s,
+			_config: Default::default(),
 		},
-
 		encointer_balances: EncointerBalancesConfig {
 			// Lower values lead to lower fees in CC proportionally.
 			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
 			fee_conversion_factor: 100_000,
+			_config: Default::default(),
+		},
+		encointer_faucet: EncointerFaucetConfig {
+			reserve_amount: 100_000_000_000_000,
+			_config: Default::default(),
 		},
 	}
 }

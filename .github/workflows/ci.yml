@@ -121,8 +121,6 @@ jobs:
         with:
           image: paritytech/srtool
           chain: ${{ matrix.runtime }}
-          # Can remove that when we can build with stable, see: https://github.com/integritee-network/parachain/issues/200
-          tag: 1.66.1
           runtime_dir: runtime
 
       - name: Summary
