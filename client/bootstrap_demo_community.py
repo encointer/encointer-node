@@ -269,12 +269,16 @@ def test_faucet(client, cid):
     faucet_account = "5CRaq3MpDT1j1d7xoaG3LDwqgC5AoTzRtGptSHm2yFrWoVid"
     print(client.balance("//Bob"), flush=True)
     print(balance_bob, flush=True)
-    print(client.balance(faucet_account), flush=True)
-    if(not client.balance(faucet_account) == balance(10000)):
-        print(f"Wrong Faucet balance after faucet creation")
+    faucet_account_balance = client.balance(faucet_account)
+    print(f"faucet_account_balance: {faucet_account_balance}", flush=True)
+    expected_facuet_balance = balance(10000)
+    if(not faucet_account_balance == expected_facuet_balance):
+        print(f"Wrong Faucet balance after faucet creation: expected: {expected_facuet_balance}, actual: {faucet_account_balance}")
         exit(1)
-    if(not balance_bob - client.balance("//Bob") == balance(13000)):
-        print(f"Wrong Bob balance after faucet creation")
+    expected_bob_balance = balance(13000)
+    balance_bob_new = balance_bob - client.balance("//Bob")
+    if(not balance_bob_new == expected_bob_balance):
+        print(f"Wrong Bob balance after faucet creation: expected: {expected_bob_balance}, actual: {balance_bob_new}")
         exit(1)
     print('Faucet created', flush=True)
 
