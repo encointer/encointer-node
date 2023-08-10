@@ -37,7 +37,7 @@ import os
 @click.option('--bizaccount', required=False, help='the account of the owner in ss58 format or raw_seed.')
 @click.option('--price', default='0', help='price of your offering.')
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
-@click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-r', '--remote_chain', default=None, help='choose remote chain: gesell.')
 @click.pass_context
 def cli(ctx, client, port, cid, bizaccount, price, remote_chain):
