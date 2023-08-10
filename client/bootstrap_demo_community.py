@@ -86,7 +86,7 @@ def register_participants_and_perform_meetup(client, cid, accounts):
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.Registering)
 
-    print(f'Registering Participants for Cid: {cid}')
+    print(f'Registering Participants for cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
     blocks_to_wait = 3
@@ -120,10 +120,10 @@ def faucet(client, cid, accounts):
 
 
 def fee_payment_transfers(client, cid):
-    print(f'Transfering 0.5CC from //Alice to //Eve')
+    print(f'Transferring 0.5CC from //Alice to //Eve')
     client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
 
-    print(f'Transfering all CC from //Eve to //Ferdie')
+    print(f'Transferring all CC from //Eve to //Ferdie')
     client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
     if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
         print("transfer_all failed")
@@ -285,7 +285,7 @@ def main(ipfs_local, client, url, port, spec_file, test):
     client.await_block(1)
 
     if(not test):
-        print(f"Community {cid} sucessfullly bootatrapped")
+        print(f"Community {cid} successfully bootstrapped")
         return(0)
 
     print(f'Balances for new community with cid: {cid}.')

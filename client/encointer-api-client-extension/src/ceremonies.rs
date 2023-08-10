@@ -11,9 +11,12 @@ use encointer_primitives::{
 };
 use log::warn;
 use serde::{Deserialize, Serialize};
-use substrate_api_client::{AccountId, ApiClientError, Moment};
 
-pub const ENCOINTER_CEREMONIES: &'static str = "EncointerCeremonies";
+use sp_runtime::AccountId32 as AccountId;
+use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
+pub type Moment = u64;
+
+pub const ENCOINTER_CEREMONIES: &str = "EncointerCeremonies";
 
 // same as in runtime, but we did not want to import the runtime here.
 pub const ONE_DAY: Moment = 86_400_000;
@@ -177,7 +180,7 @@ impl CeremoniesApi for Api {
 				ENCOINTER_CEREMONIES,
 				storage_key,
 				community_ceremony,
-				&account_id,
+				account_id,
 				None,
 			)
 		};
@@ -193,7 +196,7 @@ impl CeremoniesApi for Api {
 		}
 
 		Err(ApiClientError::Other(
-			format!("Could not get participant index for {:?}", account_id).into(),
+			format!("Could not get participant index for {account_id:?}").into(),
 		))
 	}
 
@@ -249,7 +252,7 @@ impl CeremoniesApi for Api {
 		meetup_index: MeetupIndexType,
 	) -> Result<Option<Location>> {
 		let locations = self.get_locations(community_ceremony.0)?;
-		let location_assignment_params = self.get_assignments(&community_ceremony)?.locations;
+		let location_assignment_params = self.get_assignments(community_ceremony)?.locations;
 
 		Ok(meetup_location(meetup_index, locations, location_assignment_params))
 	}
@@ -265,8 +268,7 @@ impl CeremoniesApi for Api {
 		if meetup_index_zero_based > meetup_count {
 			return Err(ApiClientError::Other(
 				format!(
-					"Invalid meetup index > meetup count: {}, {}",
-					meetup_index_zero_based, meetup_count
+					"Invalid meetup index > meetup count: {meetup_index_zero_based}, {meetup_count}"
 				)
 				.into(),
 			))
@@ -315,7 +317,7 @@ impl CeremoniesApi for Api {
 	}
 
 	fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
-		self.get_storage_value(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
+		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
 	}
 
 	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {

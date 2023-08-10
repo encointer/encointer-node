@@ -7,12 +7,16 @@ use log::{debug, error, info};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{
-	compose_call, compose_extrinsic_offline, ApiClientError, ApiResult as Result, Metadata,
+	ac_compose_macros::{compose_call, compose_extrinsic_offline},
+	ac_node_api::Metadata,
+	ac_primitives::Bytes,
+	api::error::Error as ApiClientError,
+	GetAccountInformation, GetBalance, GetStorage, GetTransactionPayment, Result, SubmitAndWatch,
 	XtStatus,
 };
 /// Wrapper around the `compose_extrinsic_offline!` macro to be less verbose.
 pub fn offline_xt<C: Encode + Clone>(api: &Api, call: C, nonce: u32) -> EncointerXt<C> {
-	compose_extrinsic_offline!(api.clone().signer.unwrap(), call, api.extrinsic_params(nonce))
+	compose_extrinsic_offline!(api.clone().signer().unwrap(), call, api.extrinsic_params(nonce))
 }
 
 /// Creates a signed extrinsic from a call
@@ -56,7 +60,7 @@ pub fn collective_propose_call<Proposal: Encode>(
 	)
 }
 pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
-	api.get_storage_value("Membership", "Members", None)?
+	api.get_storage("Membership", "Members", None)?
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
@@ -65,19 +69,10 @@ pub fn send_and_wait_for_in_block<C: Encode>(
 	xt: EncointerXt<C>,
 	tx_payment_cid: Option<&str>,
 ) -> Option<H256> {
-	send_xt_hex_and_wait_for_in_block(api, xt.hex_encode(), tx_payment_cid)
-}
-
-pub fn send_xt_hex_and_wait_for_in_block(
-	api: &Api,
-	xt_hex: String,
-	tx_payment_cid: Option<&str>,
-) -> Option<H256> {
-	ensure_payment(&api, &xt_hex, tx_payment_cid);
-	let tx_hash = api.send_extrinsic(xt_hex, XtStatus::InBlock).unwrap();
-	info!("[+] Transaction got included. Hash: {:?}\n", tx_hash);
-
-	tx_hash
+	ensure_payment(api, &xt.encode().into(), tx_payment_cid);
+	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
+	info!("[+] Transaction got included in Block: {:?}\n", report.block_hash.unwrap());
+	Some(report.extrinsic_hash)
 }
 
 /// Prints the raw call to be supplied with js/apps.
@@ -100,19 +95,19 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, xt: &str, tx_payment_cid: Option<&str>) {
+pub fn ensure_payment(api: &Api, encoded_xt: &Bytes, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
-		ensure_payment_cc(api, cid_str, xt);
+		ensure_payment_cc(api, cid_str, encoded_xt);
 	} else {
-		ensure_payment_native(api, xt);
+		ensure_payment_native(api, encoded_xt);
 	}
 }
 
-fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
+fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: &Bytes) {
 	let balance: BalanceType =
-		get_community_balance(api, cid_str, &api.signer_account().unwrap(), None);
+		get_community_balance(api, cid_str, api.signer_account().unwrap(), None);
 
-	let fee: BalanceType = get_asset_fee_details(&api, cid_str, xt)
+	let fee: BalanceType = get_asset_fee_details(api, cid_str, encoded_xt)
 		.unwrap()
 		.inclusion_fee
 		.map(|details| details.base_fee.into_u256().as_u128())
@@ -126,8 +121,8 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, xt: &str) {
 	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
 }
 
-fn ensure_payment_native(api: &Api, xt: &str) {
-	let signer_balance = match api.get_account_data(&api.signer_account().unwrap()).unwrap() {
+fn ensure_payment_native(api: &Api, encoded_xt: &Bytes) {
+	let signer_balance = match api.get_account_data(api.signer_account().unwrap()).unwrap() {
 		Some(bal) => bal.free,
 		None => {
 			error!("account does not exist on chain");
@@ -135,7 +130,7 @@ fn ensure_payment_native(api: &Api, xt: &str) {
 		},
 	};
 	let fee = api
-		.get_fee_details(xt, None)
+		.get_fee_details(encoded_xt.clone(), None)
 		.unwrap()
 		.unwrap()
 		.inclusion_fee
@@ -160,7 +155,7 @@ pub fn into_effective_cindex(
 	current_ceremony_index: CeremonyIndexType,
 ) -> CeremonyIndexType {
 	match ceremony_index {
-		i32::MIN..=-1 => current_ceremony_index - ceremony_index.abs() as u32,
+		i32::MIN..=-1 => current_ceremony_index - ceremony_index.unsigned_abs(),
 		1..=i32::MAX => ceremony_index as CeremonyIndexType,
 		0 => panic!("Zero not allowed as ceremony index"),
 	}
