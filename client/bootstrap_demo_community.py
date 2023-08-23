@@ -5,7 +5,7 @@ Demonstrate the bootstrapping of an Encointer community on a *dev* chain.
 start node with
   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
-or start parachain with  
+or start parachain with
 then run this script
   ./bootstrap_demo_community.py --port 9945
 
@@ -297,11 +297,11 @@ def test_faucet(client, cid):
     if(not client.balance("//Eve") == balance(9000)):
         print(f"Dissolve failed")
         exit(1)
-    
+
     if(not client.balance("//Bob") == balance_bob + balance(3000)):
         print(f"Dissolve failed")
         exit(1)
-    
+
     print('Faucet dissolved', flush=True)
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(2)
@@ -318,7 +318,7 @@ def test_faucet(client, cid):
     if(not client.balance(faucet_account) == 0):
         print(f"Faucet closing failed with wrong faucet balance")
         exit(1)
-    
+
     if(not client.balance("//Bob") == balance_bob + balance(3000)):
         print(f"Faucet closing failed with wrong bob balance")
         exit(1)
@@ -369,7 +369,7 @@ def main(ipfs_local, client, url, port, spec_file, test):
     if not len(rep) > 0:
         print("no reputation gained")
         exit(1)
-        
+
     register_participants_and_perform_meetup(client, cid, accounts)
     client.next_phase()
     client.await_block(1)

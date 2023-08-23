@@ -57,7 +57,6 @@ pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
 pub use pallet_encointer_faucet::Call as EncointerFaucetCall;
 pub use pallet_encointer_reputation_commitments::Call as EncointerReputationCommitmentsCall;
 pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
-/// Integritee
 pub use pallet_sidechain;
 pub use pallet_teerex;
 
@@ -131,13 +130,13 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("encointer-node-notee"),
-	impl_name: create_runtime_str!("encointer-node-notee"),
+	spec_name: create_runtime_str!("encointer-node-tee"),
+	impl_name: create_runtime_str!("encointer-node-tee"),
 	authoring_version: 0,
-	spec_version: 23,
-	impl_version: 0,
+	spec_version: 26,
+	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 3,
+	transaction_version: 5,
 	state_version: 0,
 };
 
@@ -392,7 +391,6 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 	pub const MaxAttestationRenewalPeriod: Moment = 172_800_000; // 48h
 }
 
@@ -447,7 +445,9 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);	/// 0.000005
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
+	/// 0.000005
 	pub const EncointerExistentialDeposit: BalanceType = BalanceType::from_bits(0x0000000000000000000053e2d6238da4_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
@@ -606,7 +606,6 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
-	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -628,8 +627,10 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 	(
-		pallet_encointer_communities::migrations::v1::Migration<Runtime>,
-		pallet_encointer_ceremonies::migrations::v1::Migration<Runtime>,
+		// can migrate from v0 or v1 to v2
+		pallet_encointer_communities::migrations::v2::MigrateV0orV1toV2<Runtime>,
+		// expected to be noop. but need to try-runtime checks first!
+		pallet_encointer_ceremonies::migrations::v1::MigrateToV1<Runtime>,
 	),
 >;
 
