@@ -39,7 +39,7 @@ pub use frame_support::{
 		},
 		IdentityFee, Weight,
 	},
-	StorageValue,
+	PalletId, StorageValue,
 };
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -49,12 +49,14 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+pub use pallet_enclave_bridge;
 pub use pallet_encointer_balances::Call as EncointerBalancesCall;
 pub use pallet_encointer_bazaar::Call as EncointerBazaarCall;
 pub use pallet_encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
+pub use pallet_encointer_faucet::Call as EncointerFaucetCall;
+pub use pallet_encointer_reputation_commitments::Call as EncointerReputationCommitmentsCall;
 pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
-/// Integritee
 pub use pallet_sidechain;
 pub use pallet_teerex;
 
@@ -97,6 +99,9 @@ pub const ONE_DAY: Moment = 86_400_000;
 pub type AssetId = AssetIdOf<Runtime>;
 pub type AssetBalance = AssetBalanceOf<Runtime>;
 
+const MILLICENTS: Balance = 1_000_000_000;
+const CENTS: Balance = 1_000 * MILLICENTS;
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -125,13 +130,13 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("encointer-node-notee"),
-	impl_name: create_runtime_str!("encointer-node-notee"),
+	spec_name: create_runtime_str!("encointer-node-tee"),
+	impl_name: create_runtime_str!("encointer-node-tee"),
 	authoring_version: 0,
-	spec_version: 23,
-	impl_version: 0,
+	spec_version: 26,
+	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 3,
+	transaction_version: 5,
 	state_version: 0,
 };
 
@@ -337,7 +342,7 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = (Aura, EncointerScheduler, Teerex);
+	type OnTimestampSet = (Aura, EncointerScheduler);
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Runtime>;
 }
@@ -350,7 +355,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
+	type MaxReserves = ConstU32<128>;
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -386,17 +391,21 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: Moment =172_800_000; // 48h
+	pub const MaxAttestationRenewalPeriod: Moment = 172_800_000; // 48h
 }
 
 /// added by Integritee
 impl pallet_teerex::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = pallet_balances::Pallet<Runtime>;
+	type MaxAttestationRenewalPeriod = MaxAttestationRenewalPeriod;
 	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
 	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
+}
+
+impl pallet_enclave_bridge::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = pallet_balances::Pallet<Runtime>;
+	type WeightInfo = weights::pallet_enclave_bridge::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -436,11 +445,14 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);	/// 0.000005
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
+	/// 0.000005
 	pub const EncointerExistentialDeposit: BalanceType = BalanceType::from_bits(0x0000000000000000000053e2d6238da4_i128);
 	pub const MeetupSizeTarget: u64 = 10;
 	pub const MeetupMinSize: u64 = 3;
 	pub const MeetupNewbieLimitDivider: u64 = 2;
+	pub const FaucetPalletId: PalletId = PalletId(*b"ectrfct0");
 }
 
 impl pallet_encointer_scheduler::Config for Runtime {
@@ -499,6 +511,48 @@ impl pallet_asset_tx_payment::Config for Runtime {
 	>;
 }
 
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: Balance = 100 * MILLICENTS;
+	pub const ProposalBondMaximum: Balance = 500 * CENTS;
+	pub const SpendPeriod: BlockNumber = 6 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(1);
+	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	pub const MaxApprovals: u32 = 10;
+}
+
+impl pallet_treasury::Config for Runtime {
+	type PalletId = TreasuryPalletId;
+	type Currency = pallet_balances::Pallet<Runtime>;
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type RuntimeEvent = RuntimeEvent;
+	type OnSlash = (); //No proposal
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type ProposalBondMaximum = ProposalBondMaximum;
+	type SpendPeriod = SpendPeriod; //Cannot be 0: Error: Thread 'tokio-runtime-worker' panicked at 'attempt to calculate the remainder with a divisor of zero
+	type Burn = (); //No burn
+	type BurnDestination = (); //No burn
+	type SpendFunds = (); //No spend, no bounty
+	type MaxApprovals = MaxApprovals;
+	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>; //No spend, no bounty
+}
+
+impl pallet_encointer_reputation_commitments::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_encointer_reputation_commitments::WeightInfo<Runtime>;
+}
+
+impl pallet_encointer_faucet::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ControllerOrigin = EnsureRoot<AccountId>;
+	type Currency = Balances;
+	type PalletId = FaucetPalletId;
+	type WeightInfo = weights::pallet_encointer_faucet::WeightInfo<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime where
@@ -522,16 +576,21 @@ construct_runtime!(
 		Utility: pallet_utility::{Pallet, Call, Event} = 40,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 44,
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 48,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Event<T>} = 49,
 
 		//Integritee
 		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 50,
 		Sidechain: pallet_sidechain::{Pallet, Call, Storage, Event<T>} = 53,
+		EnclaveBridge: pallet_enclave_bridge::{Pallet, Call, Storage, Event<T>} = 54,
+
 
 		EncointerScheduler: pallet_encointer_scheduler::{Pallet, Call, Storage, Config<T>, Event} = 60,
 		EncointerCeremonies: pallet_encointer_ceremonies::{Pallet, Call, Storage, Config<T>, Event<T>} = 61,
 		EncointerCommunities: pallet_encointer_communities::{Pallet, Call, Storage, Config, Event<T>} = 62,
 		EncointerBalances: pallet_encointer_balances::{Pallet, Call, Storage, Config, Event<T>} = 63,
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
+		EncointerReputationCommitments: pallet_encointer_reputation_commitments::{Pallet, Call, Storage, Event<T>} = 65,
+		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Event<T>} = 66,
 	}
 );
 
@@ -547,7 +606,6 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
-	frame_system::CheckNonZeroSender<Runtime>,
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -569,8 +627,10 @@ pub type Executive = frame_executive::Executive<
 	Runtime,
 	AllPalletsWithSystem,
 	(
-		pallet_encointer_communities::migrations::v1::Migration<Runtime>,
-		pallet_encointer_ceremonies::migrations::v1::Migration<Runtime>,
+		// can migrate from v0 or v1 to v2
+		pallet_encointer_communities::migrations::v2::MigrateV0orV1toV2<Runtime>,
+		// expected to be noop. but need to try-runtime checks first!
+		pallet_encointer_ceremonies::migrations::v1::MigrateToV1<Runtime>,
 	),
 >;
 
@@ -591,7 +651,10 @@ mod benches {
 		[pallet_encointer_bazaar, EncointerBazaar]
 		[pallet_encointer_ceremonies, EncointerCeremonies]
 		[pallet_encointer_communities, EncointerCommunities]
+		[pallet_encointer_faucet, EncointerFaucet]
+		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
 		[pallet_encointer_scheduler, EncointerScheduler]
+
 	);
 }
 

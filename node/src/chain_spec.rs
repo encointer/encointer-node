@@ -199,6 +199,6 @@ fn testnet_genesis(
 			// Translates to 0.01 CC-fee per 5muKSM fee at 20 CC nominal income
 			fee_conversion_factor: 100_000,
 		},
-		teerex: TeerexConfig { allow_sgx_debug_mode: true },
+		teerex: TeerexConfig { allow_sgx_debug_mode: true, allow_skipping_attestation: true },
 	}
 }

@@ -5,7 +5,7 @@ Demonstrate the bootstrapping of an Encointer community on a *dev* chain.
 start node with
   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
-or start parachain with  
+or start parachain with
 then run this script
   ./bootstrap_demo_community.py --port 9945
 
@@ -256,6 +256,74 @@ def test_endorsements_by_reputables(client, cid):
     # endorsee count is still 5
     check_participant_count(client, cid, "Endorsee", 5)
 
+def balance(x):
+    return x * 10**12
+
+
+def test_faucet(client, cid):
+    client.set_faucet_reserve_amount("//Alice", balance(3000))
+    client.await_block(2)
+    balance_bob = client.balance("//Bob")
+    client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(1000), [cid], cid=cid, pay_fees_in_cc=True)
+    client.await_block(2)
+    faucet_account = "5CRaq3MpDT1j1d7xoaG3LDwqgC5AoTzRtGptSHm2yFrWoVid"
+    print(client.balance("//Bob"), flush=True)
+    print(balance_bob, flush=True)
+    faucet_account_balance = client.balance(faucet_account)
+    print(f"faucet_account_balance: {faucet_account_balance}", flush=True)
+    expected_facuet_balance = balance(10000)
+    if(not faucet_account_balance == expected_facuet_balance):
+        print(f"Wrong Faucet balance after faucet creation: expected: {expected_facuet_balance}, actual: {faucet_account_balance}")
+        exit(1)
+    expected_bob_balance = balance(13000)
+    balance_bob_new = balance_bob - client.balance("//Bob")
+    if(not balance_bob_new == expected_bob_balance):
+        print(f"Wrong Bob balance after faucet creation: expected: {expected_bob_balance}, actual: {balance_bob_new}")
+        exit(1)
+    print('Faucet created', flush=True)
+
+    balance_charlie = client.balance("//Charlie")
+    client.drip_faucet("//Charlie", faucet_account, 1, cid=cid, pay_fees_in_cc=True)
+    client.await_block(2)
+    if(not client.balance("//Charlie") == balance_charlie + balance(1000)):
+        print(f"Drip failed")
+        exit(1)
+    print('Faucet dripped', flush=True)
+
+    balance_bob = client.balance("//Bob")
+    client.dissolve_faucet("//Alice", faucet_account, "//Eve")
+    client.await_block(2)
+
+    if(not client.balance("//Eve") == balance(9000)):
+        print(f"Dissolve failed")
+        exit(1)
+
+    if(not client.balance("//Bob") == balance_bob + balance(3000)):
+        print(f"Dissolve failed")
+        exit(1)
+
+    print('Faucet dissolved', flush=True)
+    client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
+    client.await_block(2)
+    if(not client.balance(faucet_account) == balance(10000)):
+        print(f"Faucet creation failed")
+        exit(1)
+    print('Faucet created', flush=True)
+    client.drip_faucet("//Charlie", faucet_account, 1, cid=cid, pay_fees_in_cc=True)
+    client.await_block(2)
+    print('Faucet dripped', flush=True)
+    balance_bob = client.balance("//Bob")
+    client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
+    client.await_block(2)
+    if(not client.balance(faucet_account) == 0):
+        print(f"Faucet closing failed with wrong faucet balance")
+        exit(1)
+
+    if(not client.balance("//Bob") == balance_bob + balance(3000)):
+        print(f"Faucet closing failed with wrong bob balance")
+        exit(1)
+    print('Faucet closed', flush=True)
+
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
@@ -301,7 +369,7 @@ def main(ipfs_local, client, url, port, spec_file, test):
     if not len(rep) > 0:
         print("no reputation gained")
         exit(1)
-        
+
     register_participants_and_perform_meetup(client, cid, accounts)
     client.next_phase()
     client.await_block(1)
@@ -311,6 +379,8 @@ def main(ipfs_local, client, url, port, spec_file, test):
     if(not balance1 == balance2):
         print("claim_reward fees were not refunded if paid in cc")
         exit(1)
+
+    test_faucet(client, cid)
 
     fee_payment_transfers(client, cid)
 
