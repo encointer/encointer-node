@@ -28,6 +28,11 @@ const VERBOSE_FLAG: &str = "verbose";
 const FAUCET_BALANCE_ARG: &str = "faucet-balance";
 const FAUCET_DRIP_AMOUNT_ARG: &str = "faucet-drip-amount";
 const FAUCET_RESERVE_AMOUNT_ARG: &str = "faucet-reserve-amount";
+const PROPOSAL_ID_ARG: &str = "proposal-id";
+const VOTE_ARG: &str = "vote";
+const REPUTATION_VEC_ARG: &str = "reputation-vec";
+const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
+
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -58,6 +63,11 @@ pub trait EncointerArgs<'b> {
 	fn faucet_balance_arg(self) -> Self;
 	fn faucet_drip_amount_arg(self) -> Self;
 	fn faucet_reserve_amount_arg(self) -> Self;
+
+	fn proposal_id_arg(self) -> Self;
+	fn vote_arg(self) -> Self;
+	fn reputation_vec_arg(self) -> Self;
+	fn inactivity_timeout_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -89,6 +99,10 @@ pub trait EncointerArgsExtractor {
 	fn faucet_balance_arg(&self) -> Option<u128>;
 	fn faucet_drip_amount_arg(&self) -> Option<u128>;
 	fn faucet_reserve_amount_arg(&self) -> Option<u128>;
+	fn proposal_id_arg(&self) -> Option<u128>;
+	fn vote_arg(&self) -> Option<&str>;
+	fn reputation_vec_arg(&self) -> Option<Vec<&str>>;
+	fn inactivity_timeout_arg(&self) -> Option<u32>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -370,6 +384,42 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("faucet reserve amount"),
 		)
 	}
+	fn proposal_id_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(PROPOSAL_ID_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("PROPOSAL_ID")
+				.help("proposal id"),
+		)
+	}
+	fn vote_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(VOTE_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("VOTE")
+				.help("vote"),
+		)
+	}
+	fn reputation_vec_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(REPUTATION_VEC_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("REPUTATION_VEC")
+				.help("reputation vec"),
+		)
+	}
+	fn inactivity_timeout_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(INACTIVITY_TIMEOUT_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("INACTIVITY_TIMEOUT")
+				.help("inactivity timeout"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -474,5 +524,17 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn faucet_reserve_amount_arg(&self) -> Option<u128> {
 		self.value_of(FAUCET_RESERVE_AMOUNT_ARG).map(|v| v.parse().unwrap())
+	}
+	fn proposal_id_arg(&self) -> Option<u128> {
+		self.value_of(PROPOSAL_ID_ARG).map(|v| v.parse().unwrap())
+	}
+	fn vote_arg(&self) -> Option<&str> {
+		self.value_of(VOTE_ARG)
+	}
+	fn reputation_vec_arg(&self) -> Option<Vec<&str>> {
+		self.value_of(REPUTATION_VEC_ARG).map(|s| s.split(",").collect())
+	}
+	fn inactivity_timeout_arg(&self) -> Option<u32> {
+		self.value_of(INACTIVITY_TIMEOUT_ARG).map(|v| v.parse().unwrap())
 	}
 }

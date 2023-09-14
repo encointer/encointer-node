@@ -320,6 +320,53 @@ def test_faucet(client, cid):
         exit(1)
     print('Faucet closed', flush=True)
 
+
+def test_democracy(client, cid):
+    print('Starting democracy test...')
+    client.next_phase()
+    client.next_phase()
+    client.next_phase()
+    #phase is 9, registering
+    print(client.purge_community_ceremony(cid, 1, 8))
+    register_participants_and_perform_meetup(client, cid, accounts)
+    cindex = 9
+
+    # registering of cindex 10
+    client.next_phase()
+
+    claim_rewards(client, cid, "//Alice", pay_fees_in_cc=False)
+    client.await_block(1)
+
+    client.next_phase()
+    client.next_phase()
+    client.next_phase()
+    # cindex is now 11
+
+
+    client.await_block(1)
+    client.submit_set_inactivity_timeout_proposal("//Alice", 8)
+    client.await_block(1)
+    proposals = client.list_proposals()
+    print(proposals)
+    if('id: 1' not in proposals):
+        print(f"Proposal Submission failed")
+        exit(1)
+
+    print('proposal submitted')
+    # vote with all reputations gathered so far
+    client.vote("//Alice", 1, "aye", [[cid, cindex]])
+    client.vote("//Bob", 1, "aye", [[cid, cindex]])
+    client.vote("//Charlie", 1, "aye", [[cid, cindex]])
+
+
+    client.await_block(21)
+    client.update_proposal_state("//Alice", 1)
+    proposals = client.list_proposals()
+    print(proposals)
+    if('Approved' not in proposals):
+        print(f"Proposal Voting and Approval failed")
+        exit(1)
+
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
@@ -330,6 +377,7 @@ def test_faucet(client, cid):
 def main(ipfs_local, client, url, port, spec_file, test):
     client = Client(rust_client=client, node_url=url, port=port)
     cid = create_community(client, spec_file, ipfs_local)
+
 
     newbie = client.create_accounts(1)[0]
     faucet(client, cid, [account3, newbie])
@@ -385,6 +433,8 @@ def main(ipfs_local, client, url, port, spec_file, test):
     test_unregister_and_upgrade_registration(client, cid)
 
     test_endorsements_by_reputables(client, cid)
+
+    test_democracy(client, cid)
 
     print("tests passed")
 
