@@ -53,6 +53,7 @@ pub use pallet_encointer_balances::Call as EncointerBalancesCall;
 pub use pallet_encointer_bazaar::Call as EncointerBazaarCall;
 pub use pallet_encointer_ceremonies::Call as EncointerCeremoniesCall;
 pub use pallet_encointer_communities::Call as EncointerCommunitiesCall;
+pub use pallet_encointer_democracy::Call as EncointerDemocracyCall;
 pub use pallet_encointer_faucet::Call as EncointerFaucetCall;
 pub use pallet_encointer_reputation_commitments::Call as EncointerReputationCommitmentsCall;
 pub use pallet_encointer_scheduler::Call as EncointerSchedulerCall;
@@ -523,6 +524,21 @@ impl pallet_encointer_faucet::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_faucet::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const ConfirmationPeriod:BlockNumber = 20;
+	pub const ProposalLifetime: BlockNumber = 40;
+}
+
+impl pallet_encointer_democracy::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MaxReputationVecLength = ConstU32<1024>;
+	type ConfirmationPeriod = ConfirmationPeriod;
+	type ProposalLifetime = ProposalLifetime;
+	type ProposalLifetimeCycles = ConstU32<1>;
+	type MinTurnout = ConstU128<1>;
+	type WeightInfo = weights::pallet_encointer_democracy::WeightInfo<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime
@@ -552,6 +568,7 @@ construct_runtime!(
 		EncointerBazaar: pallet_encointer_bazaar::{Pallet, Call, Storage, Event<T>} = 64,
 		EncointerReputationCommitments: pallet_encointer_reputation_commitments::{Pallet, Call, Storage, Event<T>} = 65,
 		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 66,
+		EncointerDemocracy: pallet_encointer_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 67,
 	}
 );
 
@@ -610,6 +627,7 @@ mod benches {
 		[pallet_encointer_bazaar, EncointerBazaar]
 		[pallet_encointer_ceremonies, EncointerCeremonies]
 		[pallet_encointer_communities, EncointerCommunities]
+		[pallet_encointer_democracy, EncointerDemocracy]
 		[pallet_encointer_faucet, EncointerFaucet]
 		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
 		[pallet_encointer_scheduler, EncointerScheduler]
