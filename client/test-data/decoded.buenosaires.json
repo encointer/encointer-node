@@ -5,7 +5,9 @@
       "name": "Decoded Buenos Aires",
       "symbol": "DBA",
       "assets": "QmTy1X1JmeipMzXknWSPrRyP8dRucxHkbAxh1X9VAMHrg7",
-      "url": "encointer.org"
+      "url": "encointer.org",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5Fy7hyV4FKvD55iPwT7yR712xXKMXKvvw1uVGA1BE4nK1Wys",

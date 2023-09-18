@@ -3,7 +3,10 @@ use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
 	common::{BoundedIpfsCid, FromStr, PalletString},
-	communities::{CommunityIdentifier, CommunityMetadata, CommunityRules, Degree, Location},
+	communities::{
+		AnnouncementSigner, CommunityIdentifier, CommunityMetadata, CommunityRules, Degree,
+		Location,
+	},
 	fixed::transcendental::ln,
 };
 use geojson::GeoJson;
@@ -94,8 +97,14 @@ impl CommunitySpec for serde_json::Value {
 				Ok(url) => Some(BoundedIpfsCid::from_str(&url).unwrap()),
 				Err(_) => None,
 			},
-			announcement_signer: None,
-			rules: CommunityRules::default(),
+			announcement_signer: serde_json::from_value::<Option<AnnouncementSigner>>(
+				self["community"]["meta"]["announcementSigner"].clone(),
+			)
+			.unwrap(),
+			rules: serde_json::from_value::<CommunityRules>(
+				self["community"]["meta"]["rules"].clone(),
+			)
+			.unwrap(),
 		}
 	}
 

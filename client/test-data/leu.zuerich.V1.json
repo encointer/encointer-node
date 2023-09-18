@@ -5,7 +5,9 @@
       "name": "Leu Zurich",
       "symbol": "LEU",
       "assets": "QmSpwTDiKbRVqHaV2LvaUVkwZkkuF8w1BjTjwXD9PEzHnd",
-      "url": "https://leu.zuerich"
+      "url": "https://leu.zuerich",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5EEh6sjZjxaMkm3vn7nKib9ciuxAGQRc4uosmuDa6vuTgfDp",
