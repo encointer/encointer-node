@@ -1,8 +1,8 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
-	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerDemocracyConfig, EncointerFaucetConfig,
-	EncointerSchedulerConfig, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerDemocracyConfig,
+	EncointerFaucetConfig, EncointerSchedulerConfig, GrandpaConfig, RuntimeGenesisConfig,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;

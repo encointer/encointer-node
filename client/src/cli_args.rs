@@ -33,7 +33,6 @@ const VOTE_ARG: &str = "vote";
 const REPUTATION_VEC_ARG: &str = "reputation-vec";
 const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
 
-
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
 	fn faucet_account_arg(self) -> Self;

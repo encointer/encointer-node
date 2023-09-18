@@ -35,12 +35,6 @@ use crate::{
 		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
-use encointer_primitives::democracy::ProposalAction;
-use encointer_primitives::democracy::Proposal;
-use encointer_primitives::democracy::ProposalIdType;
-use encointer_primitives::democracy::ReputationVec;
-use encointer_primitives::democracy::Vote;
-use sp_core::ConstU32;
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
@@ -63,6 +57,7 @@ use encointer_primitives::{
 		ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
+	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
 	faucet::{Faucet, FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
@@ -70,7 +65,7 @@ use encointer_primitives::{
 use log::*;
 use pallet_transaction_payment::FeeDetails;
 use sp_application_crypto::{ed25519, sr25519};
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, ConstU32, Pair};
 use sp_keyring::AccountKeyring;
 use sp_keystore::Keystore;
 use sp_rpc::number::NumberOrHex;
@@ -1944,32 +1939,23 @@ async fn main() {
                         })
                         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                             let who = matches.account_arg().map(get_pair_from_str).unwrap();
-        
-                            let mut api = get_chain_api(matches);
+                                                let mut api = get_chain_api(matches);
                             api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                                 who.clone(),
                             )));
-        
                             let inactivity_timeout = matches.inactivity_timeout_arg().unwrap();
-        
                             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-        
-        
+
                             let xt: EncointerXt<_> = compose_extrinsic!(
                                 api,
                                 "EncointerDemocracy",
                                 "submit_proposal",
                                 ProposalAction::SetInactivityTimeout(inactivity_timeout)
                             );
-        
                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-        
-        
                             let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
-    
                             println!("Proposal Submitted: Set inactivity timeout to {inactivity_timeout:?}");
-        
                             Ok(())
                         }),
                 )
@@ -1982,24 +1968,19 @@ async fn main() {
                         })
                         .runner(|_args: &str, matches: &ArgMatches<'_>| {
                                     let api = get_chain_api(matches);
-        
                                     let at_block = matches.at_block_arg();
-        
                                     let key_prefix = api
                                     .get_storage_map_key_prefix(
                                         "EncointerDemocracy",
                                         "Proposals",
                                     )
                                     .unwrap();
-        
                                 let max_keys = 1000;
                                 let storage_keys =
                                     api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
-        
                                 if storage_keys.len() == max_keys as usize {
                                     error!("results can be wrong because max keys reached for query")
                                 }
-        
                                 for storage_key in storage_keys.iter() {
                                     let key_postfix = storage_key.as_ref();
                                     let proposal_id = ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref()).unwrap();
@@ -2010,7 +1991,6 @@ async fn main() {
                                     println!("start cindex: {}", proposal.start_cindex);
                                     println!("state: {:?}", proposal.state);
                                     println!("");
-        
                                 }
                                     Ok(())
                                 }),
@@ -2027,16 +2007,13 @@ async fn main() {
                                 })
                                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
-                
                                     let mut api = get_chain_api(matches);
                                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                                         who.clone(),
                                     )));
-                
-                                    let proposal_id = matches.proposal_id_arg().unwrap();
+                                            let proposal_id = matches.proposal_id_arg().unwrap();
                                     let vote_raw = matches.vote_arg().unwrap();
-                
-                                    let vote = 	match vote_raw {
+                                            let vote = 	match vote_raw {
                                         "aye" => Vote::Aye,
                                         "nay" => Vote::Nay,
                                         &_ => panic!("invalid vote")
@@ -2050,12 +2027,9 @@ async fn main() {
                                         }).collect();
                                         ReputationVec::try_from(reputations).unwrap()
                                     }).unwrap();
-                
-                                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                                            let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                                     set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-                
-                
-                                    let xt: EncointerXt<_> = compose_extrinsic!(
+                                                    let xt: EncointerXt<_> = compose_extrinsic!(
                                         api,
                                         "EncointerDemocracy",
                                         "vote",
@@ -2063,15 +2037,10 @@ async fn main() {
                                         vote,
                                         reputation_vec
                                     );
-                
-                                    ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                
-                
-                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
-            
-                                    println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
-                
-                                    Ok(())
+                                            ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
+                                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                                        println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
+                                            Ok(())
                                 }),
                         )
                         .add_cmd(
@@ -2084,32 +2053,22 @@ async fn main() {
                                 })
                                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
                                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
-                
-                                    let mut api = get_chain_api(matches);
+                                            let mut api = get_chain_api(matches);
                                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                                         who.clone(),
                                     )));
-                
-                                    let proposal_id = matches.proposal_id_arg().unwrap();
-                
-                                    let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                                            let proposal_id = matches.proposal_id_arg().unwrap();
+                                            let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                                     set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-                
-                
-                                    let xt: EncointerXt<_> = compose_extrinsic!(
+                                                    let xt: EncointerXt<_> = compose_extrinsic!(
                                         api,
                                         "EncointerDemocracy",
                                         "update_proposal_state",
                                         proposal_id
                                     );
-                
-                                    ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                
-                
-                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
-            
-                                    println!("Proposal state updated for proposal {proposal_id:?}");
-                
+                                            ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
+                                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                                        println!("Proposal state updated for proposal {proposal_id:?}");
                                     Ok(())
                                 }),
                         )
