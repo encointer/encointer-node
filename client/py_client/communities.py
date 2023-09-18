@@ -58,5 +58,5 @@ def generate_community_spec(meta, bootstrappers, locations):
     return fname
 
 
-def meta_json(name, symbol, assets_cid="Defau1tCidThat1s46Characters1nLength1111111111"):
-    return {"name": name, "symbol": symbol, "assets": assets_cid}
+def meta_json(name, symbol, assets_cid="Defau1tCidThat1s46Characters1nLength1111111111", rules="loCo"):
+    return {"name": name, "symbol": symbol, "assets": assets_cid, "rules": rules }
