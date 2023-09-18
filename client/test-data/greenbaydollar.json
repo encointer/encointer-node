@@ -4,7 +4,9 @@
     "meta": {
       "name": "Green Bay Dollar",
       "symbol": "GBD",
-      "assets": "QmYJnuJCnsw2kgXQXF5Cq6k3ey5U6goRcKffraVXkeXrem"
+      "assets": "QmYJnuJCnsw2kgXQXF5Cq6k3ey5U6goRcKffraVXkeXrem",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5GKaNnyZctdLR9WfnFdbV4BDoFqqhe7AJqNfKnJsNezg2JnW",

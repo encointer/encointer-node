@@ -5,7 +5,9 @@
       "name": "Decoded Berlin",
       "symbol": "DBL",
       "assets": "QmVNg3BjzRgKaGida6jCbjFyjD4T7c8e7MCMJAUjgVx395",
-      "url": "encointer.org"
+      "url": "encointer.org",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5CDNJhAUVyM92BaqpfN7PynWPQs2ELbHHJ4QTxAd1m79HJkc",
