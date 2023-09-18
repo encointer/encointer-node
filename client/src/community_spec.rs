@@ -97,18 +97,14 @@ impl CommunitySpec for serde_json::Value {
 				Ok(url) => Some(BoundedIpfsCid::from_str(&url).unwrap()),
 				Err(_) => None,
 			},
-			announcement_signer: match serde_json::from_value::<AnnouncementSigner>(
+			announcement_signer: serde_json::from_value::<Option<AnnouncementSigner>>(
 				self["community"]["meta"]["announcementSigner"].clone(),
-			) {
-				Ok(signer) => Some(signer),
-				Err(_) => None,
-			},
-			rules: match serde_json::from_value::<CommunityRules>(
+			)
+			.unwrap(),
+			rules: serde_json::from_value::<CommunityRules>(
 				self["community"]["meta"]["rules"].clone(),
-			) {
-				Ok(rules) => rules,
-				Err(_) => Default::default(),
-			},
+			)
+			.unwrap(),
 		}
 	}
 
