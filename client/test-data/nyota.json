@@ -4,7 +4,10 @@
     "meta": {
       "name": "Nyota",
       "symbol": "NYT",
-      "assets": ""
+      "assets": "Qmbbrr4dci7SyrAzjB7W8513wgZoPx57aezqmszfqZAAL8",
+      "url": "",
+      "announcementSigner": null,
+      "rules": "loCoFlex"
     },
     "bootstrappers": [
       "5DtEth12UJGaMbvfzqUuvrMX3jv4XAiEgZBVQKZPpYQW7Y6G",
