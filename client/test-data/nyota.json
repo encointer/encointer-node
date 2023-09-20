@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "Nyota",
+      "symbol": "NYT",
+      "assets": "Qmbbrr4dci7SyrAzjB7W8513wgZoPx57aezqmszfqZAAL8",
+      "url": "",
+      "announcementSigner": null,
+      "rules": "loCoFlex"
+    },
+    "bootstrappers": [
+      "5DtEth12UJGaMbvfzqUuvrMX3jv4XAiEgZBVQKZPpYQW7Y6G",
+      "5Hmi6Xr4kPeZMjRWz2aeCawdZ7riJ4Lf46VRxv8iqAwcHdNm",
+      "5G7AsczRMrV1kSv2btw9FSh7CwoRzaYdjaadHHZU4cFKTcfN",
+      "5EhLWoCguV193dDQYnTYWG21nAnYZA5R1Heedd7ejGoStBgr",
+      "5ENrYrCKRwT7fwPkVsLnu8H3zjbnA4RfTunmV8KcFFHybvG6",
+      "5F98h4DNneovDyHX5kaKBKojezyQmtPzZichh1RbUUDfAe5U",
+      "5G1W2ruZyou7vYCg7oPNNXuMXndnE5eA1TqpV5PHnDKvwSoV",
+      "5C5tGe5eyGzfYMDYt34PfXGo5YkBEf2VCbhKv12hJ44adTpm",
+      "5Dfa4iTmfdCY9nruMhqcwwYF9Zt2NdvzW6XKXGjAtXSxFQL3"
+    ],
+    "demurrage_halving_blocks": 7884000,
+    "ceremony_income": 5
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+           39.24282869374011,
+          -6.813083008874571
+        ],
+        "type": "Point"
+      }
+    }
+  ]
+}
