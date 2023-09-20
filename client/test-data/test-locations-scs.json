@@ -4,7 +4,9 @@
     "meta": {
       "name": "EdisonPaula",
       "symbol": "EDI",
-      "assets": "QmcqHLThzvpKt67NpKRy1NHtx7KduKx3EzyFB3Yk95ra8t"
+      "assets": "QmcqHLThzvpKt67NpKRy1NHtx7KduKx3EzyFB3Yk95ra8t",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5ECkrFJwePB7W9jJUJfQhC8dDqGv1LzxG6Uq5jnXSa72RvF7",

@@ -2,11 +2,11 @@
   "type": "FeatureCollection",
   "community": {
     "meta": {
-      "name": "Mediterranea",
-      "symbol": "MTA",
+      "name": "Corsica LoCoFlex",
+      "symbol": "CLL",
       "assets": "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD",
-      "announcementSigner": null,
-      "rules": "loCo"
+      "announcementSigner": {"bip340": "0xceda72c19f11aebecf8fb4a0ab3fb2a03e03f283225655baab4728303a560a13"},
+      "rules": "loCoFlex"
     },
     "bootstrappers": [
       "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
@@ -22,99 +22,99 @@
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.543548583984375,
-          35.48415637985317
-        ]
+          8.34481736218413,
+          43.29163203249237
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.40484619140625,
-          35.480801595828616
-        ]
+          8.45875497533433,
+          43.29689755694423
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.40621948242187,
-          35.357696204467516
-        ]
+          8.561075400420066,
+          43.29809224816333
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.544921875,
-          35.35993616287676
-        ]
+          8.343157114168065,
+          43.20948958827239
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.68087768554687,
-          35.48751102385376
-        ]
+          8.458226477832369,
+          43.219872474019496
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.689117431640625,
-          35.37001520672124
-        ]
+          8.562336854479923,
+          43.2270595901108
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.4075927734375,
-          35.232159412017154
-        ]
+          8.339869418064325,
+          43.12076373482276
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.551788330078125,
-          35.238889532322595
-        ]
+          8.45493878172735,
+          43.130361931557275
+        ],
+        "type": "Point"
       }
     },
     {
       "type": "Feature",
       "properties": {},
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          18.700103759765625,
-          35.24898366572645
-        ]
+          8.568912246688683,
+          43.1399586222912
+        ],
+        "type": "Point"
       }
     }
   ]

@@ -1,8 +1,8 @@
 use encointer_node_notee_runtime::{
 	AccountId, AuraConfig, BalanceType, BalancesConfig, CeremonyPhaseType, EncointerBalancesConfig,
-	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerFaucetConfig,
-	EncointerSchedulerConfig, GrandpaConfig, RuntimeGenesisConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	EncointerCeremoniesConfig, EncointerCommunitiesConfig, EncointerDemocracyConfig,
+	EncointerFaucetConfig, EncointerSchedulerConfig, GrandpaConfig, RuntimeGenesisConfig,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -207,6 +207,10 @@ fn testnet_genesis(
 		},
 		encointer_faucet: EncointerFaucetConfig {
 			reserve_amount: 100_000_000_000_000,
+			_config: Default::default(),
+		},
+		encointer_democracy: EncointerDemocracyConfig {
+			proposal_count: 0,
 			_config: Default::default(),
 		},
 	}

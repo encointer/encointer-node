@@ -5,7 +5,9 @@
       "name": "Aslah",
       "symbol": "ASL",
       "assets": "QmXgvpsF5CzwFb7c1kobFQ3q4hutRFtKDMkYGDE3Bmmnu6",
-      "url": ""
+      "url": "",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5GsC8FS9t6EEWoMsD3v8JET49cEUjG8TgqHL3h9auj55JyWh",

@@ -7,7 +7,7 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "1.5.28"
+version = "1.5.29"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -26,6 +26,7 @@ pallet-encointer-ceremonies = { default-features = false, git = "https://github.
 pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+pallet-encointer-democracy = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 pallet-encointer-faucet = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
@@ -118,6 +119,7 @@ std = [
     "pallet-encointer-ceremonies-rpc-runtime-api/std",
     "pallet-encointer-communities/std",
     "pallet-encointer-communities-rpc-runtime-api/std",
+    "pallet-encointer-democracy/std",
     "pallet-encointer-faucet/std",
     "pallet-encointer-reputation-commitments/std",
     "pallet-encointer-scheduler/std",
@@ -138,6 +140,7 @@ runtime-benchmarks = [
     "pallet-encointer-bazaar/runtime-benchmarks",
     "pallet-encointer-ceremonies/runtime-benchmarks",
     "pallet-encointer-communities/runtime-benchmarks",
+    "pallet-encointer-democracy/runtime-benchmarks",
     "pallet-encointer-faucet/runtime-benchmarks",
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
@@ -165,6 +168,7 @@ try-runtime = [
     "pallet-encointer-bazaar/try-runtime",
     "pallet-encointer-ceremonies/try-runtime",
     "pallet-encointer-communities/try-runtime",
+    "pallet-encointer-democracy/try-runtime",
     "pallet-encointer-faucet/try-runtime",
     "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",

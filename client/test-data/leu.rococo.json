@@ -5,7 +5,9 @@
       "name": "Leu on Rococo",
       "symbol": "LOR",
       "assets": "QmbQCz9r2PfRRHmG5j6Wdz7fjFJkczALVvKhPkW48Jp4ji",
-      "url": "https://leu.zuerich"
+      "url": "https://leu.zuerich",
+      "announcementSigner": null,
+      "rules": "loCo"
     },
     "bootstrappers": [
       "5EEh6sjZjxaMkm3vn7nKib9ciuxAGQRc4uosmuDa6vuTgfDp",
