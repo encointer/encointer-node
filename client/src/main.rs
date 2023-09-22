@@ -49,7 +49,7 @@ use encointer_node_notee_runtime::{
 	Signature, ONE_DAY,
 };
 use encointer_primitives::{
-	balances::Demurrage,
+	balances::{to_U64F64, Demurrage},
 	bazaar::{Business, BusinessIdentifier, OfferingData},
 	ceremonies::{
 		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
@@ -2509,18 +2509,18 @@ fn get_reputation(
 fn apply_demurrage(
 	entry: BalanceEntry<BlockNumber>,
 	current_block: BlockNumber,
-	demurrage_per_block: BalanceType,
+	demurrage_per_block: Demurrage,
 ) -> BalanceType {
 	let elapsed_time_block_number = current_block.checked_sub(entry.last_update).unwrap();
 	let elapsed_time_u32: u32 = elapsed_time_block_number;
-	let elapsed_time = BalanceType::from_num(elapsed_time_u32);
-	let exponent: BalanceType = -demurrage_per_block * elapsed_time;
+	let elapsed_time = Demurrage::from_num(elapsed_time_u32);
+	let exponent = -demurrage_per_block * elapsed_time;
 	debug!(
 		"demurrage per block {}, current_block {}, last {}, elapsed_blocks {}",
 		demurrage_per_block, current_block, entry.last_update, elapsed_time
 	);
-	let exp_result: BalanceType = exp(exponent).unwrap();
-	entry.principal.checked_mul(exp_result).unwrap()
+	let exp_result = exp(exponent).unwrap();
+	entry.principal.checked_mul(to_U64F64(exp_result).unwrap()).unwrap()
 }
 
 fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result<(), ()> {
