@@ -119,11 +119,11 @@ impl CommunitySpec for serde_json::Value {
 	fn demurrage(&self) -> Option<Demurrage> {
 		match serde_json::from_value::<u64>(self["community"]["demurrage_halving_blocks"].clone()) {
 			Ok(demurrage_halving_blocks) => {
-				let demurrage_rate = ln::<BalanceType, BalanceType>(BalanceType::from_num(0.5))
+				let demurrage_rate = ln::<Demurrage, Demurrage>(Demurrage::from_num(0.5))
 					.unwrap()
-					.checked_mul(BalanceType::from_num(-1))
+					.checked_mul(Demurrage::from_num(-1))
 					.unwrap()
-					.checked_div(BalanceType::from_num(demurrage_halving_blocks))
+					.checked_div(Demurrage::from_num(demurrage_halving_blocks))
 					.unwrap();
 
 				log::info!(
