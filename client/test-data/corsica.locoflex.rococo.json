@@ -14,7 +14,9 @@
       "5FyWbcwN1TGPdyzRzoEeem3MUcc7jXRs7ZoftZkAQLV47nS7",
       "5DPgv6nn4R1Gi1MUiAnzFDPaKF56SYKD9Zq4Q6REUGLhUZk1",
       "5CMVLJCC4Jn7QmLsFRkLWkm2w4LJswpZo1V2nd1tp64iVnCR"
-    ]
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 22
   },
   "features": [
     {
