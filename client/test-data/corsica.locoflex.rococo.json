@@ -1,0 +1,131 @@
+{
+  "type": "FeatureCollection",
+  "community": {
+    "meta": {
+      "name": "Corsica LoCoFlex",
+      "symbol": "CLL",
+      "assets": "QmP2fzfikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD",
+      "announcementSigner": {
+        "bip340": "0xceda72c19f11aebecf8fb4a0ab3fb2a03e03f283225655baab4728303a560a13"
+      },
+      "rules": "loCoFlex"
+    },
+    "bootstrappers": [
+      "5FyWbcwN1TGPdyzRzoEeem3MUcc7jXRs7ZoftZkAQLV47nS7",
+      "5DPgv6nn4R1Gi1MUiAnzFDPaKF56SYKD9Zq4Q6REUGLhUZk1",
+      "5CMVLJCC4Jn7QmLsFRkLWkm2w4LJswpZo1V2nd1tp64iVnCR",
+      "5F77sGnUhpjdFnzruhurGZgqPFtvdECXTGgX4Bgy2zGavbEw",
+      "5GjnBkWthQqmfxL35A2sY9QeTky33bENo5zbLxh7KsY5wo5L",
+      "5GNdoaiCrGU9G9zz694d1S3XPov6Ji3zo6NR7nN2tH7jtK7Z",
+      "5DCr4Xh5pFCRHZQhvteNbdzH5bD68b5VFhAkunF7gW9umwkf",
+      "5E6x8Z6R7fYeTETj8Em5pDazcodq6Krjig5gxkSuQEvj6evv",
+      "5FEkyAfUWXwA4jdsm88kMzhF7VAenxuwZtwNs9RzeFRjXGcS",
+      "5ChwkE8kd2qagyiCikP2Ns2T6vWh7dbURx54gXcPKw8NotNp",
+      "5FQmTGD2Wh2CFvfUz6FNa8UxbxdHDP9bnf7t4gHsFP3uFiUL",
+      "5FTsVvUfSo4sg4h1n968ukKheZUTM7f139Cuh7PdxBa1FBTT"
+    ],
+    "demurrage_halving_blocks": 2628000,
+    "ceremony_income": 22
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.34481736218413,
+          43.29163203249237
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.45875497533433,
+          43.29689755694423
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.561075400420066,
+          43.29809224816333
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.343157114168065,
+          43.20948958827239
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.458226477832369,
+          43.219872474019496
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.562336854479923,
+          43.2270595901108
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.339869418064325,
+          43.12076373482276
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.45493878172735,
+          43.130361931557275
+        ],
+        "type": "Point"
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          8.568912246688683,
+          43.1399586222912
+        ],
+        "type": "Point"
+      }
+    }
+  ]
+}
