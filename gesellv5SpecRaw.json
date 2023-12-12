@@ -2,7 +2,9 @@
   "name": "Encointer Testnet Gesell",
   "id": "nctr-gsl",
   "chainType": "Live",
-  "bootNodes": [],
+  "bootNodes": [
+    "/ip4/159.89.4.42/tcp/30333/p2p/12D3KooWCsPwMxsg7b2GRjRoBZBcuvwoU1XTGNaMYP8d8RPfUYeL"
+  ],
   "telemetryEndpoints": null,
   "protocolId": "nctr-gsl",
   "properties": {
