@@ -3,7 +3,8 @@
   "id": "nctr-gsl",
   "chainType": "Live",
   "bootNodes": [
-    "/ip4/159.89.4.42/tcp/30333/p2p/12D3KooWCsPwMxsg7b2GRjRoBZBcuvwoU1XTGNaMYP8d8RPfUYeL"
+    "/ip4/159.89.4.42/tcp/30333/p2p/12D3KooWFXc4eh71QGizWP3dsTrTf2T1ZhZfPmKyZB8CkP7VoB9D",
+    "/ip4/159.89.5.13/tcp/30333/p2p/12D3KooWLzdtz1jrgNmNvpxNMTNUm5b3Pb7WCmm1GYy25Fo7Mx3U"
   ],
   "telemetryEndpoints": null,
   "protocolId": "nctr-gsl",
