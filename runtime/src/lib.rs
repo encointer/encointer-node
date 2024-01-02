@@ -525,8 +525,8 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfirmationPeriod:BlockNumber = 20;
-	pub const ProposalLifetime: BlockNumber = 40;
+	pub const ConfirmationPeriod:Moment = 60_000;
+	pub const ProposalLifetime: Moment = 240_000;
 }
 
 impl pallet_encointer_democracy::Config for Runtime {
@@ -534,7 +534,6 @@ impl pallet_encointer_democracy::Config for Runtime {
 	type MaxReputationVecLength = ConstU32<1024>;
 	type ConfirmationPeriod = ConfirmationPeriod;
 	type ProposalLifetime = ProposalLifetime;
-	type ProposalLifetimeCycles = ConstU32<1>;
 	type MinTurnout = ConstU128<1>;
 	type WeightInfo = weights::pallet_encointer_democracy::WeightInfo<Runtime>;
 }
