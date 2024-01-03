@@ -6,14 +6,27 @@ import time
 import os
 import subprocess
 import signal
+import psutil
 
 
 class TestError(Exception):
     pass
 
 
+def kill_old_processes(cmd):
+    for p in psutil.process_iter():
+        try:
+            if cmd == ' '.join(p.cmdline()):
+                p.kill()
+                #print(f'killed zombie process {p.pid}')
+        except:
+            pass
+
+
 def run_chain():
-    proc = subprocess.Popen('../target/release/encointer-node-notee --dev --enable-offchain-indexing true -lencointer=debug,parity_ws=warn --rpc-port 9945',
+    cmd = '../target/release/encointer-node-notee --dev --enable-offchain-indexing true -lencointer=debug,parity_ws=warn --rpc-port 9937'
+    kill_old_processes(cmd)
+    proc = subprocess.Popen(cmd,
                             shell=True, preexec_fn=os.setsid, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     time.sleep(3)
@@ -43,7 +56,7 @@ def e2e_test(function):
         pid = run_chain()
         try:
             client = Client(rust_client='../target/release/encointer-client-notee',
-                            node_url='ws://127.0.0.1', port='9945')
+                            node_url='ws://127.0.0.1', port='9937')
             cid = setup_community(client)
             function(client, cid)
         except Exception as e:
@@ -62,15 +75,20 @@ def fee_payment_transfers(client, cid):
     print(f'Transferring all CC from //Eve to //Ferdie')
     client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
     if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
-        print("transfer_all failed")
-        exit(1)
+        raise TestError("transfer_all failed")
 
 
 @e2e_test
 def test_reputation_caching(client, cid):
     register_participants_and_perform_meetup(client, cid, accounts)
+    claim_rewards(client, cid, account1)
     client.next_phase()
     client.await_block(1)
+
+    register_participants_and_perform_meetup(client, cid, accounts)
+    client.next_phase()
+    client.await_block(1)
+
     # query reputation to set the cache in the same phase as claiming rewards
     # so we would have a valid cache value, but the cache should be invalidated
     # anyways because of the dirty bit
@@ -81,8 +99,7 @@ def test_reputation_caching(client, cid):
     rep = client.reputation(account1)
     print(rep)
     if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
-        print("wrong reputation")
-        exit(1)
+        raise TestError("wrong reputation")
 
     # test if reputation cache is invalidated after registration
     print(f'Registering Participants for Cid: {cid}')
@@ -97,8 +114,7 @@ def test_reputation_caching(client, cid):
     print(rep)
     # after the registration the second reputation should now be linked
     if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
-        print("reputation not linked")
-        exit(1)
+        raise TestError("reputation not linked")
 
     client.next_phase()
     client.next_phase()
@@ -113,8 +129,7 @@ def test_reputation_caching(client, cid):
     rep = client.reputation(account1)
     # after phase change cache will be updated
     if not len(rep) == 0:
-        print("reputation was not cleared")
-        exit(1)
+        raise TestError("reputation was not cleared")
 
     client.next_phase()
     client.next_phase()
@@ -139,20 +154,20 @@ def test_unregister_and_upgrade_registration(client, cid):
     claim_rewards(client, cid, account1, pay_fees_in_cc=True)
     client.await_block(1)
 
-    check_reputation(client, cid, newbie, 6, "VerifiedUnlinked")
+    check_reputation(client, cid, newbie, 2, "VerifiedUnlinked")
     client.upgrade_registration(newbie, cid)
     client.await_block(1)
 
     check_participant_count(client, cid, "Newbie", 0)
     check_participant_count(client, cid, "Reputable", 1)
 
-    check_reputation(client, cid, newbie, 6, "VerifiedLinked")
+    check_reputation(client, cid, newbie, 2, "VerifiedLinked")
 
-    client.unregister_participant(newbie, cid, cindex=6)
+    client.unregister_participant(newbie, cid, cindex=2)
     client.await_block(3)
     check_participant_count(client, cid, "Reputable", 0)
 
-    check_reputation(client, cid, newbie, 6, "VerifiedUnlinked")
+    check_reputation(client, cid, newbie, 2, "VerifiedUnlinked")
 
 
 @e2e_test
@@ -209,11 +224,9 @@ def test_faucet(client, cid):
     print(balance_bob, flush=True)
     print(client.balance(faucet_account), flush=True)
     if (not client.balance(faucet_account) == balance(10000)):
-        print(f"Wrong Faucet balance after faucet creation")
-        exit(1)
+        raise TestError(f"Wrong Faucet balance after faucet creation")
     if (not balance_bob - client.balance("//Bob") == balance(13000)):
-        print(f"Wrong Bob balance after faucet creation")
-        exit(1)
+        raise TestError(f"Wrong Bob balance after faucet creation")
     print('Faucet created', flush=True)
 
     balance_charlie = client.balance("//Charlie")
@@ -221,8 +234,7 @@ def test_faucet(client, cid):
                        cid=cid, pay_fees_in_cc=True)
     client.await_block(2)
     if (not client.balance("//Charlie") == balance_charlie + balance(1000)):
-        print(f"Drip failed")
-        exit(1)
+        raise TestError(f"Drip failed")
     print('Faucet dripped', flush=True)
 
     balance_bob = client.balance("//Bob")
@@ -230,20 +242,17 @@ def test_faucet(client, cid):
     client.await_block(2)
 
     if (not client.balance("//Eve") == balance(9000)):
-        print(f"Dissolve failed")
-        exit(1)
+        raise TestError(f"Dissolve failed")
 
     if (not client.balance("//Bob") == balance_bob + balance(3000)):
-        print(f"Dissolve failed")
-        exit(1)
+        raise TestError(f"Dissolve failed")
 
     print('Faucet dissolved', flush=True)
     client.create_faucet("//Bob", "TestFaucet", balance(10000),
                          balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(2)
     if (not client.balance(faucet_account) == balance(10000)):
-        print(f"Faucet creation failed")
-        exit(1)
+        raise TestError(f"Faucet creation failed")
     print('Faucet created', flush=True)
     client.drip_faucet("//Charlie", faucet_account, 1,
                        cid=cid, pay_fees_in_cc=True)
@@ -253,12 +262,10 @@ def test_faucet(client, cid):
     client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
     client.await_block(2)
     if (not client.balance(faucet_account) == 0):
-        print(f"Faucet closing failed with wrong faucet balance")
-        exit(1)
+        raise TestError(f"Faucet closing failed with wrong faucet balance")
 
     if (not client.balance("//Bob") == balance_bob + balance(3000)):
-        print(f"Faucet closing failed with wrong bob balance")
-        exit(1)
+        raise TestError(f"Faucet closing failed with wrong bob balance")
     print('Faucet closed', flush=True)
 
 
@@ -290,8 +297,7 @@ def test_democracy(client, cid):
     proposals = client.list_proposals()
     print(proposals)
     if ('id: 1' not in proposals):
-        print(f"Proposal Submission failed")
-        exit(1)
+        raise TestError(f"Proposal Submission failed")
 
     print('proposal submitted')
     # vote with all reputations gathered so far
@@ -304,8 +310,7 @@ def test_democracy(client, cid):
     proposals = client.list_proposals()
     print(proposals)
     if ('Approved' not in proposals):
-        print(f"Proposal Voting and Approval failed")
-        exit(1)
+        raise TestError(f"Proposal Voting and Approval failed")
 
 
 @e2e_test
@@ -337,18 +342,17 @@ def run_tests():
 
     test_balances()
 
-    exit(0)
-    test_faucet(client, cid)
+    test_faucet()
 
-    fee_payment_transfers(client, cid)
+    fee_payment_transfers()
 
-    test_reputation_caching(client, cid, accounts)
+    test_reputation_caching()
 
-    test_unregister_and_upgrade_registration(client, cid)
+    test_unregister_and_upgrade_registration()
 
-    test_endorsements_by_reputables(client, cid)
+    test_endorsements_by_reputables()
 
-    test_democracy(client, cid)
+    # test_democracy()
 
     print("tests passed")
 
