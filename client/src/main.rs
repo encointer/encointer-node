@@ -57,7 +57,10 @@ use encointer_primitives::{
 		ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
-	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
+	democracy::{
+		Proposal, ProposalAction, ProposalIdType, ReputationVec, Tally,
+		Vote,
+	},
 	faucet::{Faucet, FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
@@ -1984,17 +1987,54 @@ async fn main() {
                                 for storage_key in storage_keys.iter() {
                                     let key_postfix = storage_key.as_ref();
                                     let proposal_id = ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref()).unwrap();
-                                    let proposal: Proposal<BlockNumber> = api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap();
+                                    let proposal: Proposal<Moment> = api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap();
+                                    let tally: Tally = api
+                                        .get_storage_map("EncointerDemocracy", "Tallies", proposal_id, at_block)
+                                        .unwrap().unwrap();
+
                                     println!("id: {}", proposal_id);
                                     println!("action: {:?}", proposal.action);
-                                    println!("start block: {}", proposal.start);
+                                    println!("start time: {}", proposal.start);
                                     println!("start cindex: {}", proposal.start_cindex);
                                     println!("state: {:?}", proposal.state);
-                                    println!("");
+                                    println!("electorate size: {:?}", proposal.electorate_size);
+                                    println!("turnout: {:?}", tally.turnout);
+                                    println!("ayes: {:?}", tally.ayes);
                                 }
                                     Ok(())
                                 }),
                         )
+                        .add_cmd(
+                            Command::new("list-enactment-queue")
+                                .description("list all proposals ids that are scheduled for enactment.")
+                                .options(|app| {
+                                    app.setting(AppSettings::ColoredHelp)
+                                        .at_block_arg()
+                                })
+                                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                                            let api = get_chain_api(matches);
+                                            let at_block = matches.at_block_arg();
+                                            let key_prefix = api
+                                            .get_storage_map_key_prefix(
+                                                "EncointerDemocracy",
+                                                "EnactmentQueue",
+                                            )
+                                            .unwrap();
+                                        let max_keys = 1000;
+                                        let storage_keys =
+                                            api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
+                                        if storage_keys.len() == max_keys as usize {
+                                            error!("results can be wrong because max keys reached for query")
+                                        }
+                                        for storage_key in storage_keys.iter() {
+                                            let maybe_proposal_id: Option<ProposalIdType> = api.get_storage_by_key(storage_key.clone(), at_block).unwrap();
+                                            if let Some(proposal_id) = maybe_proposal_id {
+                                                println!("{}", proposal_id);
+                                            }
+                                        }
+                                            Ok(())
+                                        }),
+                                )
                         .add_cmd(
                             Command::new("vote")
                                 .description("Submit vote for porposal. Vote is either ay or nay. Reputation vec to be specified as cid1_cindex1,cid2_cindex2,...")

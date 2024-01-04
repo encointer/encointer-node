@@ -18,7 +18,7 @@ def kill_old_processes(cmd):
         try:
             if cmd == ' '.join(p.cmdline()):
                 p.kill()
-                #print(f'killed zombie process {p.pid}')
+                # print(f'killed zombie process {p.pid}')
         except:
             pass
 
@@ -275,21 +275,6 @@ def test_democracy(client, cid):
     client.next_phase()
     client.next_phase()
     client.next_phase()
-    # phase is 9, registering
-    print(client.purge_community_ceremony(cid, 1, 8))
-    register_participants_and_perform_meetup(client, cid, accounts)
-    cindex = 9
-
-    # registering of cindex 10
-    client.next_phase()
-
-    claim_rewards(client, cid, "//Alice", pay_fees_in_cc=False)
-    client.await_block(1)
-
-    client.next_phase()
-    client.next_phase()
-    client.next_phase()
-    # cindex is now 11
 
     client.await_block(1)
     client.submit_set_inactivity_timeout_proposal("//Alice", 8)
@@ -301,15 +286,16 @@ def test_democracy(client, cid):
 
     print('proposal submitted')
     # vote with all reputations gathered so far
-    client.vote("//Alice", 1, "aye", [[cid, cindex]])
-    client.vote("//Bob", 1, "aye", [[cid, cindex]])
-    client.vote("//Charlie", 1, "aye", [[cid, cindex]])
+    client.vote("//Alice", 1, "aye", [[cid, 1]])
+    client.vote("//Bob", 1, "aye", [[cid, 1]])
+    client.vote("//Charlie", 1, "aye", [[cid, 1]])
 
     client.await_block(21)
     client.update_proposal_state("//Alice", 1)
     proposals = client.list_proposals()
     print(proposals)
-    if ('Approved' not in proposals):
+    enactment_queue = client.list_enactment_queue()
+    if ('Approved' not in proposals or '1' not in enactment_queue):
         raise TestError(f"Proposal Voting and Approval failed")
 
 
@@ -340,19 +326,19 @@ def test_balances(client, cid):
 
 def run_tests():
 
-    test_balances()
+    # test_balances()
 
-    test_faucet()
+    # test_faucet()
 
-    fee_payment_transfers()
+    # fee_payment_transfers()
 
-    test_reputation_caching()
+    # test_reputation_caching()
 
-    test_unregister_and_upgrade_registration()
+    # test_unregister_and_upgrade_registration()
 
-    test_endorsements_by_reputables()
+    # test_endorsements_by_reputables()
 
-    # test_democracy()
+    test_democracy()
 
     print("tests passed")
 

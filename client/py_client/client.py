@@ -75,7 +75,8 @@ class Client:
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
 
     def get_phase(self):
@@ -150,11 +151,13 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def register_participant(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["register-participant", account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["register-participant", account], cid, pay_fees_in_cc)
         ensure_clean_exit(ret)
 
     def upgrade_registration(self, account, cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["upgrade-registration", account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["upgrade-registration", account], cid, pay_fees_in_cc)
         ensure_clean_exit(ret)
 
     def unregister_participant(self, account, cid, cindex=None, pay_fees_in_cc=False):
@@ -185,7 +188,8 @@ class Client:
         return meetups
 
     def attest_attendees(self, account, cid, attendees, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["attest-attendees", account] + attendees, cid=cid, pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["attest-attendees", account] + attendees, cid=cid, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
 
     def list_attestees(self, cid):
@@ -199,22 +203,26 @@ class Client:
         if all:
             optional_args += ["--all"]
 
-        ret = self.run_cli_command(["claim-reward", "--signer", account] + optional_args, cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["claim-reward", "--signer", account] + optional_args, cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def create_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["create-business", account], cid, pay_fees_in_cc, ipfs_cid)
+        ret = self.run_cli_command(
+            ["create-business", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def update_business(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
         """ Update has not been tested """
-        ret = self.run_cli_command(["update-business", account], cid, pay_fees_in_cc, ipfs_cid)
+        ret = self.run_cli_command(
+            ["update-business", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def create_offering(self, account, cid, ipfs_cid, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["create-offering", account], cid, pay_fees_in_cc, ipfs_cid)
+        ret = self.run_cli_command(
+            ["create-offering", account], cid, pay_fees_in_cc, ipfs_cid)
         ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
@@ -227,7 +235,8 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def list_offerings_for_business(self, cid, account):
-        ret = self.run_cli_command(["list-business-offerings", account], cid=cid)
+        ret = self.run_cli_command(
+            ["list-business-offerings", account], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def endorse_newcomers(self, cid, endorser, endorsees, pay_fees_in_cc=False):
@@ -239,55 +248,71 @@ class Client:
         return ret.stdout.decode("utf-8").strip()
 
     def get_bootstrappers_with_remaining_newbie_tickets(self, cid):
-        ret = self.run_cli_command(["get-bootstrappers-with-remaining-newbie-tickets"], cid=cid)
+        ret = self.run_cli_command(
+            ["get-bootstrappers-with-remaining-newbie-tickets"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def transfer_all(self, cid, source, dest, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["transfer_all", source, dest], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["transfer_all", source, dest], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def transfer(self, cid, source, dest, amount, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["transfer", source, dest, amount], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["transfer", source, dest, amount], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def purge_community_ceremony(self, cid, from_cindex, to_cindex, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["purge-community-ceremony", str(from_cindex), str(to_cindex)], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["purge-community-ceremony", str(from_cindex), str(to_cindex)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def create_faucet(self, account, facuet_name, amount, drip_amount, whitelist, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["create-faucet", account, facuet_name, str(amount), str(drip_amount)] + whitelist, cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["create-faucet", account, facuet_name, str(
+            amount), str(drip_amount)] + whitelist, cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def drip_faucet(self, account, facuet_account, cindex, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["drip-faucet", account, facuet_account, str(cindex)], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["drip-faucet", account, facuet_account, str(cindex)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def dissolve_faucet(self, account, facuet_account, beneficiary, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["dissolve-faucet", "--signer", account, facuet_account, beneficiary], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["dissolve-faucet", "--signer", account, facuet_account, beneficiary], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def close_faucet(self, account, facuet_account, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["close-faucet", account, facuet_account], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["close-faucet", account, facuet_account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def set_faucet_reserve_amount(self, account, amount, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["set-faucet-reserve-amount", "--signer", account, str(amount)], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["set-faucet-reserve-amount", "--signer", account, str(amount)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def submit_set_inactivity_timeout_proposal(self, account, inactivity_timeout, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["submit-set-inactivity-timeout-proposal", account, str(inactivity_timeout)], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["submit-set-inactivity-timeout-proposal", account, str(inactivity_timeout)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def vote(self, account, proposal_id, vote, reputations, cid=None, pay_fees_in_cc=False):
-        reputations = [f'{cid}_{cindex}' for [cid,cindex] in reputations]
+        reputations = [f'{cid}_{cindex}' for [cid, cindex] in reputations]
         reputation_vec = ','.join(reputations)
-        ret = self.run_cli_command(["vote", account, str(proposal_id), vote, reputation_vec], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["vote", account, str(
+            proposal_id), vote, reputation_vec], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def update_proposal_state(self, account, proposal_id, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["update-proposal-state", account, str(proposal_id)], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(
+            ["update-proposal-state", account, str(proposal_id)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def list_proposals(self):
         ret = self.run_cli_command(["list-proposals"])
+        return ret.stdout.decode("utf-8").strip()
+
+    def list_enactment_queue(self):
+        ret = self.run_cli_command(["list-enactment-queue"])
         return ret.stdout.decode("utf-8").strip()
