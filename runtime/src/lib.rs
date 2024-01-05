@@ -525,8 +525,10 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
+	// 10 blocks
 	pub const ConfirmationPeriod:Moment = 60_000;
-	pub const ProposalLifetime: Moment = 240_000;
+	// 20 blocks
+	pub const ProposalLifetime: Moment = 120_000;
 }
 
 impl pallet_encointer_democracy::Config for Runtime {

@@ -1,4 +1,5 @@
 use clap::{App, Arg, ArgMatches};
+use encointer_primitives::balances::BalanceType;
 use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
@@ -32,6 +33,7 @@ const PROPOSAL_ID_ARG: &str = "proposal-id";
 const VOTE_ARG: &str = "vote";
 const REPUTATION_VEC_ARG: &str = "reputation-vec";
 const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
+const NOMINAL_INCOME_ARG: &str = "nominal-income";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -67,6 +69,7 @@ pub trait EncointerArgs<'b> {
 	fn vote_arg(self) -> Self;
 	fn reputation_vec_arg(self) -> Self;
 	fn inactivity_timeout_arg(self) -> Self;
+	fn nominal_income_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -102,6 +105,7 @@ pub trait EncointerArgsExtractor {
 	fn vote_arg(&self) -> Option<&str>;
 	fn reputation_vec_arg(&self) -> Option<Vec<&str>>;
 	fn inactivity_timeout_arg(&self) -> Option<u32>;
+	fn nominal_income_arg(&self) -> Option<BalanceType>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -419,6 +423,16 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("inactivity timeout"),
 		)
 	}
+
+	fn nominal_income_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(NOMINAL_INCOME_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("NOMINAL_INCOME")
+				.help("nominal income"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -535,5 +549,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn inactivity_timeout_arg(&self) -> Option<u32> {
 		self.value_of(INACTIVITY_TIMEOUT_ARG).map(|v| v.parse().unwrap())
+	}
+	fn nominal_income_arg(&self) -> Option<BalanceType> {
+		self.value_of(NOMINAL_INCOME_ARG)
+			.map(|v| BalanceType::from_num(v.parse::<u128>().unwrap()))
 	}
 }

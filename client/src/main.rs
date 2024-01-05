@@ -57,10 +57,7 @@ use encointer_primitives::{
 		ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
-	democracy::{
-		Proposal, ProposalAction, ProposalIdType, ReputationVec, Tally,
-		Vote,
-	},
+	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Tally, Vote},
 	faucet::{Faucet, FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
@@ -1963,6 +1960,38 @@ async fn main() {
                         }),
                 )
                 .add_cmd(
+                    Command::new("submit-update-nominal-income-proposal")
+                        .description("Submit update nominal income proposal")
+                        .options(|app| {
+                            app.setting(AppSettings::ColoredHelp)
+                                .account_arg()
+                                .nominal_income_arg()
+                        })
+                        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                            let who = matches.account_arg().map(get_pair_from_str).unwrap();
+                                                let mut api = get_chain_api(matches);
+                            api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
+                                who.clone(),
+                            )));
+                            let nominal_income = matches.nominal_income_arg().unwrap();
+                            let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                            set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+                            let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
+
+                            let xt: EncointerXt<_> = compose_extrinsic!(
+                                api,
+                                "EncointerDemocracy",
+                                "submit_proposal",
+                                ProposalAction::UpdateNominalIncome(cid, nominal_income)
+                            );
+                            ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
+                            let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                            println!("Proposal Submitted: Update nominal income to {nominal_income:?}");
+                            Ok(())
+                        }),
+                )
+                .add_cmd(
                     Command::new("list-proposals")
                         .description("list all proposals.")
                         .options(|app| {
@@ -1993,10 +2022,10 @@ async fn main() {
                                         .unwrap().unwrap();
 
                                     println!("id: {}", proposal_id);
+                                    println!("state: {:?}", proposal.state);
                                     println!("action: {:?}", proposal.action);
                                     println!("start time: {}", proposal.start);
                                     println!("start cindex: {}", proposal.start_cindex);
-                                    println!("state: {:?}", proposal.state);
                                     println!("electorate size: {:?}", proposal.electorate_size);
                                     println!("turnout: {:?}", tally.turnout);
                                     println!("ayes: {:?}", tally.ayes);

@@ -296,6 +296,11 @@ class Client:
         ret = self.run_cli_command(
             ["submit-set-inactivity-timeout-proposal", account, str(inactivity_timeout)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
+    
+    def submit_update_nominal_income_proposal(self, account, nominal_income, cid, pay_fees_in_cc=False):
+        ret = self.run_cli_command(
+            ["submit-update-nominal-income-proposal", account, str(nominal_income)], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
 
     def vote(self, account, proposal_id, vote, reputations, cid=None, pay_fees_in_cc=False):
         reputations = [f'{cid}_{cindex}' for [cid, cindex] in reputations]

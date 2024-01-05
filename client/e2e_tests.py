@@ -277,26 +277,50 @@ def test_democracy(client, cid):
     client.next_phase()
 
     client.await_block(1)
+    print('Submitting proposal id 1, SetInactivityTimeout(8)')
     client.submit_set_inactivity_timeout_proposal("//Alice", 8)
     client.await_block(1)
+    print('Submitting proposal id 2, UpdateNominalIncome(cid, 44)')
+    client.submit_update_nominal_income_proposal("//Alice", 44, cid)
+    client.await_block(1)
     proposals = client.list_proposals()
-    print(proposals)
-    if ('id: 1' not in proposals):
+    if ('id: 1' not in proposals or 'id: 2' not in proposals):
         raise TestError(f"Proposal Submission failed")
 
-    print('proposal submitted')
-    # vote with all reputations gathered so far
+    # note: each vote will wait one block
+    print('Alice votes aye for proposal 1')
     client.vote("//Alice", 1, "aye", [[cid, 1]])
+    print('Bob votes aye for proposal 1')
     client.vote("//Bob", 1, "aye", [[cid, 1]])
+    print('Charlie votes aye for proposal 1')
     client.vote("//Charlie", 1, "aye", [[cid, 1]])
 
-    client.await_block(21)
+    print('Alice votes nay for proposal 2')
+    client.vote("//Alice", 2, "nay", [[cid, 1]])
+    print('Bob votes nay for proposal 2')
+    client.vote("//Bob", 2, "nay", [[cid, 1]])
+    print('Charlie votes aye for proposal 2')
+    client.vote("//Charlie", 2, "aye", [[cid, 1]])
+
+    print('Waiting 5 blocks...')
+    client.await_block(5)
+    print('Alice updates proposal state of proposal 1')
     client.update_proposal_state("//Alice", 1)
     proposals = client.list_proposals()
-    print(proposals)
     enactment_queue = client.list_enactment_queue()
-    if ('Approved' not in proposals or '1' not in enactment_queue):
+    if ('id: 1\nstate: ProposalState::Approved' not in proposals or '1' not in enactment_queue):
         raise TestError(f"Proposal Voting and Approval failed")
+    print('Porposal 1 approved!')
+
+    print('Waiting 10 blocks...')
+    client.await_block(10)
+    print('Alice updates proposal state of proposal 2')
+    client.update_proposal_state("//Alice", 2)
+    proposals = client.list_proposals()
+    if ('id: 2\nstate: ProposalState::Cancelled' not in proposals):
+        raise TestError(f"Proposal Cancelling failed")
+    print('Porposal 2 cancelled!')
+    print('SUCCESS!!')
 
 
 @e2e_test
@@ -326,17 +350,17 @@ def test_balances(client, cid):
 
 def run_tests():
 
-    # test_balances()
+    test_balances()
 
-    # test_faucet()
+    test_faucet()
 
-    # fee_payment_transfers()
+    fee_payment_transfers()
 
-    # test_reputation_caching()
+    test_reputation_caching()
 
-    # test_unregister_and_upgrade_registration()
+    test_unregister_and_upgrade_registration()
 
-    # test_endorsements_by_reputables()
+    test_endorsements_by_reputables()
 
     test_democracy()
 
