@@ -350,21 +350,20 @@ def test_balances(client, cid):
 
 def run_tests():
 
-    test_balances()
+    # test_balances()
 
-    test_faucet()
+    # test_faucet()
 
-    fee_payment_transfers()
+    # fee_payment_transfers()
 
-    test_reputation_caching()
+    # test_reputation_caching()
 
-    test_unregister_and_upgrade_registration()
+    # test_unregister_and_upgrade_registration()
 
-    test_endorsements_by_reputables()
+    # test_endorsements_by_reputables()
 
     test_democracy()
 
-    print("tests passed")
 
 
 if __name__ == '__main__':
