@@ -29,7 +29,7 @@ def run_chain():
     proc = subprocess.Popen(cmd,
                             shell=True, preexec_fn=os.setsid, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-    time.sleep(3)
+    time.sleep(15)
     return proc.pid
 
 
