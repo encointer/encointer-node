@@ -5,7 +5,7 @@ Demonstrate the bootstrapping of an Encointer community on a *dev* chain.
 start node with
   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
-or start parachain with  
+or start parachain with
 then run this script
   ./bootstrap_demo_community.py --port 9945
 
@@ -64,9 +64,9 @@ def update_spec_with_cid(file, cid):
         spec_json.truncate()
 
 
-def create_community(client, spec_file_path, ipfs_local):
-    # non sudoer can create community
-    cid = client.new_community(spec_file_path, signer=account2)
+def create_community(client, spec_file_path, ipfs_local, signer):
+    # non sudoer can create community on gesell (provide --signer but don't use //Alice), but not on parachain (where council will create)
+    cid = client.new_community(spec_file_path, signer=signer)
     if len(cid) > 10:
         print(f'Registered community with cid: {cid}')
     else:
@@ -293,11 +293,11 @@ def test_faucet(client, cid):
     if(not client.balance("//Eve") == balance(9000)):
         print(f"Dissolve failed")
         exit(1)
-    
+
     if(not client.balance("//Bob") == balance_bob + balance(3000)):
         print(f"Dissolve failed")
         exit(1)
-    
+
     print('Faucet dissolved', flush=True)
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(2)
@@ -314,7 +314,7 @@ def test_faucet(client, cid):
     if(not client.balance(faucet_account) == 0):
         print(f"Faucet closing failed with wrong faucet balance")
         exit(1)
-    
+
     if(not client.balance("//Bob") == balance_bob + balance(3000)):
         print(f"Faucet closing failed with wrong bob balance")
         exit(1)
@@ -369,15 +369,15 @@ def test_democracy(client, cid):
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--signer', help='optional account keypair creating the community')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}', help='Specify community spec-file to be registered.')
 @click.option('-t', '--test', is_flag=True, help='if set, run integration tests.')
-def main(ipfs_local, client, url, port, spec_file, test):
+def main(ipfs_local, client, signer, url, port, spec_file, test):
     client = Client(rust_client=client, node_url=url, port=port)
-    cid = create_community(client, spec_file, ipfs_local)
-
+    cid = create_community(client, spec_file, ipfs_local, signer)
 
     newbie = client.create_accounts(1)[0]
     faucet(client, cid, [account3, newbie])
@@ -413,7 +413,7 @@ def main(ipfs_local, client, url, port, spec_file, test):
     if not len(rep) > 0:
         print("no reputation gained")
         exit(1)
-        
+
     register_participants_and_perform_meetup(client, cid, accounts)
     client.next_phase()
     client.await_block(1)

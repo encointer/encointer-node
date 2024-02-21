@@ -216,7 +216,7 @@ async fn main() {
                         let call = compose_call!(
                             api.metadata(),
                             "Balances",
-                            "transfer",
+                            "transfer_keep_alive",
                             ExtrinsicAddress::from(to.clone()),
                             Compact(amount)
                         );
