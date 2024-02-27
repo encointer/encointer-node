@@ -4,20 +4,19 @@ version = "0.8.2"
 edition = "2021"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-log = "0.4.14"
-serde = { features = ["derive"], version = "1.0.132" }
-serde_json = { version = "1.0.79" }
+log = { workspace = true }
+parity-scale-codec = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+serde_json = { workspace = true }
 
 # encointer deps
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+encointer-ceremonies-assignment = { workspace = true, features = ["std"] }
 encointer-node-notee-runtime = { path = "../../runtime" }
-encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+encointer-primitives = { workspace = true, features = ["std"] }
 
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0", features = ["ws-client"] }
-# scs deps
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0" }
+substrate-api-client = { workspace = true }
+substrate-client-keystore = { workspace = true }
 
 # substrate deps
-sp-core = { version = "21.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-runtime = { version = "24.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+sp-core = { workspace = true, features = ["std"] }
+sp-runtime = { workspace = true, features = ["std"] }

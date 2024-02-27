@@ -1,9 +1,9 @@
 use crate::{exit_code, get_asset_fee_details, get_community_balance, BalanceType};
-use codec::{Compact, Encode};
 use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
 use log::{debug, error, info};
+use parity_scale_codec::{Compact, Encode};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
 use substrate_api_client::{

@@ -38,7 +38,6 @@ use crate::{
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
-use codec::{Compact, Decode, Encode};
 use encointer_api_client_extension::{
 	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
 	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ExtrinsicAddress,
@@ -64,6 +63,7 @@ use encointer_primitives::{
 };
 use log::*;
 use pallet_transaction_payment::FeeDetails;
+use parity_scale_codec::{Compact, Decode, Encode};
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, ConstU32, Pair};
 use sp_keyring::AccountKeyring;

@@ -1,4 +1,3 @@
-use codec::Encode;
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
@@ -11,6 +10,7 @@ use encointer_primitives::{
 };
 use geojson::GeoJson;
 use log::{debug, info};
+use parity_scale_codec::Encode;
 use substrate_api_client::{ac_compose_macros::compose_call, ac_node_api::Metadata};
 
 pub fn read_community_spec_from_file(path: &str) -> serde_json::Value {
