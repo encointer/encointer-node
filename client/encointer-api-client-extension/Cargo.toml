@@ -4,8 +4,8 @@ version = "0.8.2"
 edition = "2021"
 
 [dependencies]
-parity-scale-codec = { workspace = true }
 log = { workspace = true }
+parity-scale-codec = { workspace = true }
 serde = { workspace = true, features = ["std"] }
 serde_json = { workspace = true }
 

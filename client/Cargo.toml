@@ -8,11 +8,11 @@ version = "1.5.4"
 [dependencies]
 clap = "2.33"
 clap-nested = "0.4.0"
-parity-scale-codec = { workspace = true }
 env_logger = { workspace = true }
 geojson = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
+parity-scale-codec = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 

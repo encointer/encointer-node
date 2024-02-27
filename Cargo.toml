@@ -45,7 +45,6 @@ pallet-encointer-reputation-commitments = { default-features = false, git = "htt
 pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
 
 
-
 # substrate deps
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }

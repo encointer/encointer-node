@@ -12,7 +12,6 @@ version = "1.5.30"
 [dependencies]
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
-# added by encointer
 serde = { workspace = true, optional = true }
 
 # encointer deps
@@ -74,29 +73,45 @@ frame-system-benchmarking = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
 
 [build-dependencies]
-substrate-wasm-builder = { workspace = true}
+substrate-wasm-builder = { workspace = true }
 
 [features]
 default = ["std"]
 std = [
-    "parity-scale-codec/std",
-    "scale-info/std",
-    "serde",
+    "encointer-balances-tx-payment-rpc-runtime-api/std",
+    "encointer-balances-tx-payment/std",
+    "encointer-primitives/serde_derive",
+    "encointer-primitives/std",
     "frame-executive/std",
     "frame-support/std",
-    "frame-system/std",
     "frame-system-rpc-runtime-api/std",
-    "pallet-aura/std",
+    "frame-system/std",
+    "frame-try-runtime/std",
     "pallet-asset-tx-payment/std",
+    "pallet-aura/std",
     "pallet-balances/std",
+    "pallet-encointer-balances/std",
+    "pallet-encointer-bazaar-rpc-runtime-api/std",
+    "pallet-encointer-bazaar/std",
+    "pallet-encointer-ceremonies-rpc-runtime-api/std",
+    "pallet-encointer-ceremonies/std",
+    "pallet-encointer-communities-rpc-runtime-api/std",
+    "pallet-encointer-communities/std",
+    "pallet-encointer-democracy/std",
+    "pallet-encointer-faucet/std",
+    "pallet-encointer-reputation-commitments/std",
+    "pallet-encointer-scheduler/std",
     "pallet-grandpa/std",
-    "pallet-proxy/std",
     "pallet-insecure-randomness-collective-flip/std",
+    "pallet-proxy/std",
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment-rpc-runtime-api/std",
     "pallet-transaction-payment/std",
     "pallet-treasury/std",
+    "parity-scale-codec/std",
+    "scale-info/std",
+    "serde",
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",
@@ -108,34 +123,14 @@ std = [
     "sp-std/std",
     "sp-transaction-pool/std",
     "sp-version/std",
-    "encointer-balances-tx-payment/std",
-    "encointer-balances-tx-payment-rpc-runtime-api/std",
-    "encointer-primitives/std",
-    "encointer-primitives/serde_derive",
-    "pallet-encointer-balances/std",
-    "pallet-encointer-bazaar/std",
-    "pallet-encointer-bazaar-rpc-runtime-api/std",
-    "pallet-encointer-ceremonies/std",
-    "pallet-encointer-ceremonies-rpc-runtime-api/std",
-    "pallet-encointer-communities/std",
-    "pallet-encointer-communities-rpc-runtime-api/std",
-    "pallet-encointer-democracy/std",
-    "pallet-encointer-faucet/std",
-    "pallet-encointer-reputation-commitments/std",
-    "pallet-encointer-scheduler/std",
-    "frame-try-runtime/std",
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "frame-system-benchmarking/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
-    "pallet-balances/runtime-benchmarks",
-    "pallet-grandpa/runtime-benchmarks",
-    "pallet-timestamp/runtime-benchmarks",
-    "sp-runtime/runtime-benchmarks",
     "hex-literal",
-    # encointer crates
+    "pallet-balances/runtime-benchmarks",
     "pallet-encointer-balances/runtime-benchmarks",
     "pallet-encointer-bazaar/runtime-benchmarks",
     "pallet-encointer-ceremonies/runtime-benchmarks",
@@ -144,26 +139,19 @@ runtime-benchmarks = [
     "pallet-encointer-faucet/runtime-benchmarks",
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
+    "pallet-grandpa/runtime-benchmarks",
+    "pallet-timestamp/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
 ]
 
 try-runtime = [
-    "frame-try-runtime/try-runtime",
     "frame-executive/try-runtime",
-    "frame-system/try-runtime",
     "frame-support/try-runtime",
+    "frame-system/try-runtime",
+    "frame-try-runtime/try-runtime",
+    "pallet-asset-tx-payment/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-balances/try-runtime",
-    "pallet-grandpa/try-runtime",
-    "pallet-insecure-randomness-collective-flip/try-runtime",
-    "pallet-sudo/try-runtime",
-    "pallet-timestamp/try-runtime",
-    "pallet-transaction-payment/try-runtime",
-    "pallet-treasury/try-runtime",
-    "pallet-proxy/try-runtime",
-    "pallet-scheduler/try-runtime",
-    "pallet-utility/try-runtime",
-    "pallet-asset-tx-payment/try-runtime",
-
     "pallet-encointer-balances/try-runtime",
     "pallet-encointer-bazaar/try-runtime",
     "pallet-encointer-ceremonies/try-runtime",
@@ -172,4 +160,13 @@ try-runtime = [
     "pallet-encointer-faucet/try-runtime",
     "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
+    "pallet-grandpa/try-runtime",
+    "pallet-insecure-randomness-collective-flip/try-runtime",
+    "pallet-proxy/try-runtime",
+    "pallet-scheduler/try-runtime",
+    "pallet-sudo/try-runtime",
+    "pallet-timestamp/try-runtime",
+    "pallet-transaction-payment/try-runtime",
+    "pallet-treasury/try-runtime",
+    "pallet-utility/try-runtime",
 ]
