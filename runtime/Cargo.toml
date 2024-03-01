@@ -60,8 +60,6 @@ sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
 
 frame-try-runtime = { workspace = true, optional = true }
-try-runtime-cli = { workspace = true, optional = true }
-
 
 # Used for the node's RPCs
 frame-system-rpc-runtime-api = { workspace = true }

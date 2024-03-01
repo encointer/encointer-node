@@ -20,7 +20,7 @@ name = "encointer-node-notee"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies]
-substrate-build-script-utils = "3.0.0"
+substrate-build-script-utils = { workspace = true }
 
 [dependencies]
 clap = { workspace = true }
@@ -82,8 +82,6 @@ pallet-encointer-communities-rpc-runtime-api = { workspace = true, features = ["
 
 # CLI-specific dependencies
 frame-try-runtime = { workspace = true, optional = true }
-try-runtime-cli = { workspace = true, optional = true }
-
 
 [features]
 default = []
@@ -96,9 +94,5 @@ runtime-benchmarks = [
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = [
     "encointer-node-notee-runtime/try-runtime",
-    "try-runtime-cli/try-runtime",
 ]
 
-cli = [
-    'try-runtime-cli',
-]

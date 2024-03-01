@@ -75,7 +75,7 @@ sc-cli = { version = "0.38.0" }
 sc-client-api = { version = "30.0.0" }
 sc-consensus = { version = "0.35.0" }
 sc-consensus-aura = { version = "0.36.0" }
-sc-consensus-grandpa = { version = "0.13.0" }
+sc-consensus-grandpa = { version = "0.21.0" }
 sc-executor = { version = "0.34.0" }
 sc-keystore = { version = "27.0.0" }
 sc-network = { version = "0.36.0" }
@@ -109,7 +109,7 @@ sp-timestamp = { version = "28.0.0" }
 sp-transaction-pool = { version = "28.0.0", default-features = false }
 sp-version = { version = "31.0.0", default-features = false }
 substrate-frame-rpc-system = { version = "30.0.0" }
-try-runtime-cli = { version = "0.39.0", default-features = false }
+
 
 substrate-wasm-builder = "19.0.0"
 substrate-build-script-utils = "11.0.0"
@@ -142,6 +142,8 @@ pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commit
 pallet-encointer-scheduler = { path = "../pallets/scheduler" }
 substrate-api-client = { path = "../../substrate-api-client" }
 substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
+ac-node-api = { path = "../../substrate-api-client/node-api" }
+ac-primitives = { path = "../../substrate-api-client/primitives" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }
