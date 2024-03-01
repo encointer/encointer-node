@@ -1,4 +1,0 @@
-[toolchain]
-channel = "stable"
-profile = "default" # include rustfmt, clippy
-targets = ["wasm32-unknown-unknown"]

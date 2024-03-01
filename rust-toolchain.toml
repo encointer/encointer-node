@@ -1,0 +1,14 @@
+[toolchain]
+channel = "nightly-2024-02-08"
+profile = "default" # include rustfmt, clippy
+components = [
+    "cargo",
+    "clippy",
+    "rust-analyzer",
+    "rust-src",
+    "rust-std",
+    "rustc",
+    "rustc-dev",
+    "rustfmt",
+]
+targets = ["wasm32-unknown-unknown"]
