@@ -121,6 +121,8 @@ substrate-client-keystore = "0.10.0"
 #only while debugging
 
 [patch.crates-io]
+ac-node-api = { path = "../../substrate-api-client/node-api" }
+ac-primitives = { path = "../../substrate-api-client/primitives" }
 encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
 encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
 encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
@@ -142,8 +144,6 @@ pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commit
 pallet-encointer-scheduler = { path = "../pallets/scheduler" }
 substrate-api-client = { path = "../../substrate-api-client" }
 substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
-ac-node-api = { path = "../../substrate-api-client/node-api" }
-ac-primitives = { path = "../../substrate-api-client/primitives" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }

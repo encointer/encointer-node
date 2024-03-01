@@ -95,4 +95,3 @@ runtime-benchmarks = [
 try-runtime = [
     "encointer-node-notee-runtime/try-runtime",
 ]
-
