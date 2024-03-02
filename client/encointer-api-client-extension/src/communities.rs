@@ -10,7 +10,8 @@ impl CommunitiesApi for Api {
 	async fn get_locations(&self, cid: CommunityIdentifier) -> Result<Vec<Location>> {
 		let locations = self
 			.client()
-			.request::<Vec<Location>>("encointer_getLocations", rpc_params![cid])?;
+			.request::<Vec<Location>>("encointer_getLocations", rpc_params![cid])
+			.await?;
 		Ok(locations)
 	}
 }

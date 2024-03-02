@@ -336,7 +336,7 @@ impl CeremoniesApi for Api {
 	}
 
 	async fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
-		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
+		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None).await
 	}
 
 	async fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {
@@ -359,7 +359,7 @@ impl CeremoniesApi for Api {
 		// get stats of every meetup
 		for m in 1..=mcount {
 			let m_location = self.get_meetup_location(&community_ceremony, m).await?.unwrap();
-			let time = self.get_meetup_time(m_location, ONE_DAY).unwrap_or(0);
+			let time = self.get_meetup_time(m_location, ONE_DAY).await.unwrap_or(0);
 			let participants = self.get_meetup_participants(&community_ceremony, m).await?;
 
 			let mut registrations = vec![];
