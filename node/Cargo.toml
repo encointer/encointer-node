@@ -54,7 +54,7 @@ sp-runtime = { workspace = true, features = ["std"] }
 sp-timestamp = { workspace = true, features = ["std"] }
 
 # These dependencies are used for the node's RPCs
-jsonrpsee = { version = "0.16.2", features = ["server"] }
+jsonrpsee = { workspace = true }
 pallet-transaction-payment-rpc = { workspace = true }
 sc-basic-authorship = { workspace = true }
 sc-chain-spec = { workspace = true }
