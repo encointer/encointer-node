@@ -102,8 +102,9 @@ pub trait CeremoniesApi {
 
 impl CeremoniesApi for Api {
 	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
+		tokio::try!(
 		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)?
-			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))
+			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into())))
 	}
 
 	fn get_assignment_counts(

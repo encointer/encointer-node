@@ -1,5 +1,5 @@
 [toolchain]
-channel = "nightly-2024-02-08"
+channel = "stable"
 profile = "default" # include rustfmt, clippy
 components = [
     "cargo",
@@ -8,7 +8,6 @@ components = [
     "rust-src",
     "rust-std",
     "rustc",
-    "rustc-dev",
     "rustfmt",
 ]
 targets = ["wasm32-unknown-unknown"]
