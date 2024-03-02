@@ -2181,6 +2181,7 @@ dependencies = [
  "pallet-encointer-communities-rpc-runtime-api",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
+ "sc-chain-spec",
  "sc-cli",
  "sc-client-api",
  "sc-consensus",

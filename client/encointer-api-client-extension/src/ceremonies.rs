@@ -102,9 +102,8 @@ pub trait CeremoniesApi {
 
 impl CeremoniesApi for Api {
 	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
-		tokio::try!(
 		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)?
-			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into())))
+			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))
 	}
 
 	fn get_assignment_counts(
@@ -187,13 +186,13 @@ impl CeremoniesApi for Api {
 		};
 
 		if let Some(p_index) = index_query("BootstrapperIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper))
+			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper));
 		} else if let Some(p_index) = index_query("ReputableIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Reputable))
+			return Ok(Registration::new(p_index, RegistrationType::Reputable));
 		} else if let Some(p_index) = index_query("EndorseeIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Endorsee))
+			return Ok(Registration::new(p_index, RegistrationType::Endorsee));
 		} else if let Some(p_index) = index_query("NewbieIndex")? {
-			return Ok(Registration::new(p_index, RegistrationType::Newbie))
+			return Ok(Registration::new(p_index, RegistrationType::Newbie));
 		}
 
 		Err(ApiClientError::Other(
@@ -216,7 +215,7 @@ impl CeremoniesApi for Api {
 
 		if meetup_count == 0 {
 			warn!("Meetup Count is 0.");
-			return Ok(None)
+			return Ok(None);
 		}
 
 		let assignments = self.get_assignments(community_ceremony)?;
@@ -234,16 +233,19 @@ impl CeremoniesApi for Api {
 		// Finally get the meetup index
 
 		match registration.registration_type {
-			RegistrationType::Bootstrapper =>
-				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables)),
+			RegistrationType::Bootstrapper => {
+				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables))
+			},
 			RegistrationType::Reputable => Ok(meetup_index_fn(
 				registration.index - 1 + bootstrapper_count()?,
 				assignments.bootstrappers_reputables,
 			)),
-			RegistrationType::Endorsee =>
-				Ok(meetup_index_fn(registration.index - 1, assignments.endorsees)),
-			RegistrationType::Newbie =>
-				Ok(meetup_index_fn(registration.index - 1, assignments.newbies)),
+			RegistrationType::Endorsee => {
+				Ok(meetup_index_fn(registration.index - 1, assignments.endorsees))
+			},
+			RegistrationType::Newbie => {
+				Ok(meetup_index_fn(registration.index - 1, assignments.newbies))
+			},
 		}
 	}
 
@@ -272,7 +274,7 @@ impl CeremoniesApi for Api {
 					"Invalid meetup index > meetup count: {meetup_index_zero_based}, {meetup_count}"
 				)
 				.into(),
-			))
+			));
 		}
 
 		let params = self.get_assignments(community_ceremony)?;
@@ -401,9 +403,9 @@ fn get_bootstrapper_or_reputable(
 	assigned: &AssignmentCount,
 ) -> Result<Option<AccountId>> {
 	if p_index < assigned.bootstrappers {
-		return api.get_bootstrapper(community_ceremony, &(p_index + 1))
+		return api.get_bootstrapper(community_ceremony, &(p_index + 1));
 	} else if p_index < assigned.bootstrappers + assigned.reputables {
-		return api.get_reputable(community_ceremony, &(p_index - assigned.bootstrappers + 1))
+		return api.get_reputable(community_ceremony, &(p_index - assigned.bootstrappers + 1));
 	}
 
 	Ok(None)
