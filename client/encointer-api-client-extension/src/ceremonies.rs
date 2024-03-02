@@ -9,9 +9,9 @@ use encointer_primitives::{
 	},
 	communities::Location,
 };
+use futures::stream::{self, StreamExt, TryStreamExt};
 use log::warn;
 use serde::{Deserialize, Serialize};
-
 use sp_runtime::AccountId32 as AccountId;
 use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
 pub type Moment = u64;
@@ -296,43 +296,53 @@ impl CeremoniesApi for Api {
 		let params = self.get_assignments(community_ceremony).await?;
 		let assigned = self.get_assignment_counts(community_ceremony).await?;
 
-		let bootstrappers_reputables = assignment_fn_inverse(
-			meetup_index_zero_based,
-			params.bootstrappers_reputables,
-			meetup_count,
-			assigned.bootstrappers + assigned.reputables,
+		let bootstrappers_reputables = stream::iter(
+			assignment_fn_inverse(
+				meetup_index_zero_based,
+				params.bootstrappers_reputables,
+				meetup_count,
+				assigned.bootstrappers + assigned.reputables,
+			)
+			.unwrap_or_default(),
 		)
-		.unwrap_or_default()
-		.into_iter()
-		.filter_map(|p_index| {
+		.filter_map(|p_index| async move {
 			get_bootstrapper_or_reputable(self, community_ceremony, p_index, &assigned)
+				.await
 				.ok()
 				.flatten()
 		});
 
-		let endorsees = assignment_fn_inverse(
-			meetup_index_zero_based,
-			params.endorsees,
-			meetup_count,
-			assigned.endorsees,
+		let endorsees = stream::iter(
+			assignment_fn_inverse(
+				meetup_index_zero_based,
+				params.endorsees,
+				meetup_count,
+				assigned.endorsees,
+			)
+			.unwrap_or_default()
+			.into_iter()
+			.filter(|p| p < &assigned.endorsees),
 		)
-		.unwrap_or_default()
-		.into_iter()
-		.filter(|p| p < &assigned.endorsees)
-		.filter_map(|p| self.get_endorsee(community_ceremony, &(p + 1)).ok().flatten());
+		.filter_map(|p| async move {
+			self.get_endorsee(community_ceremony, &(p + 1)).await.ok().flatten()
+		});
 
-		let newbies = assignment_fn_inverse(
-			meetup_index_zero_based,
-			params.newbies,
-			meetup_count,
-			assigned.newbies,
+		let newbies = stream::iter(
+			assignment_fn_inverse(
+				meetup_index_zero_based,
+				params.newbies,
+				meetup_count,
+				assigned.newbies,
+			)
+			.unwrap_or_default()
+			.into_iter()
+			.filter(|p| p < &assigned.newbies),
 		)
-		.unwrap_or_default()
-		.into_iter()
-		.filter(|p| p < &assigned.newbies)
-		.filter_map(|p| self.get_newbie(community_ceremony, &(p + 1)).ok().flatten());
+		.filter_map(|p| async move {
+			self.get_newbie(community_ceremony, &(p + 1)).await.ok().flatten()
+		});
 
-		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
+		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect().await)
 	}
 
 	async fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {

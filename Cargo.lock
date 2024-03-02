@@ -2031,6 +2031,7 @@ dependencies = [
  "encointer-ceremonies-assignment",
  "encointer-node-notee-runtime",
  "encointer-primitives",
+ "futures",
  "log",
  "parity-scale-codec",
  "serde",
