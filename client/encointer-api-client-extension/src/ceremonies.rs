@@ -22,78 +22,81 @@ pub const ENCOINTER_CEREMONIES: &str = "EncointerCeremonies";
 pub const ONE_DAY: Moment = 86_400_000;
 
 pub trait CeremoniesApi {
-	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
-	fn get_assignment_counts(
+	async fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
+	async fn get_assignment_counts(
 		&self,
 		community_ceremony: &CommunityCeremony,
 	) -> Result<AssignmentCount>;
 
-	fn get_bootstrapper(
+	async fn get_bootstrapper(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
 	) -> Result<Option<AccountId>>;
 
-	fn get_reputable(
+	async fn get_reputable(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
 	) -> Result<Option<AccountId>>;
 
-	fn get_endorsee(
+	async fn get_endorsee(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
 	) -> Result<Option<AccountId>>;
 
-	fn get_newbie(
+	async fn get_newbie(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
 	) -> Result<Option<AccountId>>;
 
-	fn get_registration(
+	async fn get_registration(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
 	) -> Result<Registration>;
 
-	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType>;
+	async fn get_meetup_count(
+		&self,
+		community_ceremony: &CommunityCeremony,
+	) -> Result<MeetupIndexType>;
 
-	fn get_meetup_index(
+	async fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
 	) -> Result<Option<MeetupIndexType>>;
 
-	fn get_meetup_location(
+	async fn get_meetup_location(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
 	) -> Result<Option<Location>>;
 
-	fn get_meetup_participants(
+	async fn get_meetup_participants(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
 	) -> Result<Vec<AccountId>>;
 
-	fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>>;
+	async fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>>;
 
-	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
+	async fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
 
-	fn get_community_ceremony_stats(
+	async fn get_community_ceremony_stats(
 		&self,
 		community_ceremony: CommunityCeremony,
 	) -> Result<CommunityCeremonyStats>;
 
-	fn get_attestees(
+	async fn get_attestees(
 		&self,
 		community_ceremony: CommunityCeremony,
 		participant_index: ParticipantIndexType,
 	) -> Result<Vec<AccountId>>;
 
-	fn get_meetup_participant_count_vote(
+	async fn get_meetup_participant_count_vote(
 		&self,
 		community_ceremony: CommunityCeremony,
 		account_id: AccountId,
@@ -101,20 +104,22 @@ pub trait CeremoniesApi {
 }
 
 impl CeremoniesApi for Api {
-	fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
-		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)?
+	async fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
+		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)
+			.await?
 			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))
 	}
 
-	fn get_assignment_counts(
+	async fn get_assignment_counts(
 		&self,
 		community_ceremony: &CommunityCeremony,
 	) -> Result<AssignmentCount> {
-		self.get_storage_map(ENCOINTER_CEREMONIES, "AssignmentCounts", community_ceremony, None)?
+		self.get_storage_map(ENCOINTER_CEREMONIES, "AssignmentCounts", community_ceremony, None)
+			.await?
 			.ok_or_else(|| ApiClientError::Other("AssignmentCounts not found".into()))
 	}
 
-	fn get_bootstrapper(
+	async fn get_bootstrapper(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
@@ -126,9 +131,10 @@ impl CeremoniesApi for Api {
 			p,
 			None,
 		)
+		.await
 	}
 
-	fn get_reputable(
+	async fn get_reputable(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
@@ -140,9 +146,10 @@ impl CeremoniesApi for Api {
 			p,
 			None,
 		)
+		.await
 	}
 
-	fn get_endorsee(
+	async fn get_endorsee(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
@@ -154,9 +161,10 @@ impl CeremoniesApi for Api {
 			p,
 			None,
 		)
+		.await
 	}
 
-	fn get_newbie(
+	async fn get_newbie(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
@@ -168,14 +176,15 @@ impl CeremoniesApi for Api {
 			p,
 			None,
 		)
+		.await
 	}
 
-	fn get_registration(
+	async fn get_registration(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
 	) -> Result<Registration> {
-		let index_query = |storage_key| -> Result<Option<ParticipantIndexType>> {
+		let index_query = |storage_key| async move {
 			self.get_storage_double_map(
 				ENCOINTER_CEREMONIES,
 				storage_key,
@@ -183,15 +192,16 @@ impl CeremoniesApi for Api {
 				account_id,
 				None,
 			)
+			.await
 		};
 
-		if let Some(p_index) = index_query("BootstrapperIndex")? {
+		if let Some(p_index) = index_query("BootstrapperIndex").await? {
 			return Ok(Registration::new(p_index, RegistrationType::Bootstrapper));
-		} else if let Some(p_index) = index_query("ReputableIndex")? {
+		} else if let Some(p_index) = index_query("ReputableIndex").await? {
 			return Ok(Registration::new(p_index, RegistrationType::Reputable));
-		} else if let Some(p_index) = index_query("EndorseeIndex")? {
+		} else if let Some(p_index) = index_query("EndorseeIndex").await? {
 			return Ok(Registration::new(p_index, RegistrationType::Endorsee));
-		} else if let Some(p_index) = index_query("NewbieIndex")? {
+		} else if let Some(p_index) = index_query("NewbieIndex").await? {
 			return Ok(Registration::new(p_index, RegistrationType::Newbie));
 		}
 
@@ -200,32 +210,38 @@ impl CeremoniesApi for Api {
 		))
 	}
 
-	fn get_meetup_count(&self, community_ceremony: &CommunityCeremony) -> Result<MeetupIndexType> {
+	async fn get_meetup_count(
+		&self,
+		community_ceremony: &CommunityCeremony,
+	) -> Result<MeetupIndexType> {
 		Ok(self
-			.get_storage_map(ENCOINTER_CEREMONIES, "MeetupCount", community_ceremony, None)?
+			.get_storage_map(ENCOINTER_CEREMONIES, "MeetupCount", community_ceremony, None)
+			.await?
 			.unwrap_or(0))
 	}
 
-	fn get_meetup_index(
+	async fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
 	) -> Result<Option<MeetupIndexType>> {
-		let meetup_count = self.get_meetup_count(community_ceremony)?;
+		let meetup_count = self.get_meetup_count(community_ceremony).await?;
 
 		if meetup_count == 0 {
 			warn!("Meetup Count is 0.");
 			return Ok(None);
 		}
 
-		let assignments = self.get_assignments(community_ceremony)?;
+		let assignments = self.get_assignments(community_ceremony).await?;
 
 		// Some helper queries to make below code more readable.
-		let bootstrapper_count = || -> Result<ParticipantIndexType> {
-			Ok(self.get_assignment_counts(community_ceremony)?.bootstrappers)
+		let bootstrapper_count = || async {
+			Ok::<ParticipantIndexType, ApiClientError>(
+				self.get_assignment_counts(community_ceremony).await?.bootstrappers,
+			)
 		};
 
-		let registration = self.get_registration(community_ceremony, account_id)?;
+		let registration = self.get_registration(community_ceremony, account_id).await?;
 
 		let meetup_index_fn =
 			|p_index, assignment_params| meetup_index(p_index, assignment_params, meetup_count);
@@ -237,7 +253,7 @@ impl CeremoniesApi for Api {
 				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables))
 			},
 			RegistrationType::Reputable => Ok(meetup_index_fn(
-				registration.index - 1 + bootstrapper_count()?,
+				registration.index - 1 + bootstrapper_count().await?,
 				assignments.bootstrappers_reputables,
 			)),
 			RegistrationType::Endorsee => {
@@ -249,24 +265,24 @@ impl CeremoniesApi for Api {
 		}
 	}
 
-	fn get_meetup_location(
+	async fn get_meetup_location(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
 	) -> Result<Option<Location>> {
-		let locations = self.get_locations(community_ceremony.0)?;
-		let location_assignment_params = self.get_assignments(community_ceremony)?.locations;
+		let locations = self.get_locations(community_ceremony.0).await?;
+		let location_assignment_params = self.get_assignments(community_ceremony).await?.locations;
 
 		Ok(meetup_location(meetup_index, locations, location_assignment_params))
 	}
 
-	fn get_meetup_participants(
+	async fn get_meetup_participants(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
 	) -> Result<Vec<AccountId>> {
 		let meetup_index_zero_based = meetup_index - 1;
-		let meetup_count = self.get_meetup_count(community_ceremony)?;
+		let meetup_count = self.get_meetup_count(community_ceremony).await?;
 
 		if meetup_index_zero_based > meetup_count {
 			return Err(ApiClientError::Other(
@@ -277,8 +293,8 @@ impl CeremoniesApi for Api {
 			));
 		}
 
-		let params = self.get_assignments(community_ceremony)?;
-		let assigned = self.get_assignment_counts(community_ceremony)?;
+		let params = self.get_assignments(community_ceremony).await?;
+		let assigned = self.get_assignment_counts(community_ceremony).await?;
 
 		let bootstrappers_reputables = assignment_fn_inverse(
 			meetup_index_zero_based,
@@ -319,37 +335,37 @@ impl CeremoniesApi for Api {
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect())
 	}
 
-	fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
+	async fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
 		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None)
 	}
 
-	fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {
-		let attesting_start = self.get_start_of_attesting_phase()?;
-		let offset = self.get_meetup_time_offset()?.unwrap_or(0);
+	async fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {
+		let attesting_start = self.get_start_of_attesting_phase().await?;
+		let offset = self.get_meetup_time_offset().await?.unwrap_or(0);
 
 		Ok(meetup_time(location, attesting_start, one_day, offset))
 	}
 
-	fn get_community_ceremony_stats(
+	async fn get_community_ceremony_stats(
 		&self,
 		community_ceremony: CommunityCeremony,
 	) -> Result<CommunityCeremonyStats> {
-		let assignment = self.get_assignments(&community_ceremony)?;
-		let assignment_count = self.get_assignment_counts(&community_ceremony)?;
-		let mcount = self.get_meetup_count(&community_ceremony)?;
+		let assignment = self.get_assignments(&community_ceremony).await?;
+		let assignment_count = self.get_assignment_counts(&community_ceremony).await?;
+		let mcount = self.get_meetup_count(&community_ceremony).await?;
 
 		let mut meetups = vec![];
 
 		// get stats of every meetup
 		for m in 1..=mcount {
-			let m_location = self.get_meetup_location(&community_ceremony, m)?.unwrap();
+			let m_location = self.get_meetup_location(&community_ceremony, m).await?.unwrap();
 			let time = self.get_meetup_time(m_location, ONE_DAY).unwrap_or(0);
-			let participants = self.get_meetup_participants(&community_ceremony, m)?;
+			let participants = self.get_meetup_participants(&community_ceremony, m).await?;
 
 			let mut registrations = vec![];
 
 			for p in participants.into_iter() {
-				let r = self.get_registration(&community_ceremony, &p)?;
+				let r = self.get_registration(&community_ceremony, &p).await?;
 				registrations.push((p, r))
 			}
 
@@ -365,7 +381,7 @@ impl CeremoniesApi for Api {
 		))
 	}
 
-	fn get_attestees(
+	async fn get_attestees(
 		&self,
 		community_ceremony: CommunityCeremony,
 		p_index: ParticipantIndexType,
@@ -376,11 +392,12 @@ impl CeremoniesApi for Api {
 			community_ceremony,
 			p_index,
 			None,
-		)?
+		)
+		.await?
 		.ok_or_else(|| ApiClientError::Other("Attestees don't exist".into()))
 	}
 
-	fn get_meetup_participant_count_vote(
+	async fn get_meetup_participant_count_vote(
 		&self,
 		community_ceremony: CommunityCeremony,
 		account_id: AccountId,
@@ -391,21 +408,24 @@ impl CeremoniesApi for Api {
 			community_ceremony,
 			account_id,
 			None,
-		)?
+		)
+		.await?
 		.ok_or_else(|| ApiClientError::Other("MeetupParticipantCountVote don't exist".into()))
 	}
 }
 
-fn get_bootstrapper_or_reputable(
+async fn get_bootstrapper_or_reputable(
 	api: &Api,
 	community_ceremony: &CommunityCeremony,
 	p_index: ParticipantIndexType,
 	assigned: &AssignmentCount,
 ) -> Result<Option<AccountId>> {
 	if p_index < assigned.bootstrappers {
-		return api.get_bootstrapper(community_ceremony, &(p_index + 1));
+		return api.get_bootstrapper(community_ceremony, &(p_index + 1)).await;
 	} else if p_index < assigned.bootstrappers + assigned.reputables {
-		return api.get_reputable(community_ceremony, &(p_index - assigned.bootstrappers + 1));
+		return api
+			.get_reputable(community_ceremony, &(p_index - assigned.bootstrappers + 1))
+			.await;
 	}
 
 	Ok(None)
