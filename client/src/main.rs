@@ -347,7 +347,7 @@ async fn main() {
                                 to.clone(),
                                 cid,
                                 amount
-                            );
+                            ).unwrap();
                             if matches.dryrun_flag() {
                                 println!("0x{}", hex::encode(xt.function.encode()));
                                 None
@@ -423,7 +423,7 @@ async fn main() {
                                 "transfer_all",
                                 to.clone(),
                                 cid
-                            );
+                            ).unwrap();
                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                             api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
                         },
@@ -1030,7 +1030,7 @@ async fn main() {
                         "register_participant",
                         cid,
                         proof
-                    );
+                    ).unwrap();
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     // send and watch extrinsic until ready
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
@@ -1095,7 +1095,7 @@ async fn main() {
                         "upgrade_registration",
                         cid,
                         proof
-                    );
+                    ).unwrap();
                     ensure_payment(&api,  &xt.encode().into(), tx_payment_cid_arg);
                     // send and watch extrinsic until ready
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
@@ -1156,7 +1156,7 @@ async fn main() {
                         "unregister_participant",
                         cid,
                         cc
-                    );
+                    ).unwrap();
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     // Send and watch extrinsic until ready
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
@@ -1280,7 +1280,7 @@ async fn main() {
                         cid,
                         vote,
                         attestees
-                    );
+                    ).unwrap();
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
 
@@ -1382,7 +1382,7 @@ async fn main() {
                                     "claim_rewards",
                                     cid,
                                     meetup_index
-                                );
+                                ).unwrap();
                                 ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                                 let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
                                 match meetup_index_arg {
@@ -1562,7 +1562,7 @@ async fn main() {
                         "Sudo",
                         "sudo",
                         batch_call
-                    );
+                    ).unwrap();
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
                     info!("[+] Transaction got included. Block Hash: {:?}\n", tx_report.block_hash.unwrap());
@@ -1657,7 +1657,7 @@ async fn main() {
                         faucet_balance,
                         whitelist,
                         drip_amount
-                    );
+                    ).unwrap();
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
 
@@ -1712,7 +1712,7 @@ async fn main() {
                         faucet_account,
                         cid,
                         cindex
-                    );
+                    ).unwrap();
 
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
@@ -1813,7 +1813,7 @@ async fn main() {
                         "EncointerFaucet",
                         "close_faucet",
                         faucet_account.clone()
-                    );
+                    ).unwrap();
 
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
@@ -1954,7 +1954,7 @@ async fn main() {
                                 "EncointerDemocracy",
                                 "submit_proposal",
                                 ProposalAction::SetInactivityTimeout(inactivity_timeout)
-                            );
+                            ).unwrap();
                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                             let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
                             println!("Proposal Submitted: Set inactivity timeout to {inactivity_timeout:?}");
@@ -1979,7 +1979,7 @@ async fn main() {
                                     .unwrap();
                                 let max_keys = 1000;
                                 let storage_keys =
-                                    api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
+                                    api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).await.unwrap();
                                 if storage_keys.len() == max_keys as usize {
                                     error!("results can be wrong because max keys reached for query")
                                 }
@@ -2038,7 +2038,7 @@ async fn main() {
                                         proposal_id,
                                         vote,
                                         reputation_vec
-                                    );
+                                    ).unwrap();
                                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                                                     let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
                                         println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
@@ -2053,28 +2053,7 @@ async fn main() {
                                         .account_arg()
                                         .proposal_id_arg()
                                 })
-                                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                                    async move {
-                                        let who = matches.account_arg().map(get_pair_from_str).unwrap();
-                                        let mut api = get_chain_api(matches).await;
-                                        api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-                                            who.clone(),
-                                        )));
-                                        let proposal_id = matches.proposal_id_arg().unwrap();
-                                        let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                                        set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-                                        let xt: EncointerXt<_> = compose_extrinsic!(
-                                        api,
-                                        "EncointerDemocracy",
-                                        "update_proposal_state",
-                                        proposal_id
-                                    );
-                                        ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                                        let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
-                                        println!("Proposal state updated for proposal {proposal_id:?}");
-                                        Ok(())
-                                    }
-                                }),
+                                .runner(move |_args: &str, matches: &ArgMatches<'_>| update_proposal_state(_args, matches).await),
                         )
         // To handle when no subcommands match
         .no_cmd(|_args, _matches| {
@@ -2084,6 +2063,21 @@ async fn main() {
         .run();
 }
 
+async fn update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> ApiResult<()> {
+	let who = matches.account_arg().map(get_pair_from_str).unwrap();
+	let mut api = get_chain_api(matches).await;
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+	let proposal_id = matches.proposal_id_arg().unwrap();
+	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+	let xt: EncointerXt<_> =
+		compose_extrinsic!(api, "EncointerDemocracy", "update_proposal_state", proposal_id)
+			.unwrap();
+	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
+	let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
+	println!("Proposal state updated for proposal {proposal_id:?}");
+	Ok(())
+}
 async fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 	let url = format!(
 		"{}:{}",
@@ -2566,7 +2560,8 @@ async fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 	let xt: EncointerXt<_> =
-		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid);
+		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid)
+			.unwrap();
 	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
 	// send and watch extrinsic until ready
 	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
