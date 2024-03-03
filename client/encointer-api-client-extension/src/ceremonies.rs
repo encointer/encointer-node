@@ -21,6 +21,7 @@ pub const ENCOINTER_CEREMONIES: &str = "EncointerCeremonies";
 // same as in runtime, but we did not want to import the runtime here.
 pub const ONE_DAY: Moment = 86_400_000;
 
+#[maybe_async::maybe_async(?Send)]
 pub trait CeremoniesApi {
 	async fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
 	async fn get_assignment_counts(
@@ -103,6 +104,7 @@ pub trait CeremoniesApi {
 	) -> Result<u32>;
 }
 
+#[maybe_async::maybe_async(?Send)]
 impl CeremoniesApi for Api {
 	async fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
 		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)

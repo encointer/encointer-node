@@ -2,6 +2,7 @@ use crate::{Api, Moment, Result};
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
 
+#[maybe_async::maybe_async(?Send)]
 pub trait SchedulerApi {
 	async fn get_current_phase(&self) -> Result<CeremonyPhaseType>;
 	async fn get_next_phase_timestamp(&self) -> Result<Moment>;
@@ -9,6 +10,7 @@ pub trait SchedulerApi {
 	async fn get_start_of_attesting_phase(&self) -> Result<Moment>;
 }
 
+#[maybe_async::maybe_async(?Send)]
 impl SchedulerApi for Api {
 	async fn get_current_phase(&self) -> Result<CeremonyPhaseType> {
 		self.get_storage("EncointerScheduler", "CurrentPhase", None)

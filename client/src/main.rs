@@ -78,7 +78,7 @@ use substrate_api_client::{
 	extrinsic::BalancesExtrinsics,
 	rpc::{JsonrpseeClient, Request},
 	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
-	Result as ApiResult, SubmitAndWatch, SubmitAndWatchUntilSuccess, SubscribeEvents, XtStatus,
+	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -182,8 +182,8 @@ async fn main() {
         .add_cmd(
             Command::new("print-metadata")
                 .description("query node metadata and print it as json to stdout")
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches).await;
                     println!("Metadata:\n {}", api.metadata().pretty_format().unwrap());
                     Ok(())
                 }),
@@ -195,8 +195,8 @@ async fn main() {
                     app.setting(AppSettings::ColoredHelp)
                     .fundees_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let mut api = get_chain_api(matches);
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                    let mut api = get_chain_api(matches).await;
                     api
                     .set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
                     let accounts = matches.fundees_arg().unwrap();
@@ -229,7 +229,7 @@ async fn main() {
                         // send and watch extrinsic until ready
                         println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
                         let _blockh = api
-                            .submit_and_watch_extrinsic_until(xt, XtStatus::Ready)
+                            .submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await
                             .unwrap();
                         nonce += 1;
                     }
@@ -246,7 +246,7 @@ async fn main() {
                     .at_block_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
                     let account = matches.account_arg().unwrap();
                     let maybe_at = matches.at_block_arg();
                     let accountid = get_accountid_from_str(account);
@@ -283,7 +283,7 @@ async fn main() {
                     .at_block_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
                     let maybe_at = matches.at_block_arg();
                     let cid_str = matches.cid_arg().expect("please supply argument --cid");
                     let issuance = get_community_issuance(&api, cid_str, maybe_at);
@@ -320,7 +320,7 @@ async fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     let arg_from = matches.value_of("from").unwrap();
                     let arg_to = matches.value_of("to").unwrap();
                     if !matches.dryrun_flag() {
@@ -334,7 +334,7 @@ async fn main() {
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&api, cid_str, None);
+                            let cid = verify_cid(&api, cid_str, None).await;
                             let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
                                 .expect("amount can be converted to fixpoint");
 
@@ -353,7 +353,7 @@ async fn main() {
                                 None
                             } else {
                                 ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                                Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap())
+                                Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
                             }
                         },
                         None => {
@@ -368,7 +368,7 @@ async fn main() {
                                 None
                             } else {
                                 ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                                Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap())
+                                Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
                             }
                         }
                     };
@@ -401,7 +401,7 @@ async fn main() {
                     )
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     let arg_from = matches.value_of("from").unwrap();
                     let arg_to = matches.value_of("to").unwrap();
                     let from = get_pair_from_str(arg_from);
@@ -414,7 +414,7 @@ async fn main() {
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
                     let tx_hash = match matches.cid_arg() {
                         Some(cid_str) => {
-                            let cid = verify_cid(&api, cid_str, None);
+                            let cid = verify_cid(&api, cid_str, None).await;
                             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 
                             let xt: EncointerXt<_> = compose_extrinsic!(
@@ -425,7 +425,7 @@ async fn main() {
                                 cid
                             );
                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                            api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap()
+                            api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
                         },
                         None => {
                             error!("No cid specified");
@@ -488,7 +488,7 @@ async fn main() {
                         .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
                     let signer = ParentchainExtrinsicSigner::new(signer);
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(signer);
 
 
@@ -557,7 +557,7 @@ async fn main() {
                     let spec_file = matches.value_of("specfile").unwrap();
                     let spec = read_community_spec_from_file(spec_file);
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     if !matches.dryrun_flag() {
                         let signer = matches.signer_arg()
                             .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
@@ -568,7 +568,7 @@ async fn main() {
 
                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 
-                    let cid = verify_cid(&api, matches.cid_arg().unwrap(), None);
+                    let cid = verify_cid(&api, matches.cid_arg().unwrap(), None).await;
 
                     let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
                                                                                   {
@@ -616,7 +616,7 @@ async fn main() {
             Command::new("list-communities")
                 .description("list all registered communities")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
                     let names = get_cid_names(&api).unwrap();
                     println!("number of communities:  {}", names.len());
                     for n in names.iter() {
@@ -634,14 +634,14 @@ async fn main() {
                         .at_block_arg()
                 })
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
                     let maybe_at = matches.at_block_arg();
                     let cid = verify_cid(&api,
                         matches
                              .cid_arg()
                              .expect("please supply argument --cid"),
                         maybe_at
-                    );
+                    ).await;
                     println!("listing locations for cid {cid}");
                     let loc = api.get_locations(cid).unwrap();
                     for l in loc.iter() {
@@ -657,7 +657,7 @@ async fn main() {
             Command::new("get-phase")
                 .description("read current ceremony phase from chain")
                 .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
 
                     // >>>> add some debug info as well
                     let bn = get_block_number(&api, None);
@@ -680,11 +680,11 @@ async fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .signer_arg("account with necessary privileges (sudo or councillor)")
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+               .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let signer = matches.signer_arg()
                         .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     let signer = ParentchainExtrinsicSigner::new(signer);
                     api.set_signer(signer);
                     let next_phase_call = compose_call!(
@@ -727,7 +727,7 @@ async fn main() {
                 app.setting(AppSettings::ColoredHelp)
                     .ceremony_index_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
@@ -775,7 +775,7 @@ async fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .ceremony_index_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
@@ -823,7 +823,7 @@ async fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .ceremony_index_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
@@ -852,27 +852,29 @@ async fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .ceremony_index_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
 
-                            let current_ceremony_index = get_ceremony_index(&api, None);
+                            let current_ceremony_index = get_ceremony_index(&api, None).await;
 
                             let cindex = matches.ceremony_index_arg()
                                 .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
 
                             println!("listing attestees for cid {cid} and ceremony nr {cindex}");
 
-                            let wcount = get_attestee_count(&api, (cid, cindex));
+                            let wcount = get_attestee_count(&api, (cid, cindex)).await;
                             println!("number of attestees:  {wcount}");
 
                             println!("listing participants for cid {cid} and ceremony nr {cindex}");
 
                             let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
-                            let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None);
+                            let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None).await;
 
                             let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
-                            let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None);
+                            let account_query = |registry_index, p_index| async move {
+                                api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None).await
+                            };
 
                             let mut participants_windex = HashMap::new();
 
@@ -885,7 +887,7 @@ async fn main() {
                                 for p_index in 1..count +1 {
                                     let accountid: AccountId = account_query(i, p_index)?.unwrap();
 
-                                    match get_participant_attestation_index(&api, (cid, cindex), &accountid) {
+                                    match get_participant_attestation_index(&api, (cid, cindex), &accountid).await {
                                         Some(windex) => {
                                             participants_windex.insert(windex as AttestationIndexType, accountid)
                                         }
@@ -898,9 +900,9 @@ async fn main() {
 
                             for w in 1..wcount + 1 {
                                 let attestor = participants_windex[&w].clone();
-                                let meetup_index = api.get_meetup_index(&(cid, cindex), &attestor).unwrap().unwrap();
-                                let attestees = api.get_attestees((cid, cindex), w).unwrap();
-                                let vote = api.get_meetup_participant_count_vote((cid, cindex), attestor.clone()).unwrap();
+                                let meetup_index = api.get_meetup_index(&(cid, cindex), &attestor).await.unwrap().unwrap();
+                                let attestees = api.get_attestees((cid, cindex), w).await.unwrap();
+                                let vote = api.get_meetup_participant_count_vote((cid, cindex), attestor.clone()).await.unwrap();
                                 let attestation_state = AttestationState::new(
                                     (cid, cindex),
                                     meetup_index,
@@ -935,8 +937,8 @@ async fn main() {
                         .at_block_arg()
                         .verbose_flag()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                            let api = get_chain_api(matches);
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                            let api = get_chain_api(matches).await;
 
                             let is_verbose = matches.verbose_flag();
                             let at_block = matches.at_block_arg();
@@ -982,7 +984,7 @@ async fn main() {
                     .account_arg()
                     .signer_arg("Account which signs the tx.")
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let signer = match matches.signer_arg() {
@@ -990,14 +992,14 @@ async fn main() {
                         None => get_pair_from_str(arg_who)
                     };
 
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
                     let cindex = get_ceremony_index(&api, None);
                     let cid = verify_cid(&api,
                         matches
                             .cid_arg()
                             .expect("please supply argument --cid"),
                         None
-                    );
+                    ).await;
                     let rep = get_reputation(&api, &accountid, cid, cindex -1);
                     info!("{} has reputation {:?}", accountid, rep);
                     let proof = match rep {
@@ -1031,7 +1033,7 @@ async fn main() {
                     );
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     // send and watch extrinsic until ready
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
                     info!("Registration sent for {}. status: '{:?}'", arg_who, report.status);
                     Ok(())
                 }),
@@ -1044,7 +1046,7 @@ async fn main() {
                     .account_arg()
                     .signer_arg("Account which signs the tx.")
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
                     let signer = match matches.signer_arg() {
@@ -1052,14 +1054,14 @@ async fn main() {
                         None => get_pair_from_str(arg_who)
                     };
 
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
                     let cindex = get_ceremony_index(&api, None);
                     let cid = verify_cid(&api,
                         matches
                             .cid_arg()
                             .expect("please supply argument --cid"),
                         None
-                    );
+                    ).await;
 
                     let current_phase = api.get_current_phase().unwrap();
                     if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
@@ -1096,7 +1098,7 @@ async fn main() {
                     );
                     ensure_payment(&api,  &xt.encode().into(), tx_payment_cid_arg);
                     // send and watch extrinsic until ready
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
                     info!("Upgrade registration sent for {}. status: '{:?}'", arg_who, report.status);
                     Ok(())
                 }),
@@ -1110,21 +1112,21 @@ async fn main() {
                     .signer_arg("Account which signs the tx.")
                     .ceremony_index_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let signer = match matches.signer_arg() {
                         Some(sig) => get_pair_from_str(sig),
                         None => get_pair_from_str(arg_who)
                     };
 
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
 
                     let cid = verify_cid(&api,
                         matches
                             .cid_arg()
                             .expect("please supply argument --cid"),
                         None
-                    );
+                    ).await;
 
 
                     let cc = match matches.ceremony_index_arg() {
@@ -1157,7 +1159,7 @@ async fn main() {
                     );
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
                     // Send and watch extrinsic until ready
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
                     info!("Unregister Participant sent for {}. status: '{:?}'", arg_who, report.status);
                     Ok(())
                 }),
@@ -1170,7 +1172,7 @@ async fn main() {
                         .bootstrapper_arg()
                         .endorsees_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
 
                     extract_and_execute(
                         matches, |mut api, cid| endorse_newcomers(&mut api, cid, matches)
@@ -1185,7 +1187,7 @@ async fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+               .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let bs_with_tickets : Vec<BootstrapperWithTickets> = extract_and_execute(
                         matches, |api, cid| get_bootstrappers_with_remaining_newbie_tickets(&api, cid)
                     ).unwrap();
@@ -1209,10 +1211,10 @@ async fn main() {
                         .account_arg()
                         .ceremony_index_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let arg_who = matches.account_arg().unwrap();
                     let accountid = get_accountid_from_str(arg_who);
-                    let api = get_chain_api(matches);
+                    let api = get_chain_api(matches).await;
 
                     let current_ceremony_index = get_ceremony_index(&api, None);
 
@@ -1223,7 +1225,7 @@ async fn main() {
                         &api,
                      matches.cid_arg().expect("please supply argument --cid"),
                         None
-                    );
+                    ).await;
 
                     debug!("Getting proof for ceremony index: {:?}", cindex);
                     let proof = prove_attendance(accountid, cid, cindex, arg_who);
@@ -1242,7 +1244,7 @@ async fn main() {
                         .optional_cid_arg()
                         .attestees_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
 
                     let attestees: Vec<_> = matches.attestees_arg().unwrap()
@@ -1257,7 +1259,7 @@ async fn main() {
                     info!("send attest_attendees by {}", who.public());
 
                     let mut api =
-                     get_chain_api(matches);
+                     get_chain_api(matches).await;
                      let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone()));
                      api.set_signer(signer);
 
@@ -1269,7 +1271,7 @@ async fn main() {
                                              .cid_arg()
                                              .expect("please supply argument --cid"),
                                          None
-                    );
+                    ).await;
 
                     let xt: EncointerXt<_> = compose_extrinsic!(
                         api,
@@ -1280,7 +1282,7 @@ async fn main() {
                         attestees
                     );
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
 
                     println!("Claims sent by {}. status: '{:?}'", who.public(), report.status);
                     Ok(())
@@ -1300,7 +1302,7 @@ async fn main() {
                             .help("participant's vote on the number of people present at meetup time"),
                     )
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     extract_and_execute(
                         matches, |api, cid| -> ApiResult<()>{
                             let arg_who = matches.account_arg().unwrap();
@@ -1331,10 +1333,10 @@ async fn main() {
                         .meetup_index_arg()
                         .all_flag()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
 
                     extract_and_execute(
-                        matches, |api, cid| {
+                        matches, |api, cid| async move {
                             let signer = match matches.signer_arg() {
                                 Some(sig) => get_pair_from_str(sig),
                                 None => panic!("please specify --signer.")
@@ -1382,7 +1384,7 @@ async fn main() {
                                     meetup_index
                                 );
                                 ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                                let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+                                let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
                                 match meetup_index_arg {
                                     Some(idx)=>{println!("Claiming reward for meetup_index {idx}. xt-status: '{:?}'", report.status);}
                                     None=>{println!("Claiming reward for {}. xt-status: 'ready'", signer.public_account_id());}
@@ -1400,8 +1402,8 @@ async fn main() {
                 .options(|app| {
                     app.setting(AppSettings::ColoredHelp)
                         .account_arg()})
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                    let api = get_chain_api(matches);
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                    let api = get_chain_api(matches).await;
                     let account = matches.account_arg().unwrap();
                     let account_id = get_accountid_from_str(account);
                     if let Some(reputation) = get_reputation_history(&api, &account_id) {
@@ -1423,7 +1425,7 @@ async fn main() {
                         .account_arg()
                         .ipfs_cid_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     send_bazaar_xt(matches, &BazaarCalls::CreateBusiness).unwrap();
                     Ok(())
                 }),
@@ -1436,7 +1438,7 @@ async fn main() {
                         .account_arg()
                         .ipfs_cid_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     send_bazaar_xt(matches, &BazaarCalls::UpdateBusiness).unwrap();
                     Ok(())
                 }),
@@ -1449,7 +1451,7 @@ async fn main() {
                         .account_arg()
                         .ipfs_cid_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     send_bazaar_xt(matches, &BazaarCalls::CreateOffering).unwrap();
                     Ok(())
                 }),
@@ -1457,7 +1459,7 @@ async fn main() {
         .add_cmd(
             Command::new("list-businesses")
                 .description("List businesses for a community")
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
 
                     let businesses = extract_and_execute(
                         matches, |api, cid| get_businesses(&api, cid).unwrap()
@@ -1470,7 +1472,7 @@ async fn main() {
         .add_cmd(
             Command::new("list-offerings")
                 .description("List offerings for a community")
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let offerings = extract_and_execute(
                         matches, |api, cid| get_offerings(&api, cid).unwrap()
                     );
@@ -1486,7 +1488,7 @@ async fn main() {
                     app.setting(AppSettings::ColoredHelp)
                         .account_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let account = matches.account_arg().map(get_accountid_from_str).unwrap();
 
                     let offerings = extract_and_execute(
@@ -1506,10 +1508,10 @@ async fn main() {
                             .to_cindex_arg()
 
                     })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let sudoer = AccountKeyring::Alice.pair();
                     let signer = ParentchainExtrinsicSigner::new(sudoer);
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(signer);
 
                     let current_ceremony_index = get_ceremony_index(&api, None);
@@ -1528,7 +1530,7 @@ async fn main() {
                                              .cid_arg()
                                              .expect("please supply argument --cid"),
                         None
-                    );
+                    ).await;
                     println!("purging ceremony index range [{from_cindex}  {to_cindex}] for community {cid}");
 
                     let calls: Vec<_> = (from_cindex..=to_cindex)
@@ -1562,7 +1564,7 @@ async fn main() {
                         batch_call
                     );
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                    let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
+                    let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
                     info!("[+] Transaction got included. Block Hash: {:?}\n", tx_report.block_hash.unwrap());
                     Ok(())
                 }),
@@ -1575,8 +1577,8 @@ async fn main() {
                         .setting(AppSettings::AllowLeadingHyphen)
                         .time_offset_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                    let mut api = get_chain_api(matches);
+               .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                    let mut api = get_chain_api(matches).await;
                     let signer = ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair());
                     api
                         .set_signer(signer);
@@ -1620,10 +1622,10 @@ async fn main() {
                         .faucet_drip_amount_arg()
                         .whitelist_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                         who.clone(),
                     )));
@@ -1635,9 +1637,9 @@ async fn main() {
                     let whitelist = matches.whitelist_arg().map(|wl| {
                         let whitelist_vec: Vec<_> = wl
                         .into_iter()
-                        .map(|c| verify_cid(&api,
+                        .map(|c| async move { verify_cid(&api,
                             c,
-                            None))
+                            None).await})
                         .collect();
                         WhiteListType::try_from(whitelist_vec).unwrap()
                     });
@@ -1660,7 +1662,7 @@ async fn main() {
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
 
 
-                    let result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                    let result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
 
                     match result {
                         Ok(report) => {
@@ -1687,15 +1689,15 @@ async fn main() {
                         .faucet_account_arg()
                         .cindex_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                         who.clone(),
                     )));
 
-                    let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
+                    let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
 
                     let cindex = matches.cindex_arg().unwrap();
                     let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
@@ -1715,7 +1717,7 @@ async fn main() {
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
 
-                    let result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                    let result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
 
                     match result {
                         Ok(_report) => {
@@ -1739,7 +1741,7 @@ async fn main() {
                         .faucet_account_arg()
                         .faucet_beneficiary_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+               .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let signer = matches.signer_arg()
                         .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
                     let signer = ParentchainExtrinsicSigner::new(signer);
@@ -1747,7 +1749,7 @@ async fn main() {
                     let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
                     let beneficiary = get_accountid_from_str(matches.faucet_beneficiary_arg().unwrap());
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(signer);
 
 
@@ -1793,10 +1795,10 @@ async fn main() {
                         .account_arg()
                         .faucet_account_arg()
                 })
-                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                         who,
                     )));
@@ -1815,7 +1817,7 @@ async fn main() {
 
 
                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+                    let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
 
                     println!("Faucet closed: {faucet_account}. status: '{:?}'", report.status);
                     Ok(())
@@ -1829,14 +1831,14 @@ async fn main() {
                         .signer_arg("account with necessary privileges (sudo or councillor)")
                         .faucet_reserve_amount_arg()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
+               .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                     let signer = matches.signer_arg()
                         .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
                     let signer = ParentchainExtrinsicSigner::new(signer);
 
                     let reserve_amount = matches.faucet_reserve_amount_arg().unwrap();
 
-                    let mut api = get_chain_api(matches);
+                    let mut api = get_chain_api(matches).await;
                     api.set_signer(signer);
 
 
@@ -1880,8 +1882,8 @@ async fn main() {
                         .at_block_arg()
                         .verbose_flag()
                 })
-                .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                            let api = get_chain_api(matches);
+               .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                            let api = get_chain_api(matches).await;
 
                             let is_verbose = matches.verbose_flag();
                             let at_block = matches.at_block_arg();
@@ -1937,9 +1939,9 @@ async fn main() {
                                 .account_arg()
                                 .inactivity_timeout_arg()
                         })
-                        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                        .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                             let who = matches.account_arg().map(get_pair_from_str).unwrap();
-                                                let mut api = get_chain_api(matches);
+                                                let mut api = get_chain_api(matches).await;
                             api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                                 who.clone(),
                             )));
@@ -1954,7 +1956,7 @@ async fn main() {
                                 ProposalAction::SetInactivityTimeout(inactivity_timeout)
                             );
                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                            let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                            let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
                             println!("Proposal Submitted: Set inactivity timeout to {inactivity_timeout:?}");
                             Ok(())
                         }),
@@ -1966,14 +1968,14 @@ async fn main() {
                             app.setting(AppSettings::ColoredHelp)
                                 .at_block_arg()
                         })
-                        .runner(|_args: &str, matches: &ArgMatches<'_>| {
-                                    let api = get_chain_api(matches);
+                       .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
+                                    let api = get_chain_api(matches).await;
                                     let at_block = matches.at_block_arg();
                                     let key_prefix = api
                                     .get_storage_map_key_prefix(
                                         "EncointerDemocracy",
                                         "Proposals",
-                                    )
+                                    ).await
                                     .unwrap();
                                 let max_keys = 1000;
                                 let storage_keys =
@@ -1984,7 +1986,7 @@ async fn main() {
                                 for storage_key in storage_keys.iter() {
                                     let key_postfix = storage_key.as_ref();
                                     let proposal_id = ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref()).unwrap();
-                                    let proposal: Proposal<BlockNumber> = api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap();
+                                    let proposal: Proposal<BlockNumber> = api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
                                     println!("id: {}", proposal_id);
                                     println!("action: {:?}", proposal.action);
                                     println!("start block: {}", proposal.start);
@@ -2005,9 +2007,9 @@ async fn main() {
                                         .vote_arg()
                                         .reputation_vec_arg()
                                 })
-                                .runner(move |_args: &str, matches: &ArgMatches<'_>| {
+                                .runner(async move |_args: &str, matches: &ArgMatches<'_>| {
                                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
-                                    let mut api = get_chain_api(matches);
+                                    let mut api = get_chain_api(matches).await;
                                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
                                         who.clone(),
                                     )));
@@ -2021,9 +2023,9 @@ async fn main() {
                                     let reputation_vec: ReputationVec<ConstU32<1024>> = matches.reputation_vec_arg().map(|rv| {
                                         let reputations: Vec<(CommunityIdentifier, CeremonyIndexType)> = rv
                                         .into_iter()
-                                        .map(|rep| {
+                                        .map(|rep| async move {
                                             let cc: Vec<_> = rep.split("_").collect();
-                                            (verify_cid(&api,cc[0],None), cc[1].parse().unwrap())
+                                            (verify_cid(&api,cc[0],None), cc[1].parse().unwrap()).await
                                         }).collect();
                                         ReputationVec::try_from(reputations).unwrap()
                                     }).unwrap();
@@ -2038,7 +2040,7 @@ async fn main() {
                                         reputation_vec
                                     );
                                             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
                                         println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
                                             Ok(())
                                 }),
@@ -2052,24 +2054,26 @@ async fn main() {
                                         .proposal_id_arg()
                                 })
                                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-                                    let who = matches.account_arg().map(get_pair_from_str).unwrap();
-                                            let mut api = get_chain_api(matches);
-                                    api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-                                        who.clone(),
-                                    )));
-                                            let proposal_id = matches.proposal_id_arg().unwrap();
-                                            let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-                                    set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-                                                    let xt: EncointerXt<_> = compose_extrinsic!(
+                                    async move {
+                                        let who = matches.account_arg().map(get_pair_from_str).unwrap();
+                                        let mut api = get_chain_api(matches).await;
+                                        api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
+                                            who.clone(),
+                                        )));
+                                        let proposal_id = matches.proposal_id_arg().unwrap();
+                                        let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+                                        set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+                                        let xt: EncointerXt<_> = compose_extrinsic!(
                                         api,
                                         "EncointerDemocracy",
                                         "update_proposal_state",
                                         proposal_id
                                     );
-                                            ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
-                                                    let _result = api.submit_and_watch_extrinsic_until_success(xt, false);
+                                        ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
+                                        let _result = api.submit_and_watch_extrinsic_until_success(xt, false).await;
                                         println!("Proposal state updated for proposal {proposal_id:?}");
-                                    Ok(())
+                                        Ok(())
+                                    }
                                 }),
                         )
         // To handle when no subcommands match
@@ -2080,52 +2084,53 @@ async fn main() {
         .run();
 }
 
-fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
+async fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 	let url = format!(
 		"{}:{}",
 		matches.value_of("node-url").unwrap(),
 		matches.value_of("node-port").unwrap()
 	);
 	debug!("connecting to {}", url);
-	let client = JsonrpseeClient::new(&url).expect("node URL is incorrect");
-	Api::new(client).unwrap()
+	let client = JsonrpseeClient::new(&url).await.expect("node URL is incorrect");
+	Api::new(client).await.unwrap()
 }
 
-fn reasonable_native_balance(api: &Api) -> u128 {
+async fn reasonable_native_balance(api: &Api) -> u128 {
 	let alice: AccountId = AccountKeyring::Alice.into();
 	let xt = api.balance_transfer_allow_death(alice.into(), 9999);
 	let fee = api
 		.get_fee_details(xt.encode().into(), None)
+		.await
 		.unwrap()
 		.unwrap()
 		.inclusion_fee
 		.unwrap()
 		.base_fee;
-	let ed = api.get_existential_deposit().unwrap();
+	let ed = api.get_existential_deposit().await.unwrap();
 	ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
 }
 
-fn listen(matches: &ArgMatches<'_>) {
-	let api = get_chain_api(matches);
+async fn listen(matches: &ArgMatches<'_>) {
+	let api = get_chain_api(matches).await;
 	debug!("Subscribing to events");
-	let mut subscription = api.subscribe_events().unwrap();
+	let mut subscription = api.subscribe_events().await.unwrap();
 	let mut count = 0u32;
 	let mut blocks = 0u32;
 	loop {
-		if matches.is_present("events") &&
-			count >= value_t!(matches.value_of("events"), u32).unwrap()
+		if matches.is_present("events")
+			&& count >= value_t!(matches.value_of("events"), u32).unwrap()
 		{
-			return
+			return;
 		};
-		if matches.is_present("blocks") &&
-			blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
+		if matches.is_present("blocks")
+			&& blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
 		{
-			return
+			return;
 		};
-		let event_results = subscription.next_events::<RuntimeEvent, Hash>().unwrap();
+		let event_results = subscription.next_events::<RuntimeEvent, Hash>().await.unwrap();
 		blocks += 1;
 		match event_results {
-			Ok(evts) =>
+			Ok(evts) => {
 				for evr in evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
@@ -2208,24 +2213,26 @@ fn listen(matches: &ArgMatches<'_>) {
 						},
 						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
 					}
-				},
+				}
+			},
 			Err(_) => error!("couldn't decode event record list"),
 		}
 	}
 }
 
 /// Extracts api and cid from `matches` and execute the given `closure` with them.
-fn extract_and_execute<T>(
+async fn extract_and_execute<T>(
 	matches: &ArgMatches<'_>,
 	closure: impl FnOnce(Api, CommunityIdentifier) -> T,
 ) -> T {
-	let api = get_chain_api(matches);
-	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
+	let api = get_chain_api(matches).await;
+	let cid =
+		verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
 	closure(api, cid)
 }
 
-fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifier {
-	let cids = get_community_identifiers(api, maybe_at).expect("no community registered");
+async fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifier {
+	let cids = get_community_identifiers(api, maybe_at).expect("no community registered").await;
 	let cid = CommunityIdentifier::from_str(cid).unwrap();
 	if !cids.contains(&cid) {
 		panic!("cid {cid} does not exist on chain");
@@ -2233,25 +2240,26 @@ fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifi
 	cid
 }
 
-fn get_block_number(api: &Api, maybe_at: Option<Hash>) -> BlockNumber {
-	let hdr = api.get_header(maybe_at).unwrap().unwrap();
+async fn get_block_number(api: &Api, maybe_at: Option<Hash>) -> BlockNumber {
+	let hdr = api.get_header(maybe_at).await.unwrap().unwrap();
 	debug!("decoded: {:?}", hdr);
 	//let hdr: Header= Decode::decode(&mut .as_bytes()).unwrap();
 	hdr.number
 }
 
-pub fn get_community_balance(
+pub async fn get_community_balance(
 	api: &Api,
 	cid_str: &str,
 	account_id: &AccountId,
 	maybe_at: Option<Hash>,
 ) -> BalanceType {
-	let cid = verify_cid(api, cid_str, maybe_at);
-	let bn = get_block_number(api, maybe_at);
-	let dr = get_demurrage_per_block(api, cid);
+	let cid = verify_cid(api, cid_str, maybe_at).await;
+	let bn = get_block_number(api, maybe_at).await;
+	let dr = get_demurrage_per_block(api, cid).await;
 
 	if let Some(entry) = api
 		.get_storage_double_map("EncointerBalances", "Balance", cid, account_id, maybe_at)
+		.await
 		.unwrap()
 	{
 		apply_demurrage(entry, bn, dr)
@@ -2260,13 +2268,18 @@ pub fn get_community_balance(
 	}
 }
 
-pub fn get_community_issuance(api: &Api, cid_str: &str, maybe_at: Option<Hash>) -> BalanceType {
-	let cid = verify_cid(api, cid_str, maybe_at);
+pub async fn get_community_issuance(
+	api: &Api,
+	cid_str: &str,
+	maybe_at: Option<Hash>,
+) -> BalanceType {
+	let cid = verify_cid(api, cid_str, maybe_at).await;
 	let bn = get_block_number(api, maybe_at);
 	let dr = get_demurrage_per_block(api, cid);
 
 	if let Some(entry) = api
 		.get_storage_map("EncointerBalances", "TotalIssuance", cid, maybe_at)
+		.await
 		.unwrap()
 	{
 		apply_demurrage(entry, bn, dr)
@@ -2275,9 +2288,10 @@ pub fn get_community_issuance(api: &Api, cid_str: &str, maybe_at: Option<Hash>) 
 	}
 }
 
-fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
+async fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 	let d: Option<Demurrage> = api
 		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
+		.await
 		.unwrap();
 
 	match d {
@@ -2286,26 +2300,28 @@ fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
 			d
 		},
 		None => {
-			let d = api.get_constant("EncointerBalances", "DefaultDemurrage").unwrap();
+			let d = api.get_constant("EncointerBalances", "DefaultDemurrage").await.unwrap();
 			debug!("Fetched default demurrage per block {:?}", d);
 			d
 		},
 	}
 }
 
-fn get_ceremony_index(api: &Api, at_block: Option<Hash>) -> CeremonyIndexType {
+async fn get_ceremony_index(api: &Api, at_block: Option<Hash>) -> CeremonyIndexType {
 	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", at_block)
+		.await
 		.unwrap()
 		.unwrap()
 }
 
-fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
+async fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
 	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
+		.await
 		.unwrap()
 		.unwrap_or(0)
 }
 
-fn get_attendees_for_community_ceremony(
+async fn get_attendees_for_community_ceremony(
 	api: &Api,
 	community_ceremony: CommunityCeremony,
 	at_block: Option<Hash>,
@@ -2316,10 +2332,13 @@ fn get_attendees_for_community_ceremony(
 			"ParticipantReputation",
 			community_ceremony,
 		)
+		.await
 		.unwrap();
 	let max_keys = 1000;
-	let storage_keys =
-		api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).unwrap();
+	let storage_keys = api
+		.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+		.await
+		.unwrap();
 
 	if storage_keys.len() == max_keys as usize {
 		error!("results can be wrong because max keys reached for query")
@@ -2327,7 +2346,7 @@ fn get_attendees_for_community_ceremony(
 	let mut attendees = Vec::new();
 	let mut noshows = Vec::new();
 	for storage_key in storage_keys.iter() {
-		match api.get_storage_by_key(storage_key.clone(), at_block).unwrap().unwrap() {
+		match api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap() {
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked => {
 				let key_postfix = storage_key.as_ref();
 				attendees.push(
@@ -2345,22 +2364,24 @@ fn get_attendees_for_community_ceremony(
 	(attendees, noshows)
 }
 
-fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
+async fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
 	api.get_storage("EncointerCeremonies", "ReputationLifetime", at_block)
+		.await
 		.unwrap()
 		.unwrap_or(5)
 }
 
-fn get_participant_attestation_index(
+async fn get_participant_attestation_index(
 	api: &Api,
 	key: CommunityCeremony,
 	accountid: &AccountId,
 ) -> Option<ParticipantIndexType> {
 	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, None)
+		.await
 		.unwrap()
 }
 
-fn new_claim_for(
+async fn new_claim_for(
 	api: &Api,
 	claimant: &sr25519::Pair,
 	cid: CommunityIdentifier,
@@ -2373,8 +2394,8 @@ fn new_claim_for(
 		.expect("participant must be assigned to meetup to generate a claim");
 
 	// implicitly assume that participant meet at the right place at the right time
-	let mloc = api.get_meetup_location(&(cid, cindex), mindex).unwrap().unwrap();
-	let mtime = api.get_meetup_time(mloc, ONE_DAY).unwrap();
+	let mloc = api.get_meetup_location(&(cid, cindex), mindex).await.unwrap().unwrap();
+	let mtime = api.get_meetup_time(mloc, ONE_DAY).await.unwrap();
 
 	info!(
 		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
@@ -2399,34 +2420,37 @@ fn new_claim_for(
 	claim.encode()
 }
 
-fn get_community_identifiers(
+async fn get_community_identifiers(
 	api: &Api,
 	maybe_at: Option<Hash>,
 ) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage("EncointerCommunities", "CommunityIdentifiers", maybe_at)
+		.await
 		.unwrap()
 }
 
 /// This rpc needs to have offchain indexing enabled in the node.
-fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
-	api.client().request("encointer_getAllCommunities", rpc_params![]).expect(
+async fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
+	api.client().request("encointer_getAllCommunities", rpc_params![]).await.expect(
 		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
 	)
 }
 
-fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
+async fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
 	api.client()
 		.request("encointer_bazaarGetBusinesses", rpc_params![cid])
+		.await
 		.expect("Could not find any businesses...")
 }
 
-fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+async fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
 	api.client()
 		.request("encointer_bazaarGetOfferings", rpc_params![cid])
+		.await
 		.expect("Could not find any business offerings...")
 }
 
-fn get_offerings_for_business(
+async fn get_offerings_for_business(
 	api: &Api,
 	cid: CommunityIdentifier,
 	account_id: AccountId,
@@ -2434,36 +2458,40 @@ fn get_offerings_for_business(
 	let b_id = BusinessIdentifier::new(cid, account_id);
 	api.client()
 		.request("encointer_bazaarGetOfferingsForBusiness", rpc_params![b_id])
+		.await
 		.expect("Could not find any business offerings...")
 }
 
-fn get_reputation_history(
+async fn get_reputation_history(
 	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
 	api.client()
 		.request("encointer_getReputations", rpc_params![account_id])
+		.await
 		.expect("Could not query reputation history...")
 }
 
-fn get_all_balances(
+async fn get_all_balances(
 	api: &Api,
 	account_id: &AccountId,
 ) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
 	api.client()
 		.request("encointer_getAllBalances", rpc_params![account_id])
+		.await
 		.expect("Could not query all balances...")
 }
 
-fn get_asset_fee_details(
+async fn get_asset_fee_details(
 	api: &Api,
 	cid_str: &str,
 	encoded_xt: &Bytes,
 ) -> Option<FeeDetails<NumberOrHex>> {
-	let cid = verify_cid(api, cid_str, None);
+	let cid = verify_cid(api, cid_str, None).await;
 
 	api.client()
 		.request("encointer_queryAssetFeeDetails", rpc_params![cid, encoded_xt])
+		.await
 		.expect("Could not query asset fee details")
 }
 
@@ -2489,7 +2517,7 @@ fn prove_attendance(
 	}
 }
 
-fn get_reputation(
+async fn get_reputation(
 	api: &Api,
 	prover: &AccountId,
 	cid: CommunityIdentifier,
@@ -2502,6 +2530,7 @@ fn get_reputation(
 		prover.clone(),
 		None,
 	)
+	.await
 	.unwrap()
 	.unwrap_or(Reputation::Unverified)
 }
@@ -2523,14 +2552,15 @@ fn apply_demurrage(
 	entry.principal.checked_mul(to_U64F64(exp_result).unwrap()).unwrap()
 }
 
-fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result<(), ()> {
+async fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result<(), ()> {
 	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
 
-	let mut api = get_chain_api(matches);
+	let mut api = get_chain_api(matches).await;
 	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
 		business_owner.clone(),
 	)));
-	let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None);
+	let cid =
+		verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
@@ -2539,7 +2569,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result
 		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid);
 	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg);
 	// send and watch extrinsic until ready
-	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).unwrap();
+	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
 	println!(
 		"{} for {}. xt-status: '{:?}'",
 		bazaar_call.to_string(),
@@ -2549,7 +2579,7 @@ fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result
 	Ok(())
 }
 
-fn endorse_newcomers(
+async fn endorse_newcomers(
 	api: &mut Api,
 	cid: CommunityIdentifier,
 	matches: &ArgMatches<'_>,
@@ -2574,6 +2604,7 @@ fn endorse_newcomers(
 		ensure_payment(api, &encoded_xt, tx_payment_cid_arg);
 		let _tx_report = api
 			.submit_and_watch_opaque_extrinsic_until(encoded_xt, XtStatus::Ready)
+			.await
 			.unwrap();
 
 		nonce += 1;
@@ -2589,32 +2620,36 @@ struct BootstrapperWithTickets {
 	remaining_newbie_tickets: u8,
 }
 
-fn get_bootstrappers_with_remaining_newbie_tickets(
+async fn get_bootstrappers_with_remaining_newbie_tickets(
 	api: &Api,
 	cid: CommunityIdentifier,
 ) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
 	let total_newbie_tickets: u8 = api
 		.get_storage("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
+		.await
 		.unwrap()
 		.unwrap();
 
 	// prepare closure to make below call more readable.
-	let ticket_query = |bs| -> Result<u8, ApiClientError> {
-		let remaining_tickets = total_newbie_tickets -
-			api.get_storage_double_map(
-				"EncointerCeremonies",
-				"BurnedBootstrapperNewbieTickets",
-				cid,
-				bs,
-				None,
-			)?
-			.unwrap_or(0u8);
+	let ticket_query = |bs| async move {
+		let remaining_tickets = total_newbie_tickets
+			- api
+				.get_storage_double_map(
+					"EncointerCeremonies",
+					"BurnedBootstrapperNewbieTickets",
+					cid,
+					bs,
+					None,
+				)
+				.await?
+				.unwrap_or(0u8);
 
 		Ok(remaining_tickets)
 	};
 
 	let bootstrappers: Vec<AccountId> = api
-		.get_storage_map("EncointerCommunities", "Bootstrappers", cid, None)?
+		.get_storage_map("EncointerCommunities", "Bootstrappers", cid, None)
+		.await?
 		.expect("No bootstrappers found, does the community exist?");
 
 	let mut bs_with_tickets: Vec<BootstrapperWithTickets> = Vec::with_capacity(bootstrappers.len());
@@ -2622,7 +2657,7 @@ fn get_bootstrappers_with_remaining_newbie_tickets(
 	for bs in bootstrappers.into_iter() {
 		bs_with_tickets.push(BootstrapperWithTickets {
 			bootstrapper: bs.clone(),
-			remaining_newbie_tickets: ticket_query(bs)?,
+			remaining_newbie_tickets: ticket_query(bs).await?,
 		});
 	}
 
@@ -2646,14 +2681,12 @@ impl ToString for BazaarCalls {
 	}
 }
 
-fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&str>) {
+async fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&str>) {
 	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
 	if let Some(tx_payment_cid) = tx_payment_cid_arg {
-		tx_params = tx_params.tip(CommunityCurrencyTip::new(0).of_community(verify_cid(
-			api,
-			tx_payment_cid,
-			None,
-		)));
+		tx_params = tx_params.tip(
+			CommunityCurrencyTip::new(0).of_community(verify_cid(api, tx_payment_cid, None).await),
+		);
 	}
 	let _ = &api.set_additional_params(tx_params);
 }

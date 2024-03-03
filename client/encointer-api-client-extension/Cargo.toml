@@ -4,6 +4,8 @@ version = "0.8.2"
 edition = "2021"
 
 [dependencies]
+async-trait = { workspace = true }
+maybe-async = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
 serde = { workspace = true, features = ["std"] }
