@@ -16,6 +16,7 @@ log = { workspace = true }
 parity-scale-codec = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
+futures = { workspace = true }
 
 # local deps
 encointer-api-client-extension = { path = "./encointer-api-client-extension" }

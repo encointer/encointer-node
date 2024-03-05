@@ -61,6 +61,7 @@ use encointer_primitives::{
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
+use futures::stream::{self, StreamExt, TryStreamExt};
 use log::*;
 use pallet_transaction_payment::FeeDetails;
 use parity_scale_codec::{Compact, Decode, Encode};
@@ -1994,18 +1995,18 @@ async fn main() {
 		//                             Ok(())
 		//                         }.await),
 		//                 )
-		//                 .add_cmd(
-		//                     Command::new("vote")
-		//                         .description("Submit vote for porposal. Vote is either ay or nay. Reputation vec to be specified as cid1_cindex1,cid2_cindex2,...")
-		//                         .options(|app| {
-		//                             app.setting(AppSettings::ColoredHelp)
-		//                                 .account_arg()
-		//                                 .proposal_id_arg()
-		//                                 .vote_arg()
-		//                                 .reputation_vec_arg()
-		//                         })
-		//                         .runner(move |args: &str, matches: &ArgMatches<'_>| cmd_vote(args, matches).await),
-		//                 )
+		.add_cmd(
+			Command::new("vote")
+				.description("Submit vote for porposal. Vote is either ay or nay. Reputation vec to be specified as cid1_cindex1,cid2_cindex2,...")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.proposal_id_arg()
+						.vote_arg()
+						.reputation_vec_arg()
+				})
+				.runner(cmd_vote),
+		)
 		.add_cmd(
 			Command::new("update-proposal-state")
 				.description("Update proposal state")
@@ -2022,41 +2023,59 @@ async fn main() {
 		.run();
 }
 
-// async fn cmd_vote(_args: &str, matches: &ArgMatches<'_>) -> ApiResult<()> {
-// 	let who = matches.account_arg().map(get_pair_from_str).unwrap();
-// 	let mut api = get_chain_api(matches).await;
-// 	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-// 	let proposal_id = matches.proposal_id_arg().unwrap();
-// 	let vote_raw = matches.vote_arg().unwrap();
-// 	let vote = match vote_raw {
-// 		"aye" => Vote::Aye,
-// 		"nay" => Vote::Nay,
-// 		&_ => panic!("invalid vote"),
-// 	};
-// 	let reputation_vec: ReputationVec<ConstU32<1024>> = matches
-// 		.reputation_vec_arg()
-// 		.map(|rv| {
-// 			let reputations: Vec<(CommunityIdentifier, CeremonyIndexType)> = rv
-// 				.into_iter()
-// 				.map(|rep| {
-// 					let cc: Vec<_> = rep.split("_").collect();
-// 					(verify_cid(&api, cc[0], None), cc[1].parse().unwrap())
-// 				})
-// 				.collect();
-// 			ReputationVec::try_from(reputations).unwrap()
-// 		})
-// 		.await
-// 		.unwrap();
-// 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-// 	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-// 	let xt: EncointerXt<_> =
-// 		compose_extrinsic!(api, "EncointerDemocracy", "vote", proposal_id, vote, reputation_vec)
-// 			.unwrap();
-// 	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-// 	let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-// 	println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
-// 	Ok(())
-// }
+fn cmd_vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let proposal_id = matches.proposal_id_arg().unwrap();
+		let vote_raw = matches.vote_arg().unwrap();
+		let vote = match vote_raw {
+			"aye" => Vote::Aye,
+			"nay" => Vote::Nay,
+			&_ => panic!("invalid vote"),
+		};
+		let reputation_vec: Vec<CommunityCeremony> = futures::future::join_all(
+			matches
+				.reputation_vec_arg()
+				.ok_or(clap::Error::with_description(
+					"missing reputation-vec argument",
+					clap::ErrorKind::MissingRequiredArgument,
+				))?
+				.into_iter()
+				.map(|rep| {
+					let api_local = api.clone();
+					async move {
+						let cc: Vec<_> = rep.split("_").collect();
+						(
+							verify_cid(&api_local, cc[0], None).await,
+							cc[1].parse::<CeremonyIndexType>().unwrap(),
+						)
+					}
+				}),
+		)
+		.await;
+		let reputation_bvec = ReputationVec::<ConstU32<1024>>::try_from(reputation_vec);
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"vote",
+			proposal_id,
+			vote,
+			reputation_bvec
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
+		Ok(())
+	})
+	.into()
+}
 fn cmd_update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
