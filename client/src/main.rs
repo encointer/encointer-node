@@ -512,7 +512,7 @@ async fn main() {
 		//                     (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
 		//
 		//                 } else {
-		//                     let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+		//                     let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
 		//                     info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
 		//                     let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
 		//                     let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_batch_call);
@@ -527,7 +527,7 @@ async fn main() {
 		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 		//
-		//             send_and_wait_for_in_block(&api, xt(&api, new_community_call), matches.tx_payment_cid_arg());
+		//             send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg());
 		//             println!("{cid}");
 		//
 		//             if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
@@ -535,7 +535,7 @@ async fn main() {
 		//                 error!("Aborting without registering additional locations");
 		//                 std::process::exit(exit_code::WRONG_PHASE);
 		//             }
-		//             send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call), tx_payment_cid_arg);
+		//             send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg);
 		//             Ok(())
 		//         }),
 		// )
@@ -591,7 +591,7 @@ async fn main() {
 		//                     print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 		//                     OpaqueCall::from_tuple(&sudo_add_location_batch)
 		//                 } else {
-		//                     let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+		//                     let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
 		//                     info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
 		//                     let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_maybe_batch_call);
 		//                     print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
@@ -608,7 +608,7 @@ async fn main() {
 		//                     error!("Aborting without registering additional locations");
 		//                     std::process::exit(exit_code::WRONG_PHASE);
 		//                 }
-		//                 send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call), tx_payment_cid_arg);
+		//                 send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call).await, tx_payment_cid_arg);
 		//             }
 		//             Ok(())
 		//         }),
@@ -703,7 +703,7 @@ async fn main() {
 		//                 OpaqueCall::from_tuple(&sudo_next_phase_call)
 		//
 		//             } else {
-		//                 let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+		//                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
 		//                 info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
 		//                 let propose_next_phase = collective_propose_call(api.metadata(), threshold, next_phase_call).await;
 		//                 print_raw_call("collective_propose(next_phase)", &propose_next_phase);
@@ -714,7 +714,7 @@ async fn main() {
 		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
 		//
-		//             send_and_wait_for_in_block(&api, xt(&api, next_phase_call), tx_payment_cid_arg);
+		//             send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg);
 		//
 		//             let phase = api.get_current_phase().await.unwrap();
 		//             println!("Phase is now: {phase:?}");
@@ -1370,7 +1370,7 @@ async fn main() {
 		//                             "batch",
 		//                             calls
 		//                         ).unwrap();
-		//                         send_and_wait_for_in_block(&api, xt(&api, batch_call), tx_payment_cid_arg);
+		//                         send_and_wait_for_in_block(&api, xt(&api, batch_call).await, tx_payment_cid_arg);
 		//                         println!("Claiming reward for all meetup indexes. xt-status: 'ready'");
 		//                     } else {
 		//                         let meetup_index = meetup_index_arg;
@@ -1595,7 +1595,7 @@ async fn main() {
 		//                 print_raw_call("sudo(...)", &sudo_call);
 		//                 OpaqueCall::from_tuple(&sudo_call)
 		//             } else {
-		//                 let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
+		//                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
 		//                 info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
 		//                 let propose_call = collective_propose_call(api.metadata(), threshold, call);
 		//                 print_raw_call("collective_propose(...)", &propose_call);
@@ -1604,397 +1604,95 @@ async fn main() {
 		//
 		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//             let xt = xt(&api, privileged_call);
+		//             let xt = xt(&api, privileged_call).await;
 		//             send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg);
 		//             Ok(())
 		//         }),
 		// )
-		// .add_cmd(
-		//     Command::new("create-faucet")
-		//         .description("Create faucet")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .faucet_name_arg()
-		//                 .faucet_balance_arg()
-		//                 .faucet_drip_amount_arg()
-		//                 .whitelist_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-		//                 who.clone(),
-		//             )));
-		//
-		//             let faucet_name_raw = matches.faucet_name_arg().unwrap();
-		//             let faucet_balance = matches.faucet_balance_arg().unwrap();
-		//             let drip_amount = matches.faucet_drip_amount_arg().unwrap();
-		//
-		//             let whitelist = matches.whitelist_arg().map(|wl| {
-		//                 let whitelist_vec: Vec<_> = wl
-		//                 .into_iter()
-		//                 .map(|c| async move { verify_cid(&api,
-		//                     c,
-		//                     None).await})
-		//                 .collect().await;
-		//                 WhiteListType::try_from(whitelist_vec).unwrap()
-		//             });
-		//
-		//             let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerFaucet",
-		//                 "create_faucet",
-		//                 faucet_name,
-		//                 faucet_balance,
-		//                 whitelist,
-		//                 drip_amount
-		//             ).unwrap();
-		//
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//
-		//
-		//             let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		//
-		//             match result {
-		//                 Ok(report) => {
-		//                     for event in report.events.unwrap().iter() {
-		//                         if event.pallet_name() == "EncointerFaucet" && event.variant_name() == "FaucetCreated" {
-		//                             println!("{}", AccountId::decode(&mut event.field_bytes()[0..32].as_ref()).unwrap().to_ss58check());
-		//                         }
-		//                     }
-		//                 },
-		//                 Err(e) => {
-		//                     println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
-		//                 },
-		//             };
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("drip-faucet")
-		//         .description("Drip faucet. args: 1. faucet account, 2. cindex of the reputation. use --cid to specify the community.")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .faucet_account_arg()
-		//                 .cindex_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-		//                 who.clone(),
-		//             )));
-		//
-		//             let cid = verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		//
-		//             let cindex = matches.cindex_arg().unwrap();
-		//             let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerFaucet",
-		//                 "drip",
-		//                 faucet_account,
-		//                 cid,
-		//                 cindex
-		//             ).unwrap();
-		//
-		//
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//
-		//             let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		//
-		//             match result {
-		//                 Ok(_report) => {
-		//                     println!("Faucet dripped to {}", who.public());
-		//
-		//                 },
-		//                 Err(e) => {
-		//                     println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
-		//                 },
-		//             };
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("dissolve-faucet")
-		//         .description("can only be called by root. args: 1. faucet address, 2. beneficiary of the remaining funds.")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .signer_arg("account with necessary privileges (sudo or councillor)")
-		//                 .faucet_account_arg()
-		//                 .faucet_beneficiary_arg()
-		//         })
-		//        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let signer = matches.signer_arg()
-		//                 .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-		//             let signer = ParentchainExtrinsicSigner::new(signer);
-		//
-		//             let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
-		//             let beneficiary = get_accountid_from_str(matches.faucet_beneficiary_arg().unwrap());
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(signer);
-		//
-		//
-		//             let dissolve_faucet_call = compose_call!(
-		//                 api.metadata(),
-		//                 "EncointerFaucet",
-		//                 "dissolve_faucet",
-		//                 faucet_account.clone(),
-		//                 beneficiary
-		//             ).unwrap();
-		//
-		//             // return calls as `OpaqueCall`s to get the same return type in both branches
-		//             let dissolve_faucet_call = if contains_sudo_pallet(api.metadata()) {
-		//                 let dissolve_faucet_call = sudo_call(api.metadata(), dissolve_faucet_call);
-		//                 info!("Printing raw sudo call for js/apps:");
-		//                 print_raw_call("sudo(dissolve_faucet)", &dissolve_faucet_call);
-		//
-		//                 OpaqueCall::from_tuple(&dissolve_faucet_call)
-		//
-		//             } else {
-		//                 let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
-		//                 info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-		//                 let propose_dissolve_faucet = collective_propose_call(api.metadata(), threshold, dissolve_faucet_call);
-		//                 print_raw_call("collective_propose(dissolve_faucet)", &propose_dissolve_faucet);
-		//
-		//                 OpaqueCall::from_tuple(&propose_dissolve_faucet)
-		//             };
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             send_and_wait_for_in_block(&api, xt(&api, dissolve_faucet_call), tx_payment_cid_arg);
-		//
-		//             println!("Faucet dissolved: {faucet_account:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("close-faucet")
-		//         .description("lazy garbage collection. can only be called by faucet creator and only once the faucet is empty")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .faucet_account_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-		//                 who,
-		//             )));
-		//
-		//             let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerFaucet",
-		//                 "close_faucet",
-		//                 faucet_account.clone()
-		//             ).unwrap();
-		//
-		//
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//             let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		//
-		//             println!("Faucet closed: {faucet_account}. status: '{:?}'", report.status);
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("set-faucet-reserve-amount")
-		//         .description("Set faucet pallet reserve amount")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .signer_arg("account with necessary privileges (sudo or councillor)")
-		//                 .faucet_reserve_amount_arg()
-		//         })
-		//        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let signer = matches.signer_arg()
-		//                 .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-		//             let signer = ParentchainExtrinsicSigner::new(signer);
-		//
-		//             let reserve_amount = matches.faucet_reserve_amount_arg().unwrap();
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(signer);
-		//
-		//
-		//             let set_reserve_amount_call = compose_call!(
-		//                 api.metadata(),
-		//                 "EncointerFaucet",
-		//                 "set_reserve_amount",
-		//                 reserve_amount
-		//             ).unwrap();
-		//             // return calls as `OpaqueCall`s to get the same return type in both branches
-		//             let set_reserve_amount_call = if contains_sudo_pallet(api.metadata()) {
-		//                 let set_reserve_amount_call = sudo_call(api.metadata(), set_reserve_amount_call);
-		//                 info!("Printing raw sudo call for js/apps:");
-		//                 print_raw_call("sudo(set_reserve_amount)", &set_reserve_amount_call);
-		//
-		//                 OpaqueCall::from_tuple(&set_reserve_amount_call)
-		//
-		//             } else {
-		//                 let threshold = (get_councillors(&api).unwrap().len() / 2 + 1) as u32;
-		//                 info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-		//                 let propose_set_reserve_amount = collective_propose_call(api.metadata(), threshold, set_reserve_amount_call);
-		//                 print_raw_call("collective_propose(set_reserve_amount)", &propose_set_reserve_amount);
-		//
-		//                 OpaqueCall::from_tuple(&propose_set_reserve_amount)
-		//             };
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             send_and_wait_for_in_block(&api, xt(&api, set_reserve_amount_call), tx_payment_cid_arg);
-		//
-		//             println!("Reserve amount set: {reserve_amount:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-faucets")
-		//         .description("list all faucets. use -v to get faucet details.")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .at_block_arg()
-		//                 .verbose_flag()
-		//         })
-		//        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//                     let api = get_chain_api(matches).await;
-		//
-		//                     let is_verbose = matches.verbose_flag();
-		//                     let at_block = matches.at_block_arg();
-		//
-		//                     let key_prefix = api
-		//                     .get_storage_map_key_prefix(
-		//                         "EncointerFaucet",
-		//                         "Faucets",
-		//                     )
-		//                     .await.unwrap();
-		//
-		//                 let max_keys = 1000;
-		//                 let storage_keys =
-		//                     api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).await.unwrap();
-		//
-		//                 if storage_keys.len() == max_keys as usize {
-		//                     error!("results can be wrong because max keys reached for query")
-		//                 }
-		//
-		//                 for storage_key in storage_keys.iter() {
-		//                     let key_postfix = storage_key.as_ref();
-		//                     let faucet_address = AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap();
-		//                     let faucet: Faucet<AccountId, Balance> = api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
-		//
-		//                     if is_verbose {
-		//                         println!("address: {}", faucet_address.to_ss58check());
-		//                         println!("name: {}", String::from_utf8(faucet.name.to_vec()).unwrap());
-		//                         println!("creator: {}", AccountId::decode(&mut faucet.creator.as_ref()).unwrap().to_ss58check());
-		//                         println!("balance: {}", api.get_account_data(&faucet_address).await.unwrap().unwrap().free);
-		//                         println!("drip amount: {}", faucet.drip_amount);
-		//                         if let Some(whitelist) = faucet.whitelist {
-		//                             println!("whitelist:");
-		//                             for cid in whitelist.to_vec() {
-		//                                 println!("{}", cid);
-		//                             }
-		//                         } else {
-		//                             println!("whitelist: None");
-		//                         }
-		//                         println!("");
-		//                     } else {
-		//                         println!{"{}", faucet_address};
-		//                     }
-		//
-		//                 }
-		//                     Ok(())
-		//                 }),
-		//         )
-		//         .add_cmd(
-		//             Command::new("submit-set-inactivity-timeout-proposal")
-		//                 .description("Submit set inactivity timeout proposal")
-		//                 .options(|app| {
-		//                     app.setting(AppSettings::ColoredHelp)
-		//                         .account_arg()
-		//                         .inactivity_timeout_arg()
-		//                 })
-		//                 .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//                     let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		//                                         let mut api = get_chain_api(matches).await;
-		//                     api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
-		//                         who.clone(),
-		//                     )));
-		//                     let inactivity_timeout = matches.inactivity_timeout_arg().unwrap();
-		//                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//                     set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//                     let xt: EncointerXt<_> = compose_extrinsic!(
-		//                         api,
-		//                         "EncointerDemocracy",
-		//                         "submit_proposal",
-		//                         ProposalAction::SetInactivityTimeout(inactivity_timeout)
-		//                     ).unwrap();
-		//                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//                     let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		//                     println!("Proposal Submitted: Set inactivity timeout to {inactivity_timeout:?}");
-		//                     Ok(())
-		//                 }),
-		//         )
-		//         .add_cmd(
-		//             Command::new("list-proposals")
-		//                 .description("list all proposals.")
-		//                 .options(|app| {
-		//                     app.setting(AppSettings::ColoredHelp)
-		//                         .at_block_arg()
-		//                 })
-		//                .runner(move |_args: &str, matches: &ArgMatches<'_>| async {
-		//                             let api = get_chain_api(matches).await;
-		//                             let at_block = matches.at_block_arg();
-		//                             let key_prefix = api
-		//                             .get_storage_map_key_prefix(
-		//                                 "EncointerDemocracy",
-		//                                 "Proposals",
-		//                             ).await
-		//                             .unwrap();
-		//                         let max_keys = 1000;
-		//                         let storage_keys =
-		//                             api.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block).await.unwrap();
-		//                         if storage_keys.len() == max_keys as usize {
-		//                             error!("results can be wrong because max keys reached for query")
-		//                         }
-		//                         for storage_key in storage_keys.iter() {
-		//                             let key_postfix = storage_key.as_ref();
-		//                             let proposal_id = ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref()).unwrap();
-		//                             let proposal: Proposal<BlockNumber> = api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
-		//                             println!("id: {}", proposal_id);
-		//                             println!("action: {:?}", proposal.action);
-		//                             println!("start block: {}", proposal.start);
-		//                             println!("start cindex: {}", proposal.start_cindex);
-		//                             println!("state: {:?}", proposal.state);
-		//                             println!("");
-		//                         }
-		//                             Ok(())
-		//                         }.await),
-		//                 )
+		.add_cmd(
+		    Command::new("create-faucet")
+		        .description("Create faucet")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .faucet_name_arg()
+		                .faucet_balance_arg()
+		                .faucet_drip_amount_arg()
+		                .whitelist_arg()
+		        })
+		        .runner(cmd_create_faucet),
+		)
+		.add_cmd(
+		    Command::new("drip-faucet")
+		        .description("Drip faucet. args: 1. faucet account, 2. cindex of the reputation. use --cid to specify the community.")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .faucet_account_arg()
+		                .cindex_arg()
+		        })
+		        .runner(cmd_drip_faucet),
+		)
+		.add_cmd(
+		    Command::new("dissolve-faucet")
+		        .description("can only be called by root. args: 1. faucet address, 2. beneficiary of the remaining funds.")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("account with necessary privileges (sudo or councillor)")
+		                .faucet_account_arg()
+		                .faucet_beneficiary_arg()
+		        })
+		       .runner(cmd_dissolve_faucet),
+		)
+		.add_cmd(
+		    Command::new("close-faucet")
+		        .description("lazy garbage collection. can only be called by faucet creator and only once the faucet is empty")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .faucet_account_arg()
+		        })
+		        .runner(cmd_close_faucet),
+		)
+		.add_cmd(
+		    Command::new("set-faucet-reserve-amount")
+		        .description("Set faucet pallet reserve amount")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("account with necessary privileges (sudo or councillor)")
+		                .faucet_reserve_amount_arg()
+		        })
+		       .runner(cmd_set_faucet_reserve_amount),
+		)
+		.add_cmd(
+		    Command::new("list-faucets")
+		        .description("list all faucets. use -v to get faucet details.")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .at_block_arg()
+		                .verbose_flag()
+		        })
+		       .runner(cmd_list_faucets)
+		)
+		.add_cmd(
+			Command::new("submit-set-inactivity-timeout-proposal")
+				.description("Submit set inactivity timeout proposal")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.inactivity_timeout_arg()
+				})
+				.runner(cmd_submit_set_inactivity_timeout_proposal),
+		)
+		.add_cmd(
+			Command::new("list-proposals")
+				.description("list all proposals.")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.at_block_arg()
+				})
+			   .runner(cmd_list_proposals),
+				)
 		.add_cmd(
 			Command::new("vote")
 				.description("Submit vote for porposal. Vote is either ay or nay. Reputation vec to be specified as cid1_cindex1,cid2_cindex2,...")
@@ -2023,6 +1721,351 @@ async fn main() {
 		.run();
 }
 
+fn cmd_create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+
+		let faucet_name_raw = matches.faucet_name_arg().unwrap();
+		let faucet_balance = matches.faucet_balance_arg().unwrap();
+		let drip_amount = matches.faucet_drip_amount_arg().unwrap();
+
+		let api2 = api.clone();
+		let whitelist = futures::future::join_all(matches.whitelist_arg().map(|wl| async move {
+			let whitelist_vec: Vec<_> = futures::future::join_all(wl.into_iter().map(|c| {
+				let api_local = api2.clone();
+				async move { verify_cid(&api_local, c, None).await }
+			}))
+			.await;
+			WhiteListType::try_from(whitelist_vec).unwrap()
+		}))
+		.await;
+
+		let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerFaucet",
+			"create_faucet",
+			faucet_name,
+			faucet_balance,
+			whitelist,
+			drip_amount
+		)
+		.unwrap();
+
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+
+		match result {
+			Ok(report) => {
+				for event in report.events.unwrap().iter() {
+					if event.pallet_name() == "EncointerFaucet"
+						&& event.variant_name() == "FaucetCreated"
+					{
+						println!(
+							"{}",
+							AccountId::decode(&mut event.field_bytes()[0..32].as_ref())
+								.unwrap()
+								.to_ss58check()
+						);
+					}
+				}
+			},
+			Err(e) => {
+				println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
+			},
+		};
+
+		Ok(())
+	})
+	.into()
+}
+fn cmd_drip_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+
+		let cindex = matches.cindex_arg().unwrap();
+		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> =
+			compose_extrinsic!(api, "EncointerFaucet", "drip", faucet_account, cid, cindex)
+				.unwrap();
+
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+
+		match result {
+			Ok(_report) => {
+				println!("Faucet dripped to {}", who.public());
+			},
+			Err(e) => {
+				println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
+			},
+		};
+
+		Ok(())
+	})
+	.into()
+}
+fn cmd_dissolve_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let signer = matches.signer_arg().map_or_else(
+			|| AccountKeyring::Alice.pair(),
+			|signer| get_pair_from_str(signer).into(),
+		);
+		let signer = ParentchainExtrinsicSigner::new(signer);
+
+		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
+		let beneficiary = get_accountid_from_str(matches.faucet_beneficiary_arg().unwrap());
+
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(signer);
+
+		let dissolve_faucet_call = compose_call!(
+			api.metadata(),
+			"EncointerFaucet",
+			"dissolve_faucet",
+			faucet_account.clone(),
+			beneficiary
+		)
+		.unwrap();
+
+		// return calls as `OpaqueCall`s to get the same return type in both branches
+		let dissolve_faucet_call = if contains_sudo_pallet(api.metadata()) {
+			let dissolve_faucet_call = sudo_call(api.metadata(), dissolve_faucet_call);
+			info!("Printing raw sudo call for js/apps:");
+			print_raw_call("sudo(dissolve_faucet)", &dissolve_faucet_call);
+
+			OpaqueCall::from_tuple(&dissolve_faucet_call)
+		} else {
+			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+			let propose_dissolve_faucet =
+				collective_propose_call(api.metadata(), threshold, dissolve_faucet_call);
+			print_raw_call("collective_propose(dissolve_faucet)", &propose_dissolve_faucet);
+
+			OpaqueCall::from_tuple(&propose_dissolve_faucet)
+		};
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		send_and_wait_for_in_block(&api, xt(&api, dissolve_faucet_call).await, tx_payment_cid_arg);
+
+		println!("Faucet dissolved: {faucet_account:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_close_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who)));
+
+		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> =
+			compose_extrinsic!(api, "EncointerFaucet", "close_faucet", faucet_account.clone())
+				.unwrap();
+
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+
+		println!("Faucet closed: {faucet_account}. status: '{:?}'", report.status);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_set_faucet_reserve_amount(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let signer = matches.signer_arg().map_or_else(
+			|| AccountKeyring::Alice.pair(),
+			|signer| get_pair_from_str(signer).into(),
+		);
+		let signer = ParentchainExtrinsicSigner::new(signer);
+
+		let reserve_amount = matches.faucet_reserve_amount_arg().unwrap();
+
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(signer);
+
+		let set_reserve_amount_call =
+			compose_call!(api.metadata(), "EncointerFaucet", "set_reserve_amount", reserve_amount)
+				.unwrap();
+		// return calls as `OpaqueCall`s to get the same return type in both branches
+		let set_reserve_amount_call = if contains_sudo_pallet(api.metadata()) {
+			let set_reserve_amount_call = sudo_call(api.metadata(), set_reserve_amount_call);
+			info!("Printing raw sudo call for js/apps:");
+			print_raw_call("sudo(set_reserve_amount)", &set_reserve_amount_call);
+
+			OpaqueCall::from_tuple(&set_reserve_amount_call)
+		} else {
+			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+			let propose_set_reserve_amount =
+				collective_propose_call(api.metadata(), threshold, set_reserve_amount_call);
+			print_raw_call("collective_propose(set_reserve_amount)", &propose_set_reserve_amount);
+
+			OpaqueCall::from_tuple(&propose_set_reserve_amount)
+		};
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		send_and_wait_for_in_block(
+			&api,
+			xt(&api, set_reserve_amount_call).await,
+			tx_payment_cid_arg,
+		);
+
+		println!("Reserve amount set: {reserve_amount:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_faucets(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+
+		let is_verbose = matches.verbose_flag();
+		let at_block = matches.at_block_arg();
+
+		let key_prefix =
+			api.get_storage_map_key_prefix("EncointerFaucet", "Faucets").await.unwrap();
+
+		let max_keys = 1000;
+		let storage_keys = api
+			.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+			.await
+			.unwrap();
+
+		if storage_keys.len() == max_keys as usize {
+			error!("results can be wrong because max keys reached for query")
+		}
+
+		for storage_key in storage_keys.iter() {
+			let key_postfix = storage_key.as_ref();
+			let faucet_address =
+				AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap();
+			let faucet: Faucet<AccountId, Balance> =
+				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
+
+			if is_verbose {
+				println!("address: {}", faucet_address.to_ss58check());
+				println!("name: {}", String::from_utf8(faucet.name.to_vec()).unwrap());
+				println!(
+					"creator: {}",
+					AccountId::decode(&mut faucet.creator.as_ref()).unwrap().to_ss58check()
+				);
+				println!(
+					"balance: {}",
+					api.get_account_data(&faucet_address).await.unwrap().unwrap().free
+				);
+				println!("drip amount: {}", faucet.drip_amount);
+				if let Some(whitelist) = faucet.whitelist {
+					println!("whitelist:");
+					for cid in whitelist.to_vec() {
+						println!("{}", cid);
+					}
+				} else {
+					println!("whitelist: None");
+				}
+				println!("");
+			} else {
+				println! {"{}", faucet_address};
+			}
+		}
+		Ok(())
+	})
+	.into()
+}
+fn cmd_submit_set_inactivity_timeout_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let inactivity_timeout = matches.inactivity_timeout_arg().unwrap();
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::SetInactivityTimeout(inactivity_timeout)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Proposal Submitted: Set inactivity timeout to {inactivity_timeout:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let at_block = matches.at_block_arg();
+		let key_prefix =
+			api.get_storage_map_key_prefix("EncointerDemocracy", "Proposals").await.unwrap();
+		let max_keys = 1000;
+		let storage_keys = api
+			.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+			.await
+			.unwrap();
+		if storage_keys.len() == max_keys as usize {
+			error!("results can be wrong because max keys reached for query")
+		}
+		for storage_key in storage_keys.iter() {
+			let key_postfix = storage_key.as_ref();
+			let proposal_id =
+				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
+					.unwrap();
+			let proposal: Proposal<BlockNumber> =
+				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
+			println!("id: {}", proposal_id);
+			println!("action: {:?}", proposal.action);
+			println!("start block: {}", proposal.start);
+			println!("start cindex: {}", proposal.start_cindex);
+			println!("state: {:?}", proposal.state);
+			println!("");
+		}
+		Ok(())
+	})
+	.into()
+}
 fn cmd_vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
