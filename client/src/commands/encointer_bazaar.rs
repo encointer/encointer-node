@@ -9,8 +9,8 @@ use encointer_api_client_extension::{Api, EncointerXt, ParentchainExtrinsicSigne
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::bazaar::{Business, BusinessIdentifier, OfferingData};
 use encointer_primitives::communities::CommunityIdentifier;
-use parity_scale_codec::{Decode, Encode};
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use parity_scale_codec::{Encode};
+use sp_core::{sr25519 as sr25519_core, Pair};
 use substrate_api_client::ac_compose_macros::{compose_extrinsic, rpc_params};
 use substrate_api_client::rpc::Request;
 use substrate_api_client::{SubmitAndWatch, XtStatus};

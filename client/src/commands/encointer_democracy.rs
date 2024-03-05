@@ -1,7 +1,7 @@
 use crate::cli_args::EncointerArgsExtractor;
 use crate::commands::encointer_core::set_api_extrisic_params_builder;
 use crate::commands::encointer_core::verify_cid;
-use crate::commands::encointer_scheduler::get_ceremony_index;
+
 use crate::utils::ensure_payment;
 use crate::utils::get_chain_api;
 use crate::utils::keys::get_pair_from_str;

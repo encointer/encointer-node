@@ -5,27 +5,26 @@ use crate::exit_code;
 use crate::utils::get_chain_api;
 use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
 use crate::utils::{
-	collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors, print_raw_call,
-	send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+	ensure_payment,
 };
 use clap::{value_t, ArgMatches};
 use encointer_api_client_extension::{
-	Api, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder, SchedulerApi,
+	Api, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder,
 };
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
-use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, Moment, RuntimeEvent};
+use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, RuntimeEvent};
 use encointer_primitives::balances::{to_U64F64, BalanceEntry, BalanceType, Demurrage};
-use encointer_primitives::ceremonies::CeremonyIndexType;
+
 use encointer_primitives::communities::CommunityIdentifier;
 use encointer_primitives::fixed::transcendental::exp;
 use log::{debug, error, info};
 use pallet_transaction_payment::FeeDetails;
 use parity_scale_codec::Encode;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_keyring::AccountKeyring;
+
 use sp_rpc::number::NumberOrHex;
 use std::str::FromStr;
-use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic, rpc_params};
+use substrate_api_client::ac_compose_macros::{compose_extrinsic, rpc_params};
 use substrate_api_client::ac_primitives::Bytes;
 use substrate_api_client::extrinsic::BalancesExtrinsics;
 use substrate_api_client::rpc::Request;

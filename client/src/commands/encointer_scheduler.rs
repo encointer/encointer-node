@@ -12,7 +12,7 @@ use encointer_api_client_extension::{Api, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::{Hash, Moment};
 use encointer_primitives::ceremonies::CeremonyIndexType;
 use log::{debug, info};
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+
 use sp_keyring::AccountKeyring;
 use substrate_api_client::ac_compose_macros::compose_call;
 use substrate_api_client::GetStorage;

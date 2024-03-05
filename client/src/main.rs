@@ -24,51 +24,26 @@ mod commands;
 mod community_spec;
 mod utils;
 
-use crate::utils::{
-	ensure_payment,
-	keys::{get_accountid_from_str, get_pair_from_str},
-};
-use clap::{value_t, AppSettings, Arg, ArgMatches};
+
+use clap::{AppSettings, Arg};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
-use encointer_api_client_extension::{
-	Api, CeremoniesApi, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder,
-	EncointerXt, ParentchainExtrinsicSigner,
-};
+
 use encointer_node_notee_runtime::{
-	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent, Signature,
-	ONE_DAY,
-};
-use encointer_primitives::{
-	balances::{to_U64F64, Demurrage},
-	bazaar::{Business, BusinessIdentifier, OfferingData},
-	ceremonies::{
-		ClaimOfAttendance, CommunityCeremony, CommunityReputation, ParticipantIndexType,
-		ProofOfAttendance, Reputation, ReputationLifetimeType,
-	},
-	communities::{CidName, CommunityIdentifier},
-	fixed::transcendental::exp,
-	scheduler::CeremonyIndexType,
+	BalanceType,
 };
 
-use log::*;
-use pallet_transaction_payment::FeeDetails;
-use parity_scale_codec::{Decode, Encode};
-use sp_application_crypto::sr25519;
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_keyring::AccountKeyring;
-use sp_rpc::number::NumberOrHex;
-use sp_runtime::MultiSignature;
-use std::str::FromStr;
-use substrate_api_client::{
-	ac_compose_macros::{compose_call, compose_extrinsic, rpc_params},
-	ac_primitives::Bytes,
-	api::error::Error as ApiClientError,
-	extrinsic::BalancesExtrinsics,
-	rpc::{JsonrpseeClient, Request},
-	GetBalance, GetChainInfo, GetStorage, GetTransactionPayment, SubmitAndWatch, SubscribeEvents,
-	XtStatus,
-};
+
+
+
+
+
+
+
+
+
+
+
 
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
