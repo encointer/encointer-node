@@ -1,23 +1,22 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::commands::encointer_core::verify_cid;
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
+};
 
-use crate::utils::ensure_payment;
-use crate::utils::get_chain_api;
-use crate::utils::keys::get_pair_from_str;
+use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
 use clap::ArgMatches;
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::BlockNumber;
-use encointer_primitives::ceremonies::{CeremonyIndexType, CommunityCeremony};
-use encointer_primitives::democracy::ProposalAction;
-use encointer_primitives::democracy::{Proposal, ProposalIdType, ReputationVec, Vote};
+use encointer_primitives::{
+	ceremonies::{CeremonyIndexType, CommunityCeremony},
+	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
+};
 use log::error;
 use parity_scale_codec::{Decode, Encode};
 use sp_core::{sr25519 as sr25519_core, ConstU32};
-use substrate_api_client::ac_compose_macros::compose_extrinsic;
-use substrate_api_client::GetStorage;
-use substrate_api_client::SubmitAndWatch;
-use substrate_api_client::XtStatus;
+use substrate_api_client::{
+	ac_compose_macros::compose_extrinsic, GetStorage, SubmitAndWatch, XtStatus,
+};
 
 pub fn submit_set_inactivity_timeout_proposal(
 	_args: &str,

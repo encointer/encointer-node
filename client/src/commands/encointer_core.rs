@@ -1,22 +1,21 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_communities::get_community_identifiers;
-use crate::commands::frame::get_block_number;
-use crate::exit_code;
-use crate::utils::get_chain_api;
-use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
-use crate::utils::{
-	ensure_payment,
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::{encointer_communities::get_community_identifiers, frame::get_block_number},
+	exit_code,
+	utils::{
+		ensure_payment, get_chain_api,
+		keys::{get_accountid_from_str, get_pair_from_str},
+	},
 };
 use clap::{value_t, ArgMatches};
 use encointer_api_client_extension::{
-	Api, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder,
+	Api, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt,
+	ParentchainExtrinsicSigner,
 };
-use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, RuntimeEvent};
 use encointer_primitives::balances::{to_U64F64, BalanceEntry, BalanceType, Demurrage};
 
-use encointer_primitives::communities::CommunityIdentifier;
-use encointer_primitives::fixed::transcendental::exp;
+use encointer_primitives::{communities::CommunityIdentifier, fixed::transcendental::exp};
 use log::{debug, error, info};
 use pallet_transaction_payment::FeeDetails;
 use parity_scale_codec::Encode;
@@ -24,14 +23,13 @@ use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 
 use sp_rpc::number::NumberOrHex;
 use std::str::FromStr;
-use substrate_api_client::ac_compose_macros::{compose_extrinsic, rpc_params};
-use substrate_api_client::ac_primitives::Bytes;
-use substrate_api_client::extrinsic::BalancesExtrinsics;
-use substrate_api_client::rpc::Request;
-use substrate_api_client::GetStorage;
-use substrate_api_client::SubmitAndWatch;
-use substrate_api_client::XtStatus;
-use substrate_api_client::{GetAccountInformation, SubscribeEvents};
+use substrate_api_client::{
+	ac_compose_macros::{compose_extrinsic, rpc_params},
+	ac_primitives::Bytes,
+	extrinsic::BalancesExtrinsics,
+	rpc::Request,
+	GetAccountInformation, GetStorage, SubmitAndWatch, SubscribeEvents, XtStatus,
+};
 
 pub fn balance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

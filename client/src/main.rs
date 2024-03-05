@@ -24,26 +24,11 @@ mod commands;
 mod community_spec;
 mod utils;
 
-
 use clap::{AppSettings, Arg};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 
-use encointer_node_notee_runtime::{
-	BalanceType,
-};
-
-
-
-
-
-
-
-
-
-
-
-
+use encointer_node_notee_runtime::BalanceType;
 
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");

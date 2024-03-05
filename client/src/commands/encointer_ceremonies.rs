@@ -1,28 +1,33 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_communities::get_cid_names;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::commands::encointer_core::verify_cid;
-use crate::commands::encointer_scheduler::get_ceremony_index;
-use crate::exit_code;
-use crate::utils::get_chain_api;
-use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
-use crate::utils::{
-	collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
-	into_effective_cindex, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::{
+		encointer_communities::get_cid_names,
+		encointer_core::{set_api_extrisic_params_builder, verify_cid},
+		encointer_scheduler::get_ceremony_index,
+	},
+	exit_code,
+	utils::{
+		collective_propose_call, contains_sudo_pallet, ensure_payment, get_chain_api,
+		get_councillors, into_effective_cindex,
+		keys::{get_accountid_from_str, get_pair_from_str},
+		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+	},
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::{Api, CeremoniesApi};
-use encointer_api_client_extension::{ApiClientError, SchedulerApi};
 use encointer_api_client_extension::{
-	EncointerXt, ParentchainExtrinsicSigner, ENCOINTER_CEREMONIES,
+	Api, ApiClientError, CeremoniesApi, EncointerXt, ParentchainExtrinsicSigner, SchedulerApi,
+	ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{AccountId, Hash, Moment, Signature, ONE_DAY};
-use encointer_primitives::ceremonies::{
-	CeremonyIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation, MeetupIndexType,
-	ParticipantIndexType, ProofOfAttendance, Reputation, ReputationLifetimeType,
+use encointer_primitives::{
+	ceremonies::{
+		CeremonyIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
+		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
+		ReputationLifetimeType,
+	},
+	communities::CommunityIdentifier,
+	scheduler::CeremonyPhaseType,
 };
-use encointer_primitives::communities::CommunityIdentifier;
-use encointer_primitives::scheduler::CeremonyPhaseType;
 use log::{debug, error, info};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::sr25519;
@@ -30,11 +35,12 @@ use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSignature;
 use std::collections::HashMap;
-use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic, rpc_params};
-use substrate_api_client::ac_primitives::{Bytes, SignExtrinsic};
-use substrate_api_client::rpc::Request;
-use substrate_api_client::GetStorage;
-use substrate_api_client::{SubmitAndWatch, XtStatus};
+use substrate_api_client::{
+	ac_compose_macros::{compose_call, compose_extrinsic, rpc_params},
+	ac_primitives::{Bytes, SignExtrinsic},
+	rpc::Request,
+	GetStorage, SubmitAndWatch, XtStatus,
+};
 
 pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
@@ -248,8 +254,8 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
 
 		let current_phase = api.get_current_phase().await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
+		if !(current_phase == CeremonyPhaseType::Registering ||
+			current_phase == CeremonyPhaseType::Attesting)
 		{
 			error!("wrong ceremony phase for registering participant");
 			std::process::exit(exit_code::WRONG_PHASE);
@@ -261,9 +267,8 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let rep = get_reputation(&api, &accountid, cid, reputation_cindex).await;
 		info!("{} has reputation {:?}", accountid, rep);
 		let proof = match rep {
-			Reputation::VerifiedUnlinked => {
-				prove_attendance(accountid, cid, reputation_cindex, arg_who)
-			},
+			Reputation::VerifiedUnlinked =>
+				prove_attendance(accountid, cid, reputation_cindex, arg_who),
 			_ => {
 				error!("No valid reputation in last ceremony.");
 				std::process::exit(exit_code::INVALID_REPUTATION);
@@ -307,17 +312,15 @@ pub fn register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let proof = match rep {
 			Reputation::Unverified => None,
 			Reputation::UnverifiedReputable => None, // this should never be the case during Registering!
-			Reputation::VerifiedUnlinked => {
-				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
-			},
-			Reputation::VerifiedLinked(_) => {
-				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
-			},
+			Reputation::VerifiedUnlinked =>
+				Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
+			Reputation::VerifiedLinked(_) =>
+				Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
 		};
 		debug!("proof: {:x?}", proof.encode());
 		let current_phase = api.get_current_phase().await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
+		if !(current_phase == CeremonyPhaseType::Registering ||
+			current_phase == CeremonyPhaseType::Attesting)
 		{
 			error!("wrong ceremony phase for registering participant");
 			std::process::exit(exit_code::WRONG_PHASE);
@@ -364,8 +367,8 @@ pub fn unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		};
 
 		let current_phase = api.get_current_phase().await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
+		if !(current_phase == CeremonyPhaseType::Registering ||
+			current_phase == CeremonyPhaseType::Attesting)
 		{
 			error!("wrong ceremony phase for unregistering");
 			std::process::exit(exit_code::WRONG_PHASE);
@@ -905,17 +908,16 @@ async fn get_bootstrappers_with_remaining_newbie_tickets(
 
 	// prepare closure to make below call more readable.
 	let ticket_query = |bs| async move {
-		let remaining_tickets = total_newbie_tickets
-			- api
-				.get_storage_double_map(
-					"EncointerCeremonies",
-					"BurnedBootstrapperNewbieTickets",
-					cid,
-					bs,
-					None,
-				)
-				.await?
-				.unwrap_or(0u8);
+		let remaining_tickets = total_newbie_tickets -
+			api.get_storage_double_map(
+				"EncointerCeremonies",
+				"BurnedBootstrapperNewbieTickets",
+				cid,
+				bs,
+				None,
+			)
+			.await?
+			.unwrap_or(0u8);
 
 		Ok::<_, ApiClientError>(remaining_tickets)
 	};

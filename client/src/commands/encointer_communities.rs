@@ -1,32 +1,32 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::commands::encointer_core::verify_cid;
-use crate::community_spec::CommunitySpec;
-use crate::community_spec::{
-	add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
-};
-use crate::exit_code;
-use crate::utils::get_chain_api;
-use crate::utils::keys::get_pair_from_str;
-use crate::utils::{
-	batch_call, collective_propose_call, contains_sudo_pallet, get_councillors, print_raw_call,
-	send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
+	community_spec::{
+		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
+		CommunitySpec,
+	},
+	exit_code,
+	utils::{
+		batch_call, collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
+		keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
+		OpaqueCall,
+	},
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::ParentchainExtrinsicSigner;
-use encointer_api_client_extension::SchedulerApi;
-use encointer_api_client_extension::{Api, CommunitiesApi};
+use encointer_api_client_extension::{
+	Api, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
+};
 use encointer_node_notee_runtime::Hash;
-use encointer_primitives::communities::{CidName, CommunityIdentifier};
-use encointer_primitives::scheduler::CeremonyPhaseType;
+use encointer_primitives::{
+	communities::{CidName, CommunityIdentifier},
+	scheduler::CeremonyPhaseType,
+};
 use log::{error, info};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
-use substrate_api_client::ac_compose_macros::rpc_params;
-use substrate_api_client::rpc::Request;
-use substrate_api_client::GetStorage;
+use substrate_api_client::{ac_compose_macros::rpc_params, rpc::Request, GetStorage};
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

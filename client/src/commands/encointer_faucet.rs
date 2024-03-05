@@ -1,26 +1,25 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::commands::encointer_core::verify_cid;
-use crate::utils::get_chain_api;
-use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
-use crate::utils::{
-	collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors, print_raw_call,
-	send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
+	utils::{
+		collective_propose_call, contains_sudo_pallet, ensure_payment, get_chain_api,
+		get_councillors,
+		keys::{get_accountid_from_str, get_pair_from_str},
+		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+	},
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::{AccountId, Balance};
-use encointer_primitives::faucet::FromStr;
-use encointer_primitives::faucet::{Faucet, FaucetNameType, WhiteListType};
+use encointer_primitives::faucet::{Faucet, FaucetNameType, FromStr, WhiteListType};
 use log::{error, info};
 use parity_scale_codec::{Decode, Encode};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
-use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic};
-use substrate_api_client::GetAccountInformation;
-use substrate_api_client::GetStorage;
-use substrate_api_client::SubmitAndWatch;
-use substrate_api_client::XtStatus;
+use substrate_api_client::{
+	ac_compose_macros::{compose_call, compose_extrinsic},
+	GetAccountInformation, GetStorage, SubmitAndWatch, XtStatus,
+};
 
 pub fn create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

@@ -1,5 +1,7 @@
-use crate::commands::encointer_core::{get_asset_fee_details, get_community_balance};
-use crate::{exit_code, BalanceType};
+use crate::{
+	commands::encointer_core::{get_asset_fee_details, get_community_balance},
+	exit_code, BalanceType,
+};
 use clap::ArgMatches;
 use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
@@ -8,12 +10,12 @@ use log::{debug, error, info};
 use parity_scale_codec::{Compact, Encode};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
-use substrate_api_client::rpc::JsonrpseeClient;
 use substrate_api_client::{
 	ac_compose_macros::compose_call,
 	ac_node_api::Metadata,
 	ac_primitives::Bytes,
 	api::{error::Error as ApiClientError, rpc_api::state::GetStorage},
+	rpc::JsonrpseeClient,
 	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch, XtStatus,
 };
 

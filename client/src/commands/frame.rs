@@ -1,20 +1,22 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::utils::ensure_payment;
-use crate::utils::get_chain_api;
-use crate::utils::keys::get_accountid_from_str;
-use crate::PREFUNDING_NR_OF_TRANSFER_EXTRINSICS;
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::encointer_core::set_api_extrisic_params_builder,
+	utils::{ensure_payment, get_chain_api, keys::get_accountid_from_str},
+	PREFUNDING_NR_OF_TRANSFER_EXTRINSICS,
+};
 use clap::ArgMatches;
-use encointer_api_client_extension::{Api, ExtrinsicAddress};
-use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
+use encointer_api_client_extension::{
+	Api, EncointerXt, ExtrinsicAddress, ParentchainExtrinsicSigner,
+};
 use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash};
 use log::{debug, info};
 use parity_scale_codec::{Compact, Encode};
 use sp_keyring::AccountKeyring;
-use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic_offline};
-use substrate_api_client::extrinsic::BalancesExtrinsics;
-use substrate_api_client::GetChainInfo;
-use substrate_api_client::{GetBalance, GetTransactionPayment, SubmitAndWatch, XtStatus};
+use substrate_api_client::{
+	ac_compose_macros::{compose_call, compose_extrinsic_offline},
+	extrinsic::BalancesExtrinsics,
+	GetBalance, GetChainInfo, GetTransactionPayment, SubmitAndWatch, XtStatus,
+};
 
 pub fn print_metadata(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

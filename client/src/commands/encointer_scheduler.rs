@@ -1,21 +1,20 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::commands::frame::get_block_number;
-use crate::utils::keys::get_pair_from_str;
-use crate::utils::{
-	collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors, print_raw_call,
-	send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::{encointer_core::set_api_extrisic_params_builder, frame::get_block_number},
+	utils::{
+		collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
+		keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
+		OpaqueCall,
+	},
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::SchedulerApi;
-use encointer_api_client_extension::{Api, ParentchainExtrinsicSigner};
+use encointer_api_client_extension::{Api, ParentchainExtrinsicSigner, SchedulerApi};
 use encointer_node_notee_runtime::{Hash, Moment};
 use encointer_primitives::ceremonies::CeremonyIndexType;
 use log::{debug, info};
 
 use sp_keyring::AccountKeyring;
-use substrate_api_client::ac_compose_macros::compose_call;
-use substrate_api_client::GetStorage;
+use substrate_api_client::{ac_compose_macros::compose_call, GetStorage};
 
 pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

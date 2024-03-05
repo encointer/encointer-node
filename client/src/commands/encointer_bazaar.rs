@@ -1,19 +1,25 @@
-use crate::cli_args::EncointerArgsExtractor;
-use crate::commands::encointer_core::set_api_extrisic_params_builder;
-use crate::commands::encointer_core::verify_cid;
-use crate::utils::ensure_payment;
-use crate::utils::get_chain_api;
-use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
+	utils::{
+		ensure_payment, get_chain_api,
+		keys::{get_accountid_from_str, get_pair_from_str},
+	},
+};
 use clap::ArgMatches;
 use encointer_api_client_extension::{Api, EncointerXt, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::AccountId;
-use encointer_primitives::bazaar::{Business, BusinessIdentifier, OfferingData};
-use encointer_primitives::communities::CommunityIdentifier;
-use parity_scale_codec::{Encode};
+use encointer_primitives::{
+	bazaar::{Business, BusinessIdentifier, OfferingData},
+	communities::CommunityIdentifier,
+};
+use parity_scale_codec::Encode;
 use sp_core::{sr25519 as sr25519_core, Pair};
-use substrate_api_client::ac_compose_macros::{compose_extrinsic, rpc_params};
-use substrate_api_client::rpc::Request;
-use substrate_api_client::{SubmitAndWatch, XtStatus};
+use substrate_api_client::{
+	ac_compose_macros::{compose_extrinsic, rpc_params},
+	rpc::Request,
+	SubmitAndWatch, XtStatus,
+};
 
 pub fn create_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
