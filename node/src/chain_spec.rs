@@ -1,6 +1,6 @@
-use encointer_node_notee_runtime::BalanceType;
-use encointer_node_notee_runtime::CeremonyPhaseType;
-use encointer_node_notee_runtime::{AccountId, RuntimeGenesisConfig, Signature, WASM_BINARY};
+use encointer_node_notee_runtime::{
+	AccountId, BalanceType, CeremonyPhaseType, RuntimeGenesisConfig, Signature, WASM_BINARY,
+};
 use sc_service::{ChainType, Properties};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;

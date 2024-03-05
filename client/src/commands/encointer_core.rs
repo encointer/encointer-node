@@ -303,20 +303,20 @@ async fn listen(matches: &ArgMatches<'_>) {
 	let mut count = 0u32;
 	let mut blocks = 0u32;
 	loop {
-		if matches.is_present("events")
-			&& count >= value_t!(matches.value_of("events"), u32).unwrap()
+		if matches.is_present("events") &&
+			count >= value_t!(matches.value_of("events"), u32).unwrap()
 		{
-			return;
+			return
 		};
-		if matches.is_present("blocks")
-			&& blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
+		if matches.is_present("blocks") &&
+			blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
 		{
-			return;
+			return
 		};
 		let event_results = subscription.next_events::<RuntimeEvent, Hash>().await.unwrap();
 		blocks += 1;
 		match event_results {
-			Ok(evts) => {
+			Ok(evts) =>
 				for evr in evts {
 					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 					match &evr.event {
@@ -399,8 +399,7 @@ async fn listen(matches: &ArgMatches<'_>) {
 						},
 						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
 					}
-				}
-			},
+				},
 			Err(_) => error!("couldn't decode event record list"),
 		}
 	}

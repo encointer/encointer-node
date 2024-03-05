@@ -6,9 +6,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use frame_support::derive_impl;
-use frame_support::traits::{
-	tokens::ConversionToAssetBalance, ConstU128, EqualPrivilegeOnly, InstanceFilter,
+use frame_support::{
+	derive_impl,
+	traits::{tokens::ConversionToAssetBalance, ConstU128, EqualPrivilegeOnly, InstanceFilter},
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -67,8 +67,10 @@ pub use encointer_primitives::{
 	communities::{CommunityIdentifier, Location},
 	scheduler::CeremonyPhaseType,
 };
-use frame_support::traits::tokens::{ConversionFromAssetBalance, PayFromAccount};
-use frame_support::traits::ConstBool;
+use frame_support::traits::{
+	tokens::{ConversionFromAssetBalance, PayFromAccount},
+	ConstBool,
+};
 use frame_system::{EnsureRoot, EnsureSigned};
 use sp_runtime::traits::IdentityLookup;
 
@@ -208,9 +210,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::NonTransfer => matches!(c, RuntimeCall::EncointerBazaar(..)),
 			ProxyType::BazaarEdit => matches!(
 				c,
-				RuntimeCall::EncointerBazaar(EncointerBazaarCall::create_offering { .. })
-					| RuntimeCall::EncointerBazaar(EncointerBazaarCall::update_offering { .. })
-					| RuntimeCall::EncointerBazaar(EncointerBazaarCall::delete_offering { .. })
+				RuntimeCall::EncointerBazaar(EncointerBazaarCall::create_offering { .. }) |
+					RuntimeCall::EncointerBazaar(EncointerBazaarCall::update_offering { .. }) |
+					RuntimeCall::EncointerBazaar(EncointerBazaarCall::delete_offering { .. })
 			),
 		}
 	}
@@ -476,7 +478,7 @@ pub struct NoConversion;
 impl ConversionFromAssetBalance<u128, (), u128> for NoConversion {
 	type Error = ();
 	fn from_asset_balance(balance: Balance, _asset_id: ()) -> Result<Balance, Self::Error> {
-		return Ok(balance);
+		return Ok(balance)
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn ensure_successful(_: ()) {}

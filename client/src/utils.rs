@@ -220,10 +220,9 @@ pub mod keys {
 	pub fn get_accountid_from_str(account: &str) -> AccountId {
 		debug!("getting AccountId from -{}-", account);
 		match &account[..2] {
-			"//" => {
+			"//" =>
 				AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
-					.into_account()
-			},
+					.into_account(),
 			_ => AccountPublic::from(sr25519::Public::from_ss58check(account).unwrap())
 				.into_account(),
 		}
@@ -238,7 +237,7 @@ pub mod keys {
 			_ => {
 				if sr25519::Public::from_ss58check(account).is_err() {
 					// could be mnemonic phrase
-					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0;
+					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0
 				}
 				debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 				// open store without password protection
