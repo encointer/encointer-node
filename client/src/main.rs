@@ -20,6 +20,7 @@
 //!
 
 mod cli_args;
+mod commands;
 mod community_spec;
 mod utils;
 
@@ -136,17 +137,17 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .seed_arg()
 		        })
-		        .runner(cmd_new_account),
+		        .runner(commands::keystore::new_account),
 		)
 		.add_cmd(
 		    Command::new("list-accounts")
 		        .description("lists all accounts in keystore")
-		        .runner(cmd_list_accounts),
+		        .runner(commands::keystore::list_accounts),
 		)
 		.add_cmd(
 		    Command::new("print-metadata")
 		        .description("query node metadata and print it as json to stdout")
-		        .runner(cmd_print_metadata),
+		        .runner(commands::frame::print_metadata),
 		)
 		.add_cmd(
 		    Command::new("faucet")
@@ -155,7 +156,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		            .fundees_arg()
 		        })
-		        .runner(cmd_faucet),
+		        .runner(commands::frame::faucet),
 		)
 		.add_cmd(
 		    Command::new("balance")
@@ -166,7 +167,7 @@ async fn main() {
 		            .all_flag()
 		            .at_block_arg()
 		        })
-		        .runner(cmd_balance),
+		        .runner(commands::encointer_core::balance),
 		)
 		.add_cmd(
 		    Command::new("issuance")
@@ -175,7 +176,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		            .at_block_arg()
 		        })
-		        .runner(cmd_issuance),
+		        .runner(commands::encointer_core::issuance),
 		)
 		.add_cmd(
 		    Command::new("transfer")
@@ -205,7 +206,7 @@ async fn main() {
 		                    .help("amount to be transferred"),
 		            )
 		        })
-		        .runner(cmd_transfer),
+		        .runner(commands::encointer_core::transfer),
 		)
 		.add_cmd(
 		    Command::new("transfer_all")
@@ -227,7 +228,7 @@ async fn main() {
 		                    .help("recipient's AccountId in ss58check format"),
 		            )
 		        })
-		        .runner(cmd_transfer_all),
+		        .runner(commands::encointer_core::transfer_all),
 		)
 		.add_cmd(
 		    Command::new("listen")
@@ -249,7 +250,7 @@ async fn main() {
 		                    .help("exit after given number of blocks"),
 		            )
 		        })
-		        .runner(cmd_listen),
+		        .runner(commands::encointer_core::listen_to_events),
 		)
 		.add_cmd(
 		    Command::new("new-community")
@@ -264,7 +265,7 @@ async fn main() {
 		            )
 		            .signer_arg("account with necessary privileges")
 		        })
-		        .runner(cmd_new_community),
+		        .runner(commands::encointer_communities::new_community),
 		)
 		.add_cmd(
 		    Command::new("add-locations")
@@ -280,12 +281,12 @@ async fn main() {
 		                        .help("geojson file that specifies locations to add as points"),
 		                )
 		        })
-		        .runner(cmd_add_locations),
+		        .runner(commands::encointer_communities::add_locations),
 		)
 		.add_cmd(
 		    Command::new("list-communities")
 		        .description("list all registered communities")
-		        .runner(cmd_list_communities),
+		        .runner(commands::encointer_communities::list_communities),
 		)
 		.add_cmd(
 		    Command::new("list-locations")
@@ -294,12 +295,12 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .at_block_arg()
 		        })
-		        .runner(cmd_list_locations),
+		        .runner(commands::encointer_communities::list_locations),
 		)
 		.add_cmd(
 		    Command::new("get-phase")
 		        .description("read current ceremony phase from chain")
-		        .runner(cmd_get_phase),
+		        .runner(commands::encointer_core::get_phase),
 		)
 		.add_cmd(
 		    Command::new("next-phase")
@@ -308,7 +309,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .signer_arg("account with necessary privileges (sudo or councillor)")
 		        })
-		       .runner(cmd_next_phase),
+		       .runner(commands::encointer_core::next_phase),
 		)
 		.add_cmd(
 		    Command::new("list-participants")
@@ -317,7 +318,7 @@ async fn main() {
 		        app.setting(AppSettings::ColoredHelp)
 		            .ceremony_index_arg()
 		        })
-		        .runner(cmd_list_participants),
+		        .runner(commands::encointer_ceremonies::list_participants),
 		)
 		.add_cmd(
 		    Command::new("list-meetups")
@@ -326,7 +327,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .ceremony_index_arg()
 		        })
-		        .runner(cmd_list_meetups),
+		        .runner(commands::encointer_ceremonies::list_meetups),
 		)
 		.add_cmd(
 		    Command::new("print-ceremony-stats")
@@ -335,7 +336,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .ceremony_index_arg()
 		        })
-		        .runner(cmd_print_ceremony_stats),
+		        .runner(commands::encointer_ceremonies::print_ceremony_stats),
 		)
 		.add_cmd(
 		    Command::new("list-attestees")
@@ -344,7 +345,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .ceremony_index_arg()
 		        })
-		        .runner(cmd_list_attestees),
+		        .runner(commands::encointer_ceremonies::list_attestees),
 		)
 		.add_cmd(
 		    Command::new("list-reputables")
@@ -354,7 +355,7 @@ async fn main() {
 		                .at_block_arg()
 		                .verbose_flag()
 		        })
-		        .runner(cmd_list_reputables),
+		        .runner(commands::encointer_ceremonies::list_reputables),
 		        )
 		.add_cmd(
 		    Command::new("register-participant")
@@ -364,7 +365,7 @@ async fn main() {
 		            .account_arg()
 		            .signer_arg("Account which signs the tx.")
 		        })
-		        .runner(cmd_register_participant),
+		        .runner(commands::encointer_ceremonies::register_participant),
 		)
 		.add_cmd(
 		    Command::new("upgrade-registration")
@@ -374,7 +375,7 @@ async fn main() {
 		            .account_arg()
 		            .signer_arg("Account which signs the tx.")
 		        })
-		        .runner(cmd_upgrade_registration),
+		        .runner(commands::encointer_ceremonies::upgrade_registration),
 		)
 		.add_cmd(
 		    Command::new("unregister-participant")
@@ -385,7 +386,7 @@ async fn main() {
 		            .signer_arg("Account which signs the tx.")
 		            .ceremony_index_arg()
 		        })
-		        .runner(cmd_unregister_participant),
+		        .runner(commands::encointer_ceremonies::unregister_participant),
 		)
 		.add_cmd(
 		    Command::new("endorse-newcomers")
@@ -395,7 +396,7 @@ async fn main() {
 		                .bootstrapper_arg()
 		                .endorsees_arg()
 		        })
-		        .runner(cmd_endorse_newcomers),
+		        .runner(commands::encointer_ceremonies::endorse),
 		)
 		.add_cmd(
 		    Command::new("get-bootstrappers-with-remaining-newbie-tickets")
@@ -403,7 +404,7 @@ async fn main() {
 		        .options(|app| {
 		            app.setting(AppSettings::ColoredHelp)
 		        })
-		       .runner(cmd_get_bootstrappers_with_remaining_newbie_tickets),
+		       .runner(commands::encointer_ceremonies::bootstrappers_with_remaining_newbie_tickets),
 		)
 		.add_cmd(
 		    Command::new("get-proof-of-attendance")
@@ -414,7 +415,7 @@ async fn main() {
 		                .account_arg()
 		                .ceremony_index_arg()
 		        })
-		        .runner(cmd_get_proof_of_attendance),
+		        .runner(commands::encointer_ceremonies::get_proof_of_attendance),
 		)
 		.add_cmd(
 		    Command::new("attest-attendees")
@@ -425,7 +426,7 @@ async fn main() {
 		                .optional_cid_arg()
 		                .attestees_arg()
 		        })
-		        .runner(cmd_attest_attendees),
+		        .runner(commands::encointer_ceremonies::attest_attendees),
 		)
 		.add_cmd(
 		    Command::new("new-claim")
@@ -441,7 +442,7 @@ async fn main() {
 		                    .help("participant's vote on the number of people present at meetup time"),
 		            )
 		        })
-		        .runner(cmd_new_claim),
+		        .runner(commands::encointer_ceremonies::new_claim),
 		)
 		.add_cmd(
 		    Command::new("claim-reward")
@@ -452,7 +453,7 @@ async fn main() {
 		                .meetup_index_arg()
 		                .all_flag()
 		        })
-		        .runner(cmd_claim_reward),
+		        .runner(commands::encointer_ceremonies::claim_reward),
 		)
 		.add_cmd(
 		    Command::new("reputation")
@@ -460,7 +461,28 @@ async fn main() {
 		        .options(|app| {
 		            app.setting(AppSettings::ColoredHelp)
 		                .account_arg()})
-		        .runner(cmd_reputation),
+		        .runner(commands::encointer_ceremonies::reputation),
+		)
+		.add_cmd(
+			Command::new("purge-community-ceremony")
+				.description("purge all history within the provided ceremony index range for the specified community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.from_cindex_arg()
+						.to_cindex_arg()
+
+				})
+				.runner(commands::encointer_ceremonies::purge_community_ceremony),
+		)
+		.add_cmd(
+			Command::new("set-meetup-time-offset")
+				.description("signed value to offset the ceremony meetup time relative to solar noon")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.setting(AppSettings::AllowLeadingHyphen)
+						.time_offset_arg()
+				})
+				.runner(commands::encointer_ceremonies::set_meetup_time_offset),
 		)
 		.add_cmd(
 		    Command::new("create-business")
@@ -470,7 +492,7 @@ async fn main() {
 		                .account_arg()
 		                .ipfs_cid_arg()
 		        })
-		        .runner(cmd_create_business),
+		        .runner(commands::encointer_bazaar::create_business),
 		)
 		.add_cmd(
 		    Command::new("update-business")
@@ -480,7 +502,7 @@ async fn main() {
 		                .account_arg()
 		                .ipfs_cid_arg()
 		        })
-		        .runner(cmd_update_business),
+		        .runner(commands::encointer_bazaar::update_business),
 		)
 		.add_cmd(
 		    Command::new("create-offering")
@@ -490,17 +512,17 @@ async fn main() {
 		                .account_arg()
 		                .ipfs_cid_arg()
 		        })
-		        .runner(cmd_create_offering),
+		        .runner(commands::encointer_bazaar::create_offering),
 		)
 		.add_cmd(
 		    Command::new("list-businesses")
 		        .description("List businesses for a community")
-		        .runner(cmd_list_businesses),
+		        .runner(commands::encointer_bazaar::list_businesses),
 		)
 		.add_cmd(
 		    Command::new("list-offerings")
 		        .description("List offerings for a community")
-		        .runner(cmd_list_offerings),
+		        .runner(commands::encointer_bazaar::list_offerings),
 		)
 		.add_cmd(
 		    Command::new("list-business-offerings")
@@ -509,28 +531,7 @@ async fn main() {
 		            app.setting(AppSettings::ColoredHelp)
 		                .account_arg()
 		        })
-		        .runner(cmd_list_business_offerings),
-		)
-		.add_cmd(
-		        Command::new("purge-community-ceremony")
-		            .description("purge all history within the provided ceremony index range for the specified community")
-		            .options(|app| {
-		                app.setting(AppSettings::ColoredHelp)
-		                    .from_cindex_arg()
-		                    .to_cindex_arg()
-
-		            })
-		        .runner(cmd_purge_community_ceremony),
-		)
-		.add_cmd(
-		    Command::new("set-meetup-time-offset")
-		        .description("signed value to offset the ceremony meetup time relative to solar noon")
-		        .options(|app| {
-		            app.setting(AppSettings::ColoredHelp)
-		                .setting(AppSettings::AllowLeadingHyphen)
-		                .time_offset_arg()
-		        })
-		       .runner(cmd_set_meetup_time_offset),
+		        .runner(commands::encointer_bazaar::list_business_offerings),
 		)
 		.add_cmd(
 		    Command::new("create-faucet")
@@ -543,7 +544,7 @@ async fn main() {
 		                .faucet_drip_amount_arg()
 		                .whitelist_arg()
 		        })
-		        .runner(cmd_create_faucet),
+		        .runner(commands::encointer_faucet::create_faucet),
 		)
 		.add_cmd(
 		    Command::new("drip-faucet")
@@ -554,7 +555,7 @@ async fn main() {
 		                .faucet_account_arg()
 		                .cindex_arg()
 		        })
-		        .runner(cmd_drip_faucet),
+		        .runner(commands::encointer_faucet::drip_faucet),
 		)
 		.add_cmd(
 		    Command::new("dissolve-faucet")
@@ -565,7 +566,7 @@ async fn main() {
 		                .faucet_account_arg()
 		                .faucet_beneficiary_arg()
 		        })
-		       .runner(cmd_dissolve_faucet),
+		       .runner(commands::encointer_faucet::dissolve_faucet),
 		)
 		.add_cmd(
 		    Command::new("close-faucet")
@@ -575,7 +576,7 @@ async fn main() {
 		                .account_arg()
 		                .faucet_account_arg()
 		        })
-		        .runner(cmd_close_faucet),
+		        .runner(commands::encointer_faucet::close_faucet),
 		)
 		.add_cmd(
 		    Command::new("set-faucet-reserve-amount")
@@ -585,7 +586,7 @@ async fn main() {
 		                .signer_arg("account with necessary privileges (sudo or councillor)")
 		                .faucet_reserve_amount_arg()
 		        })
-		       .runner(cmd_set_faucet_reserve_amount),
+		       .runner(commands::encointer_faucet::set_faucet_reserve_amount),
 		)
 		.add_cmd(
 		    Command::new("list-faucets")
@@ -595,7 +596,7 @@ async fn main() {
 		                .at_block_arg()
 		                .verbose_flag()
 		        })
-		       .runner(cmd_list_faucets)
+		       .runner(commands::encointer_faucet::list_faucets)
 		)
 		.add_cmd(
 			Command::new("submit-set-inactivity-timeout-proposal")
@@ -605,7 +606,7 @@ async fn main() {
 						.account_arg()
 						.inactivity_timeout_arg()
 				})
-				.runner(cmd_submit_set_inactivity_timeout_proposal),
+				.runner(commands::encointer_democracy::submit_set_inactivity_timeout_proposal),
 		)
 		.add_cmd(
 			Command::new("list-proposals")
@@ -614,7 +615,7 @@ async fn main() {
 					app.setting(AppSettings::ColoredHelp)
 						.at_block_arg()
 				})
-			   .runner(cmd_list_proposals),
+			   .runner(commands::encointer_democracy::list_proposals),
 				)
 		.add_cmd(
 			Command::new("vote")
@@ -626,7 +627,7 @@ async fn main() {
 						.vote_arg()
 						.reputation_vec_arg()
 				})
-				.runner(cmd_vote),
+				.runner(commands::encointer_democracy::vote),
 		)
 		.add_cmd(
 			Command::new("update-proposal-state")
@@ -634,7 +635,7 @@ async fn main() {
 				.options(|app| {
 					app.setting(AppSettings::ColoredHelp).account_arg().proposal_id_arg()
 				})
-				.runner(cmd_update_proposal_state),
+				.runner(commands::encointer_democracy::update_proposal_state),
 		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {
@@ -644,1613 +645,6 @@ async fn main() {
 		.run();
 }
 //////////////////////
-fn cmd_new_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-
-	// This does not place the key into the keystore if we have a seed, but it does
-	// place it into the keystore if the seed is none.
-	let key = store.sr25519_generate_new(SR25519, matches.seed_arg()).unwrap();
-
-	if let Some(suri) = matches.seed_arg() {
-		store.insert(SR25519, suri, &key.0).unwrap();
-	}
-
-	drop(store);
-	println!("{}", key.to_ss58check());
-	Ok(())
-}
-fn cmd_list_accounts(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-	info!("sr25519 keys:");
-	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
-		println!("{}", pubkey.to_ss58check());
-	}
-	info!("ed25519 keys:");
-	for pubkey in store.public_keys::<ed25519::AppPublic>().unwrap().into_iter() {
-		println!("{}", pubkey.to_ss58check());
-	}
-	drop(store);
-	Ok(())
-}
-fn cmd_print_metadata(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		println!("Metadata:\n {}", api.metadata().pretty_format().unwrap());
-		Ok(())
-	})
-	.into()
-}
-fn cmd_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
-		let accounts = matches.fundees_arg().unwrap();
-
-		let existential_deposit = api.get_existential_deposit().await.unwrap();
-		info!("Existential deposit is = {:?}", existential_deposit);
-
-		let mut nonce = api.get_nonce().await.unwrap();
-
-		let amount = reasonable_native_balance(&api).await;
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		for account in accounts.into_iter() {
-			let to = get_accountid_from_str(account);
-			let call = compose_call!(
-				api.metadata(),
-				"Balances",
-				"transfer_keep_alive",
-				ExtrinsicAddress::from(to.clone()),
-				Compact(amount)
-			)
-			.unwrap();
-			let xt: EncointerXt<_> = compose_extrinsic_offline!(
-				api.clone().signer().unwrap(),
-				call.clone(),
-				api.extrinsic_params(nonce)
-			);
-			ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-			// send and watch extrinsic until ready
-			println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
-			let _blockh = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-			nonce += 1;
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_balance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let account = matches.account_arg().unwrap();
-		let maybe_at = matches.at_block_arg();
-		let accountid = get_accountid_from_str(account);
-		match matches.cid_arg() {
-			Some(cid_str) => {
-				let balance = get_community_balance(&api, cid_str, &accountid, maybe_at).await;
-				println! {"{balance:?}"};
-			},
-			None => {
-				if matches.all_flag() {
-					let community_balances = get_all_balances(&api, &accountid).await.unwrap();
-					let bn = get_block_number(&api, maybe_at).await;
-					for b in community_balances.iter() {
-						let dr = get_demurrage_per_block(&api, b.0).await;
-						println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
-					}
-				}
-				let balance = if let Some(data) = api.get_account_data(&accountid).await.unwrap() {
-					data.free
-				} else {
-					0
-				};
-				println!("{balance}");
-			},
-		};
-		Ok(())
-	})
-	.into()
-}
-fn cmd_issuance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let maybe_at = matches.at_block_arg();
-		let cid_str = matches.cid_arg().expect("please supply argument --cid");
-		let issuance = get_community_issuance(&api, cid_str, maybe_at).await;
-		println! {"{issuance:?}"};
-		Ok(())
-	})
-	.into()
-}
-fn cmd_transfer(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		let arg_from = matches.value_of("from").unwrap();
-		let arg_to = matches.value_of("to").unwrap();
-		if !matches.dryrun_flag() {
-			let from = get_pair_from_str(arg_from);
-			info!("from ss58 is {}", from.public().to_ss58check());
-			let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
-			api.set_signer(signer);
-		}
-		let to = get_accountid_from_str(arg_to);
-		info!("to ss58 is {}", to.to_ss58check());
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		let tx_hash = match matches.cid_arg() {
-			Some(cid_str) => {
-				let cid = verify_cid(&api, cid_str, None).await;
-				let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
-					.expect("amount can be converted to fixpoint");
-
-				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-				let xt: EncointerXt<_> = compose_extrinsic!(
-					api,
-					"EncointerBalances",
-					"transfer",
-					to.clone(),
-					cid,
-					amount
-				)
-				.unwrap();
-				if matches.dryrun_flag() {
-					println!("0x{}", hex::encode(xt.function.encode()));
-					None
-				} else {
-					ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-					Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
-				}
-			},
-			None => {
-				let amount = matches
-					.value_of("amount")
-					.unwrap()
-					.parse::<u128>()
-					.expect("amount can be converted to u128");
-				// todo: use keep_alive instead https://github.com/scs/substrate-api-client/issues/747
-				let xt = api.balance_transfer_allow_death(to.clone().into(), amount).await.unwrap();
-				if matches.dryrun_flag() {
-					println!("0x{}", hex::encode(xt.function.encode()));
-					None
-				} else {
-					ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-					Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
-				}
-			},
-		};
-		if let Some(txh) = tx_hash {
-			info!("[+] Transaction included. Hash: {:?}\n", txh);
-			let result = api.get_account_data(&to).await.unwrap().unwrap();
-			println!("balance for {} is now {}", to, result.free);
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_transfer_all(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		let arg_from = matches.value_of("from").unwrap();
-		let arg_to = matches.value_of("to").unwrap();
-		let from = get_pair_from_str(arg_from);
-		let to = get_accountid_from_str(arg_to);
-		info!("from ss58 is {}", from.public().to_ss58check());
-		info!("to ss58 is {}", to.to_ss58check());
-
-		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
-		api.set_signer(signer);
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		let tx_hash = match matches.cid_arg() {
-			Some(cid_str) => {
-				let cid = verify_cid(&api, cid_str, None).await;
-				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-				let xt: EncointerXt<_> =
-					compose_extrinsic!(api, "EncointerBalances", "transfer_all", to.clone(), cid)
-						.unwrap();
-				ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-				api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
-			},
-			None => {
-				error!("No cid specified");
-				std::process::exit(exit_code::NO_CID_SPECIFIED);
-			},
-		};
-		info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
-		let result = api.get_account_data(&to).await.unwrap().unwrap();
-		println!("balance for {} is now {}", to, result.free);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_listen(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		listen(matches).await;
-		Ok(())
-	})
-	.into()
-}
-fn cmd_new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		// -----setup
-		let spec_file = matches.value_of("specfile").unwrap();
-		let spec = read_community_spec_from_file(spec_file);
-		let cid = spec.community_identifier();
-
-		let signer = matches.signer_arg()
-			.map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-		let signer = ParentchainExtrinsicSigner::new(signer);
-
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(signer);
-
-
-		// ------- create calls for xt's
-		let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, api.metadata()));
-		// only the first meetup location has been registered now. register all others one-by-one
-		let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(api.metadata(), cid, l)).collect();
-		let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls));
-
-
-		if matches.signer_arg().is_none() {
-			// return calls as `OpaqueCall`s to get the same return type in both branches
-			(new_community_call, add_location_batch_call) = if contains_sudo_pallet(api.metadata()) {
-				let sudo_new_community = sudo_call(api.metadata(), new_community_call);
-				let sudo_add_location_batch = sudo_call(api.metadata(), add_location_batch_call);
-				info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-				print_raw_call("sudo(new_community)", &sudo_new_community);
-				print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
-
-				(OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
-
-			} else {
-				let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-				info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-				let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
-				let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_batch_call);
-				print_raw_call("collective_propose(new_community)", &propose_new_community);
-				print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
-
-				(OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
-			};
-		}
-
-		// ---- send xt's to chain
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg()).await;
-		println!("{cid}");
-
-		if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
-			error!("Wrong ceremony phase for registering new locations for {}", cid);
-			error!("Aborting without registering additional locations");
-			std::process::exit(exit_code::WRONG_PHASE);
-		}
-		send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg).await;
-		Ok(())
-
-	})
-		.into()
-}
-fn cmd_add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		// -----setup
-		let spec_file = matches.value_of("specfile").unwrap();
-		let spec = read_community_spec_from_file(spec_file);
-
-		let mut api = get_chain_api(matches).await;
-		if !matches.dryrun_flag() {
-			let signer = matches.signer_arg()
-				.map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-			info!("signer ss58 is {}", signer.public().to_ss58check());
-			let signer = ParentchainExtrinsicSigner::new(signer);
-			api.set_signer(signer);
-		}
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-
-		let cid = verify_cid(&api, matches.cid_arg().unwrap(), None).await;
-
-		let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
-			{
-				info!("adding location {:?}", l);
-				add_location_call(api.metadata(), cid, l)
-			}
-		).collect();
-
-		let mut add_location_maybe_batch_call = match  add_location_calls.as_slice() {
-			[call] => OpaqueCall::from_tuple(call),
-			_ => OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls.clone()))
-		};
-
-		if matches.signer_arg().is_none() {
-			// return calls as `OpaqueCall`s to get the same return type in both branches
-			add_location_maybe_batch_call = if contains_sudo_pallet(api.metadata()) {
-				let sudo_add_location_batch = sudo_call(api.metadata(), add_location_maybe_batch_call);
-				info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-				print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
-				OpaqueCall::from_tuple(&sudo_add_location_batch)
-			} else {
-				let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-				info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-				let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_maybe_batch_call);
-				print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
-				OpaqueCall::from_tuple(&propose_add_location_batch)
-			};
-		}
-
-		if matches.dryrun_flag() {
-			println!("0x{}", hex::encode(add_location_maybe_batch_call.encode()));
-		} else {
-			// ---- send xt's to chain
-			if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
-				error!("Wrong ceremony phase for registering new locations for {}", cid);
-				error!("Aborting without registering additional locations");
-				std::process::exit(exit_code::WRONG_PHASE);
-			}
-			send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call).await, tx_payment_cid_arg).await;
-		}
-		Ok(())
-
-	})
-		.into()
-}
-fn cmd_list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let names = get_cid_names(&api).await.unwrap();
-		println!("number of communities:  {}", names.len());
-		for n in names.iter() {
-			let loc = api.get_locations(n.cid).await.unwrap();
-			println!(
-				"{}: {} locations: {}",
-				n.cid,
-				String::from_utf8(n.name.to_vec()).unwrap(),
-				loc.len()
-			);
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let maybe_at = matches.at_block_arg();
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-				.await;
-		println!("listing locations for cid {cid}");
-		let loc = api.get_locations(cid).await.unwrap();
-		for l in loc.iter() {
-			println!(
-				"lat: {} lon: {} (raw lat: {} lon: {})",
-				l.lat,
-				l.lon,
-				i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
-				i128::decode(&mut l.lon.encode().as_slice()).unwrap()
-			);
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-
-		// >>>> add some debug info as well
-		let bn = get_block_number(&api, None).await;
-		debug!("block number: {}", bn);
-		let cindex = get_ceremony_index(&api, None).await;
-		info!("ceremony index: {}", cindex);
-		let tnext: Moment = api.get_next_phase_timestamp().await.unwrap();
-		debug!("next phase timestamp: {}", tnext);
-		// <<<<
-
-		let phase = api.get_current_phase().await.unwrap();
-		println!("{phase:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let signer = matches.signer_arg().map_or_else(
-			|| AccountKeyring::Alice.pair(),
-			|signer| get_pair_from_str(signer).into(),
-		);
-
-		let mut api = get_chain_api(matches).await;
-		let signer = ParentchainExtrinsicSigner::new(signer);
-		api.set_signer(signer);
-		let next_phase_call =
-			compose_call!(api.metadata(), "EncointerScheduler", "next_phase").unwrap();
-
-		// return calls as `OpaqueCall`s to get the same return type in both branches
-		let next_phase_call = if contains_sudo_pallet(api.metadata()) {
-			let sudo_next_phase_call = sudo_call(api.metadata(), next_phase_call);
-			info!("Printing raw sudo call for js/apps:");
-			print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
-
-			OpaqueCall::from_tuple(&sudo_next_phase_call)
-		} else {
-			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-			let propose_next_phase =
-				collective_propose_call(api.metadata(), threshold, next_phase_call);
-			print_raw_call("collective_propose(next_phase)", &propose_next_phase);
-
-			OpaqueCall::from_tuple(&propose_next_phase)
-		};
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg).await;
-
-		let phase = api.get_current_phase().await.unwrap();
-		println!("Phase is now: {phase:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
-
-		let cindex = matches.ceremony_index_arg().map_or_else(
-			|| current_ceremony_index,
-			|ci| into_effective_cindex(ci, current_ceremony_index),
-		);
-
-		println!("listing participants for cid {cid} and ceremony nr {cindex}");
-
-		let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
-
-		let registries =
-			vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
-
-		let mut num_participants: Vec<u64> = vec![0, 0, 0, 0];
-		for i in 0..registries.len() {
-			println!("Querying {}", registries[i]);
-
-			let count: ParticipantIndexType = api
-				.get_storage_map(ENCOINTER_CEREMONIES, counts[i], (cid, cindex), None)
-				.await
-				.unwrap()
-				.unwrap_or(0);
-			println!("number of participants assigned:  {count}");
-			num_participants[i] = count;
-			for p_index in 1..count + 1 {
-				let accountid: AccountId = api
-					.get_storage_double_map(
-						ENCOINTER_CEREMONIES,
-						registries[i],
-						(cid, cindex),
-						p_index,
-						None,
-					)
-					.await
-					.unwrap()
-					.unwrap();
-				println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
-			}
-		}
-		println!("total: {} guaranteed seats + {} newbies = {} total participants who would like to attend",
-				 num_participants[0..=2].iter().sum::<u64>(),
-				 num_participants[3],
-				 num_participants[0..=3].iter().sum::<u64>()
-		);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
-
-		let cindex = matches.ceremony_index_arg().map_or_else(
-			|| current_ceremony_index,
-			|ci| into_effective_cindex(ci, current_ceremony_index),
-		);
-
-		let community_ceremony = (cid, cindex);
-
-		println!("listing meetups for cid {cid} and ceremony nr {cindex}");
-
-		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
-
-		let mut num_assignees = 0u64;
-
-		for meetup in stats.meetups.iter() {
-			println!(
-				"MeetupRegistry[{:?}, {}] location is {:?}, {:?}",
-				&community_ceremony, meetup.index, meetup.location.lat, meetup.location.lon
-			);
-
-			println!(
-				"MeetupRegistry[{:?}, {}] meeting time is {:?}",
-				&community_ceremony, meetup.index, meetup.time
-			);
-
-			if !meetup.registrations.is_empty() {
-				let num = meetup.registrations.len();
-				num_assignees += num as u64;
-				println!(
-					"MeetupRegistry[{:?}, {}] participants: {}",
-					&community_ceremony, meetup.index, num
-				);
-				for (participant, _registration) in meetup.registrations.iter() {
-					println!("   {participant}");
-				}
-			} else {
-				println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
-			}
-		}
-		println!("total number of assignees: {num_assignees}");
-		Ok(())
-	})
-	.into()
-}
-
-fn cmd_print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
-
-		let cindex = matches.ceremony_index_arg().map_or_else(
-			|| current_ceremony_index,
-			|ci| into_effective_cindex(ci, current_ceremony_index),
-		);
-
-		let community_ceremony = (cid, cindex);
-
-		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
-
-		// serialization prints the the account id better than `debug`
-		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
-
-		let cindex = matches.ceremony_index_arg().map_or_else(
-			|| current_ceremony_index,
-			|ci| into_effective_cindex(ci, current_ceremony_index),
-		);
-
-		let community_ceremony = (cid, cindex);
-
-		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
-
-		// serialization prints the the account id better than `debug`
-		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_reputables(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-
-		let is_verbose = matches.verbose_flag();
-		let at_block = matches.at_block_arg();
-
-		let lifetime = get_reputation_lifetime(&api, at_block).await;
-		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
-
-
-		let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
-		let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
-
-		let community_ids = get_cid_names(&api).await.unwrap().into_iter().map(|names| names.cid);
-
-		let mut reputables_csv = Vec::new();
-
-		println!("Listing the number of attested attendees for each community and ceremony for cycles [{:}:{:}]", ceremony_indices.first().unwrap(), ceremony_indices.last().unwrap());
-		for community_id in community_ids {
-			println!("Community ID: {community_id:?}");
-			let mut reputables: HashMap<AccountId, usize> = HashMap::new();
-			for ceremony_index in &ceremony_indices {
-				let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block).await;
-				println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:} (noshows: {:})", attendees.len(), noshows.len());
-				for attendee in attendees {
-					reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
-					*reputables.entry(attendee.clone()).or_insert(0) += 1;
-				}
-			}
-			println!("Reputables in {community_id:?} (unique accounts with at least one attendance) {:}", reputables.keys().len());
-		}
-		if is_verbose {
-			for reputable in reputables_csv {
-				println!("{reputable}");
-			}
-		}
-		Ok(())
-
-	})
-	.into()
-}
-fn cmd_upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let arg_who = matches.account_arg().unwrap();
-		let accountid = get_accountid_from_str(arg_who);
-		let signer = match matches.signer_arg() {
-			Some(sig) => get_pair_from_str(sig),
-			None => get_pair_from_str(arg_who),
-		};
-
-		let api = get_chain_api(matches).await;
-		let cindex = get_ceremony_index(&api, None).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-
-		let current_phase = api.get_current_phase().await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
-		{
-			error!("wrong ceremony phase for registering participant");
-			std::process::exit(exit_code::WRONG_PHASE);
-		}
-		let mut reputation_cindex = cindex;
-		if current_phase == CeremonyPhaseType::Registering {
-			reputation_cindex -= 1;
-		}
-		let rep = get_reputation(&api, &accountid, cid, reputation_cindex).await;
-		info!("{} has reputation {:?}", accountid, rep);
-		let proof = match rep {
-			Reputation::VerifiedUnlinked => {
-				prove_attendance(accountid, cid, reputation_cindex, arg_who)
-			},
-			_ => {
-				error!("No valid reputation in last ceremony.");
-				std::process::exit(exit_code::INVALID_REPUTATION);
-			},
-		};
-
-		let mut api = api;
-		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		api.set_signer(signer);
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerCeremonies", "upgrade_registration", cid, proof)
-				.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		// send and watch extrinsic until ready
-		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		info!("Upgrade registration sent for {}. status: '{:?}'", arg_who, report.status);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let arg_who = matches.account_arg().unwrap();
-		let accountid = get_accountid_from_str(arg_who);
-		let signer = match matches.signer_arg() {
-			Some(sig) => get_pair_from_str(sig),
-			None => get_pair_from_str(arg_who),
-		};
-
-		let api = get_chain_api(matches).await;
-		let cindex = get_ceremony_index(&api, None).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let rep = get_reputation(&api, &accountid, cid, cindex - 1).await;
-		info!("{} has reputation {:?}", accountid, rep);
-		let proof = match rep {
-			Reputation::Unverified => None,
-			Reputation::UnverifiedReputable => None, // this should never be the case during Registering!
-			Reputation::VerifiedUnlinked => {
-				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
-			},
-			Reputation::VerifiedLinked(_) => {
-				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
-			},
-		};
-		debug!("proof: {:x?}", proof.encode());
-		let current_phase = api.get_current_phase().await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
-		{
-			error!("wrong ceremony phase for registering participant");
-			std::process::exit(exit_code::WRONG_PHASE);
-		}
-		let mut api = api;
-		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		api.set_signer(signer);
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerCeremonies", "register_participant", cid, proof)
-				.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		// send and watch extrinsic until ready
-		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		info!("Registration sent for {}. status: '{:?}'", arg_who, report.status);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let arg_who = matches.account_arg().unwrap();
-		let signer = match matches.signer_arg() {
-			Some(sig) => get_pair_from_str(sig),
-			None => get_pair_from_str(arg_who),
-		};
-
-		let api = get_chain_api(matches).await;
-
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-
-		let cc = match matches.ceremony_index_arg() {
-			Some(cindex_arg) => {
-				let current_ceremony_index = get_ceremony_index(&api, None).await;
-				let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
-				Some((cid, cindex))
-			},
-			None => None,
-		};
-
-		let current_phase = api.get_current_phase().await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
-		{
-			error!("wrong ceremony phase for unregistering");
-			std::process::exit(exit_code::WRONG_PHASE);
-		}
-		let mut api = api;
-		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		api.set_signer(signer);
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerCeremonies", "unregister_participant", cid, cc)
-				.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		// Send and watch extrinsic until ready
-		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		info!("Unregister Participant sent for {}. status: '{:?}'", arg_who, report.status);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_endorse_newcomers(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		endorse_newcomers(&mut api, cid, matches).await.unwrap();
-
-		Ok(())
-	})
-	.into()
-}
-fn cmd_get_bootstrappers_with_remaining_newbie_tickets(
-	_args: &str,
-	matches: &ArgMatches<'_>,
-) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let bs_with_tickets: Vec<BootstrapperWithTickets> =
-			get_bootstrappers_with_remaining_newbie_tickets(&api, cid).await.unwrap();
-
-		info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
-
-		// transform it to simple tuples, which is easier to parse in python
-		let bt_vec = bs_with_tickets
-			.into_iter()
-			.map(|bt| (bt.bootstrapper.to_ss58check(), bt.remaining_newbie_tickets))
-			.collect::<Vec<_>>();
-
-		println!("{bt_vec:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_get_proof_of_attendance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let arg_who = matches.account_arg().unwrap();
-		let accountid = get_accountid_from_str(arg_who);
-		let api = get_chain_api(matches).await;
-
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
-
-		let cindex_arg = matches.ceremony_index_arg().unwrap_or(-1);
-		let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
-
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-
-		debug!("Getting proof for ceremony index: {:?}", cindex);
-		let proof = prove_attendance(accountid, cid, cindex, arg_who);
-		info!("Proof: {:?}\n", &proof);
-		println!("0x{}", hex::encode(proof.encode()));
-
-		Ok(())
-	})
-	.into()
-}
-fn cmd_attest_attendees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-
-		let attestees: Vec<_> = matches
-			.attestees_arg()
-			.unwrap()
-			.into_iter()
-			.map(get_accountid_from_str)
-			.collect();
-
-		let vote = attestees.len() as u32 + 1u32;
-
-		debug!("attestees: {:?}", attestees);
-
-		info!("send attest_attendees by {}", who.public());
-
-		let mut api = get_chain_api(matches).await;
-		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone()));
-		api.set_signer(signer);
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-
-		let xt: EncointerXt<_> = compose_extrinsic!(
-			api,
-			"EncointerCeremonies",
-			"attest_attendees",
-			cid,
-			vote,
-			attestees
-		)
-		.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-
-		println!("Claims sent by {}. status: '{:?}'", who.public(), report.status);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_new_claim(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let arg_who = matches.account_arg().unwrap();
-		let claimant = get_pair_from_str(arg_who);
-
-		let n_participants = matches.value_of("vote").unwrap().parse::<u32>().unwrap();
-
-		let claim = new_claim_for(&api, &claimant.into(), cid, n_participants).await;
-
-		println!("{}", hex::encode(claim));
-
-		Ok(())
-	})
-	.into()
-}
-fn cmd_claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-
-		let signer = match matches.signer_arg() {
-			Some(sig) => get_pair_from_str(sig),
-			None => panic!("please specify --signer."),
-		};
-		let mut api = api;
-		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		api.set_signer(signer.clone());
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		let meetup_index_arg = matches.meetup_index_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		if matches.all_flag() {
-			let mut cindex = get_ceremony_index(&api, None).await;
-			if api.get_current_phase().await.unwrap() == CeremonyPhaseType::Registering {
-				cindex -= 1;
-			}
-			let meetup_count = api
-				.get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), None)
-				.await
-				.unwrap()
-				.unwrap_or(0u64);
-			let calls: Vec<_> = (1u64..=meetup_count)
-				.map(|idx| {
-					compose_call!(
-						api.metadata(),
-						ENCOINTER_CEREMONIES,
-						"claim_rewards",
-						cid,
-						Option::<MeetupIndexType>::Some(idx)
-					)
-					.unwrap()
-				})
-				.collect();
-			let batch_call = compose_call!(api.metadata(), "Utility", "batch", calls).unwrap();
-			send_and_wait_for_in_block(&api, xt(&api, batch_call).await, tx_payment_cid_arg).await;
-			println!("Claiming reward for all meetup indexes. xt-status: 'ready'");
-		} else {
-			let meetup_index = meetup_index_arg;
-			let xt: EncointerXt<_> =
-				compose_extrinsic!(api, ENCOINTER_CEREMONIES, "claim_rewards", cid, meetup_index)
-					.unwrap();
-			ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-			let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-			match meetup_index_arg {
-				Some(idx) => {
-					println!(
-						"Claiming reward for meetup_index {idx}. xt-status: '{:?}'",
-						report.status
-					);
-				},
-				None => {
-					println!(
-						"Claiming reward for {}. xt-status: 'ready'",
-						signer.public_account_id()
-					);
-				},
-			}
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_reputation(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let account = matches.account_arg().unwrap();
-		let account_id = get_accountid_from_str(account);
-		if let Some(reputation) = get_reputation_history(&api, &account_id).await {
-			for rep in reputation.iter() {
-				println!("{}, {}, {:?}", rep.0, rep.1.community_identifier, rep.1.reputation);
-			}
-		} else {
-			error!("could not fetch reputation over rpc");
-			std::process::exit(exit_code::RPC_ERROR);
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_create_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		send_bazaar_xt(matches, &BazaarCalls::CreateBusiness).await.unwrap();
-		Ok(())
-	})
-	.into()
-}
-fn cmd_update_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		send_bazaar_xt(matches, &BazaarCalls::UpdateBusiness).await.unwrap();
-		Ok(())
-	})
-	.into()
-}
-fn cmd_create_offering(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		send_bazaar_xt(matches, &BazaarCalls::CreateOffering).await.unwrap();
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_businesses(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let businesses = get_businesses(&api, cid).await.unwrap();
-		// only print plain businesses to be able to parse them in python scripts
-		println!("{businesses:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let offerings = get_offerings(&api, cid).await.unwrap();
-		// only print plain offerings to be able to parse them in python scripts
-		println!("{offerings:?}");
-		Ok(())
-	})
-	.into()
-}
-
-fn cmd_list_business_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let account = matches.account_arg().map(get_accountid_from_str).unwrap();
-		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let offerings = get_offerings_for_business(&api, cid, account).await.unwrap();
-		// only print plain offerings to be able to parse them in python scripts
-		println!("{offerings:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_set_meetup_time_offset(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		let signer = ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair());
-		api.set_signer(signer);
-		let time_offset = matches.time_offset_arg().unwrap_or(0);
-		let call = compose_call!(
-			api.metadata(),
-			"EncointerCeremonies",
-			"set_meetup_time_offset",
-			time_offset
-		)
-		.unwrap();
-
-		// return calls as `OpaqueCall`s to get the same return type in both branches
-		let privileged_call = if contains_sudo_pallet(api.metadata()) {
-			let sudo_call = sudo_call(api.metadata(), call);
-			info!("Printing raw sudo call for js/apps:");
-			print_raw_call("sudo(...)", &sudo_call);
-			OpaqueCall::from_tuple(&sudo_call)
-		} else {
-			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-			let propose_call = collective_propose_call(api.metadata(), threshold, call);
-			print_raw_call("collective_propose(...)", &propose_call);
-			OpaqueCall::from_tuple(&propose_call)
-		};
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-		let xt = xt(&api, privileged_call).await;
-		send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg).await;
-		Ok(())
-	})
-	.into()
-}
-
-fn cmd_purge_community_ceremony(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let sudoer = AccountKeyring::Alice.pair();
-		let signer = ParentchainExtrinsicSigner::new(sudoer);
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(signer);
-
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
-
-		let from_cindex_arg = matches.from_cindex_arg().unwrap_or(0);
-		let to_cindex_arg = matches.to_cindex_arg().unwrap_or(0);
-
-		let from_cindex = into_effective_cindex(from_cindex_arg, current_ceremony_index);
-		let to_cindex = into_effective_cindex(to_cindex_arg, current_ceremony_index);
-
-		if from_cindex > to_cindex {
-			panic!("'from' <= 'to' ceremony index violated");
-		}
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		println!("purging ceremony index range [{from_cindex}  {to_cindex}] for community {cid}");
-
-		let calls: Vec<_> = (from_cindex..=to_cindex)
-			.map(|idx| {
-				compose_call!(
-					api.metadata(),
-					"EncointerCeremonies",
-					"purge_community_ceremony",
-					(cid, idx)
-				)
-				.unwrap()
-			})
-			.collect();
-		let batch_call = compose_call!(api.metadata(), "Utility", "batch", calls).unwrap();
-		let unsigned_sudo_call =
-			compose_call!(api.metadata(), "Sudo", "sudo", batch_call.clone()).unwrap();
-		info!(
-			"raw sudo batch call to sign with js/apps {}: 0x{}",
-			cid,
-			hex::encode(unsigned_sudo_call.encode())
-		);
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-		let xt: EncointerXt<_> = compose_extrinsic!(api, "Sudo", "sudo", batch_call).unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
-		info!("[+] Transaction got included. Block Hash: {:?}\n", tx_report.block_hash.unwrap());
-		Ok(())
-	})
-	.into()
-}
-fn cmd_create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-
-		let faucet_name_raw = matches.faucet_name_arg().unwrap();
-		let faucet_balance = matches.faucet_balance_arg().unwrap();
-		let drip_amount = matches.faucet_drip_amount_arg().unwrap();
-
-		let api2 = api.clone();
-		let whitelist = futures::future::join_all(matches.whitelist_arg().map(|wl| async move {
-			let whitelist_vec: Vec<_> = futures::future::join_all(wl.into_iter().map(|c| {
-				let api_local = api2.clone();
-				async move { verify_cid(&api_local, c, None).await }
-			}))
-			.await;
-			WhiteListType::try_from(whitelist_vec).unwrap()
-		}))
-		.await;
-
-		let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> = compose_extrinsic!(
-			api,
-			"EncointerFaucet",
-			"create_faucet",
-			faucet_name,
-			faucet_balance,
-			whitelist,
-			drip_amount
-		)
-		.unwrap();
-
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-
-		match result {
-			Ok(report) => {
-				for event in report.events.unwrap().iter() {
-					if event.pallet_name() == "EncointerFaucet"
-						&& event.variant_name() == "FaucetCreated"
-					{
-						println!(
-							"{}",
-							AccountId::decode(&mut event.field_bytes()[0..32].as_ref())
-								.unwrap()
-								.to_ss58check()
-						);
-					}
-				}
-			},
-			Err(e) => {
-				println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
-			},
-		};
-
-		Ok(())
-	})
-	.into()
-}
-fn cmd_drip_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-
-		let cindex = matches.cindex_arg().unwrap();
-		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerFaucet", "drip", faucet_account, cid, cindex)
-				.unwrap();
-
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-
-		match result {
-			Ok(_report) => {
-				println!("Faucet dripped to {}", who.public());
-			},
-			Err(e) => {
-				println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
-			},
-		};
-
-		Ok(())
-	})
-	.into()
-}
-fn cmd_dissolve_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let signer = matches.signer_arg().map_or_else(
-			|| AccountKeyring::Alice.pair(),
-			|signer| get_pair_from_str(signer).into(),
-		);
-		let signer = ParentchainExtrinsicSigner::new(signer);
-
-		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
-		let beneficiary = get_accountid_from_str(matches.faucet_beneficiary_arg().unwrap());
-
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(signer);
-
-		let dissolve_faucet_call = compose_call!(
-			api.metadata(),
-			"EncointerFaucet",
-			"dissolve_faucet",
-			faucet_account.clone(),
-			beneficiary
-		)
-		.unwrap();
-
-		// return calls as `OpaqueCall`s to get the same return type in both branches
-		let dissolve_faucet_call = if contains_sudo_pallet(api.metadata()) {
-			let dissolve_faucet_call = sudo_call(api.metadata(), dissolve_faucet_call);
-			info!("Printing raw sudo call for js/apps:");
-			print_raw_call("sudo(dissolve_faucet)", &dissolve_faucet_call);
-
-			OpaqueCall::from_tuple(&dissolve_faucet_call)
-		} else {
-			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-			let propose_dissolve_faucet =
-				collective_propose_call(api.metadata(), threshold, dissolve_faucet_call);
-			print_raw_call("collective_propose(dissolve_faucet)", &propose_dissolve_faucet);
-
-			OpaqueCall::from_tuple(&propose_dissolve_faucet)
-		};
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		send_and_wait_for_in_block(&api, xt(&api, dissolve_faucet_call).await, tx_payment_cid_arg)
-			.await;
-
-		println!("Faucet dissolved: {faucet_account:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_close_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who)));
-
-		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerFaucet", "close_faucet", faucet_account.clone())
-				.unwrap();
-
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-
-		println!("Faucet closed: {faucet_account}. status: '{:?}'", report.status);
-		Ok(())
-	})
-	.into()
-}
-fn cmd_set_faucet_reserve_amount(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let signer = matches.signer_arg().map_or_else(
-			|| AccountKeyring::Alice.pair(),
-			|signer| get_pair_from_str(signer).into(),
-		);
-		let signer = ParentchainExtrinsicSigner::new(signer);
-
-		let reserve_amount = matches.faucet_reserve_amount_arg().unwrap();
-
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(signer);
-
-		let set_reserve_amount_call =
-			compose_call!(api.metadata(), "EncointerFaucet", "set_reserve_amount", reserve_amount)
-				.unwrap();
-		// return calls as `OpaqueCall`s to get the same return type in both branches
-		let set_reserve_amount_call = if contains_sudo_pallet(api.metadata()) {
-			let set_reserve_amount_call = sudo_call(api.metadata(), set_reserve_amount_call);
-			info!("Printing raw sudo call for js/apps:");
-			print_raw_call("sudo(set_reserve_amount)", &set_reserve_amount_call);
-
-			OpaqueCall::from_tuple(&set_reserve_amount_call)
-		} else {
-			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-			let propose_set_reserve_amount =
-				collective_propose_call(api.metadata(), threshold, set_reserve_amount_call);
-			print_raw_call("collective_propose(set_reserve_amount)", &propose_set_reserve_amount);
-
-			OpaqueCall::from_tuple(&propose_set_reserve_amount)
-		};
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		send_and_wait_for_in_block(
-			&api,
-			xt(&api, set_reserve_amount_call).await,
-			tx_payment_cid_arg,
-		)
-		.await;
-
-		println!("Reserve amount set: {reserve_amount:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_faucets(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-
-		let is_verbose = matches.verbose_flag();
-		let at_block = matches.at_block_arg();
-
-		let key_prefix =
-			api.get_storage_map_key_prefix("EncointerFaucet", "Faucets").await.unwrap();
-
-		let max_keys = 1000;
-		let storage_keys = api
-			.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
-			.await
-			.unwrap();
-
-		if storage_keys.len() == max_keys as usize {
-			error!("results can be wrong because max keys reached for query")
-		}
-
-		for storage_key in storage_keys.iter() {
-			let key_postfix = storage_key.as_ref();
-			let faucet_address =
-				AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap();
-			let faucet: Faucet<AccountId, Balance> =
-				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
-
-			if is_verbose {
-				println!("address: {}", faucet_address.to_ss58check());
-				println!("name: {}", String::from_utf8(faucet.name.to_vec()).unwrap());
-				println!(
-					"creator: {}",
-					AccountId::decode(&mut faucet.creator.as_ref()).unwrap().to_ss58check()
-				);
-				println!(
-					"balance: {}",
-					api.get_account_data(&faucet_address).await.unwrap().unwrap().free
-				);
-				println!("drip amount: {}", faucet.drip_amount);
-				if let Some(whitelist) = faucet.whitelist {
-					println!("whitelist:");
-					for cid in whitelist.to_vec() {
-						println!("{}", cid);
-					}
-				} else {
-					println!("whitelist: None");
-				}
-				println!("");
-			} else {
-				println! {"{}", faucet_address};
-			}
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_submit_set_inactivity_timeout_proposal(
-	_args: &str,
-	matches: &ArgMatches<'_>,
-) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-		let inactivity_timeout = matches.inactivity_timeout_arg().unwrap();
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		let xt: EncointerXt<_> = compose_extrinsic!(
-			api,
-			"EncointerDemocracy",
-			"submit_proposal",
-			ProposalAction::SetInactivityTimeout(inactivity_timeout)
-		)
-		.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		println!("Proposal Submitted: Set inactivity timeout to {inactivity_timeout:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let at_block = matches.at_block_arg();
-		let key_prefix =
-			api.get_storage_map_key_prefix("EncointerDemocracy", "Proposals").await.unwrap();
-		let max_keys = 1000;
-		let storage_keys = api
-			.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
-			.await
-			.unwrap();
-		if storage_keys.len() == max_keys as usize {
-			error!("results can be wrong because max keys reached for query")
-		}
-		for storage_key in storage_keys.iter() {
-			let key_postfix = storage_key.as_ref();
-			let proposal_id =
-				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
-					.unwrap();
-			let proposal: Proposal<BlockNumber> =
-				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
-			println!("id: {}", proposal_id);
-			println!("action: {:?}", proposal.action);
-			println!("start block: {}", proposal.start);
-			println!("start cindex: {}", proposal.start_cindex);
-			println!("state: {:?}", proposal.state);
-			println!("");
-		}
-		Ok(())
-	})
-	.into()
-}
-fn cmd_vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-		let proposal_id = matches.proposal_id_arg().unwrap();
-		let vote_raw = matches.vote_arg().unwrap();
-		let vote = match vote_raw {
-			"aye" => Vote::Aye,
-			"nay" => Vote::Nay,
-			&_ => panic!("invalid vote"),
-		};
-		let reputation_vec: Vec<CommunityCeremony> = futures::future::join_all(
-			matches
-				.reputation_vec_arg()
-				.ok_or(clap::Error::with_description(
-					"missing reputation-vec argument",
-					clap::ErrorKind::MissingRequiredArgument,
-				))?
-				.into_iter()
-				.map(|rep| {
-					let api_local = api.clone();
-					async move {
-						let cc: Vec<_> = rep.split("_").collect();
-						(
-							verify_cid(&api_local, cc[0], None).await,
-							cc[1].parse::<CeremonyIndexType>().unwrap(),
-						)
-					}
-				}),
-		)
-		.await;
-		let reputation_bvec = ReputationVec::<ConstU32<1024>>::try_from(reputation_vec);
-
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-		let xt: EncointerXt<_> = compose_extrinsic!(
-			api,
-			"EncointerDemocracy",
-			"vote",
-			proposal_id,
-			vote,
-			reputation_bvec
-		)
-		.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
-		Ok(())
-	})
-	.into()
-}
-fn cmd_update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-		let proposal_id = matches.proposal_id_arg().unwrap();
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerDemocracy", "update_proposal_state", proposal_id)
-				.unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		println!("Proposal state updated for proposal {proposal_id:?}");
-		Ok(())
-	})
-	.into()
-}
 async fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
 	let url = format!(
 		"{}:{}",

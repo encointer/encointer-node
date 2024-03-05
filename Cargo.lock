@@ -15,8 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bd62974353f0e96a110d08b59b670bf6b3af6095da1d1d410687c456546d302"
+source = "git+https://github.com/brenzi/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable#cb238d79dc46a303a2958c0897a6d67b2eb80175"
 dependencies = [
  "ac-primitives",
  "log",
