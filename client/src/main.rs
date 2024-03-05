@@ -1394,221 +1394,84 @@ async fn main() {
 		//             Ok(())
 		//         }),
 		// )
-		// .add_cmd(
-		//     Command::new("reputation")
-		//         .description("List reputation history for an account")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()})
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//             let account = matches.account_arg().unwrap();
-		//             let account_id = get_accountid_from_str(account);
-		//             if let Some(reputation) = get_reputation_history(&api, &account_id).await {
-		//                 for rep in reputation.iter() {
-		//                     println!("{}, {}, {:?}", rep.0, rep.1.community_identifier, rep.1.reputation);
-		//                 }
-		//             } else {
-		//                 error!("could not fetch reputation over rpc");
-		//                 std::process::exit(exit_code::RPC_ERROR);
-		//             }
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("create-business")
-		//         .description("Register a community business on behalf of the account")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .ipfs_cid_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             send_bazaar_xt(matches, &BazaarCalls::CreateBusiness).await.unwrap();
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("update-business")
-		//         .description("Update an already existing community business on behalf of the account")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .ipfs_cid_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             send_bazaar_xt(matches, &BazaarCalls::UpdateBusiness).await.unwrap();
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("create-offering")
-		//         .description("Create an offering for the business belonging to account")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .ipfs_cid_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             send_bazaar_xt(matches, &BazaarCalls::CreateOffering).await.unwrap();
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-businesses")
-		//         .description("List businesses for a community")
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//
-		//             let businesses = extract_and_execute(
-		//                 matches, |api, cid| get_businesses(&api, cid).await.unwrap()
-		//             );
-		//             // only print plain businesses to be able to parse them in python scripts
-		//             println!("{businesses:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-offerings")
-		//         .description("List offerings for a community")
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let offerings = extract_and_execute(
-		//                 matches, |api, cid| get_offerings(&api, cid).await.unwrap()
-		//             );
-		//             // only print plain offerings to be able to parse them in python scripts
-		//             println!("{offerings:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-business-offerings")
-		//         .description("List offerings for a business")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let account = matches.account_arg().map(get_accountid_from_str).unwrap();
-		//
-		//             let offerings = extract_and_execute(
-		//                 matches, |api, cid| get_offerings_for_business(&api, cid, account).await.unwrap()
-		//             );
-		//             // only print plain offerings to be able to parse them in python scripts
-		//             println!("{offerings:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//         Command::new("purge-community-ceremony")
-		//             .description("purge all history within the provided ceremony index range for the specified community")
-		//             .options(|app| {
-		//                 app.setting(AppSettings::ColoredHelp)
-		//                     .from_cindex_arg()
-		//                     .to_cindex_arg()
-		//
-		//             })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let sudoer = AccountKeyring::Alice.pair();
-		//             let signer = ParentchainExtrinsicSigner::new(sudoer);
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(signer);
-		//
-		//             let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//
-		//             let from_cindex_arg = matches.from_cindex_arg().unwrap_or(0);
-		//             let to_cindex_arg = matches.to_cindex_arg().unwrap_or(0);
-		//
-		//             let from_cindex = into_effective_cindex(from_cindex_arg, current_ceremony_index);
-		//             let to_cindex = into_effective_cindex(to_cindex_arg, current_ceremony_index);
-		//
-		//             if from_cindex > to_cindex {
-		//                 panic!("'from' <= 'to' ceremony index violated");
-		//             }
-		//             let cid = verify_cid(&api,
-		//                                  matches
-		//                                      .cid_arg()
-		//                                      .expect("please supply argument --cid"),
-		//                 None
-		//             ).await;
-		//             println!("purging ceremony index range [{from_cindex}  {to_cindex}] for community {cid}");
-		//
-		//             let calls: Vec<_> = (from_cindex..=to_cindex)
-		//                 .map(|idx| compose_call!(
-		//                     api.metadata(),
-		//                     "EncointerCeremonies",
-		//                     "purge_community_ceremony",
-		//                     (cid, idx)
-		//                 ).unwrap())
-		//                 .collect();
-		//             let batch_call = compose_call!(
-		//                 api.metadata(),
-		//                 "Utility",
-		//                 "batch",
-		//                 calls
-		//             ).unwrap();
-		//             let unsigned_sudo_call = compose_call!(
-		//                 api.metadata(),
-		//                 "Sudo",
-		//                 "sudo",
-		//                 batch_call.clone()
-		//             ).unwrap();
-		//             info!("raw sudo batch call to sign with js/apps {}: 0x{}", cid, hex::encode(unsigned_sudo_call.encode()));
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "Sudo",
-		//                 "sudo",
-		//                 batch_call
-		//             ).unwrap();
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//             let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
-		//             info!("[+] Transaction got included. Block Hash: {:?}\n", tx_report.block_hash.unwrap());
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("set-meetup-time-offset")
-		//         .description("signed value to offset the ceremony meetup time relative to solar noon")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .setting(AppSettings::AllowLeadingHyphen)
-		//                 .time_offset_arg()
-		//         })
-		//        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let mut api = get_chain_api(matches).await;
-		//             let signer = ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair());
-		//             api
-		//                 .set_signer(signer);
-		//             let time_offset = matches.time_offset_arg().unwrap_or(0);
-		//             let call = compose_call!(
-		//                 api.metadata(),
-		//                 "EncointerCeremonies",
-		//                 "set_meetup_time_offset",
-		//                 time_offset
-		//             ).unwrap();
-		//
-		//             // return calls as `OpaqueCall`s to get the same return type in both branches
-		//             let privileged_call = if contains_sudo_pallet(api.metadata()) {
-		//                 let sudo_call = sudo_call(api.metadata(), call);
-		//                 info!("Printing raw sudo call for js/apps:");
-		//                 print_raw_call("sudo(...)", &sudo_call);
-		//                 OpaqueCall::from_tuple(&sudo_call)
-		//             } else {
-		//                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-		//                 info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-		//                 let propose_call = collective_propose_call(api.metadata(), threshold, call);
-		//                 print_raw_call("collective_propose(...)", &propose_call);
-		//                 OpaqueCall::from_tuple(&propose_call)
-		//             };
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//             let xt = xt(&api, privileged_call).await;
-		//             send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg);
-		//             Ok(())
-		//         }),
-		// )
+		.add_cmd(
+		    Command::new("reputation")
+		        .description("List reputation history for an account")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()})
+		        .runner(cmd_reputation),
+		)
+		.add_cmd(
+		    Command::new("create-business")
+		        .description("Register a community business on behalf of the account")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .ipfs_cid_arg()
+		        })
+		        .runner(cmd_create_business),
+		)
+		.add_cmd(
+		    Command::new("update-business")
+		        .description("Update an already existing community business on behalf of the account")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .ipfs_cid_arg()
+		        })
+		        .runner(cmd_update_business),
+		)
+		.add_cmd(
+		    Command::new("create-offering")
+		        .description("Create an offering for the business belonging to account")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .ipfs_cid_arg()
+		        })
+		        .runner(cmd_create_offering),
+		)
+		.add_cmd(
+		    Command::new("list-businesses")
+		        .description("List businesses for a community")
+		        .runner(cmd_list_businesses),
+		)
+		.add_cmd(
+		    Command::new("list-offerings")
+		        .description("List offerings for a community")
+		        .runner(cmd_list_offerings),
+		)
+		.add_cmd(
+		    Command::new("list-business-offerings")
+		        .description("List offerings for a business")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		        })
+		        .runner(cmd_list_business_offerings),
+		)
+		.add_cmd(
+		        Command::new("purge-community-ceremony")
+		            .description("purge all history within the provided ceremony index range for the specified community")
+		            .options(|app| {
+		                app.setting(AppSettings::ColoredHelp)
+		                    .from_cindex_arg()
+		                    .to_cindex_arg()
+
+		            })
+		        .runner(cmd_purge_community_ceremony),
+		)
+		.add_cmd(
+		    Command::new("set-meetup-time-offset")
+		        .description("signed value to offset the ceremony meetup time relative to solar noon")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .setting(AppSettings::AllowLeadingHyphen)
+		                .time_offset_arg()
+		        })
+		       .runner(cmd_set_meetup_time_offset),
+		)
 		.add_cmd(
 		    Command::new("create-faucet")
 		        .description("Create faucet")
@@ -1721,6 +1584,180 @@ async fn main() {
 		.run();
 }
 
+fn cmd_reputation(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let account = matches.account_arg().unwrap();
+		let account_id = get_accountid_from_str(account);
+		if let Some(reputation) = get_reputation_history(&api, &account_id).await {
+			for rep in reputation.iter() {
+				println!("{}, {}, {:?}", rep.0, rep.1.community_identifier, rep.1.reputation);
+			}
+		} else {
+			error!("could not fetch reputation over rpc");
+			std::process::exit(exit_code::RPC_ERROR);
+		}
+		Ok(())
+	})
+	.into()
+}
+fn cmd_create_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		send_bazaar_xt(matches, &BazaarCalls::CreateBusiness).await.unwrap();
+		Ok(())
+	})
+	.into()
+}
+fn cmd_update_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		send_bazaar_xt(matches, &BazaarCalls::UpdateBusiness).await.unwrap();
+		Ok(())
+	})
+	.into()
+}
+fn cmd_create_offering(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		send_bazaar_xt(matches, &BazaarCalls::CreateOffering).await.unwrap();
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_businesses(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let businesses = get_businesses(&api, cid).await.unwrap();
+		// only print plain businesses to be able to parse them in python scripts
+		println!("{businesses:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let offerings = get_offerings(&api, cid).await.unwrap();
+		// only print plain offerings to be able to parse them in python scripts
+		println!("{offerings:?}");
+		Ok(())
+	})
+	.into()
+}
+
+fn cmd_list_business_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let account = matches.account_arg().map(get_accountid_from_str).unwrap();
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let offerings = get_offerings_for_business(&api, cid, account).await.unwrap();
+		// only print plain offerings to be able to parse them in python scripts
+		println!("{offerings:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_set_meetup_time_offset(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let mut api = get_chain_api(matches).await;
+		let signer = ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair());
+		api.set_signer(signer);
+		let time_offset = matches.time_offset_arg().unwrap_or(0);
+		let call = compose_call!(
+			api.metadata(),
+			"EncointerCeremonies",
+			"set_meetup_time_offset",
+			time_offset
+		)
+		.unwrap();
+
+		// return calls as `OpaqueCall`s to get the same return type in both branches
+		let privileged_call = if contains_sudo_pallet(api.metadata()) {
+			let sudo_call = sudo_call(api.metadata(), call);
+			info!("Printing raw sudo call for js/apps:");
+			print_raw_call("sudo(...)", &sudo_call);
+			OpaqueCall::from_tuple(&sudo_call)
+		} else {
+			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+			let propose_call = collective_propose_call(api.metadata(), threshold, call);
+			print_raw_call("collective_propose(...)", &propose_call);
+			OpaqueCall::from_tuple(&propose_call)
+		};
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		let xt = xt(&api, privileged_call).await;
+		send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg);
+		Ok(())
+	})
+	.into()
+}
+
+fn cmd_purge_community_ceremony(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let sudoer = AccountKeyring::Alice.pair();
+		let signer = ParentchainExtrinsicSigner::new(sudoer);
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(signer);
+
+		let current_ceremony_index = get_ceremony_index(&api, None).await;
+
+		let from_cindex_arg = matches.from_cindex_arg().unwrap_or(0);
+		let to_cindex_arg = matches.to_cindex_arg().unwrap_or(0);
+
+		let from_cindex = into_effective_cindex(from_cindex_arg, current_ceremony_index);
+		let to_cindex = into_effective_cindex(to_cindex_arg, current_ceremony_index);
+
+		if from_cindex > to_cindex {
+			panic!("'from' <= 'to' ceremony index violated");
+		}
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		println!("purging ceremony index range [{from_cindex}  {to_cindex}] for community {cid}");
+
+		let calls: Vec<_> = (from_cindex..=to_cindex)
+			.map(|idx| {
+				compose_call!(
+					api.metadata(),
+					"EncointerCeremonies",
+					"purge_community_ceremony",
+					(cid, idx)
+				)
+				.unwrap()
+			})
+			.collect();
+		let batch_call = compose_call!(api.metadata(), "Utility", "batch", calls).unwrap();
+		let unsigned_sudo_call =
+			compose_call!(api.metadata(), "Sudo", "sudo", batch_call.clone()).unwrap();
+		info!(
+			"raw sudo batch call to sign with js/apps {}: 0x{}",
+			cid,
+			hex::encode(unsigned_sudo_call.encode())
+		);
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		let xt: EncointerXt<_> = compose_extrinsic!(api, "Sudo", "sudo", batch_call).unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
+		info!("[+] Transaction got included. Block Hash: {:?}\n", tx_report.block_hash.unwrap());
+		Ok(())
+	})
+	.into()
+}
 fn cmd_create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
