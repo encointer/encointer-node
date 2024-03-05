@@ -215,7 +215,15 @@ jobs:
       RUSTV: ${{ matrix.rust }}
       TARGET: ${{ matrix.rust-target }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
+
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Install protoc
         run: sudo apt-get install protobuf-compiler
