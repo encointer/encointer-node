@@ -130,415 +130,143 @@ async fn main() {
 			.setting(AppSettings::ColoredHelp)
 		})
 		.args(|_args, _matches| "")
-		// .add_cmd(
-		//     Command::new("new-account")
-		//         .description("Imports account into the key store. Either creates a new account or with the supplied seed.")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .seed_arg()
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//
-		//             let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-		//
-		//             // This does not place the key into the keystore if we have a seed, but it does
-		//             // place it into the keystore if the seed is none.
-		//             let key = store.sr25519_generate_new(
-		//                 SR25519,
-		//                 matches.seed_arg(),
-		//             ).unwrap();
-		//
-		//             if let Some(suri) = matches.seed_arg() {
-		//                 store.insert(SR25519, suri, &key.0).unwrap();
-		//             }
-		//
-		//             drop(store);
-		//             println!("{}", key.to_ss58check());
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-accounts")
-		//         .description("lists all accounts in keystore")
-		//         .runner(|_args: &str, _matches: &ArgMatches<'_>| {
-		//             let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-		//             info!("sr25519 keys:");
-		//             for pubkey in store.public_keys::<sr25519::AppPublic>()
-		//                 .unwrap()
-		//                 .into_iter()
-		//             {
-		//                 println!("{}", pubkey.to_ss58check());
-		//             }
-		//             info!("ed25519 keys:");
-		//             for pubkey in store.public_keys::<ed25519::AppPublic>()
-		//                 .unwrap()
-		//                 .into_iter()
-		//             {
-		//                 println!("{}", pubkey.to_ss58check());
-		//             }
-		//             drop(store);
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("print-metadata")
-		//         .description("query node metadata and print it as json to stdout")
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//             println!("Metadata:\n {}", api.metadata().pretty_format().unwrap());
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("faucet")
-		//         .description("send some bootstrapping funds to supplied account(s)")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .fundees_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let mut api = get_chain_api(matches).await;
-		//             api
-		//             .set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
-		//             let accounts = matches.fundees_arg().unwrap();
-		//
-		//             let existential_deposit = api.get_existential_deposit().unwrap();
-		//             info!("Existential deposit is = {:?}", existential_deposit);
-		//
-		//             let mut nonce = api.get_nonce().unwrap();
-		//
-		//             let amount = reasonable_native_balance(&api);
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             for account in accounts.into_iter() {
-		//                 let to = get_accountid_from_str(account);
-		//                 let call = compose_call!(
-		//                     api.metadata(),
-		//                     "Balances",
-		//                     "transfer_keep_alive",
-		//                     ExtrinsicAddress::from(to.clone()),
-		//                     Compact(amount)
-		//                 ).unwrap();
-		//                 let xt: EncointerXt<_> = compose_extrinsic_offline!(
-		//                     api.clone().signer().unwrap(),
-		//                     call.clone(),
-		//                     api.extrinsic_params(nonce)
-		//                 );
-		//                 ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//                 // send and watch extrinsic until ready
-		//                 println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
-		//                 let _blockh = api
-		//                     .submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await
-		//                     .unwrap();
-		//                 nonce += 1;
-		//             }
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("balance")
-		//         .description("query on-chain balance for AccountId. If --cid is supplied, returns balance in that community. Otherwise balance of native ERT token")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .account_arg()
-		//             .all_flag()
-		//             .at_block_arg()
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//             let account = matches.account_arg().unwrap();
-		//             let maybe_at = matches.at_block_arg();
-		//             let accountid = get_accountid_from_str(account);
-		//             match matches.cid_arg() {
-		//                 Some(cid_str) => {
-		//                     let balance = get_community_balance(&api, cid_str, &accountid, maybe_at);
-		//                     println!{"{balance:?}"};
-		//                 }
-		//                 None => {
-		//                     if matches.all_flag() {
-		//                         let community_balances = get_all_balances(&api, &accountid).unwrap();
-		//                         let bn = get_block_number(&api, maybe_at);
-		//                         for b in community_balances.iter() {
-		//                             let dr = get_demurrage_per_block(&api, b.0);
-		//                             println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
-		//                         }
-		//                     }
-		//                     let balance = if let Some(data) = api.get_account_data(&accountid).unwrap() {
-		//                         data.free
-		//                     } else {
-		//                         0
-		//                     };
-		//                     println!("{balance}");
-		//                 }
-		//             };
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("issuance")
-		//         .description("query total issuance for community. must supply --cid")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .at_block_arg()
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//             let maybe_at = matches.at_block_arg();
-		//             let cid_str = matches.cid_arg().expect("please supply argument --cid");
-		//             let issuance = get_community_issuance(&api, cid_str, maybe_at);
-		//             println!{"{issuance:?}"};
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("transfer")
-		//         .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .dryrun_flag()
-		//             .arg(
-		//                 Arg::with_name("from")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .value_name("SS58")
-		//                     .help("sender's AccountId in ss58check format"),
-		//             )
-		//             .arg(
-		//                 Arg::with_name("to")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .value_name("SS58")
-		//                     .help("recipient's AccountId in ss58check format"),
-		//             )
-		//             .arg(
-		//                 Arg::with_name("amount")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .value_name("U128")
-		//                     .help("amount to be transferred"),
-		//             )
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let mut api = get_chain_api(matches).await;
-		//             let arg_from = matches.value_of("from").unwrap();
-		//             let arg_to = matches.value_of("to").unwrap();
-		//             if !matches.dryrun_flag() {
-		//                 let from = get_pair_from_str(arg_from);
-		//                 info!("from ss58 is {}", from.public().to_ss58check());
-		//                 let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
-		//                 api.set_signer(signer);
-		//             }
-		//             let to = get_accountid_from_str(arg_to);
-		//             info!("to ss58 is {}", to.to_ss58check());
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             let tx_hash = match matches.cid_arg() {
-		//                 Some(cid_str) => {
-		//                     let cid = verify_cid(&api, cid_str, None).await;
-		//                     let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
-		//                         .expect("amount can be converted to fixpoint");
-		//
-		//                     set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//                     let xt: EncointerXt<_> = compose_extrinsic!(
-		//                         api,
-		//                         "EncointerBalances",
-		//                         "transfer",
-		//                         to.clone(),
-		//                         cid,
-		//                         amount
-		//                     ).unwrap();
-		//                     if matches.dryrun_flag() {
-		//                         println!("0x{}", hex::encode(xt.function.encode()));
-		//                         None
-		//                     } else {
-		//                         ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//                         Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
-		//                     }
-		//                 },
-		//                 None => {
-		//                     let amount = matches.value_of("amount").unwrap().parse::<u128>()
-		//                         .expect("amount can be converted to u128");
-		//                     let xt = api.balance_transfer_allow_death(
-		//                         to.clone().into(),
-		//                         amount
-		//                     );
-		//                     if matches.dryrun_flag() {
-		//                         println!("0x{}", hex::encode(xt.function.encode()));
-		//                         None
-		//                     } else {
-		//                         ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//                         Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
-		//                     }
-		//                 }
-		//             };
-		//             if let Some(txh) = tx_hash {
-		//                 info!("[+] Transaction included. Hash: {:?}\n", txh);
-		//                 let result = api.get_account_data(&to).unwrap().unwrap();
-		//                 println!("balance for {} is now {}", to, result.free);
-		//             }
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("transfer_all")
-		//         .description("transfer all available funds from one account to another for a community specified with --cid.")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .arg(
-		//                 Arg::with_name("from")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .value_name("SS58")
-		//                     .help("sender's AccountId in ss58check format"),
-		//             )
-		//             .arg(
-		//                 Arg::with_name("to")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .value_name("SS58")
-		//                     .help("recipient's AccountId in ss58check format"),
-		//             )
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let mut api = get_chain_api(matches).await;
-		//             let arg_from = matches.value_of("from").unwrap();
-		//             let arg_to = matches.value_of("to").unwrap();
-		//             let from = get_pair_from_str(arg_from);
-		//             let to = get_accountid_from_str(arg_to);
-		//             info!("from ss58 is {}", from.public().to_ss58check());
-		//             info!("to ss58 is {}", to.to_ss58check());
-		//
-		//             let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
-		//             api.set_signer(signer);
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             let tx_hash = match matches.cid_arg() {
-		//                 Some(cid_str) => {
-		//                     let cid = verify_cid(&api, cid_str, None).await;
-		//                     set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//                     let xt: EncointerXt<_> = compose_extrinsic!(
-		//                         api,
-		//                         "EncointerBalances",
-		//                         "transfer_all",
-		//                         to.clone(),
-		//                         cid
-		//                     ).unwrap();
-		//                     ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//                     api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
-		//                 },
-		//                 None => {
-		//                     error!("No cid specified");
-		//                     std::process::exit(exit_code::NO_CID_SPECIFIED);
-		//                 }
-		//             };
-		//             info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
-		//             let result = api.get_account_data(&to).unwrap().unwrap();
-		//             println!("balance for {} is now {}", to, result.free);
-		//             Ok(())
-		//
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("listen")
-		//         .description("listen to on-chain events")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .arg(
-		//                 Arg::with_name("events")
-		//                     .short("e")
-		//                     .long("await-events")
-		//                     .takes_value(true)
-		//                     .help("exit after given number of encointer events"),
-		//             )
-		//             .arg(
-		//                 Arg::with_name("blocks")
-		//                     .short("b")
-		//                     .long("await-blocks")
-		//                     .takes_value(true)
-		//                     .help("exit after given number of blocks"),
-		//             )
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             listen(matches);
-		//             Ok(())
-		//         }),
-		// )
-		// // start encointer stuff
-		// .add_cmd(
-		//     Command::new("new-community")
-		//         .description("Register new community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .arg(
-		//                 Arg::with_name("specfile")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .help("enhanced geojson file that specifies a community"),
-		//             )
-		//             .signer_arg("account with necessary privileges")
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             // -----setup
-		//             let spec_file = matches.value_of("specfile").unwrap();
-		//             let spec = read_community_spec_from_file(spec_file);
-		//             let cid = spec.community_identifier();
-		//
-		//             let signer = matches.signer_arg()
-		//                 .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-		//             let signer = ParentchainExtrinsicSigner::new(signer);
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             api.set_signer(signer);
-		//
-		//
-		//             // ------- create calls for xt's
-		//             let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, api.metadata()));
-		//             // only the first meetup location has been registered now. register all others one-by-one
-		//             let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(api.metadata(), cid, l)).collect();
-		//             let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls));
-		//
-		//
-		//             if matches.signer_arg().is_none() {
-		//                 // return calls as `OpaqueCall`s to get the same return type in both branches
-		//                 (new_community_call, add_location_batch_call) = if contains_sudo_pallet(api.metadata()) {
-		//                     let sudo_new_community = sudo_call(api.metadata(), new_community_call);
-		//                     let sudo_add_location_batch = sudo_call(api.metadata(), add_location_batch_call);
-		//                     info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-		//                     print_raw_call("sudo(new_community)", &sudo_new_community);
-		//                     print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
-		//
-		//                     (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
-		//
-		//                 } else {
-		//                     let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-		//                     info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-		//                     let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
-		//                     let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_batch_call);
-		//                     print_raw_call("collective_propose(new_community)", &propose_new_community);
-		//                     print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
-		//
-		//                     (OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
-		//                 };
-		//             }
-		//
-		//             // ---- send xt's to chain
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg());
-		//             println!("{cid}");
-		//
-		//             if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
-		//                 error!("Wrong ceremony phase for registering new locations for {}", cid);
-		//                 error!("Aborting without registering additional locations");
-		//                 std::process::exit(exit_code::WRONG_PHASE);
-		//             }
-		//             send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg);
-		//             Ok(())
-		//         }),
-		// )
+		.add_cmd(
+		    Command::new("new-account")
+		        .description("Imports account into the key store. Either creates a new account or with the supplied seed.")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .seed_arg()
+		        })
+		        .runner(cmd_new_account),
+		)
+		.add_cmd(
+		    Command::new("list-accounts")
+		        .description("lists all accounts in keystore")
+		        .runner(cmd_list_accounts),
+		)
+		.add_cmd(
+		    Command::new("print-metadata")
+		        .description("query node metadata and print it as json to stdout")
+		        .runner(cmd_print_metadata),
+		)
+		.add_cmd(
+		    Command::new("faucet")
+		        .description("send some bootstrapping funds to supplied account(s)")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .fundees_arg()
+		        })
+		        .runner(cmd_faucet),
+		)
+		.add_cmd(
+		    Command::new("balance")
+		        .description("query on-chain balance for AccountId. If --cid is supplied, returns balance in that community. Otherwise balance of native ERT token")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .account_arg()
+		            .all_flag()
+		            .at_block_arg()
+		        })
+		        .runner(cmd_balance),
+		)
+		.add_cmd(
+		    Command::new("issuance")
+		        .description("query total issuance for community. must supply --cid")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .at_block_arg()
+		        })
+		        .runner(cmd_issuance),
+		)
+		.add_cmd(
+		    Command::new("transfer")
+		        .description("transfer funds from one account to another. If --cid is supplied, send that community (amount is fixpoint). Otherwise send native ERT tokens (amount is integer)")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .dryrun_flag()
+		            .arg(
+		                Arg::with_name("from")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .value_name("SS58")
+		                    .help("sender's AccountId in ss58check format"),
+		            )
+		            .arg(
+		                Arg::with_name("to")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .value_name("SS58")
+		                    .help("recipient's AccountId in ss58check format"),
+		            )
+		            .arg(
+		                Arg::with_name("amount")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .value_name("U128")
+		                    .help("amount to be transferred"),
+		            )
+		        })
+		        .runner(cmd_transfer),
+		)
+		.add_cmd(
+		    Command::new("transfer_all")
+		        .description("transfer all available funds from one account to another for a community specified with --cid.")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .arg(
+		                Arg::with_name("from")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .value_name("SS58")
+		                    .help("sender's AccountId in ss58check format"),
+		            )
+		            .arg(
+		                Arg::with_name("to")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .value_name("SS58")
+		                    .help("recipient's AccountId in ss58check format"),
+		            )
+		        })
+		        .runner(cmd_transfer_all),
+		)
+		.add_cmd(
+		    Command::new("listen")
+		        .description("listen to on-chain events")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .arg(
+		                Arg::with_name("events")
+		                    .short("e")
+		                    .long("await-events")
+		                    .takes_value(true)
+		                    .help("exit after given number of encointer events"),
+		            )
+		            .arg(
+		                Arg::with_name("blocks")
+		                    .short("b")
+		                    .long("await-blocks")
+		                    .takes_value(true)
+		                    .help("exit after given number of blocks"),
+		            )
+		        })
+		        .runner(cmd_listen),
+		)
+		.add_cmd(
+		    Command::new("new-community")
+		        .description("Register new community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .arg(
+		                Arg::with_name("specfile")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .help("enhanced geojson file that specifies a community"),
+		            )
+		            .signer_arg("account with necessary privileges")
+		        })
+		        .runner(cmd_new_community),
+		)
 		.add_cmd(
 		    Command::new("add-locations")
 		        .description("Register new locations for a community")
@@ -917,6 +645,305 @@ async fn main() {
 		.run();
 }
 //////////////////////
+fn cmd_new_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
+
+	// This does not place the key into the keystore if we have a seed, but it does
+	// place it into the keystore if the seed is none.
+	let key = store.sr25519_generate_new(SR25519, matches.seed_arg()).unwrap();
+
+	if let Some(suri) = matches.seed_arg() {
+		store.insert(SR25519, suri, &key.0).unwrap();
+	}
+
+	drop(store);
+	println!("{}", key.to_ss58check());
+	Ok(())
+}
+fn cmd_list_accounts(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
+	info!("sr25519 keys:");
+	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
+		println!("{}", pubkey.to_ss58check());
+	}
+	info!("ed25519 keys:");
+	for pubkey in store.public_keys::<ed25519::AppPublic>().unwrap().into_iter() {
+		println!("{}", pubkey.to_ss58check());
+	}
+	drop(store);
+	Ok(())
+}
+fn cmd_print_metadata(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		println!("Metadata:\n {}", api.metadata().pretty_format().unwrap());
+		Ok(())
+	})
+	.into()
+}
+fn cmd_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
+		let accounts = matches.fundees_arg().unwrap();
+
+		let existential_deposit = api.get_existential_deposit().await.unwrap();
+		info!("Existential deposit is = {:?}", existential_deposit);
+
+		let mut nonce = api.get_nonce().await.unwrap();
+
+		let amount = reasonable_native_balance(&api).await;
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		for account in accounts.into_iter() {
+			let to = get_accountid_from_str(account);
+			let call = compose_call!(
+				api.metadata(),
+				"Balances",
+				"transfer_keep_alive",
+				ExtrinsicAddress::from(to.clone()),
+				Compact(amount)
+			)
+			.unwrap();
+			let xt: EncointerXt<_> = compose_extrinsic_offline!(
+				api.clone().signer().unwrap(),
+				call.clone(),
+				api.extrinsic_params(nonce)
+			);
+			ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+			// send and watch extrinsic until ready
+			println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
+			let _blockh = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+			nonce += 1;
+		}
+		Ok(())
+	})
+	.into()
+}
+fn cmd_balance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let account = matches.account_arg().unwrap();
+		let maybe_at = matches.at_block_arg();
+		let accountid = get_accountid_from_str(account);
+		match matches.cid_arg() {
+			Some(cid_str) => {
+				let balance = get_community_balance(&api, cid_str, &accountid, maybe_at).await;
+				println! {"{balance:?}"};
+			},
+			None => {
+				if matches.all_flag() {
+					let community_balances = get_all_balances(&api, &accountid).await.unwrap();
+					let bn = get_block_number(&api, maybe_at).await;
+					for b in community_balances.iter() {
+						let dr = get_demurrage_per_block(&api, b.0).await;
+						println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
+					}
+				}
+				let balance = if let Some(data) = api.get_account_data(&accountid).await.unwrap() {
+					data.free
+				} else {
+					0
+				};
+				println!("{balance}");
+			},
+		};
+		Ok(())
+	})
+	.into()
+}
+fn cmd_issuance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let maybe_at = matches.at_block_arg();
+		let cid_str = matches.cid_arg().expect("please supply argument --cid");
+		let issuance = get_community_issuance(&api, cid_str, maybe_at).await;
+		println! {"{issuance:?}"};
+		Ok(())
+	})
+	.into()
+}
+fn cmd_transfer(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let mut api = get_chain_api(matches).await;
+		let arg_from = matches.value_of("from").unwrap();
+		let arg_to = matches.value_of("to").unwrap();
+		if !matches.dryrun_flag() {
+			let from = get_pair_from_str(arg_from);
+			info!("from ss58 is {}", from.public().to_ss58check());
+			let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
+			api.set_signer(signer);
+		}
+		let to = get_accountid_from_str(arg_to);
+		info!("to ss58 is {}", to.to_ss58check());
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		let tx_hash = match matches.cid_arg() {
+			Some(cid_str) => {
+				let cid = verify_cid(&api, cid_str, None).await;
+				let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
+					.expect("amount can be converted to fixpoint");
+
+				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+				let xt: EncointerXt<_> = compose_extrinsic!(
+					api,
+					"EncointerBalances",
+					"transfer",
+					to.clone(),
+					cid,
+					amount
+				)
+				.unwrap();
+				if matches.dryrun_flag() {
+					println!("0x{}", hex::encode(xt.function.encode()));
+					None
+				} else {
+					ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+					Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
+				}
+			},
+			None => {
+				let amount = matches
+					.value_of("amount")
+					.unwrap()
+					.parse::<u128>()
+					.expect("amount can be converted to u128");
+				// todo: use keep_alive instead https://github.com/scs/substrate-api-client/issues/747
+				let xt = api.balance_transfer_allow_death(to.clone().into(), amount).await.unwrap();
+				if matches.dryrun_flag() {
+					println!("0x{}", hex::encode(xt.function.encode()));
+					None
+				} else {
+					ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+					Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
+				}
+			},
+		};
+		if let Some(txh) = tx_hash {
+			info!("[+] Transaction included. Hash: {:?}\n", txh);
+			let result = api.get_account_data(&to).await.unwrap().unwrap();
+			println!("balance for {} is now {}", to, result.free);
+		}
+		Ok(())
+	})
+	.into()
+}
+fn cmd_transfer_all(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let mut api = get_chain_api(matches).await;
+		let arg_from = matches.value_of("from").unwrap();
+		let arg_to = matches.value_of("to").unwrap();
+		let from = get_pair_from_str(arg_from);
+		let to = get_accountid_from_str(arg_to);
+		info!("from ss58 is {}", from.public().to_ss58check());
+		info!("to ss58 is {}", to.to_ss58check());
+
+		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
+		api.set_signer(signer);
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		let tx_hash = match matches.cid_arg() {
+			Some(cid_str) => {
+				let cid = verify_cid(&api, cid_str, None).await;
+				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+				let xt: EncointerXt<_> =
+					compose_extrinsic!(api, "EncointerBalances", "transfer_all", to.clone(), cid)
+						.unwrap();
+				ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+				api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
+			},
+			None => {
+				error!("No cid specified");
+				std::process::exit(exit_code::NO_CID_SPECIFIED);
+			},
+		};
+		info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
+		let result = api.get_account_data(&to).await.unwrap().unwrap();
+		println!("balance for {} is now {}", to, result.free);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_listen(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		listen(matches);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		// -----setup
+		let spec_file = matches.value_of("specfile").unwrap();
+		let spec = read_community_spec_from_file(spec_file);
+		let cid = spec.community_identifier();
+
+		let signer = matches.signer_arg()
+			.map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+		let signer = ParentchainExtrinsicSigner::new(signer);
+
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(signer);
+
+
+		// ------- create calls for xt's
+		let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, api.metadata()));
+		// only the first meetup location has been registered now. register all others one-by-one
+		let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(api.metadata(), cid, l)).collect();
+		let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls));
+
+
+		if matches.signer_arg().is_none() {
+			// return calls as `OpaqueCall`s to get the same return type in both branches
+			(new_community_call, add_location_batch_call) = if contains_sudo_pallet(api.metadata()) {
+				let sudo_new_community = sudo_call(api.metadata(), new_community_call);
+				let sudo_add_location_batch = sudo_call(api.metadata(), add_location_batch_call);
+				info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+				print_raw_call("sudo(new_community)", &sudo_new_community);
+				print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
+
+				(OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
+
+			} else {
+				let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+				info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+				let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
+				let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_batch_call);
+				print_raw_call("collective_propose(new_community)", &propose_new_community);
+				print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+
+				(OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
+			};
+		}
+
+		// ---- send xt's to chain
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg());
+		println!("{cid}");
+
+		if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
+			error!("Wrong ceremony phase for registering new locations for {}", cid);
+			error!("Aborting without registering additional locations");
+			std::process::exit(exit_code::WRONG_PHASE);
+		}
+		send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg);
+		Ok(())
+
+	})
+		.into()
+}
 fn cmd_add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
