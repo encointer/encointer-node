@@ -35,7 +35,7 @@ use crate::{
 		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
-use clap::{value_t, AppSettings, Arg, ArgMatches};
+use clap::{value_t, AppSettings, Arg, ArgMatches, ErrorKind};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use encointer_api_client_extension::{
@@ -539,861 +539,194 @@ async fn main() {
 		//             Ok(())
 		//         }),
 		// )
-		// .add_cmd(
-		//     Command::new("add-locations")
-		//         .description("Register new locations for a community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .signer_arg("account with necessary privileges")
-		//                 .dryrun_flag()
-		//                 .arg(
-		//                     Arg::with_name("specfile")
-		//                         .takes_value(true)
-		//                         .required(true)
-		//                         .help("geojson file that specifies locations to add as points"),
-		//                 )
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             // -----setup
-		//             let spec_file = matches.value_of("specfile").unwrap();
-		//             let spec = read_community_spec_from_file(spec_file);
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             if !matches.dryrun_flag() {
-		//                 let signer = matches.signer_arg()
-		//                     .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-		//                 info!("signer ss58 is {}", signer.public().to_ss58check());
-		//                 let signer = ParentchainExtrinsicSigner::new(signer);
-		//                 api.set_signer(signer);
-		//             }
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//
-		//             let cid = verify_cid(&api, matches.cid_arg().unwrap(), None).await;
-		//
-		//             let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
-		//                                                                           {
-		//                                                                               info!("adding location {:?}", l);
-		//                                                                               add_location_call(api.metadata(), cid, l)
-		//                                                                           }
-		//                 ).collect();
-		//
-		//             let mut add_location_maybe_batch_call = match  add_location_calls.as_slice() {
-		//                 [call] => OpaqueCall::from_tuple(call),
-		//                 _ => OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls.clone()))
-		//             };
-		//
-		//             if matches.signer_arg().is_none() {
-		//                 // return calls as `OpaqueCall`s to get the same return type in both branches
-		//                 add_location_maybe_batch_call = if contains_sudo_pallet(api.metadata()) {
-		//                     let sudo_add_location_batch = sudo_call(api.metadata(), add_location_maybe_batch_call);
-		//                     info!("Printing raw sudo calls for js/apps for cid: {}", cid);
-		//                     print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
-		//                     OpaqueCall::from_tuple(&sudo_add_location_batch)
-		//                 } else {
-		//                     let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-		//                     info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
-		//                     let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_maybe_batch_call);
-		//                     print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
-		//                     OpaqueCall::from_tuple(&propose_add_location_batch)
-		//                 };
-		//             }
-		//
-		//             if matches.dryrun_flag() {
-		//                 println!("0x{}", hex::encode(add_location_maybe_batch_call.encode()));
-		//             } else {
-		//                 // ---- send xt's to chain
-		//                 if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
-		//                     error!("Wrong ceremony phase for registering new locations for {}", cid);
-		//                     error!("Aborting without registering additional locations");
-		//                     std::process::exit(exit_code::WRONG_PHASE);
-		//                 }
-		//                 send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call).await, tx_payment_cid_arg);
-		//             }
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-communities")
-		//         .description("list all registered communities")
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//             let names = get_cid_names(&api).await.unwrap();
-		//             println!("number of communities:  {}", names.len());
-		//             for n in names.iter() {
-		//                 let loc = api.get_locations(n.cid).await.unwrap();
-		//                 println!("{}: {} locations: {}", n.cid, String::from_utf8(n.name.to_vec()).unwrap(), loc.len());
-		//             }
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-locations")
-		//         .description("list all meetup locations for a community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .at_block_arg()
-		//         })
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//             let maybe_at = matches.at_block_arg();
-		//             let cid = verify_cid(&api,
-		//                 matches
-		//                      .cid_arg()
-		//                      .expect("please supply argument --cid"),
-		//                 maybe_at
-		//             ).await;
-		//             println!("listing locations for cid {cid}");
-		//             let loc = api.get_locations(cid).await.unwrap();
-		//             for l in loc.iter() {
-		//                 println!("lat: {} lon: {} (raw lat: {} lon: {})", l.lat, l.lon,
-		//                          i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
-		//                          i128::decode(&mut l.lon.encode().as_slice()).unwrap()
-		//                 );
-		//             }
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("get-phase")
-		//         .description("read current ceremony phase from chain")
-		//         .runner(|_args: &str, matches: &ArgMatches<'_>| {
-		//             let api = get_chain_api(matches).await;
-		//
-		//             // >>>> add some debug info as well
-		//             let bn = get_block_number(&api, None).await;
-		//             debug!("block number: {}", bn);
-		//             let cindex = get_ceremony_index(&api, None).await;
-		//             info!("ceremony index: {}", cindex);
-		//             let tnext: Moment = api.get_next_phase_timestamp().await.unwrap();
-		//             debug!("next phase timestamp: {}", tnext);
-		//             // <<<<
-		//
-		//             let phase = api.get_current_phase().await.unwrap();
-		//             println!("{phase:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("next-phase")
-		//         .description("Advance ceremony state machine to next phase by ROOT call")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .signer_arg("account with necessary privileges (sudo or councillor)")
-		//         })
-		//        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let signer = matches.signer_arg()
-		//                 .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
-		//
-		//             let mut api = get_chain_api(matches).await;
-		//             let signer = ParentchainExtrinsicSigner::new(signer);
-		//             api.set_signer(signer);
-		//             let next_phase_call = compose_call!(
-		//                 api.metadata(),
-		//                 "EncointerScheduler",
-		//                 "next_phase"
-		//             ).unwrap();
-		//
-		//             // return calls as `OpaqueCall`s to get the same return type in both branches
-		//             let next_phase_call = if contains_sudo_pallet(api.metadata()) {
-		//                 let sudo_next_phase_call = sudo_call(api.metadata(), next_phase_call);
-		//                 info!("Printing raw sudo call for js/apps:");
-		//                 print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
-		//
-		//                 OpaqueCall::from_tuple(&sudo_next_phase_call)
-		//
-		//             } else {
-		//                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-		//                 info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-		//                 let propose_next_phase = collective_propose_call(api.metadata(), threshold, next_phase_call).await;
-		//                 print_raw_call("collective_propose(next_phase)", &propose_next_phase);
-		//
-		//                 OpaqueCall::from_tuple(&propose_next_phase)
-		//             };
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg);
-		//
-		//             let phase = api.get_current_phase().await.unwrap();
-		//             println!("Phase is now: {phase:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-participants")
-		//         .description("list all registered participants supplied community identifier and ceremony index")
-		//         .options(|app| {
-		//         app.setting(AppSettings::ColoredHelp)
-		//             .ceremony_index_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             extract_and_execute(
-		//                 matches, |api, cid| -> ApiResult<()>{
-		//
-		//                     let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//
-		//                     let cindex = matches.ceremony_index_arg()
-		//                         .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
-		//
-		//                     println!("listing participants for cid {cid} and ceremony nr {cindex}");
-		//
-		//                     let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
-		//                     let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None).await;
-		//
-		//                     let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
-		//                     let account_query = |registry_index, p_index| api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None).await;
-		//
-		//                     let mut num_participants: Vec<u64> = vec![0, 0, 0, 0];
-		//                     for i in 0..registries.len() {
-		//                         println!("Querying {}", registries[i]);
-		//
-		//                         let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
-		//                         println!("number of participants assigned:  {count}");
-		//                         num_participants[i] = count;
-		//                         for p_index in 1..count +1 {
-		//                             let accountid: AccountId = account_query(i, p_index)?.unwrap();
-		//                             println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
-		//                         }
-		//                     }
-		//                     println!("total: {} guaranteed seats + {} newbies = {} total participants who would like to attend",
-		//                              num_participants[0..=2].iter().sum::<u64>(),
-		//                              num_participants[3],
-		//                              num_participants[0..=3].iter().sum::<u64>()
-		//                     );
-		//                     Ok(())
-		//                 }
-		//             ).await.unwrap();
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-meetups")
-		//         .description("list all assigned meetups for supplied community identifier and ceremony index")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .ceremony_index_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             extract_and_execute(
-		//                 matches, |api, cid| -> ApiResult<()>{
-		//
-		//                     let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//
-		//                     let cindex = matches.ceremony_index_arg()
-		//                         .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
-		//
-		//                     let community_ceremony = (cid, cindex);
-		//
-		//                     println!("listing meetups for cid {cid} and ceremony nr {cindex}");
-		//
-		//                     let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
-		//
-		//                     let mut num_assignees = 0u64;
-		//
-		//                     for meetup in stats.meetups.iter() {
-		//                         println!("MeetupRegistry[{:?}, {}] location is {:?}, {:?}", &community_ceremony, meetup.index, meetup.location.lat, meetup.location.lon);
-		//
-		//                         println!("MeetupRegistry[{:?}, {}] meeting time is {:?}", &community_ceremony, meetup.index, meetup.time);
-		//
-		//                         if !meetup.registrations.is_empty() {
-		//                             let num = meetup.registrations.len();
-		//                             num_assignees += num as u64;
-		//                             println!("MeetupRegistry[{:?}, {}] participants: {}", &community_ceremony, meetup.index, num);
-		//                             for (participant, _registration) in meetup.registrations.iter() {
-		//                                 println!("   {participant}");
-		//                             }
-		//                         } else {
-		//                             println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
-		//                         }
-		//                     }
-		//                     println!("total number of assignees: {num_assignees}");
-		//                     Ok(())
-		//                 }
-		//             ).await.unwrap();
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("print-ceremony-stats")
-		//         .description("pretty prints all information for a community ceremony")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .ceremony_index_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             extract_and_execute(
-		//                 matches, |api, cid| -> ApiResult<()>{
-		//
-		//                     let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//
-		//                     let cindex = matches.ceremony_index_arg()
-		//                         .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
-		//
-		//                     let community_ceremony = (cid, cindex);
-		//
-		//                     let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
-		//
-		//                     // serialization prints the the account id better than `debug`
-		//                     println!("{}", serde_json::to_string_pretty(&stats).unwrap());
-		//                     Ok(())
-		//                 }
-		//             ).unwrap();
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-attestees")
-		//         .description("list all attestees for participants for supplied community identifier and ceremony index")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .ceremony_index_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             extract_and_execute(
-		//                 matches, |api, cid| -> ApiResult<()>{
-		//
-		//                     let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//
-		//                     let cindex = matches.ceremony_index_arg()
-		//                         .map_or_else(|| current_ceremony_index , |ci| into_effective_cindex(ci, current_ceremony_index));
-		//
-		//                     println!("listing attestees for cid {cid} and ceremony nr {cindex}");
-		//
-		//                     let wcount = get_attestee_count(&api, (cid, cindex)).await;
-		//                     println!("number of attestees:  {wcount}");
-		//
-		//                     println!("listing participants for cid {cid} and ceremony nr {cindex}");
-		//
-		//                     let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
-		//                     let count_query = |count_index| api.get_storage_map(ENCOINTER_CEREMONIES, counts[count_index], (cid, cindex), None).await;
-		//
-		//                     let registries = vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
-		//                     let account_query = |registry_index, p_index| async move {
-		//                         api.get_storage_double_map(ENCOINTER_CEREMONIES, registries[registry_index],(cid, cindex), p_index, None).await
-		//                     };
-		//
-		//                     let mut participants_windex = HashMap::new();
-		//
-		//                     for (i, item) in registries.iter().enumerate() {
-		//                         println!("Querying {item}");
-		//
-		//                         let count: ParticipantIndexType = count_query(i)?.unwrap_or(0);
-		//                         println!("number of participants assigned:  {count}");
-		//
-		//                         for p_index in 1..count +1 {
-		//                             let accountid: AccountId = account_query(i, p_index)?.unwrap();
-		//
-		//                             match get_participant_attestation_index(&api, (cid, cindex), &accountid).await {
-		//                                 Some(windex) => {
-		//                                     participants_windex.insert(windex as AttestationIndexType, accountid)
-		//                                 }
-		//                                 _ => continue,
-		//                             };
-		//                         }
-		//                     }
-		//
-		//                     let mut attestation_states = Vec::with_capacity(wcount as usize);
-		//
-		//                     for w in 1..wcount + 1 {
-		//                         let attestor = participants_windex[&w].clone();
-		//                         let meetup_index = api.get_meetup_index(&(cid, cindex), &attestor).await.unwrap().unwrap();
-		//                         let attestees = api.get_attestees((cid, cindex), w).await.unwrap();
-		//                         let vote = api.get_meetup_participant_count_vote((cid, cindex), attestor.clone()).await.unwrap();
-		//                         let attestation_state = AttestationState::new(
-		//                             (cid, cindex),
-		//                             meetup_index,
-		//                             vote,
-		//                             w,
-		//                             attestor,
-		//                             attestees,
-		//                         );
-		//
-		//                         attestation_states.push(attestation_state);
-		//                     }
-		//
-		//                     // Group attestation states by meetup index
-		//                     attestation_states.sort_by(|a, b| a.meetup_index.partial_cmp(&b.meetup_index).unwrap());
-		//
-		//                     for a in attestation_states.iter() {
-		//                         println!("{a:?}");
-		//                     }
-		//
-		//                     Ok(())
-		//                 }
-		//             ).await.unwrap();
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("list-reputables")
-		//         .description("list all reputables for all cycles within the current reputation-lifetime for all communities")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .at_block_arg()
-		//                 .verbose_flag()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//                     let api = get_chain_api(matches).await;
-		//
-		//                     let is_verbose = matches.verbose_flag();
-		//                     let at_block = matches.at_block_arg();
-		//
-		//                     let lifetime = get_reputation_lifetime(&api, at_block).await;
-		//                     let current_ceremony_index = get_ceremony_index(&api, at_block).await;
-		//
-		//
-		//                     let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
-		//                     let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
-		//
-		//                     let community_ids = get_cid_names(&api).await.unwrap().into_iter().map(|names| names.cid);
-		//
-		//                     let mut reputables_csv = Vec::new();
-		//
-		//                     println!("Listing the number of attested attendees for each community and ceremony for cycles [{:}:{:}]", ceremony_indices.first().unwrap(), ceremony_indices.last().unwrap());
-		//                     for community_id in community_ids {
-		//                         println!("Community ID: {community_id:?}");
-		//                         let mut reputables: HashMap<AccountId, usize> = HashMap::new();
-		//                         for ceremony_index in &ceremony_indices {
-		//                             let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block).await;
-		//                             println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:} (noshows: {:})", attendees.len(), noshows.len());
-		//                             for attendee in attendees {
-		//                                 reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
-		//                                 *reputables.entry(attendee.clone()).or_insert(0) += 1;
-		//                             }
-		//                         }
-		//                         println!("Reputables in {community_id:?} (unique accounts with at least one attendance) {:}", reputables.keys().len());
-		//                     }
-		//                     if is_verbose {
-		//                         for reputable in reputables_csv {
-		//                             println!("{reputable}");
-		//                         }
-		//                     }
-		//                     Ok(())
-		//                 }),
-		//         )
-		// .add_cmd(
-		//     Command::new("register-participant")
-		//         .description("Register encointer ceremony participant for supplied community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .account_arg()
-		//             .signer_arg("Account which signs the tx.")
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let arg_who = matches.account_arg().unwrap();
-		//             let accountid = get_accountid_from_str(arg_who);
-		//             let signer = match matches.signer_arg() {
-		//                 Some(sig) => get_pair_from_str(sig),
-		//                 None => get_pair_from_str(arg_who)
-		//             };
-		//
-		//             let api = get_chain_api(matches).await;
-		//             let cindex = get_ceremony_index(&api, None).await;
-		//             let cid = verify_cid(&api,
-		//                 matches
-		//                     .cid_arg()
-		//                     .expect("please supply argument --cid"),
-		//                 None
-		//             ).await;
-		//             let rep = get_reputation(&api, &accountid, cid, cindex -1).await;
-		//             info!("{} has reputation {:?}", accountid, rep);
-		//             let proof = match rep {
-		//                 Reputation::Unverified => None,
-		//                 Reputation::UnverifiedReputable => None, // this should never be the case during Registering!
-		//                 Reputation::VerifiedUnlinked => Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
-		//                 Reputation::VerifiedLinked(_) => Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
-		//             };
-		//             debug!("proof: {:x?}", proof.encode());
-		//             let current_phase = api.get_current_phase().await.unwrap();
-		//             if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
-		//                 error!("wrong ceremony phase for registering participant");
-		//                 std::process::exit(exit_code::WRONG_PHASE);
-		//             }
-		//             let mut api = api;
-		//             let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		//             api.set_signer(signer);
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerCeremonies",
-		//                 "register_participant",
-		//                 cid,
-		//                 proof
-		//             ).unwrap();
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//             // send and watch extrinsic until ready
-		//             let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		//             info!("Registration sent for {}. status: '{:?}'", arg_who, report.status);
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("upgrade-registration")
-		//         .description("Upgrade registration to repuable for encointer ceremony participant for supplied community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .account_arg()
-		//             .signer_arg("Account which signs the tx.")
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let arg_who = matches.account_arg().unwrap();
-		//             let accountid = get_accountid_from_str(arg_who);
-		//             let signer = match matches.signer_arg() {
-		//                 Some(sig) => get_pair_from_str(sig),
-		//                 None => get_pair_from_str(arg_who)
-		//             };
-		//
-		//             let api = get_chain_api(matches).await;
-		//             let cindex = get_ceremony_index(&api, None).await;
-		//             let cid = verify_cid(&api,
-		//                 matches
-		//                     .cid_arg()
-		//                     .expect("please supply argument --cid"),
-		//                 None
-		//             ).await;
-		//
-		//             let current_phase = api.get_current_phase().await.unwrap();
-		//             if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
-		//                 error!("wrong ceremony phase for registering participant");
-		//                 std::process::exit(exit_code::WRONG_PHASE);
-		//             }
-		//             let mut reputation_cindex = cindex;
-		//             if current_phase == CeremonyPhaseType::Registering {
-		//                 reputation_cindex -= 1;
-		//             }
-		//             let rep = get_reputation(&api, &accountid, cid, reputation_cindex).await;
-		//             info!("{} has reputation {:?}", accountid, rep);
-		//             let proof = match rep {
-		//                 Reputation::VerifiedUnlinked => prove_attendance(accountid, cid, reputation_cindex, arg_who),
-		//                 _ => {
-		//                     error!("No valid reputation in last ceremony.");
-		//                     std::process::exit(exit_code::INVALID_REPUTATION);
-		//                 },
-		//             };
-		//
-		//             let mut api = api;
-		//             let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		//             api.set_signer(signer);
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerCeremonies",
-		//                 "upgrade_registration",
-		//                 cid,
-		//                 proof
-		//             ).unwrap();
-		//             ensure_payment(&api,  &xt.encode().into(), tx_payment_cid_arg).await;
-		//             // send and watch extrinsic until ready
-		//             let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		//             info!("Upgrade registration sent for {}. status: '{:?}'", arg_who, report.status);
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("unregister-participant")
-		//         .description("Unregister encointer ceremony participant for supplied community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .account_arg()
-		//             .signer_arg("Account which signs the tx.")
-		//             .ceremony_index_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let arg_who = matches.account_arg().unwrap();
-		//             let signer = match matches.signer_arg() {
-		//                 Some(sig) => get_pair_from_str(sig),
-		//                 None => get_pair_from_str(arg_who)
-		//             };
-		//
-		//             let api = get_chain_api(matches).await;
-		//
-		//             let cid = verify_cid(&api,
-		//                 matches
-		//                     .cid_arg()
-		//                     .expect("please supply argument --cid"),
-		//                 None
-		//             ).await;
-		//
-		//
-		//             let cc = match matches.ceremony_index_arg() {
-		//                 Some(cindex_arg) => {
-		//                     let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//                     let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
-		//                     Some((cid, cindex))
-		//                 },
-		//                 None => None,
-		//              };
-		//
-		//             let current_phase = api.get_current_phase().await.unwrap();
-		//             if !(current_phase == CeremonyPhaseType::Registering || current_phase == CeremonyPhaseType::Attesting) {
-		//                 error!("wrong ceremony phase for unregistering");
-		//                 std::process::exit(exit_code::WRONG_PHASE);
-		//             }
-		//             let mut api = api;
-		//             let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		//             api.set_signer(signer);
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerCeremonies",
-		//                 "unregister_participant",
-		//                 cid,
-		//                 cc
-		//             ).unwrap();
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//             // Send and watch extrinsic until ready
-		//             let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		//             info!("Unregister Participant sent for {}. status: '{:?}'", arg_who, report.status);
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("endorse-newcomers")
-		//         .description("Endorse newbies with a bootstrapper account")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .bootstrapper_arg()
-		//                 .endorsees_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//
-		//             extract_and_execute(
-		//                 matches, |mut api, cid| endorse_newcomers(&mut api, cid, matches)
-		//             ).await.unwrap();
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("get-bootstrappers-with-remaining-newbie-tickets")
-		//         .description("Get the bootstrappers along with the remaining newbie tickets")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//         })
-		//        .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let bs_with_tickets : Vec<BootstrapperWithTickets> = extract_and_execute(
-		//                 matches, |api, cid| get_bootstrappers_with_remaining_newbie_tickets(&api, cid)
-		//             ).await.unwrap();
-		//
-		//             info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
-		//
-		//             // transform it to simple tuples, which is easier to parse in python
-		//             let bt_vec = bs_with_tickets.into_iter()
-		//                 .map(|bt| (bt.bootstrapper.to_ss58check(), bt.remaining_newbie_tickets)).collect::<Vec<_>>();
-		//
-		//             println!("{bt_vec:?}");
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("get-proof-of-attendance")
-		//         .description("creates a proof of ProofOfAttendances for an <account> for the given ceremony index")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .setting(AppSettings::AllowLeadingHyphen)
-		//                 .account_arg()
-		//                 .ceremony_index_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let arg_who = matches.account_arg().unwrap();
-		//             let accountid = get_accountid_from_str(arg_who);
-		//             let api = get_chain_api(matches).await;
-		//
-		//             let current_ceremony_index = get_ceremony_index(&api, None).await;
-		//
-		//             let cindex_arg = matches.ceremony_index_arg().unwrap_or(-1);
-		//             let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
-		//
-		//             let cid = verify_cid(
-		//                 &api,
-		//              matches.cid_arg().expect("please supply argument --cid"),
-		//                 None
-		//             ).await;
-		//
-		//             debug!("Getting proof for ceremony index: {:?}", cindex);
-		//             let proof = prove_attendance(accountid, cid, cindex, arg_who);
-		//             info!("Proof: {:?}\n", &proof);
-		//             println!("0x{}", hex::encode(proof.encode()));
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("attest-attendees")
-		//         .description("Register encointer ceremony claim of attendances for supplied community")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .account_arg()
-		//                 .optional_cid_arg()
-		//                 .attestees_arg()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		//
-		//             let attestees: Vec<_> = matches.attestees_arg().unwrap()
-		//                 .into_iter()
-		//                 .map(get_accountid_from_str)
-		//                 .collect();
-		//
-		//             let vote = attestees.len() as u32 + 1u32;
-		//
-		//             debug!("attestees: {:?}", attestees);
-		//
-		//             info!("send attest_attendees by {}", who.public());
-		//
-		//             let mut api =
-		//              get_chain_api(matches).await;
-		//              let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone()));
-		//              api.set_signer(signer);
-		//
-		//             let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//             set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//             let cid = verify_cid(&api,
-		//                                  matches
-		//                                      .cid_arg()
-		//                                      .expect("please supply argument --cid"),
-		//                                  None
-		//             ).await;
-		//
-		//             let xt: EncointerXt<_> = compose_extrinsic!(
-		//                 api,
-		//                 "EncointerCeremonies",
-		//                 "attest_attendees",
-		//                 cid,
-		//                 vote,
-		//                 attestees
-		//             ).unwrap();
-		//             ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//             let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		//
-		//             println!("Claims sent by {}. status: '{:?}'", who.public(), report.status);
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("new-claim")
-		//         .description("create a fresh claim of attendance for account")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//             .account_arg()
-		//             .arg(
-		//                 Arg::with_name("vote")
-		//                     .takes_value(true)
-		//                     .required(true)
-		//                     .value_name("VOTE")
-		//                     .help("participant's vote on the number of people present at meetup time"),
-		//             )
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//             extract_and_execute(
-		//                 matches, |api, cid| -> ApiResult<()>{
-		//                     let arg_who = matches.account_arg().unwrap();
-		//                     let claimant = get_pair_from_str(arg_who);
-		//
-		//                     let n_participants = matches
-		//                         .value_of("vote")
-		//                         .unwrap()
-		//                         .parse::<u32>()
-		//                         .unwrap();
-		//
-		//                     let claim = new_claim_for(&api, &claimant.into(), cid, n_participants).await;
-		//
-		//                     println!("{}", hex::encode(claim));
-		//                     Ok(())
-		//                 }
-		//             ).await.unwrap();
-		//
-		//             Ok(())
-		//         }),
-		// )
-		// .add_cmd(
-		//     Command::new("claim-reward")
-		//         .description("Claim the rewards for all meetup participants of the last ceremony.")
-		//         .options(|app| {
-		//             app.setting(AppSettings::ColoredHelp)
-		//                 .signer_arg("Account which signs the tx.")
-		//                 .meetup_index_arg()
-		//                 .all_flag()
-		//         })
-		//         .runner(move |_args: &str, matches: &ArgMatches<'_>| {
-		//
-		//             extract_and_execute(
-		//                 matches, |api, cid| async move {
-		//                     let signer = match matches.signer_arg() {
-		//                         Some(sig) => get_pair_from_str(sig),
-		//                         None => panic!("please specify --signer.")
-		//                     };
-		//                     let mut api = api;
-		//                     let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
-		//                     api.set_signer(signer.clone());
-		//
-		//                     let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		//                     let meetup_index_arg = matches.meetup_index_arg();
-		//                     set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
-		//
-		//                     if matches.all_flag() {
-		//                         let mut cindex = get_ceremony_index(&api, None).await;
-		//                         if api.get_current_phase().await.unwrap() == CeremonyPhaseType::Registering {
-		//                             cindex -= 1;
-		//                         }
-		//                         let meetup_count = api
-		//                         .get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), None).await
-		//                         .unwrap().unwrap_or(0u64);
-		//                         let calls: Vec<_> = (1u64..=meetup_count)
-		//                         .map(|idx| compose_call!(
-		//                             api.metadata(),
-		//                             ENCOINTER_CEREMONIES,
-		//                             "claim_rewards",
-		//                             cid,
-		//                             Option::<MeetupIndexType>::Some(idx)
-		//                         ).unwrap())
-		//                         .collect();
-		//                         let batch_call = compose_call!(
-		//                             api.metadata(),
-		//                             "Utility",
-		//                             "batch",
-		//                             calls
-		//                         ).unwrap();
-		//                         send_and_wait_for_in_block(&api, xt(&api, batch_call).await, tx_payment_cid_arg);
-		//                         println!("Claiming reward for all meetup indexes. xt-status: 'ready'");
-		//                     } else {
-		//                         let meetup_index = meetup_index_arg;
-		//                         let xt: EncointerXt<_> = compose_extrinsic!(
-		//                             api,
-		//                             ENCOINTER_CEREMONIES,
-		//                             "claim_rewards",
-		//                             cid,
-		//                             meetup_index
-		//                         ).unwrap();
-		//                         ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		//                         let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
-		//                         match meetup_index_arg {
-		//                             Some(idx)=>{println!("Claiming reward for meetup_index {idx}. xt-status: '{:?}'", report.status);}
-		//                             None=>{println!("Claiming reward for {}. xt-status: 'ready'", signer.public_account_id());}
-		//                         }
-		//                     }
-		//                 }
-		//             );
-		//
-		//             Ok(())
-		//         }),
-		// )
+		.add_cmd(
+		    Command::new("add-locations")
+		        .description("Register new locations for a community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("account with necessary privileges")
+		                .dryrun_flag()
+		                .arg(
+		                    Arg::with_name("specfile")
+		                        .takes_value(true)
+		                        .required(true)
+		                        .help("geojson file that specifies locations to add as points"),
+		                )
+		        })
+		        .runner(cmd_add_locations),
+		)
+		.add_cmd(
+		    Command::new("list-communities")
+		        .description("list all registered communities")
+		        .runner(cmd_list_communities),
+		)
+		.add_cmd(
+		    Command::new("list-locations")
+		        .description("list all meetup locations for a community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .at_block_arg()
+		        })
+		        .runner(cmd_list_locations),
+		)
+		.add_cmd(
+		    Command::new("get-phase")
+		        .description("read current ceremony phase from chain")
+		        .runner(cmd_get_phase),
+		)
+		.add_cmd(
+		    Command::new("next-phase")
+		        .description("Advance ceremony state machine to next phase by ROOT call")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("account with necessary privileges (sudo or councillor)")
+		        })
+		       .runner(cmd_next_phase),
+		)
+		.add_cmd(
+		    Command::new("list-participants")
+		        .description("list all registered participants supplied community identifier and ceremony index")
+		        .options(|app| {
+		        app.setting(AppSettings::ColoredHelp)
+		            .ceremony_index_arg()
+		        })
+		        .runner(cmd_list_participants),
+		)
+		.add_cmd(
+		    Command::new("list-meetups")
+		        .description("list all assigned meetups for supplied community identifier and ceremony index")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .ceremony_index_arg()
+		        })
+		        .runner(cmd_list_meetups),
+		)
+		.add_cmd(
+		    Command::new("print-ceremony-stats")
+		        .description("pretty prints all information for a community ceremony")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .ceremony_index_arg()
+		        })
+		        .runner(cmd_print_ceremony_stats),
+		)
+		.add_cmd(
+		    Command::new("list-attestees")
+		        .description("list all attestees for participants for supplied community identifier and ceremony index")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .ceremony_index_arg()
+		        })
+		        .runner(cmd_list_attestees),
+		)
+		.add_cmd(
+		    Command::new("list-reputables")
+		        .description("list all reputables for all cycles within the current reputation-lifetime for all communities")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .at_block_arg()
+		                .verbose_flag()
+		        })
+		        .runner(cmd_list_reputables),
+		        )
+		.add_cmd(
+		    Command::new("register-participant")
+		        .description("Register encointer ceremony participant for supplied community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .account_arg()
+		            .signer_arg("Account which signs the tx.")
+		        })
+		        .runner(cmd_register_participant),
+		)
+		.add_cmd(
+		    Command::new("upgrade-registration")
+		        .description("Upgrade registration to repuable for encointer ceremony participant for supplied community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .account_arg()
+		            .signer_arg("Account which signs the tx.")
+		        })
+		        .runner(cmd_upgrade_registration),
+		)
+		.add_cmd(
+		    Command::new("unregister-participant")
+		        .description("Unregister encointer ceremony participant for supplied community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .account_arg()
+		            .signer_arg("Account which signs the tx.")
+		            .ceremony_index_arg()
+		        })
+		        .runner(cmd_unregister_participant),
+		)
+		.add_cmd(
+		    Command::new("endorse-newcomers")
+		        .description("Endorse newbies with a bootstrapper account")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .bootstrapper_arg()
+		                .endorsees_arg()
+		        })
+		        .runner(cmd_endorse_newcomers),
+		)
+		.add_cmd(
+		    Command::new("get-bootstrappers-with-remaining-newbie-tickets")
+		        .description("Get the bootstrappers along with the remaining newbie tickets")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		        })
+		       .runner(cmd_get_bootstrappers_with_remaining_newbie_tickets),
+		)
+		.add_cmd(
+		    Command::new("get-proof-of-attendance")
+		        .description("creates a proof of ProofOfAttendances for an <account> for the given ceremony index")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .setting(AppSettings::AllowLeadingHyphen)
+		                .account_arg()
+		                .ceremony_index_arg()
+		        })
+		        .runner(cmd_get_proof_of_attendance),
+		)
+		.add_cmd(
+		    Command::new("attest-attendees")
+		        .description("Register encointer ceremony claim of attendances for supplied community")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .account_arg()
+		                .optional_cid_arg()
+		                .attestees_arg()
+		        })
+		        .runner(cmd_attest_attendees),
+		)
+		.add_cmd(
+		    Command::new("new-claim")
+		        .description("create a fresh claim of attendance for account")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		            .account_arg()
+		            .arg(
+		                Arg::with_name("vote")
+		                    .takes_value(true)
+		                    .required(true)
+		                    .value_name("VOTE")
+		                    .help("participant's vote on the number of people present at meetup time"),
+		            )
+		        })
+		        .runner(cmd_new_claim),
+		)
+		.add_cmd(
+		    Command::new("claim-reward")
+		        .description("Claim the rewards for all meetup participants of the last ceremony.")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("Account which signs the tx.")
+		                .meetup_index_arg()
+		                .all_flag()
+		        })
+		        .runner(cmd_claim_reward),
+		)
 		.add_cmd(
 		    Command::new("reputation")
 		        .description("List reputation history for an account")
@@ -1583,7 +916,722 @@ async fn main() {
 		})
 		.run();
 }
+//////////////////////
+fn cmd_add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		// -----setup
+		let spec_file = matches.value_of("specfile").unwrap();
+		let spec = read_community_spec_from_file(spec_file);
 
+		let mut api = get_chain_api(matches).await;
+		if !matches.dryrun_flag() {
+			let signer = matches.signer_arg()
+				.map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+			info!("signer ss58 is {}", signer.public().to_ss58check());
+			let signer = ParentchainExtrinsicSigner::new(signer);
+			api.set_signer(signer);
+		}
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+
+		let cid = verify_cid(&api, matches.cid_arg().unwrap(), None).await;
+
+		let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
+			{
+				info!("adding location {:?}", l);
+				add_location_call(api.metadata(), cid, l)
+			}
+		).collect();
+
+		let mut add_location_maybe_batch_call = match  add_location_calls.as_slice() {
+			[call] => OpaqueCall::from_tuple(call),
+			_ => OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls.clone()))
+		};
+
+		if matches.signer_arg().is_none() {
+			// return calls as `OpaqueCall`s to get the same return type in both branches
+			add_location_maybe_batch_call = if contains_sudo_pallet(api.metadata()) {
+				let sudo_add_location_batch = sudo_call(api.metadata(), add_location_maybe_batch_call);
+				info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+				print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
+				OpaqueCall::from_tuple(&sudo_add_location_batch)
+			} else {
+				let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+				info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+				let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_maybe_batch_call);
+				print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
+				OpaqueCall::from_tuple(&propose_add_location_batch)
+			};
+		}
+
+		if matches.dryrun_flag() {
+			println!("0x{}", hex::encode(add_location_maybe_batch_call.encode()));
+		} else {
+			// ---- send xt's to chain
+			if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
+				error!("Wrong ceremony phase for registering new locations for {}", cid);
+				error!("Aborting without registering additional locations");
+				std::process::exit(exit_code::WRONG_PHASE);
+			}
+			send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call).await, tx_payment_cid_arg).await;
+		}
+		Ok(())
+
+	})
+		.into()
+}
+fn cmd_list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let names = get_cid_names(&api).await.unwrap();
+		println!("number of communities:  {}", names.len());
+		for n in names.iter() {
+			let loc = api.get_locations(n.cid).await.unwrap();
+			println!(
+				"{}: {} locations: {}",
+				n.cid,
+				String::from_utf8(n.name.to_vec()).unwrap(),
+				loc.len()
+			);
+		}
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let maybe_at = matches.at_block_arg();
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+				.await;
+		println!("listing locations for cid {cid}");
+		let loc = api.get_locations(cid).await.unwrap();
+		for l in loc.iter() {
+			println!(
+				"lat: {} lon: {} (raw lat: {} lon: {})",
+				l.lat,
+				l.lon,
+				i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
+				i128::decode(&mut l.lon.encode().as_slice()).unwrap()
+			);
+		}
+		Ok(())
+	})
+	.into()
+}
+fn cmd_get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+
+		// >>>> add some debug info as well
+		let bn = get_block_number(&api, None).await;
+		debug!("block number: {}", bn);
+		let cindex = get_ceremony_index(&api, None).await;
+		info!("ceremony index: {}", cindex);
+		let tnext: Moment = api.get_next_phase_timestamp().await.unwrap();
+		debug!("next phase timestamp: {}", tnext);
+		// <<<<
+
+		let phase = api.get_current_phase().await.unwrap();
+		println!("{phase:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let signer = matches.signer_arg().map_or_else(
+			|| AccountKeyring::Alice.pair(),
+			|signer| get_pair_from_str(signer).into(),
+		);
+
+		let mut api = get_chain_api(matches).await;
+		let signer = ParentchainExtrinsicSigner::new(signer);
+		api.set_signer(signer);
+		let next_phase_call =
+			compose_call!(api.metadata(), "EncointerScheduler", "next_phase").unwrap();
+
+		// return calls as `OpaqueCall`s to get the same return type in both branches
+		let next_phase_call = if contains_sudo_pallet(api.metadata()) {
+			let sudo_next_phase_call = sudo_call(api.metadata(), next_phase_call);
+			info!("Printing raw sudo call for js/apps:");
+			print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
+
+			OpaqueCall::from_tuple(&sudo_next_phase_call)
+		} else {
+			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
+			let propose_next_phase =
+				collective_propose_call(api.metadata(), threshold, next_phase_call);
+			print_raw_call("collective_propose(next_phase)", &propose_next_phase);
+
+			OpaqueCall::from_tuple(&propose_next_phase)
+		};
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg);
+
+		let phase = api.get_current_phase().await.unwrap();
+		println!("Phase is now: {phase:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let current_ceremony_index = get_ceremony_index(&api, None).await;
+
+		let cindex = matches.ceremony_index_arg().map_or_else(
+			|| current_ceremony_index,
+			|ci| into_effective_cindex(ci, current_ceremony_index),
+		);
+
+		println!("listing participants for cid {cid} and ceremony nr {cindex}");
+
+		let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+
+		let registries =
+			vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+
+		let mut num_participants: Vec<u64> = vec![0, 0, 0, 0];
+		for i in 0..registries.len() {
+			println!("Querying {}", registries[i]);
+
+			let count: ParticipantIndexType = api
+				.get_storage_map(ENCOINTER_CEREMONIES, counts[i], (cid, cindex), None)
+				.await
+				.unwrap()
+				.unwrap_or(0);
+			println!("number of participants assigned:  {count}");
+			num_participants[i] = count;
+			for p_index in 1..count + 1 {
+				let accountid: AccountId = api
+					.get_storage_double_map(
+						ENCOINTER_CEREMONIES,
+						registries[i],
+						(cid, cindex),
+						p_index,
+						None,
+					)
+					.await
+					.unwrap()
+					.unwrap();
+				println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
+			}
+		}
+		println!("total: {} guaranteed seats + {} newbies = {} total participants who would like to attend",
+				 num_participants[0..=2].iter().sum::<u64>(),
+				 num_participants[3],
+				 num_participants[0..=3].iter().sum::<u64>()
+		);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let current_ceremony_index = get_ceremony_index(&api, None).await;
+
+		let cindex = matches.ceremony_index_arg().map_or_else(
+			|| current_ceremony_index,
+			|ci| into_effective_cindex(ci, current_ceremony_index),
+		);
+
+		let community_ceremony = (cid, cindex);
+
+		println!("listing meetups for cid {cid} and ceremony nr {cindex}");
+
+		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
+
+		let mut num_assignees = 0u64;
+
+		for meetup in stats.meetups.iter() {
+			println!(
+				"MeetupRegistry[{:?}, {}] location is {:?}, {:?}",
+				&community_ceremony, meetup.index, meetup.location.lat, meetup.location.lon
+			);
+
+			println!(
+				"MeetupRegistry[{:?}, {}] meeting time is {:?}",
+				&community_ceremony, meetup.index, meetup.time
+			);
+
+			if !meetup.registrations.is_empty() {
+				let num = meetup.registrations.len();
+				num_assignees += num as u64;
+				println!(
+					"MeetupRegistry[{:?}, {}] participants: {}",
+					&community_ceremony, meetup.index, num
+				);
+				for (participant, _registration) in meetup.registrations.iter() {
+					println!("   {participant}");
+				}
+			} else {
+				println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
+			}
+		}
+		println!("total number of assignees: {num_assignees}");
+		Ok(())
+	})
+	.into()
+}
+
+fn cmd_print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let current_ceremony_index = get_ceremony_index(&api, None).await;
+
+		let cindex = matches.ceremony_index_arg().map_or_else(
+			|| current_ceremony_index,
+			|ci| into_effective_cindex(ci, current_ceremony_index),
+		);
+
+		let community_ceremony = (cid, cindex);
+
+		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
+
+		// serialization prints the the account id better than `debug`
+		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let current_ceremony_index = get_ceremony_index(&api, None).await;
+
+		let cindex = matches.ceremony_index_arg().map_or_else(
+			|| current_ceremony_index,
+			|ci| into_effective_cindex(ci, current_ceremony_index),
+		);
+
+		let community_ceremony = (cid, cindex);
+
+		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
+
+		// serialization prints the the account id better than `debug`
+		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
+		Ok(())
+	})
+	.into()
+}
+fn cmd_list_reputables(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+
+		let is_verbose = matches.verbose_flag();
+		let at_block = matches.at_block_arg();
+
+		let lifetime = get_reputation_lifetime(&api, at_block).await;
+		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
+
+
+		let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
+		let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
+
+		let community_ids = get_cid_names(&api).await.unwrap().into_iter().map(|names| names.cid);
+
+		let mut reputables_csv = Vec::new();
+
+		println!("Listing the number of attested attendees for each community and ceremony for cycles [{:}:{:}]", ceremony_indices.first().unwrap(), ceremony_indices.last().unwrap());
+		for community_id in community_ids {
+			println!("Community ID: {community_id:?}");
+			let mut reputables: HashMap<AccountId, usize> = HashMap::new();
+			for ceremony_index in &ceremony_indices {
+				let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block).await;
+				println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:} (noshows: {:})", attendees.len(), noshows.len());
+				for attendee in attendees {
+					reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
+					*reputables.entry(attendee.clone()).or_insert(0) += 1;
+				}
+			}
+			println!("Reputables in {community_id:?} (unique accounts with at least one attendance) {:}", reputables.keys().len());
+		}
+		if is_verbose {
+			for reputable in reputables_csv {
+				println!("{reputable}");
+			}
+		}
+		Ok(())
+
+	})
+	.into()
+}
+fn cmd_upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let arg_who = matches.account_arg().unwrap();
+		let accountid = get_accountid_from_str(arg_who);
+		let signer = match matches.signer_arg() {
+			Some(sig) => get_pair_from_str(sig),
+			None => get_pair_from_str(arg_who),
+		};
+
+		let api = get_chain_api(matches).await;
+		let cindex = get_ceremony_index(&api, None).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+
+		let current_phase = api.get_current_phase().await.unwrap();
+		if !(current_phase == CeremonyPhaseType::Registering
+			|| current_phase == CeremonyPhaseType::Attesting)
+		{
+			error!("wrong ceremony phase for registering participant");
+			std::process::exit(exit_code::WRONG_PHASE);
+		}
+		let mut reputation_cindex = cindex;
+		if current_phase == CeremonyPhaseType::Registering {
+			reputation_cindex -= 1;
+		}
+		let rep = get_reputation(&api, &accountid, cid, reputation_cindex).await;
+		info!("{} has reputation {:?}", accountid, rep);
+		let proof = match rep {
+			Reputation::VerifiedUnlinked => {
+				prove_attendance(accountid, cid, reputation_cindex, arg_who)
+			},
+			_ => {
+				error!("No valid reputation in last ceremony.");
+				std::process::exit(exit_code::INVALID_REPUTATION);
+			},
+		};
+
+		let mut api = api;
+		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
+		api.set_signer(signer);
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> =
+			compose_extrinsic!(api, "EncointerCeremonies", "upgrade_registration", cid, proof)
+				.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		// send and watch extrinsic until ready
+		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+		info!("Upgrade registration sent for {}. status: '{:?}'", arg_who, report.status);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let arg_who = matches.account_arg().unwrap();
+		let accountid = get_accountid_from_str(arg_who);
+		let signer = match matches.signer_arg() {
+			Some(sig) => get_pair_from_str(sig),
+			None => get_pair_from_str(arg_who),
+		};
+
+		let api = get_chain_api(matches).await;
+		let cindex = get_ceremony_index(&api, None).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let rep = get_reputation(&api, &accountid, cid, cindex - 1).await;
+		info!("{} has reputation {:?}", accountid, rep);
+		let proof = match rep {
+			Reputation::Unverified => None,
+			Reputation::UnverifiedReputable => None, // this should never be the case during Registering!
+			Reputation::VerifiedUnlinked => {
+				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
+			},
+			Reputation::VerifiedLinked(_) => {
+				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
+			},
+		};
+		debug!("proof: {:x?}", proof.encode());
+		let current_phase = api.get_current_phase().await.unwrap();
+		if !(current_phase == CeremonyPhaseType::Registering
+			|| current_phase == CeremonyPhaseType::Attesting)
+		{
+			error!("wrong ceremony phase for registering participant");
+			std::process::exit(exit_code::WRONG_PHASE);
+		}
+		let mut api = api;
+		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
+		api.set_signer(signer);
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> =
+			compose_extrinsic!(api, "EncointerCeremonies", "register_participant", cid, proof)
+				.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		// send and watch extrinsic until ready
+		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+		info!("Registration sent for {}. status: '{:?}'", arg_who, report.status);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let arg_who = matches.account_arg().unwrap();
+		let signer = match matches.signer_arg() {
+			Some(sig) => get_pair_from_str(sig),
+			None => get_pair_from_str(arg_who),
+		};
+
+		let api = get_chain_api(matches).await;
+
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+
+		let cc = match matches.ceremony_index_arg() {
+			Some(cindex_arg) => {
+				let current_ceremony_index = get_ceremony_index(&api, None).await;
+				let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
+				Some((cid, cindex))
+			},
+			None => None,
+		};
+
+		let current_phase = api.get_current_phase().await.unwrap();
+		if !(current_phase == CeremonyPhaseType::Registering
+			|| current_phase == CeremonyPhaseType::Attesting)
+		{
+			error!("wrong ceremony phase for unregistering");
+			std::process::exit(exit_code::WRONG_PHASE);
+		}
+		let mut api = api;
+		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
+		api.set_signer(signer);
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let xt: EncointerXt<_> =
+			compose_extrinsic!(api, "EncointerCeremonies", "unregister_participant", cid, cc)
+				.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		// Send and watch extrinsic until ready
+		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+		info!("Unregister Participant sent for {}. status: '{:?}'", arg_who, report.status);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_endorse_newcomers(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let mut api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		endorse_newcomers(&mut api, cid, matches).await.unwrap();
+
+		Ok(())
+	})
+	.into()
+}
+fn cmd_get_bootstrappers_with_remaining_newbie_tickets(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let bs_with_tickets: Vec<BootstrapperWithTickets> =
+			get_bootstrappers_with_remaining_newbie_tickets(&api, cid).await.unwrap();
+
+		info!("burned_bootstrapper_newbie_tickets = {:?}", bs_with_tickets);
+
+		// transform it to simple tuples, which is easier to parse in python
+		let bt_vec = bs_with_tickets
+			.into_iter()
+			.map(|bt| (bt.bootstrapper.to_ss58check(), bt.remaining_newbie_tickets))
+			.collect::<Vec<_>>();
+
+		println!("{bt_vec:?}");
+		Ok(())
+	})
+	.into()
+}
+fn cmd_get_proof_of_attendance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let arg_who = matches.account_arg().unwrap();
+		let accountid = get_accountid_from_str(arg_who);
+		let api = get_chain_api(matches).await;
+
+		let current_ceremony_index = get_ceremony_index(&api, None).await;
+
+		let cindex_arg = matches.ceremony_index_arg().unwrap_or(-1);
+		let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
+
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+
+		debug!("Getting proof for ceremony index: {:?}", cindex);
+		let proof = prove_attendance(accountid, cid, cindex, arg_who);
+		info!("Proof: {:?}\n", &proof);
+		println!("0x{}", hex::encode(proof.encode()));
+
+		Ok(())
+	})
+	.into()
+}
+fn cmd_attest_attendees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+
+		let attestees: Vec<_> = matches
+			.attestees_arg()
+			.unwrap()
+			.into_iter()
+			.map(get_accountid_from_str)
+			.collect();
+
+		let vote = attestees.len() as u32 + 1u32;
+
+		debug!("attestees: {:?}", attestees);
+
+		info!("send attest_attendees by {}", who.public());
+
+		let mut api = get_chain_api(matches).await;
+		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone()));
+		api.set_signer(signer);
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerCeremonies",
+			"attest_attendees",
+			cid,
+			vote,
+			attestees
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+
+		println!("Claims sent by {}. status: '{:?}'", who.public(), report.status);
+		Ok(())
+	})
+	.into()
+}
+fn cmd_new_claim(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let arg_who = matches.account_arg().unwrap();
+		let claimant = get_pair_from_str(arg_who);
+
+		let n_participants = matches.value_of("vote").unwrap().parse::<u32>().unwrap();
+
+		let claim = new_claim_for(&api, &claimant.into(), cid, n_participants).await;
+
+		println!("{}", hex::encode(claim));
+
+		Ok(())
+	})
+	.into()
+}
+fn cmd_claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+
+		let signer = match matches.signer_arg() {
+			Some(sig) => get_pair_from_str(sig),
+			None => panic!("please specify --signer."),
+		};
+		let mut api = api;
+		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer));
+		api.set_signer(signer.clone());
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		let meetup_index_arg = matches.meetup_index_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+
+		if matches.all_flag() {
+			let mut cindex = get_ceremony_index(&api, None).await;
+			if api.get_current_phase().await.unwrap() == CeremonyPhaseType::Registering {
+				cindex -= 1;
+			}
+			let meetup_count = api
+				.get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), None)
+				.await
+				.unwrap()
+				.unwrap_or(0u64);
+			let calls: Vec<_> = (1u64..=meetup_count)
+				.map(|idx| {
+					compose_call!(
+						api.metadata(),
+						ENCOINTER_CEREMONIES,
+						"claim_rewards",
+						cid,
+						Option::<MeetupIndexType>::Some(idx)
+					)
+					.unwrap()
+				})
+				.collect();
+			let batch_call = compose_call!(api.metadata(), "Utility", "batch", calls).unwrap();
+			send_and_wait_for_in_block(&api, xt(&api, batch_call).await, tx_payment_cid_arg);
+			println!("Claiming reward for all meetup indexes. xt-status: 'ready'");
+		} else {
+			let meetup_index = meetup_index_arg;
+			let xt: EncointerXt<_> =
+				compose_extrinsic!(api, ENCOINTER_CEREMONIES, "claim_rewards", cid, meetup_index)
+					.unwrap();
+			ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+			let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+			match meetup_index_arg {
+				Some(idx) => {
+					println!(
+						"Claiming reward for meetup_index {idx}. xt-status: '{:?}'",
+						report.status
+					);
+				},
+				None => {
+					println!(
+						"Claiming reward for {}. xt-status: 'ready'",
+						signer.public_account_id()
+					);
+				},
+			}
+		}
+		Ok(())
+	})
+	.into()
+}
 fn cmd_reputation(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
