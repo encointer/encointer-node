@@ -4,5 +4,6 @@ pub mod encointer_communities;
 pub mod encointer_core;
 pub mod encointer_democracy;
 pub mod encointer_faucet;
+pub mod encointer_scheduler;
 pub mod frame;
 pub mod keystore;

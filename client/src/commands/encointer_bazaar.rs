@@ -1,11 +1,19 @@
 use crate::cli_args::EncointerArgsExtractor;
-use crate::utils::keys::get_accountid_from_str;
-use crate::{
-	get_businesses, get_chain_api, get_offerings, get_offerings_for_business, send_bazaar_xt,
-	verify_cid, BazaarCalls,
-};
+use crate::commands::encointer_core::set_api_extrisic_params_builder;
+use crate::commands::encointer_core::verify_cid;
+use crate::utils::ensure_payment;
+use crate::utils::get_chain_api;
+use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
 use clap::ArgMatches;
-
+use encointer_api_client_extension::{Api, EncointerXt, ParentchainExtrinsicSigner};
+use encointer_node_notee_runtime::AccountId;
+use encointer_primitives::bazaar::{Business, BusinessIdentifier, OfferingData};
+use encointer_primitives::communities::CommunityIdentifier;
+use parity_scale_codec::{Decode, Encode};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use substrate_api_client::ac_compose_macros::{compose_extrinsic, rpc_params};
+use substrate_api_client::rpc::Request;
+use substrate_api_client::{SubmitAndWatch, XtStatus};
 
 pub fn create_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
@@ -71,4 +79,74 @@ pub fn list_business_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<
 		Ok(())
 	})
 	.into()
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum BazaarCalls {
+	CreateBusiness,
+	UpdateBusiness,
+	CreateOffering,
+}
+
+impl ToString for BazaarCalls {
+	fn to_string(&self) -> String {
+		match self {
+			BazaarCalls::CreateBusiness => "create_business".to_string(),
+			BazaarCalls::UpdateBusiness => "update_business".to_string(),
+			BazaarCalls::CreateOffering => "create_offering".to_string(),
+		}
+	}
+}
+
+async fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> Result<(), ()> {
+	let business_owner = matches.account_arg().map(get_pair_from_str).unwrap();
+
+	let mut api = get_chain_api(matches).await;
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
+		business_owner.clone(),
+	)));
+	let cid =
+		verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
+
+	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+	let xt: EncointerXt<_> =
+		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid)
+			.unwrap();
+	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+	// send and watch extrinsic until ready
+	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
+	println!(
+		"{} for {}. xt-status: '{:?}'",
+		bazaar_call.to_string(),
+		business_owner.public(),
+		report.status
+	);
+	Ok(())
+}
+async fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
+	api.client()
+		.request("encointer_bazaarGetBusinesses", rpc_params![cid])
+		.await
+		.expect("Could not find any businesses...")
+}
+
+async fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
+	api.client()
+		.request("encointer_bazaarGetOfferings", rpc_params![cid])
+		.await
+		.expect("Could not find any business offerings...")
+}
+
+async fn get_offerings_for_business(
+	api: &Api,
+	cid: CommunityIdentifier,
+	account_id: AccountId,
+) -> Option<Vec<OfferingData>> {
+	let b_id = BusinessIdentifier::new(cid, account_id);
+	api.client()
+		.request("encointer_bazaarGetOfferingsForBusiness", rpc_params![b_id])
+		.await
+		.expect("Could not find any business offerings...")
 }

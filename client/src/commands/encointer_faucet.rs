@@ -1,12 +1,13 @@
 use crate::cli_args::EncointerArgsExtractor;
+use crate::commands::encointer_core::set_api_extrisic_params_builder;
+use crate::commands::encointer_core::verify_cid;
+use crate::utils::get_chain_api;
 use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
 use crate::utils::{
 	collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors, print_raw_call,
 	send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 };
-use crate::{get_chain_api, set_api_extrisic_params_builder, verify_cid};
 use clap::ArgMatches;
-
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::{AccountId, Balance};
 use encointer_primitives::faucet::FromStr;

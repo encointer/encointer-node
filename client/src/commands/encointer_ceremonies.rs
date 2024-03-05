@@ -1,31 +1,38 @@
 use crate::cli_args::EncointerArgsExtractor;
+use crate::commands::encointer_communities::get_cid_names;
+use crate::commands::encointer_core::set_api_extrisic_params_builder;
+use crate::commands::encointer_core::verify_cid;
+use crate::commands::encointer_scheduler::get_ceremony_index;
+use crate::exit_code;
+use crate::utils::get_chain_api;
 use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
 use crate::utils::{
 	collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
 	into_effective_cindex, print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 };
-use crate::{
-	endorse_newcomers, exit_code, get_attendees_for_community_ceremony,
-	get_bootstrappers_with_remaining_newbie_tickets, get_ceremony_index, get_chain_api,
-	get_cid_names, get_reputation, get_reputation_history, get_reputation_lifetime, new_claim_for,
-	prove_attendance, set_api_extrisic_params_builder, verify_cid, BootstrapperWithTickets,
-};
 use clap::ArgMatches;
-use encointer_api_client_extension::CeremoniesApi;
-use encointer_api_client_extension::SchedulerApi;
+use encointer_api_client_extension::{Api, CeremoniesApi};
+use encointer_api_client_extension::{ApiClientError, SchedulerApi};
 use encointer_api_client_extension::{
 	EncointerXt, ParentchainExtrinsicSigner, ENCOINTER_CEREMONIES,
 };
-use encointer_node_notee_runtime::AccountId;
-use encointer_primitives::ceremonies::{MeetupIndexType, ParticipantIndexType, Reputation};
+use encointer_node_notee_runtime::{AccountId, Hash, Moment, Signature, ONE_DAY};
+use encointer_primitives::ceremonies::{
+	CeremonyIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation, MeetupIndexType,
+	ParticipantIndexType, ProofOfAttendance, Reputation, ReputationLifetimeType,
+};
+use encointer_primitives::communities::CommunityIdentifier;
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use log::{debug, error, info};
-use parity_scale_codec::Encode;
+use parity_scale_codec::{Decode, Encode};
+use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
+use sp_runtime::MultiSignature;
 use std::collections::HashMap;
-use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic};
-use substrate_api_client::ac_primitives::SignExtrinsic;
+use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic, rpc_params};
+use substrate_api_client::ac_primitives::{Bytes, SignExtrinsic};
+use substrate_api_client::rpc::Request;
 use substrate_api_client::GetStorage;
 use substrate_api_client::{SubmitAndWatch, XtStatus};
 
@@ -685,4 +692,247 @@ pub fn purge_community_ceremony(_args: &str, matches: &ArgMatches<'_>) -> Result
 		Ok(())
 	})
 	.into()
+}
+
+fn prove_attendance(
+	prover: AccountId,
+	cid: CommunityIdentifier,
+	cindex: CeremonyIndexType,
+	attendee_str: &str,
+) -> ProofOfAttendance<Signature, AccountId> {
+	let msg = (prover.clone(), cindex);
+	let attendee = get_pair_from_str(attendee_str);
+	let attendeeid = get_accountid_from_str(attendee_str);
+	debug!("generating proof of attendance for {} and cindex: {}", prover, cindex);
+	debug!("signature payload is {:x?}", msg.encode());
+	ProofOfAttendance {
+		prover_public: prover,
+		community_identifier: cid,
+		ceremony_index: cindex,
+		attendee_public: attendeeid,
+		attendee_signature: Signature::from(sr25519_core::Signature::from(
+			attendee.sign(&msg.encode()),
+		)),
+	}
+}
+
+async fn get_reputation(
+	api: &Api,
+	prover: &AccountId,
+	cid: CommunityIdentifier,
+	cindex: CeremonyIndexType,
+) -> Reputation {
+	api.get_storage_double_map(
+		"EncointerCeremonies",
+		"ParticipantReputation",
+		(cid, cindex),
+		prover.clone(),
+		None,
+	)
+	.await
+	.unwrap()
+	.unwrap_or(Reputation::Unverified)
+}
+
+async fn get_reputation_history(
+	api: &Api,
+	account_id: &AccountId,
+) -> Option<Vec<(CeremonyIndexType, CommunityReputation)>> {
+	api.client()
+		.request("encointer_getReputations", rpc_params![account_id])
+		.await
+		.expect("Could not query reputation history...")
+}
+
+async fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
+	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
+		.await
+		.unwrap()
+		.unwrap_or(0)
+}
+
+async fn get_attendees_for_community_ceremony(
+	api: &Api,
+	community_ceremony: CommunityCeremony,
+	at_block: Option<Hash>,
+) -> (Vec<AccountId>, Vec<AccountId>) {
+	let key_prefix = api
+		.get_storage_double_map_key_prefix(
+			"EncointerCeremonies",
+			"ParticipantReputation",
+			community_ceremony,
+		)
+		.await
+		.unwrap();
+	let max_keys = 1000;
+	let storage_keys = api
+		.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+		.await
+		.unwrap();
+
+	if storage_keys.len() == max_keys as usize {
+		error!("results can be wrong because max keys reached for query")
+	}
+	let mut attendees = Vec::new();
+	let mut noshows = Vec::new();
+	for storage_key in storage_keys.iter() {
+		match api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap() {
+			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked(_) => {
+				let key_postfix = storage_key.as_ref();
+				attendees.push(
+					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+				);
+			},
+			Reputation::UnverifiedReputable | Reputation::Unverified => {
+				let key_postfix = storage_key.as_ref();
+				noshows.push(
+					AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap(),
+				);
+			},
+		}
+	}
+	(attendees, noshows)
+}
+
+async fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
+	api.get_storage("EncointerCeremonies", "ReputationLifetime", at_block)
+		.await
+		.unwrap()
+		.unwrap_or(5)
+}
+
+async fn get_participant_attestation_index(
+	api: &Api,
+	key: CommunityCeremony,
+	accountid: &AccountId,
+) -> Option<ParticipantIndexType> {
+	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, None)
+		.await
+		.unwrap()
+}
+
+async fn new_claim_for(
+	api: &Api,
+	claimant: &sr25519::Pair,
+	cid: CommunityIdentifier,
+	n_participants: u32,
+) -> Vec<u8> {
+	let cindex = get_ceremony_index(api, None).await;
+	let mindex = api
+		.get_meetup_index(&(cid, cindex), &claimant.public().into())
+		.await
+		.unwrap()
+		.expect("participant must be assigned to meetup to generate a claim");
+
+	// implicitly assume that participant meet at the right place at the right time
+	let mloc = api.get_meetup_location(&(cid, cindex), mindex).await.unwrap().unwrap();
+	let mtime = api.get_meetup_time(mloc, ONE_DAY).await.unwrap();
+
+	info!(
+		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
+		claimant.public().to_ss58check(),
+		mindex,
+		mloc.lat,
+		mloc.lon,
+		mtime,
+		cindex
+	);
+	let claim: ClaimOfAttendance<MultiSignature, AccountId, Moment> =
+		ClaimOfAttendance::new_unsigned(
+			claimant.public().into(),
+			cindex,
+			cid,
+			mindex,
+			mloc,
+			mtime,
+			n_participants,
+		)
+		.sign(claimant);
+	claim.encode()
+}
+
+async fn endorse_newcomers(
+	api: &mut Api,
+	cid: CommunityIdentifier,
+	matches: &ArgMatches<'_>,
+) -> Result<(), ApiClientError> {
+	let bootstrapper = matches.bootstrapper_arg().map(get_pair_from_str).unwrap();
+	let endorsees = matches.endorsees_arg().expect("Please supply at least one endorsee");
+
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(bootstrapper)));
+
+	let mut nonce = api.get_nonce().await?;
+
+	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+	set_api_extrisic_params_builder(api, tx_payment_cid_arg).await;
+
+	for e in endorsees.into_iter() {
+		let endorsee = get_accountid_from_str(e);
+
+		let call =
+			compose_call!(api.metadata(), "EncointerCeremonies", "endorse_newcomer", cid, endorsee)
+				.unwrap();
+
+		let encoded_xt: Bytes = api.compose_extrinsic_offline(call, nonce).encode().into();
+		ensure_payment(api, &encoded_xt, tx_payment_cid_arg).await;
+		let _tx_report = api
+			.submit_and_watch_opaque_extrinsic_until(&encoded_xt, XtStatus::Ready)
+			.await
+			.unwrap();
+
+		nonce += 1;
+	}
+
+	Ok(())
+}
+
+/// Helper type, which is only needed to print the information nicely.
+#[derive(Debug)]
+struct BootstrapperWithTickets {
+	bootstrapper: AccountId,
+	remaining_newbie_tickets: u8,
+}
+
+async fn get_bootstrappers_with_remaining_newbie_tickets(
+	api: &Api,
+	cid: CommunityIdentifier,
+) -> Result<Vec<BootstrapperWithTickets>, ApiClientError> {
+	let total_newbie_tickets: u8 = api
+		.get_storage("EncointerCeremonies", "EndorsementTicketsPerBootstrapper", None)
+		.await
+		.unwrap()
+		.unwrap();
+
+	// prepare closure to make below call more readable.
+	let ticket_query = |bs| async move {
+		let remaining_tickets = total_newbie_tickets
+			- api
+				.get_storage_double_map(
+					"EncointerCeremonies",
+					"BurnedBootstrapperNewbieTickets",
+					cid,
+					bs,
+					None,
+				)
+				.await?
+				.unwrap_or(0u8);
+
+		Ok::<_, ApiClientError>(remaining_tickets)
+	};
+
+	let bootstrappers: Vec<AccountId> = api
+		.get_storage_map("EncointerCommunities", "Bootstrappers", cid, None)
+		.await?
+		.expect("No bootstrappers found, does the community exist?");
+
+	let mut bs_with_tickets: Vec<BootstrapperWithTickets> = Vec::with_capacity(bootstrappers.len());
+
+	for bs in bootstrappers.into_iter() {
+		bs_with_tickets.push(BootstrapperWithTickets {
+			bootstrapper: bs.clone(),
+			remaining_newbie_tickets: ticket_query(bs).await?,
+		});
+	}
+
+	Ok(bs_with_tickets)
 }

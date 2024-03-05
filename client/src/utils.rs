@@ -1,4 +1,6 @@
-use crate::{exit_code, get_asset_fee_details, get_community_balance, BalanceType};
+use crate::commands::encointer_core::{get_asset_fee_details, get_community_balance};
+use crate::{exit_code, BalanceType};
+use clap::ArgMatches;
 use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
@@ -6,6 +8,7 @@ use log::{debug, error, info};
 use parity_scale_codec::{Compact, Encode};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
+use substrate_api_client::rpc::JsonrpseeClient;
 use substrate_api_client::{
 	ac_compose_macros::compose_call,
 	ac_node_api::Metadata,
@@ -13,6 +16,17 @@ use substrate_api_client::{
 	api::{error::Error as ApiClientError, rpc_api::state::GetStorage},
 	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch, XtStatus,
 };
+
+pub async fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
+	let url = format!(
+		"{}:{}",
+		matches.value_of("node-url").unwrap(),
+		matches.value_of("node-port").unwrap()
+	);
+	debug!("connecting to {}", url);
+	let client = JsonrpseeClient::new(&url).await.expect("node URL is incorrect");
+	Api::new(client).await.unwrap()
+}
 
 /// Creates a signed extrinsic from a call
 ///

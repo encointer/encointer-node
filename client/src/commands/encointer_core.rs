@@ -1,29 +1,38 @@
 use crate::cli_args::EncointerArgsExtractor;
+use crate::commands::encointer_communities::get_community_identifiers;
+use crate::commands::frame::get_block_number;
+use crate::exit_code;
+use crate::utils::get_chain_api;
 use crate::utils::keys::{get_accountid_from_str, get_pair_from_str};
 use crate::utils::{
 	collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors, print_raw_call,
 	send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 };
-use crate::{
-	apply_demurrage, exit_code, get_all_balances, get_block_number, get_ceremony_index,
-	get_chain_api, get_community_balance, get_community_issuance, get_demurrage_per_block, listen,
-	set_api_extrisic_params_builder, verify_cid,
+use clap::{value_t, ArgMatches};
+use encointer_api_client_extension::{
+	Api, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder, SchedulerApi,
 };
-use clap::ArgMatches;
-use encointer_api_client_extension::SchedulerApi;
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
-use encointer_node_notee_runtime::Moment;
-use encointer_primitives::balances::BalanceType;
+use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, Moment, RuntimeEvent};
+use encointer_primitives::balances::{to_U64F64, BalanceEntry, BalanceType, Demurrage};
+use encointer_primitives::ceremonies::CeremonyIndexType;
+use encointer_primitives::communities::CommunityIdentifier;
+use encointer_primitives::fixed::transcendental::exp;
 use log::{debug, error, info};
-use parity_scale_codec::{Encode};
+use pallet_transaction_payment::FeeDetails;
+use parity_scale_codec::Encode;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
+use sp_rpc::number::NumberOrHex;
 use std::str::FromStr;
-use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic};
+use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic, rpc_params};
+use substrate_api_client::ac_primitives::Bytes;
 use substrate_api_client::extrinsic::BalancesExtrinsics;
-use substrate_api_client::GetAccountInformation;
+use substrate_api_client::rpc::Request;
+use substrate_api_client::GetStorage;
 use substrate_api_client::SubmitAndWatch;
 use substrate_api_client::XtStatus;
+use substrate_api_client::{GetAccountInformation, SubscribeEvents};
 
 pub fn balance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
@@ -182,65 +191,230 @@ pub fn listen_to_events(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 	.into()
 }
 
-pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
+pub async fn get_community_balance(
+	api: &Api,
+	cid_str: &str,
+	account_id: &AccountId,
+	maybe_at: Option<Hash>,
+) -> BalanceType {
+	let cid = verify_cid(api, cid_str, maybe_at).await;
+	let bn = get_block_number(api, maybe_at).await;
+	let dr = get_demurrage_per_block(api, cid).await;
 
-		// >>>> add some debug info as well
-		let bn = get_block_number(&api, None).await;
-		debug!("block number: {}", bn);
-		let cindex = get_ceremony_index(&api, None).await;
-		info!("ceremony index: {}", cindex);
-		let tnext: Moment = api.get_next_phase_timestamp().await.unwrap();
-		debug!("next phase timestamp: {}", tnext);
-		// <<<<
-
-		let phase = api.get_current_phase().await.unwrap();
-		println!("{phase:?}");
-		Ok(())
-	})
-	.into()
+	if let Some(entry) = api
+		.get_storage_double_map("EncointerBalances", "Balance", cid, account_id, maybe_at)
+		.await
+		.unwrap()
+	{
+		apply_demurrage(entry, bn, dr)
+	} else {
+		BalanceType::from_num(0)
+	}
 }
-pub fn next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let signer = matches.signer_arg().map_or_else(
-			|| AccountKeyring::Alice.pair(),
-			|signer| get_pair_from_str(signer).into(),
-		);
 
-		let mut api = get_chain_api(matches).await;
-		let signer = ParentchainExtrinsicSigner::new(signer);
-		api.set_signer(signer);
-		let next_phase_call =
-			compose_call!(api.metadata(), "EncointerScheduler", "next_phase").unwrap();
+pub async fn get_community_issuance(
+	api: &Api,
+	cid_str: &str,
+	maybe_at: Option<Hash>,
+) -> BalanceType {
+	let cid = verify_cid(api, cid_str, maybe_at).await;
+	let bn = get_block_number(api, maybe_at).await;
+	let dr = get_demurrage_per_block(api, cid).await;
 
-		// return calls as `OpaqueCall`s to get the same return type in both branches
-		let next_phase_call = if contains_sudo_pallet(api.metadata()) {
-			let sudo_next_phase_call = sudo_call(api.metadata(), next_phase_call);
-			info!("Printing raw sudo call for js/apps:");
-			print_raw_call("sudo(next_phase)", &sudo_next_phase_call);
+	if let Some(entry) = api
+		.get_storage_map("EncointerBalances", "TotalIssuance", cid, maybe_at)
+		.await
+		.unwrap()
+	{
+		apply_demurrage(entry, bn, dr)
+	} else {
+		BalanceType::from_num(0)
+	}
+}
 
-			OpaqueCall::from_tuple(&sudo_next_phase_call)
-		} else {
-			let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
-			info!("Printing raw collective propose calls with threshold {} for js/apps", threshold);
-			let propose_next_phase =
-				collective_propose_call(api.metadata(), threshold, next_phase_call);
-			print_raw_call("collective_propose(next_phase)", &propose_next_phase);
+async fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
+	let d: Option<Demurrage> = api
+		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
+		.await
+		.unwrap();
 
-			OpaqueCall::from_tuple(&propose_next_phase)
+	match d {
+		Some(d) => {
+			debug!("Fetched community specific demurrage per block {:?}", &d);
+			d
+		},
+		None => {
+			let d = api.get_constant("EncointerBalances", "DefaultDemurrage").await.unwrap();
+			debug!("Fetched default demurrage per block {:?}", d);
+			d
+		},
+	}
+}
+
+async fn get_all_balances(
+	api: &Api,
+	account_id: &AccountId,
+) -> Option<Vec<(CommunityIdentifier, BalanceEntry<BlockNumber>)>> {
+	api.client()
+		.request("encointer_getAllBalances", rpc_params![account_id])
+		.await
+		.expect("Could not query all balances...")
+}
+
+pub async fn get_asset_fee_details(
+	api: &Api,
+	cid_str: &str,
+	encoded_xt: &Bytes,
+) -> Option<FeeDetails<NumberOrHex>> {
+	let cid = verify_cid(api, cid_str, None).await;
+
+	api.client()
+		.request("encointer_queryAssetFeeDetails", rpc_params![cid, encoded_xt])
+		.await
+		.expect("Could not query asset fee details")
+}
+pub fn apply_demurrage(
+	entry: BalanceEntry<BlockNumber>,
+	current_block: BlockNumber,
+	demurrage_per_block: Demurrage,
+) -> BalanceType {
+	let elapsed_time_block_number = current_block.checked_sub(entry.last_update).unwrap();
+	let elapsed_time_u32: u32 = elapsed_time_block_number;
+	let elapsed_time = Demurrage::from_num(elapsed_time_u32);
+	let exponent = -demurrage_per_block * elapsed_time;
+	debug!(
+		"demurrage per block {}, current_block {}, last {}, elapsed_blocks {}",
+		demurrage_per_block, current_block, entry.last_update, elapsed_time
+	);
+	let exp_result = exp(exponent).unwrap();
+	entry.principal.checked_mul(to_U64F64(exp_result).unwrap()).unwrap()
+}
+
+pub async fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifier {
+	let cids = get_community_identifiers(api, maybe_at).await.expect("no community registered");
+	let cid = CommunityIdentifier::from_str(cid).unwrap();
+	if !cids.contains(&cid) {
+		panic!("cid {cid} does not exist on chain");
+	}
+	cid
+}
+
+async fn listen(matches: &ArgMatches<'_>) {
+	let api = get_chain_api(matches).await;
+	debug!("Subscribing to events");
+	let mut subscription = api.subscribe_events().await.unwrap();
+	let mut count = 0u32;
+	let mut blocks = 0u32;
+	loop {
+		if matches.is_present("events")
+			&& count >= value_t!(matches.value_of("events"), u32).unwrap()
+		{
+			return;
 		};
+		if matches.is_present("blocks")
+			&& blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
+		{
+			return;
+		};
+		let event_results = subscription.next_events::<RuntimeEvent, Hash>().await.unwrap();
+		blocks += 1;
+		match event_results {
+			Ok(evts) => {
+				for evr in evts {
+					debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
+					match &evr.event {
+						RuntimeEvent::EncointerCeremonies(ee) => {
+							count += 1;
+							info!(">>>>>>>>>> ceremony event: {:?}", ee);
+							match &ee {
+								pallet_encointer_ceremonies::Event::ParticipantRegistered(
+									cid,
+									participant_type,
+									accountid,
+								) => {
+									println!(
+										"Participant registered as {participant_type:?}, for cid: {cid:?}, account: {accountid}, "
+									);
+								},
+								_ => println!("Unsupported EncointerCommunities event"),
+							}
+						},
+						RuntimeEvent::EncointerScheduler(ee) => {
+							count += 1;
+							info!(">>>>>>>>>> scheduler event: {:?}", ee);
+							match &ee {
+								pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
+									println!("Phase changed to: {phase:?}");
+								},
+								pallet_encointer_scheduler::Event::CeremonySchedulePushedByOneDay => {
+									println!("Ceremony schedule was pushed by one day");
+								},
+							}
+						},
+						RuntimeEvent::EncointerCommunities(ee) => {
+							count += 1;
+							info!(">>>>>>>>>> community event: {:?}", ee);
+							match &ee {
+								pallet_encointer_communities::Event::CommunityRegistered(cid) => {
+									println!("Community registered: cid: {cid:?}");
+								},
+								pallet_encointer_communities::Event::MetadataUpdated(cid) => {
+									println!("Community metadata updated cid: {cid:?}");
+								},
+								pallet_encointer_communities::Event::NominalIncomeUpdated(
+									cid,
+									income,
+								) => {
+									println!(
+										"Community metadata updated cid: {cid:?}, value: {income:?}"
+									);
+								},
+								pallet_encointer_communities::Event::DemurrageUpdated(
+									cid,
+									demurrage,
+								) => {
+									println!(
+										"Community metadata updated cid: {cid:?}, value: {demurrage:?}"
+									);
+								},
+								_ => println!("Unsupported EncointerCommunities event"),
+							}
+						},
+						RuntimeEvent::EncointerBalances(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> encointer balances event: {ee:?}");
+						},
+						RuntimeEvent::EncointerBazaar(ee) => {
+							count += 1;
+							println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
+						},
+						RuntimeEvent::System(ee) => match ee {
+							frame_system::Event::ExtrinsicFailed {
+								dispatch_error: _,
+								dispatch_info: _,
+							} => {
+								error!("ExtrinsicFailed: {ee:?}");
+							},
+							frame_system::Event::ExtrinsicSuccess { dispatch_info } => {
+								println!("ExtrinsicSuccess: {dispatch_info:?}");
+							},
+							_ => debug!("ignoring unsupported system Event"),
+						},
+						_ => debug!("ignoring unsupported module event: {:?}", evr.event),
+					}
+				}
+			},
+			Err(_) => error!("couldn't decode event record list"),
+		}
+	}
+}
 
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg).await;
-
-		let phase = api.get_current_phase().await.unwrap();
-		println!("Phase is now: {phase:?}");
-		Ok(())
-	})
-	.into()
+pub async fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&str>) {
+	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
+	if let Some(tx_payment_cid) = tx_payment_cid_arg {
+		tx_params = tx_params.tip(
+			CommunityCurrencyTip::new(0).of_community(verify_cid(api, tx_payment_cid, None).await),
+		);
+	}
+	let _ = &api.set_additional_params(tx_params);
 }
