@@ -26,62 +26,57 @@ mod utils;
 
 use crate::{
 	community_spec::{
-		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
 		CommunitySpec,
 	},
 	utils::{
-		batch_call, collective_propose_call, contains_sudo_pallet, ensure_payment, get_councillors,
-		into_effective_cindex,
-		keys::{get_accountid_from_str, get_pair_from_str, KEYSTORE_PATH, SR25519},
-		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
+		ensure_payment,
+		keys::{get_accountid_from_str, get_pair_from_str},
 	},
 };
 use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use encointer_api_client_extension::{
-	Api, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
-	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ExtrinsicAddress,
-	ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
+	Api, CeremoniesApi, CommunityCurrencyTip,
+	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt,
+	ParentchainExtrinsicSigner,
 };
 use encointer_node_notee_runtime::{
-	AccountId, Balance, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent,
+	AccountId, BalanceEntry, BalanceType, BlockNumber, Hash, Moment, RuntimeEvent,
 	Signature, ONE_DAY,
 };
 use encointer_primitives::{
 	balances::{to_U64F64, Demurrage},
 	bazaar::{Business, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		ClaimOfAttendance, CommunityCeremony, CommunityReputation, MeetupIndexType,
+		ClaimOfAttendance, CommunityCeremony, CommunityReputation,
 		ParticipantIndexType, ProofOfAttendance, Reputation, ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
-	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
-	faucet::{Faucet, FaucetNameType, FromStr as FaucetNameFromStr, WhiteListType},
+	faucet::{FromStr as FaucetNameFromStr},
 	fixed::transcendental::exp,
-	scheduler::{CeremonyIndexType, CeremonyPhaseType},
+	scheduler::{CeremonyIndexType},
 };
-use futures::stream;
+
 use log::*;
 use pallet_transaction_payment::FeeDetails;
-use parity_scale_codec::{Compact, Decode, Encode};
-use sp_application_crypto::{ed25519, sr25519};
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, ConstU32, Pair};
+use parity_scale_codec::{Decode, Encode};
+use sp_application_crypto::{sr25519};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_keystore::Keystore;
 use sp_rpc::number::NumberOrHex;
 use sp_runtime::MultiSignature;
-use std::{collections::HashMap, path::PathBuf, str::FromStr};
+use std::{str::FromStr};
 use substrate_api_client::{
-	ac_compose_macros::{compose_call, compose_extrinsic, compose_extrinsic_offline, rpc_params},
+	ac_compose_macros::{compose_call, compose_extrinsic, rpc_params},
 	ac_primitives::{Bytes, SignExtrinsic},
 	api::error::Error as ApiClientError,
 	extrinsic::BalancesExtrinsics,
-	rpc::{JsonrpseeClient, Request},
-	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
+	rpc::{JsonrpseeClient, Request}, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
 	SubmitAndWatch, SubscribeEvents, XtStatus,
 };
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+
 
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 const VERSION: &str = env!("CARGO_PKG_VERSION");

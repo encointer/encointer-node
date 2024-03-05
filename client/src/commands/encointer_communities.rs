@@ -15,12 +15,12 @@ use encointer_api_client_extension::ParentchainExtrinsicSigner;
 use encointer_api_client_extension::SchedulerApi;
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use log::{error, info};
-use parity_scale_codec::{Compact, Decode, Encode};
+use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
-use substrate_api_client::ac_primitives::SignExtrinsic;
-use substrate_api_client::GetStorage;
+
+
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

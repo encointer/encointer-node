@@ -6,14 +6,14 @@ use crate::utils::{
 };
 use crate::{get_chain_api, set_api_extrisic_params_builder, verify_cid};
 use clap::ArgMatches;
-use encointer_api_client_extension::ExtrinsicAddress;
+
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
 use encointer_node_notee_runtime::{AccountId, Balance};
 use encointer_primitives::faucet::FromStr;
 use encointer_primitives::faucet::{Faucet, FaucetNameType, WhiteListType};
 use log::{error, info};
-use parity_scale_codec::{Compact, Decode, Encode};
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, ConstU32, Pair};
+use parity_scale_codec::{Decode, Encode};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic};
 use substrate_api_client::GetAccountInformation;

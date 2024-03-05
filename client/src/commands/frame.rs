@@ -6,7 +6,7 @@ use clap::ArgMatches;
 use encointer_api_client_extension::ExtrinsicAddress;
 use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
 use log::info;
-use parity_scale_codec::{Compact, Decode, Encode};
+use parity_scale_codec::{Compact, Encode};
 use sp_keyring::AccountKeyring;
 use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic_offline};
 use substrate_api_client::{GetBalance, SubmitAndWatch, XtStatus};

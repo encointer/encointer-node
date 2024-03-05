@@ -9,7 +9,7 @@ use encointer_primitives::{
 	},
 	communities::Location,
 };
-use futures::stream::{self, StreamExt, TryStreamExt};
+use futures::stream::{self, StreamExt};
 use log::warn;
 use serde::{Deserialize, Serialize};
 use sp_runtime::AccountId32 as AccountId;

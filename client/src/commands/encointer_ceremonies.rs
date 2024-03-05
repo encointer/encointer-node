@@ -21,7 +21,7 @@ use encointer_primitives::ceremonies::{MeetupIndexType, ParticipantIndexType, Re
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use log::{debug, error, info};
 use parity_scale_codec::Encode;
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, ConstU32, Pair};
+use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use std::collections::HashMap;
 use substrate_api_client::ac_compose_macros::{compose_call, compose_extrinsic};

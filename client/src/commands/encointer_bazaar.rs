@@ -5,7 +5,7 @@ use crate::{
 	verify_cid, BazaarCalls,
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::ExtrinsicAddress;
+
 
 pub fn create_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
