@@ -9315,6 +9315,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.17.0"
+source = "git+https://github.com/brenzi/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable#cb238d79dc46a303a2958c0897a6d67b2eb80175"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -9363,6 +9364,7 @@ checksum = "b285e7d183a32732fdc119f3d81b7915790191fad602b7c709ef247073c77a2e"
 [[package]]
 name = "substrate-client-keystore"
 version = "0.10.0"
+source = "git+https://github.com/brenzi/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable#cb238d79dc46a303a2958c0897a6d67b2eb80175"
 dependencies = [
  "array-bytes 6.2.2",
  "async-trait",
@@ -11112,3 +11114,11 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "substrate-api-client"
+version = "0.17.0"
+
+[[patch.unused]]
+name = "substrate-client-keystore"
+version = "0.10.0"

@@ -11,18 +11,18 @@ members = [
 panic = 'unwind'
 
 [workspace.dependencies]
+async-trait = "0.1.68"
+clap = { version = "4.5.1", features = ["derive"] }
+env_logger = "0.9.0"
+futures = { version = "0.3.30", features = ["thread-pool"] }
+geojson = "0.22.2"
+hex = "0.4.3"
+log = "0.4.20"
+maybe-async = { version = "0.2.7" }
 parity-scale-codec = { version = "3.6.5", default-features = false, features = ["derive"] }
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 serde = { features = ["derive"], version = "1.0.197" }
-clap = { version = "4.5.1", features = ["derive"] }
-futures = { version = "0.3.30", features = ["thread-pool"] }
-log = "0.4.20"
 serde_json = "1.0.114"
-env_logger = "0.9.0"
-geojson = "0.22.2"
-hex = "0.4.3"
-maybe-async = { version = "0.2.7" }
-async-trait = "0.1.68"
 tokio = { version = "1.33", features = ["rt-multi-thread", "macros", "time"] }
 
 # encointer deps
@@ -117,15 +117,11 @@ substrate-frame-rpc-system = { version = "30.0.0" }
 substrate-wasm-builder = "19.0.0"
 substrate-build-script-utils = "11.0.0"
 
-substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"] }
-substrate-client-keystore = "0.10.0"
-
-
+substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"], git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+substrate-client-keystore = { version = "0.10.0", git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
 #only while debugging
 
 [patch.crates-io]
-ac-node-api = { path = "../../substrate-api-client/node-api" }
-ac-primitives = { path = "../../substrate-api-client/primitives" }
 encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
 encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
 encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
@@ -145,6 +141,9 @@ pallet-encointer-democracy = { path = "../pallets/democracy" }
 pallet-encointer-faucet = { path = "../pallets/faucet" }
 pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
 pallet-encointer-scheduler = { path = "../pallets/scheduler" }
+# api client
+ac-node-api = { path = "../../substrate-api-client/node-api" }
+ac-primitives = { path = "../../substrate-api-client/primitives" }
 substrate-api-client = { path = "../../substrate-api-client" }
 substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
 

@@ -10,13 +10,13 @@ version = "1.5.4"
 clap = "2.33"
 clap-nested = "0.4.0"
 env_logger = { workspace = true }
+futures = { workspace = true }
 geojson = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
-futures = { workspace = true }
 
 # local deps
 encointer-api-client-extension = { path = "./encointer-api-client-extension" }
