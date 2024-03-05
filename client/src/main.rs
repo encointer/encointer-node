@@ -26,7 +26,7 @@ mod utils;
 
 use clap::{AppSettings, Arg};
 use clap_nested::{Command, Commander};
-use cli_args::{EncointerArgs, EncointerArgsExtractor};
+use cli_args::EncointerArgs;
 
 use encointer_node_notee_runtime::BalanceType;
 

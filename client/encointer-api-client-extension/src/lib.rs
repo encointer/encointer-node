@@ -1,4 +1,3 @@
-use extrinsic_params::CommunityCurrencyTipExtrinsicParams;
 use substrate_api_client::{
 	ac_primitives::{AssetRuntimeConfig, Config, ExtrinsicSigner, WithExtrinsicParams},
 	rpc::JsonrpseeClient,

@@ -124,8 +124,8 @@ substrate-client-keystore = { version = "0.10.0" }
 [patch.crates-io]
 ## api client
 # todo: temporary patch until ^0.17.1 is released
-ac-node-api = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
 ac-compose-macros = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+ac-node-api = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
 ac-primitives = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
 substrate-api-client = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
 substrate-client-keystore = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }

@@ -747,13 +747,6 @@ async fn get_reputation_history(
 		.expect("Could not query reputation history...")
 }
 
-async fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
-	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
-		.await
-		.unwrap()
-		.unwrap_or(0)
-}
-
 async fn get_attendees_for_community_ceremony(
 	api: &Api,
 	community_ceremony: CommunityCeremony,
@@ -802,16 +795,6 @@ async fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> Reputatio
 		.await
 		.unwrap()
 		.unwrap_or(5)
-}
-
-async fn get_participant_attestation_index(
-	api: &Api,
-	key: CommunityCeremony,
-	accountid: &AccountId,
-) -> Option<ParticipantIndexType> {
-	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, None)
-		.await
-		.unwrap()
 }
 
 async fn new_claim_for(
