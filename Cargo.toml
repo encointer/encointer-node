@@ -98,6 +98,7 @@ sp-consensus = { version = "0.34.0" }
 sp-consensus-aura = { version = "0.34.0", default-features = false }
 sp-consensus-grandpa = { version = "15.0.0" }
 sp-core = { default-features = false, version = "30.0.0" }
+sp-genesis-builder = { default-features = false, version = "0.9.0" }
 sp-inherents = { default-features = false, version = "28.0.0" }
 sp-io = { default-features = false, version = "32.0.0" }
 sp-keyring = "33.0.0"

@@ -41,8 +41,7 @@ mod exit_code {
 	pub const NO_CID_SPECIFIED: i32 = 70;
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
 	env_logger::init();
 
 	Commander::new()
