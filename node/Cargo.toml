@@ -8,10 +8,10 @@ license = "GPL-3.0"
 name = "encointer-node-notee"
 repository = "https://github.com/encointer/encointer-node"
 # Note the following for the versioning:
-#   * Align minor version with the runtime.
+#   * Align major and minor version with polkadot-sdk major.minor.
 #   * Bump patch version for new releases, and make it the release tag.
 #   * The client should follow this version.
-version = "1.5.4"
+version = "1.8.0"
 
 [[bin]]
 name = "encointer-node-notee"

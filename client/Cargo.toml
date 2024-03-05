@@ -3,7 +3,7 @@ name = "encointer-client-notee"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 #keep with node version. major, minor and patch
-version = "1.5.4"
+version = "1.8.0"
 
 [dependencies]
 # todo migrate to clap >=3 https://github.com/encointer/encointer-node/issues/107

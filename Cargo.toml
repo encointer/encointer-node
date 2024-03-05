@@ -117,35 +117,42 @@ substrate-frame-rpc-system = { version = "30.0.0" }
 substrate-wasm-builder = "19.0.0"
 substrate-build-script-utils = "11.0.0"
 
-substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"], git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
-substrate-client-keystore = { version = "0.10.0", git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"] }
+substrate-client-keystore = { version = "0.10.0" }
 #only while debugging
 
 [patch.crates-io]
-encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
-encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
-encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
-encointer-ceremonies-assignment = { path = "../pallets/ceremonies/assignment" }
-encointer-primitives = { path = "../pallets/primitives" }
-pallet-encointer-balances = { path = "../pallets/balances" }
-pallet-encointer-bazaar = { path = "../pallets/bazaar" }
-pallet-encointer-bazaar-rpc = { path = "../pallets/bazaar/rpc" }
-pallet-encointer-bazaar-rpc-runtime-api = { path = "../pallets/bazaar/rpc/runtime-api" }
-pallet-encointer-ceremonies = { path = "../pallets/ceremonies" }
-pallet-encointer-ceremonies-rpc = { path = "../pallets/ceremonies/rpc" }
-pallet-encointer-ceremonies-rpc-runtime-api = { path = "../pallets/ceremonies/rpc/runtime-api" }
-pallet-encointer-communities = { path = "../pallets/communities" }
-pallet-encointer-communities-rpc = { path = "../pallets/communities/rpc" }
-pallet-encointer-communities-rpc-runtime-api = { path = "../pallets/communities/rpc/runtime-api" }
-pallet-encointer-democracy = { path = "../pallets/democracy" }
-pallet-encointer-faucet = { path = "../pallets/faucet" }
-pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
-pallet-encointer-scheduler = { path = "../pallets/scheduler" }
-# api client
-ac-node-api = { path = "../../substrate-api-client/node-api" }
-ac-primitives = { path = "../../substrate-api-client/primitives" }
-substrate-api-client = { path = "../../substrate-api-client" }
-substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
+## api client
+# todo: temporary patch until ^0.17.1 is released
+ac-node-api = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+ac-compose-macros = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+ac-primitives = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+substrate-api-client = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+substrate-client-keystore = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+#ac-node-api = { path = "../../substrate-api-client/node-api" }
+#ac-primitives = { path = "../../substrate-api-client/primitives" }
+#substrate-api-client = { path = "../../substrate-api-client" }
+#substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
+## encointer
+#encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
+#encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
+#encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
+#encointer-ceremonies-assignment = { path = "../pallets/ceremonies/assignment" }
+#encointer-primitives = { path = "../pallets/primitives" }
+#pallet-encointer-balances = { path = "../pallets/balances" }
+#pallet-encointer-bazaar = { path = "../pallets/bazaar" }
+#pallet-encointer-bazaar-rpc = { path = "../pallets/bazaar/rpc" }
+#pallet-encointer-bazaar-rpc-runtime-api = { path = "../pallets/bazaar/rpc/runtime-api" }
+#pallet-encointer-ceremonies = { path = "../pallets/ceremonies" }
+#pallet-encointer-ceremonies-rpc = { path = "../pallets/ceremonies/rpc" }
+#pallet-encointer-ceremonies-rpc-runtime-api = { path = "../pallets/ceremonies/rpc/runtime-api" }
+#pallet-encointer-communities = { path = "../pallets/communities" }
+#pallet-encointer-communities-rpc = { path = "../pallets/communities/rpc" }
+#pallet-encointer-communities-rpc-runtime-api = { path = "../pallets/communities/rpc/runtime-api" }
+#pallet-encointer-democracy = { path = "../pallets/democracy" }
+#pallet-encointer-faucet = { path = "../pallets/faucet" }
+#pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
+#pallet-encointer-scheduler = { path = "../pallets/scheduler" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }

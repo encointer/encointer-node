@@ -35,11 +35,11 @@ use crate::{
 		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
-use clap::{value_t, AppSettings, Arg, ArgMatches, ErrorKind};
+use clap::{value_t, AppSettings, Arg, ArgMatches};
 use clap_nested::{Command, Commander};
 use cli_args::{EncointerArgs, EncointerArgsExtractor};
 use encointer_api_client_extension::{
-	Api, AttestationState, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
+	Api, CeremoniesApi, CommunitiesApi, CommunityCurrencyTip,
 	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ExtrinsicAddress,
 	ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
@@ -51,9 +51,8 @@ use encointer_primitives::{
 	balances::{to_U64F64, Demurrage},
 	bazaar::{Business, BusinessIdentifier, OfferingData},
 	ceremonies::{
-		AttestationIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
-		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
-		ReputationLifetimeType,
+		ClaimOfAttendance, CommunityCeremony, CommunityReputation, MeetupIndexType,
+		ParticipantIndexType, ProofOfAttendance, Reputation, ReputationLifetimeType,
 	},
 	communities::{CidName, CommunityIdentifier},
 	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
@@ -61,7 +60,7 @@ use encointer_primitives::{
 	fixed::transcendental::exp,
 	scheduler::{CeremonyIndexType, CeremonyPhaseType},
 };
-use futures::stream::{self, StreamExt, TryStreamExt};
+use futures::stream;
 use log::*;
 use pallet_transaction_payment::FeeDetails;
 use parity_scale_codec::{Compact, Decode, Encode};
@@ -79,7 +78,7 @@ use substrate_api_client::{
 	extrinsic::BalancesExtrinsics,
 	rpc::{JsonrpseeClient, Request},
 	GetAccountInformation, GetBalance, GetChainInfo, GetStorage, GetTransactionPayment,
-	Result as ApiResult, SubmitAndWatch, SubscribeEvents, XtStatus,
+	SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
@@ -660,7 +659,7 @@ fn cmd_new_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Er
 	println!("{}", key.to_ss58check());
 	Ok(())
 }
-fn cmd_list_accounts(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+fn cmd_list_accounts(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
 	info!("sr25519 keys:");
 	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
@@ -790,7 +789,7 @@ fn cmd_transfer(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error
 				let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
 					.expect("amount can be converted to fixpoint");
 
-				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 				let xt: EncointerXt<_> = compose_extrinsic!(
 					api,
@@ -875,7 +874,7 @@ fn cmd_transfer_all(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 fn cmd_listen(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
-		listen(matches);
+		listen(matches).await;
 		Ok(())
 	})
 	.into()
@@ -928,9 +927,9 @@ fn cmd_new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 
 		// ---- send xt's to chain
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg());
+		send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg()).await;
 		println!("{cid}");
 
 		if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
@@ -938,7 +937,7 @@ fn cmd_new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 			error!("Aborting without registering additional locations");
 			std::process::exit(exit_code::WRONG_PHASE);
 		}
-		send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg);
+		send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg).await;
 		Ok(())
 
 	})
@@ -1102,9 +1101,9 @@ fn cmd_next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Err
 		};
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg);
+		send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg).await;
 
 		let phase = api.get_current_phase().await.unwrap();
 		println!("Phase is now: {phase:?}");
@@ -1351,7 +1350,7 @@ fn cmd_upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		api.set_signer(signer);
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
 			compose_extrinsic!(api, "EncointerCeremonies", "upgrade_registration", cid, proof)
@@ -1403,7 +1402,7 @@ fn cmd_register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		api.set_signer(signer);
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
 			compose_extrinsic!(api, "EncointerCeremonies", "register_participant", cid, proof)
@@ -1451,7 +1450,7 @@ fn cmd_unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		api.set_signer(signer);
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
 			compose_extrinsic!(api, "EncointerCeremonies", "unregister_participant", cid, cc)
@@ -1548,7 +1547,7 @@ fn cmd_attest_attendees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 		api.set_signer(signer);
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let cid =
 			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
@@ -1606,7 +1605,7 @@ fn cmd_claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		let meetup_index_arg = matches.meetup_index_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		if matches.all_flag() {
 			let mut cindex = get_ceremony_index(&api, None).await;
@@ -1631,7 +1630,7 @@ fn cmd_claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 				})
 				.collect();
 			let batch_call = compose_call!(api.metadata(), "Utility", "batch", calls).unwrap();
-			send_and_wait_for_in_block(&api, xt(&api, batch_call).await, tx_payment_cid_arg);
+			send_and_wait_for_in_block(&api, xt(&api, batch_call).await, tx_payment_cid_arg).await;
 			println!("Claiming reward for all meetup indexes. xt-status: 'ready'");
 		} else {
 			let meetup_index = meetup_index_arg;
@@ -1772,9 +1771,9 @@ fn cmd_set_meetup_time_offset(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		};
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 		let xt = xt(&api, privileged_call).await;
-		send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg);
+		send_and_wait_for_in_block(&api, xt, tx_payment_cid_arg).await;
 		Ok(())
 	})
 	.into()
@@ -1824,7 +1823,7 @@ fn cmd_purge_community_ceremony(_args: &str, matches: &ArgMatches<'_>) -> Result
 		);
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 		let xt: EncointerXt<_> = compose_extrinsic!(api, "Sudo", "sudo", batch_call).unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
 		let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
@@ -1858,7 +1857,7 @@ fn cmd_create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 
 		let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> = compose_extrinsic!(
 			api,
@@ -1914,7 +1913,7 @@ fn cmd_drip_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Er
 		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
 			compose_extrinsic!(api, "EncointerFaucet", "drip", faucet_account, cid, cindex)
@@ -1979,9 +1978,10 @@ fn cmd_dissolve_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
 		};
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		send_and_wait_for_in_block(&api, xt(&api, dissolve_faucet_call).await, tx_payment_cid_arg);
+		send_and_wait_for_in_block(&api, xt(&api, dissolve_faucet_call).await, tx_payment_cid_arg)
+			.await;
 
 		println!("Faucet dissolved: {faucet_account:?}");
 		Ok(())
@@ -1999,7 +1999,7 @@ fn cmd_close_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
 			compose_extrinsic!(api, "EncointerFaucet", "close_faucet", faucet_account.clone())
@@ -2048,13 +2048,14 @@ fn cmd_set_faucet_reserve_amount(_args: &str, matches: &ArgMatches<'_>) -> Resul
 		};
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		send_and_wait_for_in_block(
 			&api,
 			xt(&api, set_reserve_amount_call).await,
 			tx_payment_cid_arg,
-		);
+		)
+		.await;
 
 		println!("Reserve amount set: {reserve_amount:?}");
 		Ok(())
@@ -2129,7 +2130,7 @@ fn cmd_submit_set_inactivity_timeout_proposal(
 		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
 		let inactivity_timeout = matches.inactivity_timeout_arg().unwrap();
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> = compose_extrinsic!(
 			api,
@@ -2214,7 +2215,7 @@ fn cmd_vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 		let reputation_bvec = ReputationVec::<ConstU32<1024>>::try_from(reputation_vec);
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 		let xt: EncointerXt<_> = compose_extrinsic!(
 			api,
 			"EncointerDemocracy",
@@ -2384,17 +2385,6 @@ async fn listen(matches: &ArgMatches<'_>) {
 			Err(_) => error!("couldn't decode event record list"),
 		}
 	}
-}
-
-/// Extracts api and cid from `matches` and execute the given `closure` with them.
-async fn extract_and_execute<T>(
-	matches: &ArgMatches<'_>,
-	closure: impl FnOnce(Api, CommunityIdentifier) -> T,
-) -> T {
-	let api = get_chain_api(matches).await;
-	let cid =
-		verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-	closure(api, cid)
 }
 
 async fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifier {
@@ -2731,7 +2721,7 @@ async fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> 
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg);
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 	let xt: EncointerXt<_> =
 		compose_extrinsic!(api, "EncointerBazaar", &bazaar_call.to_string(), cid, ipfs_cid)
 			.unwrap();
@@ -2760,7 +2750,7 @@ async fn endorse_newcomers(
 	let mut nonce = api.get_nonce().await?;
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-	set_api_extrisic_params_builder(api, tx_payment_cid_arg);
+	set_api_extrisic_params_builder(api, tx_payment_cid_arg).await;
 
 	for e in endorsees.into_iter() {
 		let endorsee = get_accountid_from_str(e);
