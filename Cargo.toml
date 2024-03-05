@@ -108,11 +108,11 @@ sp-runtime = { default-features = false, version = "33.0.0" }
 sp-session = { version = "29.0.0", default-features = false }
 sp-staking = { version = "28.0.0", default-features = false }
 sp-std = { default-features = false, version = "14.0.0" }
+sp-storage = { default-features = false, version = "20.0.0" }
 sp-timestamp = { version = "28.0.0" }
 sp-transaction-pool = { version = "28.0.0", default-features = false }
 sp-version = { version = "31.0.0", default-features = false }
 substrate-frame-rpc-system = { version = "30.0.0" }
-
 
 substrate-wasm-builder = "19.0.0"
 substrate-build-script-utils = "11.0.0"
