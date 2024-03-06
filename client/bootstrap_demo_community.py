@@ -164,7 +164,7 @@ def test_reputation_caching(client, cid, account):
     rep = client.reputation(account1)
     print(rep)
     # after the registration the second reputation should now be linked
-    if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+    if ('3', ' sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
         print("reputation not linked")
         exit(1)
 
@@ -213,7 +213,7 @@ def test_unregister_and_upgrade_registration(client, cid):
     check_participant_count(client, cid, "Newbie", 0)
     check_participant_count(client, cid, "Reputable", 1)
 
-    check_reputation(client, cid, newbie, 6, "VerifiedLinked")
+    check_reputation(client, cid, newbie, 6, "VerifiedLinked(7)")
 
     client.unregister_participant(newbie, cid, cindex=6)
     client.await_block(3)
