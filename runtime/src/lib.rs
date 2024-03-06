@@ -596,6 +596,13 @@ pub type UncheckedExtrinsic =
 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
+
+/// storage migrations to be applied upon runtime upgrade
+pub type Migrations = (
+	pallet_grandpa::migrations::MigrateV4ToV5<Runtime>,
+	pallet_encointer_ceremonies::migrations::v2::MigrateToV2<Runtime>,
+);
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -603,12 +610,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(
-		// can migrate from v0 or v1 to v2
-		pallet_encointer_communities::migrations::v2::MigrateV0orV1toV2<Runtime>,
-		// expected to be noop. but need to try-runtime checks first!
-		pallet_encointer_ceremonies::migrations::v1::MigrateToV1<Runtime>,
-	),
+	Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
