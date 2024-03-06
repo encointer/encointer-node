@@ -110,7 +110,7 @@ pub fn vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 				}),
 		)
 		.await;
-		let reputation_bvec = ReputationVec::<ConstU32<1024>>::try_from(reputation_vec);
+		let reputation_bvec = ReputationVec::<ConstU32<1024>>::try_from(reputation_vec).unwrap();
 
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
