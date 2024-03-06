@@ -400,7 +400,7 @@ parameter_types! {
 	pub const DefaultDemurrage: Demurrage = Demurrage::from_bits(0x0000000000000000000001E3F0A8A973_i128);
 	/// 0.000005
 	pub const EncointerExistentialDeposit: BalanceType = BalanceType::from_bits(0x0000000000000000000053e2d6238da4_u128);
-	pub const MeetupSizeTarget: u64 = 10;
+	pub const MeetupSizeTarget: u64 = 15;
 	pub const MeetupMinSize: u64 = 3;
 	pub const MeetupNewbieLimitDivider: u64 = 2;
 	pub const FaucetPalletId: PalletId = PalletId(*b"ectrfct0");
