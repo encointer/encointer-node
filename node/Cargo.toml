@@ -8,10 +8,10 @@ license = "GPL-3.0"
 name = "encointer-node-notee"
 repository = "https://github.com/encointer/encointer-node"
 # Note the following for the versioning:
-#   * Align minor version with the runtime.
+#   * Align major and minor version with polkadot-sdk major.minor.
 #   * Bump patch version for new releases, and make it the release tag.
 #   * The client should follow this version.
-version = "1.5.4"
+version = "1.8.0"
 
 [[bin]]
 name = "encointer-node-notee"
@@ -20,7 +20,7 @@ name = "encointer-node-notee"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [build-dependencies]
-substrate-build-script-utils = "3.0.0"
+substrate-build-script-utils = { workspace = true }
 
 [dependencies]
 clap = { workspace = true }
@@ -54,9 +54,10 @@ sp-runtime = { workspace = true, features = ["std"] }
 sp-timestamp = { workspace = true, features = ["std"] }
 
 # These dependencies are used for the node's RPCs
-jsonrpsee = { version = "0.16.2", features = ["server"] }
+jsonrpsee = { workspace = true }
 pallet-transaction-payment-rpc = { workspace = true }
 sc-basic-authorship = { workspace = true }
+sc-chain-spec = { workspace = true }
 sc-rpc = { workspace = true }
 sc-rpc-api = { workspace = true }
 sp-api = { workspace = true, features = ["std"] }
@@ -82,8 +83,6 @@ pallet-encointer-communities-rpc-runtime-api = { workspace = true, features = ["
 
 # CLI-specific dependencies
 frame-try-runtime = { workspace = true, optional = true }
-try-runtime-cli = { workspace = true, optional = true }
-
 
 [features]
 default = []
@@ -96,9 +95,4 @@ runtime-benchmarks = [
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = [
     "encointer-node-notee-runtime/try-runtime",
-    "try-runtime-cli/try-runtime",
-]
-
-cli = [
-    'try-runtime-cli',
 ]

@@ -11,139 +11,149 @@ members = [
 panic = 'unwind'
 
 [workspace.dependencies]
-parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
-serde = { features = ["derive"], version = "1.0.136" }
-clap = { version = "4.0.9", features = ["derive"] }
-futures = { version = "0.3.21", features = ["thread-pool"] }
-log = "0.4.14"
-serde_json = "1.0.81"
+async-trait = "0.1.68"
+clap = { version = "4.5.1", features = ["derive"] }
 env_logger = "0.9.0"
+futures = { version = "0.3.30", features = ["thread-pool"] }
 geojson = "0.22.2"
 hex = "0.4.3"
-tokio = { version = "1.24", features = ["rt-multi-thread", "macros", "time"] }
+log = "0.4.20"
+maybe-async = { version = "0.2.7" }
+parity-scale-codec = { version = "3.6.5", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+serde = { features = ["derive"], version = "1.0.197" }
+serde_json = "1.0.114"
+tokio = { version = "1.33", features = ["rt-multi-thread", "macros", "time"] }
 
 # encointer deps
-encointer-balances-tx-payment = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-encointer-primitives = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-balances = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-bazaar = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-bazaar-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-ceremonies = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-ceremonies-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-communities = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-communities-rpc-runtime-api = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-democracy = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-faucet = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-reputation-commitments = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
-pallet-encointer-scheduler = { default-features = false, git = "https://github.com/encointer/pallets", branch = "polkadot-v1.0.0-pallets-v1.3.0" }
+encointer-balances-tx-payment = { default-features = false, version = "7.0.0" }
+encointer-balances-tx-payment-rpc = { version = "7.0.0" }
+encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "7.0.0" }
+encointer-ceremonies-assignment = { version = "7.0.0" }
+encointer-primitives = { default-features = false, version = "7.0.0" }
+pallet-encointer-balances = { default-features = false, version = "7.0.0" }
+pallet-encointer-bazaar = { default-features = false, version = "7.0.0" }
+pallet-encointer-bazaar-rpc = { version = "7.0.0" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "7.0.0" }
+pallet-encointer-ceremonies = { default-features = false, version = "7.0.0" }
+pallet-encointer-ceremonies-rpc = { version = "7.0.0" }
+pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "7.0.0" }
+pallet-encointer-communities = { default-features = false, version = "7.0.0" }
+pallet-encointer-communities-rpc = { version = "7.0.0" }
+pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "7.0.0" }
+pallet-encointer-democracy = { default-features = false, version = "7.0.0" }
+pallet-encointer-faucet = { default-features = false, version = "7.0.0" }
+pallet-encointer-reputation-commitments = { default-features = false, version = "7.0.0" }
+pallet-encointer-scheduler = { default-features = false, version = "7.0.0" }
 
 
 # substrate deps
-frame-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-benchmarking-cli = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-executive = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-support = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-system-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-try-runtime = { git = 'https://github.com/paritytech/substrate.git', default-features = false, branch = "polkadot-v1.0.0" }
-hex-literal = { version = "0.3.4" }
-jsonrpsee = { version = "0.16.2", features = ["server"] }
-pallet-asset-tx-payment = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-aura = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-balances = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-grandpa = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-insecure-randomness-collective-flip = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-proxy = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-scheduler = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-sudo = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-timestamp = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-transaction-payment = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-transaction-payment-rpc = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-transaction-payment-rpc-runtime-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-treasury = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-utility = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-basic-authorship = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-cli = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-client-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-consensus = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-consensus-aura = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-consensus-grandpa = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-executor = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-keystore = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-network = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-offchain = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-rpc = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-rpc-api = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-service = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-telemetry = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-transaction-pool = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sc-transaction-pool-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-api = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-application-crypto = { version = "23.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-block-builder = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-blockchain = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-consensus = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-consensus-aura = { version = "0.10.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-consensus-grandpa = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-core = { version = "21.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-inherents = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-io = { version = "23.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-keyring = { version = "24.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-keystore = { version = "0.27.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-offchain = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-rpc = { version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-runtime = { version = "24.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-session = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-staking = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-std = { version = "8.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-transaction-pool = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-version = { version = "22.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-substrate-frame-rpc-system = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-try-runtime-cli = { git = 'https://github.com/paritytech/substrate.git', default-features = false, branch = "polkadot-v1.0.0" }
+frame-benchmarking = { default-features = false, version = "30.0.0" }
+frame-benchmarking-cli = { version = "34.0.0" }
+frame-executive = { default-features = false, version = "30.0.0" }
+frame-support = { default-features = false, version = "30.0.0" }
+frame-system = { default-features = false, version = "30.0.0" }
+frame-system-benchmarking = { default-features = false, version = "30.0.0" }
+frame-system-rpc-runtime-api = { default-features = false, version = "28.0.0" }
+frame-try-runtime = { default-features = false, version = "0.36.0" }
+hex-literal = { version = "0.4.1" }
+jsonrpsee = { version = "0.22.0", features = ["server"] }
+pallet-asset-tx-payment = { default-features = false, version = "30.0.0" }
+pallet-aura = { default-features = false, version = "29.0.0" }
+pallet-balances = { default-features = false, version = "30.0.0" }
+pallet-grandpa = { default-features = false, version = "30.0.0" }
+pallet-insecure-randomness-collective-flip = { default-features = false, version = "18.0.0" }
+pallet-proxy = { default-features = false, version = "30.0.0" }
+pallet-scheduler = { default-features = false, version = "31.0.0" }
+pallet-sudo = { default-features = false, version = "30.0.0" }
+pallet-timestamp = { default-features = false, version = "29.0.0" }
+pallet-transaction-payment = { default-features = false, version = "30.0.0" }
+pallet-transaction-payment-rpc = { version = "32.0.0" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "30.0.0" }
+pallet-treasury = { default-features = false, version = "29.0.0" }
+pallet-utility = { default-features = false, version = "30.0.0" }
+sc-basic-authorship = { version = "0.36.0" }
+sc-chain-spec = "29.0.0"
+sc-cli = { version = "0.38.0" }
+sc-client-api = { version = "30.0.0" }
+sc-consensus = { version = "0.35.0" }
+sc-consensus-aura = { version = "0.36.0" }
+sc-consensus-grandpa = { version = "0.21.0" }
+sc-executor = { version = "0.34.0" }
+sc-keystore = { version = "27.0.0" }
+sc-network = { version = "0.36.0" }
+sc-offchain = { version = "31.0.0" }
+sc-rpc = "31.0.0"
+sc-rpc-api = "0.35.0"
+sc-service = { version = "0.37.0" }
+sc-telemetry = { version = "17.0.0" }
+sc-transaction-pool = { version = "30.0.0" }
+sc-transaction-pool-api = { version = "30.0.0" }
+sp-api = { default-features = false, version = "28.0.0" }
+sp-application-crypto = { default-features = false, version = "32.0.0" }
+sp-arithmetic = { default-features = false, version = "25.0.0" }
+sp-block-builder = { default-features = false, version = "28.0.0" }
+sp-blockchain = "30.0.0"
+sp-consensus = { version = "0.34.0" }
+sp-consensus-aura = { default-features = false, version = "0.34.0" }
+sp-consensus-grandpa = { version = "15.0.0" }
+sp-core = { default-features = false, version = "30.0.0" }
+sp-genesis-builder = { default-features = false, version = "0.9.0" }
+sp-inherents = { default-features = false, version = "28.0.0" }
+sp-io = { default-features = false, version = "32.0.0" }
+sp-keyring = "33.0.0"
+sp-keystore = "0.36.0"
+sp-offchain = { default-features = false, version = "28.0.0" }
+sp-rpc = "28.0.0"
+sp-runtime = { default-features = false, version = "33.0.0" }
+sp-session = { default-features = false, version = "29.0.0" }
+sp-staking = { default-features = false, version = "28.0.0" }
+sp-std = { default-features = false, version = "14.0.0" }
+sp-storage = { default-features = false, version = "20.0.0" }
+sp-timestamp = { version = "28.0.0" }
+sp-transaction-pool = { default-features = false, version = "28.0.0" }
+sp-version = { default-features = false, version = "31.0.0" }
+substrate-frame-rpc-system = { version = "30.0.0" }
 
+substrate-wasm-builder = "19.0.0"
+substrate-build-script-utils = "11.0.0"
 
-substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-substrate-build-script-utils = "3.0.0"
-
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0", features = ["ws-client"] }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v1.0.0-tag-v0.12.0" }
-
-
+substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"] }
+substrate-client-keystore = { version = "0.10.0" }
 #only while debugging
 
-#[patch."https://github.com/encointer/pallets"]
-# encointer-balances-tx-payment = { path = "../encointer-pallets/balances-tx-payment" }
-# encointer-balances-tx-payment-rpc = { path = "../encointer-pallets/balances-tx-payment/rpc" }
-# encointer-balances-tx-payment-rpc-runtime-api = { path = "../encointer-pallets/balances-tx-payment/rpc/runtime-api" }
-# encointer-ceremonies-assignment = { path = "../encointer-pallets/ceremonies/assignment" }
-# encointer-primitives = { path = "../encointer-pallets/primitives" }
-# pallet-encointer-balances = { path = "../encointer-pallets/balances" }
-# pallet-encointer-bazaar = { path = "../encointer-pallets/bazaar" }
-# pallet-encointer-bazaar-rpc = { path = "../encointer-pallets/bazaar/rpc" }
-# pallet-encointer-bazaar-rpc-runtime-api = { path = "../encointer-pallets/bazaar/rpc/runtime-api" }
-# pallet-encointer-ceremonies = { path = "../encointer-pallets/ceremonies" }
-# pallet-encointer-ceremonies-rpc = { path = "../encointer-pallets/ceremonies/rpc" }
-# pallet-encointer-ceremonies-rpc-runtime-api = { path = "../encointer-pallets/ceremonies/rpc/runtime-api" }
-# pallet-encointer-communities = { path = "../encointer-pallets/communities" }
-# pallet-encointer-communities-rpc = { path = "../encointer-pallets/communities/rpc" }
-# pallet-encointer-communities-rpc-runtime-api = { path = "../encointer-pallets/communities/rpc/runtime-api" }
-# pallet-encointer-democracy = { path = "../encointer-pallets/democracy" }
-# pallet-encointer-faucet = { path = "../encointer-pallets/faucet" }
-# pallet-encointer-reputation-commitments = { path = "../encointer-pallets/reputation-commitments" }
-# pallet-encointer-scheduler = { path = "../encointer-pallets/scheduler" }
-
-# [patch."https://github.com/scs/substrate-api-client"]
-# substrate-api-client = { path = "../substrate-api-client" }
-# substrate-client-keystore = { path = "../substrate-api-client/client-keystore" }
+[patch.crates-io]
+## api client
+# todo: temporary patch until ^0.17.1 is released
+ac-compose-macros = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+ac-node-api = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+ac-primitives = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+substrate-api-client = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+substrate-client-keystore = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+#ac-node-api = { path = "../../substrate-api-client/node-api" }
+#ac-primitives = { path = "../../substrate-api-client/primitives" }
+#substrate-api-client = { path = "../../substrate-api-client" }
+#substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
+## encointer
+#encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
+#encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
+#encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
+#encointer-ceremonies-assignment = { path = "../pallets/ceremonies/assignment" }
+#encointer-primitives = { path = "../pallets/primitives" }
+#pallet-encointer-balances = { path = "../pallets/balances" }
+#pallet-encointer-bazaar = { path = "../pallets/bazaar" }
+#pallet-encointer-bazaar-rpc = { path = "../pallets/bazaar/rpc" }
+#pallet-encointer-bazaar-rpc-runtime-api = { path = "../pallets/bazaar/rpc/runtime-api" }
+#pallet-encointer-ceremonies = { path = "../pallets/ceremonies" }
+#pallet-encointer-ceremonies-rpc = { path = "../pallets/ceremonies/rpc" }
+#pallet-encointer-ceremonies-rpc-runtime-api = { path = "../pallets/ceremonies/rpc/runtime-api" }
+#pallet-encointer-communities = { path = "../pallets/communities" }
+#pallet-encointer-communities-rpc = { path = "../pallets/communities/rpc" }
+#pallet-encointer-communities-rpc-runtime-api = { path = "../pallets/communities/rpc/runtime-api" }
+#pallet-encointer-democracy = { path = "../pallets/democracy" }
+#pallet-encointer-faucet = { path = "../pallets/faucet" }
+#pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
+#pallet-encointer-scheduler = { path = "../pallets/scheduler" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }

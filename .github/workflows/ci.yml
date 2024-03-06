@@ -209,13 +209,21 @@ jobs:
         os: [ ubuntu-latest ]
         rust: [ stable ]
         rust-target: [ x86_64-unknown-linux-gnu ]
-        check: [ fmt --all -- --check, clippy -p encointer-client-notee ]
+        check: [ +nightly fmt --all -- --check, clippy -p encointer-client-notee ]
     env:
       RUST_BACKTRACE: full
       RUSTV: ${{ matrix.rust }}
       TARGET: ${{ matrix.rust-target }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
+
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Install protoc
         run: sudo apt-get install protobuf-compiler

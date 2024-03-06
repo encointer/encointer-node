@@ -1,6 +1,5 @@
-use extrinsic_params::CommunityCurrencyTipExtrinsicParams;
 use substrate_api_client::{
-	ac_primitives::{Config, ExtrinsicSigner, SubstrateKitchensinkConfig, WithExtrinsicParams},
+	ac_primitives::{AssetRuntimeConfig, Config, ExtrinsicSigner, WithExtrinsicParams},
 	rpc::JsonrpseeClient,
 };
 
@@ -8,13 +7,13 @@ pub use encointer_node_notee_runtime::Runtime;
 pub use substrate_api_client::{api::error::Error as ApiClientError, Result};
 
 pub type EncointerConfig = WithExtrinsicParams<
-	SubstrateKitchensinkConfig,
-	CommunityCurrencyTipExtrinsicParams<SubstrateKitchensinkConfig>,
+	AssetRuntimeConfig,
+	CommunityCurrencyTipExtrinsicParams<AssetRuntimeConfig>,
 >;
 
 pub type Api = substrate_api_client::Api<EncointerConfig, JsonrpseeClient>;
 
-pub type ParentchainExtrinsicSigner = ExtrinsicSigner<SubstrateKitchensinkConfig>;
+pub type ParentchainExtrinsicSigner = ExtrinsicSigner<EncointerConfig>;
 pub type ExtrinsicAddress = <EncointerConfig as Config>::Address;
 
 pub use ceremonies::*;

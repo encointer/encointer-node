@@ -185,6 +185,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 		maybe_demurrage,
 		maybe_income
 	)
+	.unwrap()
 }
 
 pub type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
@@ -195,5 +196,5 @@ pub fn add_location_call(
 	cid: CommunityIdentifier,
 	loc: Location,
 ) -> AddLocationCall {
-	compose_call!(metadata, "EncointerCommunities", "add_location", cid, loc)
+	compose_call!(metadata, "EncointerCommunities", "add_location", cid, loc).unwrap()
 }

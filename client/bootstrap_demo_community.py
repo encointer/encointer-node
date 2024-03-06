@@ -111,7 +111,7 @@ def register_participants_and_perform_meetup(client, cid, accounts):
 
 def faucet(client, cid, accounts):
     # charlie has no genesis funds
-    print('Faucet is dripping...')
+    print('native (Alice)Faucet is dripping...')
     client.faucet(accounts, is_faucet=True)
 
     blocks_to_wait = 3
@@ -149,7 +149,7 @@ def test_reputation_caching(client, cid, account):
     # check if the reputation cache was updated
     rep = client.reputation(account1)
     print(rep)
-    if ('1', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+    if ('1', ' sqm1v79dF6b', 'VerifiedLinked(2)') not in rep or ('2', ' sqm1v79dF6b', 'VerifiedLinked(3)') not in rep or ('3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
         print("wrong reputation")
         exit(1)
 
@@ -164,7 +164,7 @@ def test_reputation_caching(client, cid, account):
     rep = client.reputation(account1)
     print(rep)
     # after the registration the second reputation should now be linked
-    if ('3', ' sqm1v79dF6b', 'VerifiedLinked') not in rep:
+    if ('3', ' sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
         print("reputation not linked")
         exit(1)
 
@@ -213,7 +213,7 @@ def test_unregister_and_upgrade_registration(client, cid):
     check_participant_count(client, cid, "Newbie", 0)
     check_participant_count(client, cid, "Reputable", 1)
 
-    check_reputation(client, cid, newbie, 6, "VerifiedLinked")
+    check_reputation(client, cid, newbie, 6, "VerifiedLinked(7)")
 
     client.unregister_participant(newbie, cid, cindex=6)
     client.await_block(3)
@@ -261,6 +261,7 @@ def balance(x):
 
 
 def test_faucet(client, cid):
+    print("Testing the EncointerFaucet")
     client.set_faucet_reserve_amount("//Alice", balance(3000))
     client.await_block(2)
     balance_bob = client.balance("//Bob")

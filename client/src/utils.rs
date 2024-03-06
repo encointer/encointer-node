@@ -1,4 +1,8 @@
-use crate::{exit_code, get_asset_fee_details, get_community_balance, BalanceType};
+use crate::{
+	commands::encointer_core::{get_asset_fee_details, get_community_balance},
+	exit_code, BalanceType,
+};
+use clap::ArgMatches;
 use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
@@ -11,25 +15,37 @@ use substrate_api_client::{
 	ac_node_api::Metadata,
 	ac_primitives::Bytes,
 	api::{error::Error as ApiClientError, rpc_api::state::GetStorage},
+	rpc::JsonrpseeClient,
 	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch, XtStatus,
 };
+
+pub async fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
+	let url = format!(
+		"{}:{}",
+		matches.value_of("node-url").unwrap(),
+		matches.value_of("node-port").unwrap()
+	);
+	debug!("connecting to {}", url);
+	let client = JsonrpseeClient::new(&url).await.expect("node URL is incorrect");
+	Api::new(client).await.unwrap()
+}
 
 /// Creates a signed extrinsic from a call
 ///
 /// Panics if no signer is set.
-pub fn xt<C: Encode + Clone>(api: &Api, call: C) -> EncointerXt<C> {
-	let nonce = api.get_nonce().unwrap();
+pub async fn xt<C: Encode + Clone>(api: &Api, call: C) -> EncointerXt<C> {
+	let nonce = api.get_nonce().await.unwrap();
 	api.compose_extrinsic_offline(call, nonce)
 }
 
 /// Wraps the supplied call in a sudo call
 pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C) {
-	compose_call!(metadata, "Sudo", "sudo", call)
+	compose_call!(metadata, "Sudo", "sudo", call).unwrap()
 }
 
 /// Wraps the supplied calls in a batch call
 pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8; 2], Vec<C>) {
-	compose_call!(metadata, "Utility", "batch", calls)
+	compose_call!(metadata, "Utility", "batch", calls).unwrap()
 }
 
 /// ([pallet_index, call_index], threshold, Proposal,length_bound)
@@ -53,19 +69,21 @@ pub fn collective_propose_call<Proposal: Encode>(
 		proposal,
 		Compact(length_bound)
 	)
+	.unwrap()
 }
-pub fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
-	api.get_storage("Membership", "Members", None)?
+pub async fn get_councillors(api: &Api) -> Result<Vec<AccountId>> {
+	api.get_storage("Membership", "Members", None)
+		.await?
 		.ok_or_else(|| ApiClientError::Other("Couldn't get councillors".into()))
 }
 
-pub fn send_and_wait_for_in_block<C: Encode>(
+pub async fn send_and_wait_for_in_block<C: Encode>(
 	api: &Api,
 	xt: EncointerXt<C>,
 	tx_payment_cid: Option<&str>,
 ) -> Option<H256> {
-	ensure_payment(api, &xt.encode().into(), tx_payment_cid);
-	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
+	ensure_payment(api, &xt.encode().into(), tx_payment_cid).await;
+	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap();
 	info!("[+] Transaction got included in Block: {:?}\n", report.block_hash.unwrap());
 	Some(report.extrinsic_hash)
 }
@@ -80,7 +98,7 @@ pub fn print_raw_call<Call: Encode>(name: &str, call: &Call) {
 /// This will implicitly distinguish between solo-chain (sudo exists) and parachain
 /// (sudo doesn't exist).
 pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
-	if metadata.pallet("Sudo").is_ok() {
+	if metadata.pallet_by_name("Sudo").is_some() {
 		info!("'Sudo' pallet found on chain. Will send privileged xt's as sudo");
 		true
 	} else {
@@ -90,19 +108,20 @@ pub fn contains_sudo_pallet(metadata: &Metadata) -> bool {
 }
 
 /// Checks if the account has sufficient funds. Exits the process if not.
-pub fn ensure_payment(api: &Api, encoded_xt: &Bytes, tx_payment_cid: Option<&str>) {
+pub async fn ensure_payment(api: &Api, encoded_xt: &Bytes, tx_payment_cid: Option<&str>) {
 	if let Some(cid_str) = tx_payment_cid {
-		ensure_payment_cc(api, cid_str, encoded_xt);
+		ensure_payment_cc(api, cid_str, encoded_xt).await;
 	} else {
-		ensure_payment_native(api, encoded_xt);
+		ensure_payment_native(api, encoded_xt).await;
 	}
 }
 
-fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: &Bytes) {
+async fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: &Bytes) {
 	let balance: BalanceType =
-		get_community_balance(api, cid_str, api.signer_account().unwrap(), None);
+		get_community_balance(api, cid_str, api.signer_account().unwrap(), None).await;
 
 	let fee: BalanceType = get_asset_fee_details(api, cid_str, encoded_xt)
+		.await
 		.unwrap()
 		.inclusion_fee
 		.map(|details| details.base_fee.into_u256().as_u128())
@@ -116,8 +135,8 @@ fn ensure_payment_cc(api: &Api, cid_str: &str, encoded_xt: &Bytes) {
 	debug!("account can pay fees in CC: fee: {} bal: {}", fee, balance);
 }
 
-fn ensure_payment_native(api: &Api, encoded_xt: &Bytes) {
-	let signer_balance = match api.get_account_data(api.signer_account().unwrap()).unwrap() {
+async fn ensure_payment_native(api: &Api, encoded_xt: &Bytes) {
+	let signer_balance = match api.get_account_data(api.signer_account().unwrap()).await.unwrap() {
 		Some(bal) => bal.free,
 		None => {
 			error!("account does not exist on chain");
@@ -125,12 +144,13 @@ fn ensure_payment_native(api: &Api, encoded_xt: &Bytes) {
 		},
 	};
 	let fee = api
-		.get_fee_details(encoded_xt.clone(), None)
+		.get_fee_details(encoded_xt, None)
+		.await
 		.unwrap()
 		.unwrap()
 		.inclusion_fee
 		.map_or_else(|| 0, |details| details.base_fee);
-	let ed = api.get_existential_deposit().unwrap();
+	let ed = api.get_existential_deposit().await.unwrap();
 	if signer_balance < fee + ed {
 		error!("insufficient funds: fee: {} ed: {} bal: {:?}", fee, ed, signer_balance);
 		std::process::exit(exit_code::FEE_PAYMENT_FAILED);
