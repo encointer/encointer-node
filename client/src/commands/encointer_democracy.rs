@@ -5,8 +5,7 @@ use crate::{
 
 use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
 use clap::ArgMatches;
-use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
-use encointer_node_notee_runtime::BlockNumber;
+use encointer_api_client_extension::{EncointerXt, Moment, ParentchainExtrinsicSigner};
 use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony},
 	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
@@ -65,9 +64,9 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			let proposal_id =
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
-			let proposal: Proposal<BlockNumber> =
-				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
 			println!("id: {}", proposal_id);
+			let proposal: Proposal<Moment> =
+				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
 			println!("action: {:?}", proposal.action);
 			println!("start block: {}", proposal.start);
 			println!("start cindex: {}", proposal.start_cindex);
