@@ -34,15 +34,16 @@ pub fn create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 		let drip_amount = matches.faucet_drip_amount_arg().unwrap();
 
 		let api2 = api.clone();
-		let whitelist = futures::future::join_all(matches.whitelist_arg().map(|wl| async move {
+		let whitelist = if let Some(wl) = matches.whitelist_arg() {
 			let whitelist_vec: Vec<_> = futures::future::join_all(wl.into_iter().map(|c| {
 				let api_local = api2.clone();
 				async move { verify_cid(&api_local, c, None).await }
 			}))
 			.await;
-			WhiteListType::try_from(whitelist_vec).unwrap()
-		}))
-		.await;
+			Some(WhiteListType::try_from(whitelist_vec).unwrap())
+		} else {
+			None
+		};
 
 		let faucet_name = FaucetNameType::from_str(faucet_name_raw).unwrap();
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();

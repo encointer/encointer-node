@@ -111,7 +111,7 @@ def register_participants_and_perform_meetup(client, cid, accounts):
 
 def faucet(client, cid, accounts):
     # charlie has no genesis funds
-    print('Faucet is dripping...')
+    print('native (Alice)Faucet is dripping...')
     client.faucet(accounts, is_faucet=True)
 
     blocks_to_wait = 3
@@ -261,6 +261,7 @@ def balance(x):
 
 
 def test_faucet(client, cid):
+    print("Testing the EncointerFaucet")
     client.set_faucet_reserve_amount("//Alice", balance(3000))
     client.await_block(2)
     balance_bob = client.balance("//Bob")

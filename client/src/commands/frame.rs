@@ -62,7 +62,7 @@ pub fn faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> 
 			);
 			ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
 			// send and watch extrinsic until ready
-			println!("Faucet drips {amount} to {to} (Alice's nonce={nonce})");
+			println!("Alice-Faucet drips {amount} to {to} (Alice's nonce={nonce})");
 			let _blockh = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await.unwrap();
 			nonce += 1;
 		}
