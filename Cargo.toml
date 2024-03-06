@@ -50,28 +50,28 @@ pallet-encointer-scheduler = { default-features = false, version = "7.0.0" }
 # substrate deps
 frame-benchmarking = { default-features = false, version = "30.0.0" }
 frame-benchmarking-cli = { version = "34.0.0" }
-frame-executive = { version = "30.0.0", default-features = false }
+frame-executive = { default-features = false, version = "30.0.0" }
 frame-support = { default-features = false, version = "30.0.0" }
 frame-system = { default-features = false, version = "30.0.0" }
-frame-system-benchmarking = { version = "30.0.0", default-features = false }
-frame-system-rpc-runtime-api = { version = "28.0.0", default-features = false }
-frame-try-runtime = { version = "0.36.0", default-features = false }
+frame-system-benchmarking = { default-features = false, version = "30.0.0" }
+frame-system-rpc-runtime-api = { default-features = false, version = "28.0.0" }
+frame-try-runtime = { default-features = false, version = "0.36.0" }
 hex-literal = { version = "0.4.1" }
 jsonrpsee = { version = "0.22.0", features = ["server"] }
 pallet-asset-tx-payment = { default-features = false, version = "30.0.0" }
-pallet-aura = { version = "29.0.0", default-features = false }
+pallet-aura = { default-features = false, version = "29.0.0" }
 pallet-balances = { default-features = false, version = "30.0.0" }
-pallet-grandpa = { version = "30.0.0", default-features = false }
-pallet-insecure-randomness-collective-flip = { version = "18.0.0", default-features = false }
-pallet-proxy = { version = "30.0.0", default-features = false }
-pallet-scheduler = { version = "31.0.0", default-features = false }
-pallet-sudo = { version = "30.0.0", default-features = false }
+pallet-grandpa = { default-features = false, version = "30.0.0" }
+pallet-insecure-randomness-collective-flip = { default-features = false, version = "18.0.0" }
+pallet-proxy = { default-features = false, version = "30.0.0" }
+pallet-scheduler = { default-features = false, version = "31.0.0" }
+pallet-sudo = { default-features = false, version = "30.0.0" }
 pallet-timestamp = { default-features = false, version = "29.0.0" }
 pallet-transaction-payment = { default-features = false, version = "30.0.0" }
 pallet-transaction-payment-rpc = { version = "32.0.0" }
-pallet-transaction-payment-rpc-runtime-api = { version = "30.0.0", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "30.0.0" }
 pallet-treasury = { default-features = false, version = "29.0.0" }
-pallet-utility = { version = "30.0.0", default-features = false }
+pallet-utility = { default-features = false, version = "30.0.0" }
 sc-basic-authorship = { version = "0.36.0" }
 sc-chain-spec = "29.0.0"
 sc-cli = { version = "0.38.0" }
@@ -92,10 +92,10 @@ sc-transaction-pool-api = { version = "30.0.0" }
 sp-api = { default-features = false, version = "28.0.0" }
 sp-application-crypto = { default-features = false, version = "32.0.0" }
 sp-arithmetic = { default-features = false, version = "25.0.0" }
-sp-block-builder = { version = "28.0.0", default-features = false }
+sp-block-builder = { default-features = false, version = "28.0.0" }
 sp-blockchain = "30.0.0"
 sp-consensus = { version = "0.34.0" }
-sp-consensus-aura = { version = "0.34.0", default-features = false }
+sp-consensus-aura = { default-features = false, version = "0.34.0" }
 sp-consensus-grandpa = { version = "15.0.0" }
 sp-core = { default-features = false, version = "30.0.0" }
 sp-genesis-builder = { default-features = false, version = "0.9.0" }
@@ -103,16 +103,16 @@ sp-inherents = { default-features = false, version = "28.0.0" }
 sp-io = { default-features = false, version = "32.0.0" }
 sp-keyring = "33.0.0"
 sp-keystore = "0.36.0"
-sp-offchain = { version = "28.0.0", default-features = false }
+sp-offchain = { default-features = false, version = "28.0.0" }
 sp-rpc = "28.0.0"
 sp-runtime = { default-features = false, version = "33.0.0" }
-sp-session = { version = "29.0.0", default-features = false }
-sp-staking = { version = "28.0.0", default-features = false }
+sp-session = { default-features = false, version = "29.0.0" }
+sp-staking = { default-features = false, version = "28.0.0" }
 sp-std = { default-features = false, version = "14.0.0" }
 sp-storage = { default-features = false, version = "20.0.0" }
 sp-timestamp = { version = "28.0.0" }
-sp-transaction-pool = { version = "28.0.0", default-features = false }
-sp-version = { version = "31.0.0", default-features = false }
+sp-transaction-pool = { default-features = false, version = "28.0.0" }
+sp-version = { default-features = false, version = "31.0.0" }
 substrate-frame-rpc-system = { version = "30.0.0" }
 
 substrate-wasm-builder = "19.0.0"
