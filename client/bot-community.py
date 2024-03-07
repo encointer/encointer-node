@@ -36,7 +36,7 @@ import ast
 from math import floor
 
 from py_client.communities import random_community_spec, COMMUNITY_SPECS_PATH
-from py_client.helpers import purge_prompt, read_cid, write_cid, set_local_or_remote_chain
+from py_client.helpers import purge_prompt, read_cid, write_cid
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWrongPhase, UnknownError, \
     ParticipantAlreadyLinked
 from py_client.ipfs import Ipfs, ASSETS_PATH
@@ -53,16 +53,14 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 @click.option('-u', '--url', default='ws://127.0.0.1', help='ws-url of the chain.')
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, remote_chain):
+def cli(ctx, client, url, port, ipfs_local):
     ctx.ensure_object(dict)
-    cl = set_local_or_remote_chain(client, port, remote_chain)
+    cl = Client(rust_client=client, node_url=url, port=port)
     ctx.obj['client'] = cl
     ctx.obj['port'] = port
+    ctx.obj['url'] = url
     ctx.obj['ipfs_local'] = ipfs_local
-    ctx.obj['remote_chain'] = remote_chain
-
 
 @cli.command()
 @click.pass_obj

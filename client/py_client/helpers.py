@@ -37,13 +37,13 @@ def mkdir_p(path):
     return subprocess.run(['mkdir', '-p', path])
 
 
-# this method takes the last content identifier, which is the one of the whole folder, for a file, there is only one cid so it works, too. 
+# this method takes the last content identifier, which is the one of the whole folder, for a file, there is only one cid so it works, too.
 def take_only_last_cid(ret_cids):
         # last line contains the directory cid
         last = ret_cids.stdout.splitlines()[-1]
         p = re.compile('Qm\\w*')
         cids = p.findall(str(last))
-    
+
         if cids:
             print(cids[0])
             return cids[0]
@@ -68,14 +68,3 @@ def generate_file_list(path_to_files):
         with open(os.path.abspath(path_to_files), 'rb') as file:
             args += [(rel_path.as_posix(), file.read())]
     return args
-
-
-def set_local_or_remote_chain(client: str, port: str, node_url: str):
-    if node_url is None:
-        client = Client(rust_client=client, port=port)
-    else:
-        if node_url == "gesell":
-            client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
-        else:
-            raise Exception("You need to choose a valid remote chain")
-    return client
