@@ -46,9 +46,11 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
+		let at_block = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+				.await;
+		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -67,7 +69,7 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 			println!("Querying {}", registries[i]);
 
 			let count: ParticipantIndexType = api
-				.get_storage_map(ENCOINTER_CEREMONIES, counts[i], (cid, cindex), None)
+				.get_storage_map(ENCOINTER_CEREMONIES, counts[i], (cid, cindex), at_block)
 				.await
 				.unwrap()
 				.unwrap_or(0);
@@ -80,7 +82,7 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 						registries[i],
 						(cid, cindex),
 						p_index,
-						None,
+						at_block,
 					)
 					.await
 					.unwrap()
@@ -101,8 +103,10 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
+		let at_block = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+				.await;
 		let current_ceremony_index = get_ceremony_index(&api, None).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
@@ -114,7 +118,7 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 
 		println!("listing meetups for cid {cid} and ceremony nr {cindex}");
 
-		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
+		let stats = api.get_community_ceremony_stats(community_ceremony, at_block).await.unwrap();
 
 		let mut num_assignees = 0u64;
 
@@ -153,9 +157,11 @@ pub fn print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
+		let at_block = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+				.await;
+		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -164,7 +170,7 @@ pub fn print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 
 		let community_ceremony = (cid, cindex);
 
-		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
+		let stats = api.get_community_ceremony_stats(community_ceremony, at_block).await.unwrap();
 
 		// serialization prints the the account id better than `debug`
 		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
@@ -176,9 +182,12 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
+		let at_block = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+				.await;
+
+		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -187,7 +196,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 
 		println!("listing attestees for cid {cid} and ceremony nr {cindex}");
 
-		let wcount = get_attestee_count(&api, (cid, cindex)).await;
+		let wcount = get_attestee_count(&api, (cid, cindex), at_block).await;
 		println!("number of attestees:  {wcount}");
 
 		println!("listing participants for cid {cid} and ceremony nr {cindex}");
@@ -202,7 +211,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 						ENCOINTER_CEREMONIES,
 						counts_local[count_index],
 						(cid, cindex),
-						None,
+						at_block,
 					)
 					.await
 			}
@@ -220,7 +229,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 						registries_local[registry_index],
 						(cid, cindex),
 						p_index,
-						None,
+						at_block,
 					)
 					.await
 			}
@@ -237,7 +246,9 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			for p_index in 1..count + 1 {
 				let accountid: AccountId = account_query(i, p_index).await.unwrap().unwrap();
 
-				match get_participant_attestation_index(&api, (cid, cindex), &accountid).await {
+				match get_participant_attestation_index(&api, (cid, cindex), &accountid, at_block)
+					.await
+				{
 					Some(windex) =>
 						participants_windex.insert(windex as AttestationIndexType, accountid),
 					_ => continue,
@@ -249,11 +260,14 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 
 		for w in 1..wcount + 1 {
 			let attestor = participants_windex[&w].clone();
-			let meetup_index =
-				api.get_meetup_index(&(cid, cindex), &attestor).await.unwrap().unwrap();
-			let attestees = api.get_attestees((cid, cindex), w).await.unwrap();
+			let meetup_index = api
+				.get_meetup_index(&(cid, cindex), &attestor, at_block)
+				.await
+				.unwrap()
+				.unwrap();
+			let attestees = api.get_attestees((cid, cindex), w, at_block).await.unwrap();
 			let vote = api
-				.get_meetup_participant_count_vote((cid, cindex), attestor.clone())
+				.get_meetup_participant_count_vote((cid, cindex), attestor.clone(), at_block)
 				.await
 				.unwrap();
 			let attestation_state =
@@ -331,7 +345,7 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let cid =
 			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
 
-		let current_phase = api.get_current_phase().await.unwrap();
+		let current_phase = api.get_current_phase(None).await.unwrap();
 		if !(current_phase == CeremonyPhaseType::Registering ||
 			current_phase == CeremonyPhaseType::Attesting)
 		{
@@ -342,7 +356,7 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		if current_phase == CeremonyPhaseType::Registering {
 			reputation_cindex -= 1;
 		}
-		let rep = get_reputation(&api, &accountid, cid, reputation_cindex).await;
+		let rep = get_reputation(&api, &accountid, cid, reputation_cindex, None).await;
 		info!("{} has reputation {:?}", accountid, rep);
 		let proof = match rep {
 			Reputation::VerifiedUnlinked =>
@@ -385,7 +399,7 @@ pub fn register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let cindex = get_ceremony_index(&api, None).await;
 		let cid =
 			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
-		let rep = get_reputation(&api, &accountid, cid, cindex - 1).await;
+		let rep = get_reputation(&api, &accountid, cid, cindex - 1, None).await;
 		info!("{} has reputation {:?}", accountid, rep);
 		let proof = match rep {
 			Reputation::Unverified => None,
@@ -396,7 +410,7 @@ pub fn register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 				Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
 		};
 		debug!("proof: {:x?}", proof.encode());
-		let current_phase = api.get_current_phase().await.unwrap();
+		let current_phase = api.get_current_phase(None).await.unwrap();
 		if !(current_phase == CeremonyPhaseType::Registering ||
 			current_phase == CeremonyPhaseType::Attesting)
 		{
@@ -444,7 +458,7 @@ pub fn unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 			None => None,
 		};
 
-		let current_phase = api.get_current_phase().await.unwrap();
+		let current_phase = api.get_current_phase(None).await.unwrap();
 		if !(current_phase == CeremonyPhaseType::Registering ||
 			current_phase == CeremonyPhaseType::Attesting)
 		{
@@ -615,7 +629,7 @@ pub fn claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 
 		if matches.all_flag() {
 			let mut cindex = get_ceremony_index(&api, None).await;
-			if api.get_current_phase().await.unwrap() == CeremonyPhaseType::Registering {
+			if api.get_current_phase(None).await.unwrap() == CeremonyPhaseType::Registering {
 				cindex -= 1;
 			}
 			let meetup_count = api
@@ -802,13 +816,14 @@ async fn get_reputation(
 	prover: &AccountId,
 	cid: CommunityIdentifier,
 	cindex: CeremonyIndexType,
+	maybe_at: Option<Hash>,
 ) -> Reputation {
 	api.get_storage_double_map(
 		"EncointerCeremonies",
 		"ParticipantReputation",
 		(cid, cindex),
 		prover.clone(),
-		None,
+		maybe_at,
 	)
 	.await
 	.unwrap()
@@ -883,14 +898,14 @@ async fn new_claim_for(
 ) -> Vec<u8> {
 	let cindex = get_ceremony_index(api, None).await;
 	let mindex = api
-		.get_meetup_index(&(cid, cindex), &claimant.public().into())
+		.get_meetup_index(&(cid, cindex), &claimant.public().into(), None)
 		.await
 		.unwrap()
 		.expect("participant must be assigned to meetup to generate a claim");
 
 	// implicitly assume that participant meet at the right place at the right time
-	let mloc = api.get_meetup_location(&(cid, cindex), mindex).await.unwrap().unwrap();
-	let mtime = api.get_meetup_time(mloc, ONE_DAY).await.unwrap();
+	let mloc = api.get_meetup_location(&(cid, cindex), mindex, None).await.unwrap().unwrap();
+	let mtime = api.get_meetup_time(mloc, ONE_DAY, None).await.unwrap();
 
 	info!(
 		"creating claim for {} at loc {} (lat: {} lon: {}) at time {}, cindex {}",
@@ -1000,8 +1015,12 @@ async fn get_bootstrappers_with_remaining_newbie_tickets(
 	Ok(bs_with_tickets)
 }
 
-async fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
-	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
+async fn get_attestee_count(
+	api: &Api,
+	key: CommunityCeremony,
+	maybe_at: Option<Hash>,
+) -> ParticipantIndexType {
+	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, maybe_at)
 		.await
 		.unwrap()
 		.unwrap_or(0)
@@ -1011,8 +1030,9 @@ async fn get_participant_attestation_index(
 	api: &Api,
 	key: CommunityCeremony,
 	accountid: &AccountId,
+	maybe_at: Option<Hash>,
 ) -> Option<ParticipantIndexType> {
-	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, None)
+	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, maybe_at)
 		.await
 		.unwrap()
 }

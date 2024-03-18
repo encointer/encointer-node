@@ -81,7 +81,7 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg()).await;
         println!("{cid}");
 
-        if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
+        if api.get_current_phase(None).await.unwrap() != CeremonyPhaseType::Registering {
             error!("Wrong ceremony phase for registering new locations for {}", cid);
             error!("Aborting without registering additional locations");
             std::process::exit(exit_code::WRONG_PHASE);
@@ -144,7 +144,7 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
             println!("0x{}", hex::encode(add_location_maybe_batch_call.encode()));
         } else {
             // ---- send xt's to chain
-            if api.get_current_phase().await.unwrap() != CeremonyPhaseType::Registering {
+            if api.get_current_phase(None).await.unwrap() != CeremonyPhaseType::Registering {
                 error!("Wrong ceremony phase for registering new locations for {}", cid);
                 error!("Aborting without registering additional locations");
                 std::process::exit(exit_code::WRONG_PHASE);

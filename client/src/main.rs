@@ -232,6 +232,10 @@ fn main() {
 		.add_cmd(
 		    Command::new("list-communities")
 		        .description("list all registered communities")
+				.options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .at_block_arg()
+		        })
 		        .runner(commands::encointer_communities::list_communities),
 		)
 		.add_cmd(
@@ -263,6 +267,7 @@ fn main() {
 		        .options(|app| {
 		        app.setting(AppSettings::ColoredHelp)
 		            .ceremony_index_arg()
+					.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::list_participants),
 		)
@@ -272,6 +277,7 @@ fn main() {
 		        .options(|app| {
 		            app.setting(AppSettings::ColoredHelp)
 		                .ceremony_index_arg()
+						.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::list_meetups),
 		)
@@ -281,6 +287,7 @@ fn main() {
 		        .options(|app| {
 		            app.setting(AppSettings::ColoredHelp)
 		                .ceremony_index_arg()
+						.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::print_ceremony_stats),
 		)
@@ -290,6 +297,7 @@ fn main() {
 		        .options(|app| {
 		            app.setting(AppSettings::ColoredHelp)
 		                .ceremony_index_arg()
+						.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::list_attestees),
 		)

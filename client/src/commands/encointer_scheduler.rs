@@ -26,11 +26,11 @@ pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Erro
 		debug!("block number: {}", bn);
 		let cindex = get_ceremony_index(&api, None).await;
 		info!("ceremony index: {}", cindex);
-		let tnext: Moment = api.get_next_phase_timestamp().await.unwrap();
+		let tnext: Moment = api.get_next_phase_timestamp(None).await.unwrap();
 		debug!("next phase timestamp: {}", tnext);
 		// <<<<
 
-		let phase = api.get_current_phase().await.unwrap();
+		let phase = api.get_current_phase(None).await.unwrap();
 		println!("{phase:?}");
 		Ok(())
 	})
@@ -72,7 +72,7 @@ pub fn next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Err
 
 		send_and_wait_for_in_block(&api, xt(&api, next_phase_call).await, tx_payment_cid_arg).await;
 
-		let phase = api.get_current_phase().await.unwrap();
+		let phase = api.get_current_phase(None).await.unwrap();
 		println!("Phase is now: {phase:?}");
 		Ok(())
 	})

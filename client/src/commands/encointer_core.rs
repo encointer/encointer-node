@@ -44,11 +44,14 @@ pub fn balance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error>
 				println! {"{balance:?}"};
 			},
 			None => {
+				if maybe_at.is_some() {
+					panic!("can't apply --at if --cid not set")
+				};
 				if matches.all_flag() {
 					let community_balances = get_all_balances(&api, &accountid).await.unwrap();
 					let bn = get_block_number(&api, maybe_at).await;
 					for b in community_balances.iter() {
-						let dr = get_demurrage_per_block(&api, b.0).await;
+						let dr = get_demurrage_per_block(&api, b.0, maybe_at).await;
 						println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
 					}
 				}
@@ -196,7 +199,7 @@ pub async fn get_community_balance(
 ) -> BalanceType {
 	let cid = verify_cid(api, cid_str, maybe_at).await;
 	let bn = get_block_number(api, maybe_at).await;
-	let dr = get_demurrage_per_block(api, cid).await;
+	let dr = get_demurrage_per_block(api, cid, maybe_at).await;
 
 	if let Some(entry) = api
 		.get_storage_double_map("EncointerBalances", "Balance", cid, account_id, maybe_at)
@@ -216,7 +219,7 @@ pub async fn get_community_issuance(
 ) -> BalanceType {
 	let cid = verify_cid(api, cid_str, maybe_at).await;
 	let bn = get_block_number(api, maybe_at).await;
-	let dr = get_demurrage_per_block(api, cid).await;
+	let dr = get_demurrage_per_block(api, cid, maybe_at).await;
 
 	if let Some(entry) = api
 		.get_storage_map("EncointerBalances", "TotalIssuance", cid, maybe_at)
@@ -229,9 +232,13 @@ pub async fn get_community_issuance(
 	}
 }
 
-async fn get_demurrage_per_block(api: &Api, cid: CommunityIdentifier) -> Demurrage {
+async fn get_demurrage_per_block(
+	api: &Api,
+	cid: CommunityIdentifier,
+	at_block: Option<Hash>,
+) -> Demurrage {
 	let d: Option<Demurrage> = api
-		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, None)
+		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, at_block)
 		.await
 		.unwrap();
 
