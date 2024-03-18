@@ -15,14 +15,14 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	Api, ApiClientError, CeremoniesApi, EncointerXt, ParentchainExtrinsicSigner, SchedulerApi,
-	ENCOINTER_CEREMONIES,
+	Api, ApiClientError, AttestationState, CeremoniesApi, EncointerXt, ParentchainExtrinsicSigner,
+	SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{AccountId, Hash, Moment, Signature, ONE_DAY};
 use encointer_primitives::{
 	ceremonies::{
-		CeremonyIndexType, ClaimOfAttendance, CommunityCeremony, CommunityReputation,
-		MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
+		AttestationIndexType, CeremonyIndexType, ClaimOfAttendance, CommunityCeremony,
+		CommunityReputation, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
 		ReputationLifetimeType,
 	},
 	communities::CommunityIdentifier,
@@ -185,12 +185,90 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			|ci| into_effective_cindex(ci, current_ceremony_index),
 		);
 
-		let community_ceremony = (cid, cindex);
+		println!("listing attestees for cid {cid} and ceremony nr {cindex}");
 
-		let stats = api.get_community_ceremony_stats(community_ceremony).await.unwrap();
+		let wcount = get_attestee_count(&api, (cid, cindex)).await;
+		println!("number of attestees:  {wcount}");
 
-		// serialization prints the the account id better than `debug`
-		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
+		println!("listing participants for cid {cid} and ceremony nr {cindex}");
+
+		let counts = vec!["BootstrapperCount", "ReputableCount", "EndorseeCount", "NewbieCount"];
+		let count_query = |count_index| {
+			let api_local = api.clone();
+			let counts_local = counts.clone();
+			async move {
+				api_local
+					.get_storage_map(
+						ENCOINTER_CEREMONIES,
+						counts_local[count_index],
+						(cid, cindex),
+						None,
+					)
+					.await
+			}
+		};
+
+		let registries =
+			vec!["BootstrapperRegistry", "ReputableRegistry", "EndorseeRegistry", "NewbieRegistry"];
+		let account_query = |registry_index, p_index| {
+			let api_local = api.clone();
+			let registries_local = registries.clone();
+			async move {
+				api_local
+					.get_storage_double_map(
+						ENCOINTER_CEREMONIES,
+						registries_local[registry_index],
+						(cid, cindex),
+						p_index,
+						None,
+					)
+					.await
+			}
+		};
+
+		let mut participants_windex = HashMap::new();
+
+		for (i, item) in registries.iter().enumerate() {
+			println!("Querying {item}");
+
+			let count: ParticipantIndexType = count_query(i).await.unwrap().unwrap_or(0);
+			println!("number of participants assigned:  {count}");
+
+			for p_index in 1..count + 1 {
+				let accountid: AccountId = account_query(i, p_index).await.unwrap().unwrap();
+
+				match get_participant_attestation_index(&api, (cid, cindex), &accountid).await {
+					Some(windex) =>
+						participants_windex.insert(windex as AttestationIndexType, accountid),
+					_ => continue,
+				};
+			}
+		}
+
+		let mut attestation_states = Vec::with_capacity(wcount as usize);
+
+		for w in 1..wcount + 1 {
+			let attestor = participants_windex[&w].clone();
+			let meetup_index =
+				api.get_meetup_index(&(cid, cindex), &attestor).await.unwrap().unwrap();
+			let attestees = api.get_attestees((cid, cindex), w).await.unwrap();
+			let vote = api
+				.get_meetup_participant_count_vote((cid, cindex), attestor.clone())
+				.await
+				.unwrap();
+			let attestation_state =
+				AttestationState::new((cid, cindex), meetup_index, vote, w, attestor, attestees);
+
+			attestation_states.push(attestation_state);
+		}
+
+		// Group attestation states by meetup index
+		attestation_states.sort_by(|a, b| a.meetup_index.partial_cmp(&b.meetup_index).unwrap());
+
+		for a in attestation_states.iter() {
+			println!("{a:?}");
+		}
+
 		Ok(())
 	})
 	.into()
@@ -920,4 +998,21 @@ async fn get_bootstrappers_with_remaining_newbie_tickets(
 	}
 
 	Ok(bs_with_tickets)
+}
+
+async fn get_attestee_count(api: &Api, key: CommunityCeremony) -> ParticipantIndexType {
+	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, None)
+		.await
+		.unwrap()
+		.unwrap_or(0)
+}
+
+async fn get_participant_attestation_index(
+	api: &Api,
+	key: CommunityCeremony,
+	accountid: &AccountId,
+) -> Option<ParticipantIndexType> {
+	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, None)
+		.await
+		.unwrap()
 }
