@@ -275,7 +275,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			let vote = api
 				.get_meetup_participant_count_vote((cid, cindex), attestor.clone(), at_block)
 				.await
-				.unwrap();
+				.unwrap_or(0);
 			let attestation_state =
 				AttestationState::new((cid, cindex), meetup_index, vote, w, attestor, attestees);
 
@@ -307,7 +307,11 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					votes.push(a.vote);
 				}
 			}
-			let mean_vote: f64 = votes.iter().sum::<u32>() as f64 / votes.len() as f64;
+			let mut mean_vote: f64 = votes.iter().sum::<u32>() as f64 / votes.len() as f64;
+			if mean_vote.is_nan() {
+				mean_vote = 0f64;
+			}
+
 			all_votes.insert(*m, mean_vote);
 			println!(
 				"CSVmeetupVotes: {cindex}, {cid}, {m}, {}, {:.3}, {:?}",
@@ -317,7 +321,12 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			);
 		}
 
-		println!("CSV: {cindex}, {cid}, {wcount}, {}", all_votes.values().sum::<f64>());
+		println!("cindex, cid, assignees, attestors, sum of mean votes");
+		println!(
+			"CSV: {cindex}, {cid}, {}, {wcount}, {}",
+			meetup_sizes.values().sum::<usize>(),
+			all_votes.values().sum::<f64>()
+		);
 		Ok(())
 	})
 	.into()
