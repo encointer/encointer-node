@@ -1,7 +1,7 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
 	commands::{
-		encointer_communities::get_cid_names,
+		encointer_communities::get_community_identifiers,
 		encointer_core::{set_api_extrisic_params_builder, verify_cid},
 		encointer_scheduler::get_ceremony_index,
 	},
@@ -34,7 +34,7 @@ use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSignature;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap};
 use substrate_api_client::{
 	ac_compose_macros::{compose_call, compose_extrinsic, rpc_params},
 	ac_primitives::{Bytes, SignExtrinsic},
@@ -90,6 +90,10 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 				println!("{}[{}, {}] = {}", registries[i], cindex, p_index, accountid);
 			}
 		}
+		println!(
+			"CSV: {cindex}, {cid}, {}, {}, {}, {}",
+			num_participants[0], num_participants[1], num_participants[2], num_participants[3]
+		);
 		println!("total: {} guaranteed seats + {} newbies = {} total participants who would like to attend",
                  num_participants[0..=2].iter().sum::<u64>(),
                  num_participants[3],
@@ -107,7 +111,7 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 		let cid =
 			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
 				.await;
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
+		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -147,6 +151,7 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 				println!("MeetupRegistry[{:?}, {}] EMPTY", &community_ceremony, meetup.index);
 			}
 		}
+		println!("CSV: {cindex}, {cid}, {num_assignees}, {}", stats.meetups.len());
 		println!("total number of assignees: {num_assignees}");
 		Ok(())
 	})
@@ -283,6 +288,25 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			println!("{a:?}");
 		}
 
+		let meetup_count = api
+			.get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), at_block)
+			.await
+			.unwrap()
+			.unwrap_or(0u64);
+		let mut all_votes: HashMap<MeetupIndexType, f64> = HashMap::new();
+		for m in 1..=meetup_count {
+			let mut votes: Vec<u32> = Vec::with_capacity(32);
+			for a in attestation_states.iter() {
+				if a.meetup_index == m {
+					votes.push(a.vote);
+				}
+			}
+			let mean_vote: f64 = votes.iter().sum::<u32>() as f64 / votes.len() as f64;
+			all_votes.insert(m, mean_vote);
+			println!("meetup {m} votes: mean: {:.3}, {:?}", mean_vote, votes);
+		}
+
+		println!("CSV: {cindex}, {cid}, {wcount}, {}", all_votes.values().sum::<f64>());
 		Ok(())
 	})
 	.into()
@@ -302,7 +326,7 @@ pub fn list_reputables(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
         let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
         let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
 
-        let community_ids = get_cid_names(&api).await.unwrap().into_iter().map(|names| names.cid);
+        let community_ids = get_community_identifiers(&api, at_block).await.expect("no communities found");
 
         let mut reputables_csv = Vec::new();
 
@@ -865,7 +889,12 @@ async fn get_attendees_for_community_ceremony(
 	let mut attendees = Vec::new();
 	let mut noshows = Vec::new();
 	for storage_key in storage_keys.iter() {
-		match api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap() {
+		match api
+			.get_storage_by_key(storage_key.clone(), at_block)
+			.await
+			.unwrap_or(Some(Reputation::VerifiedLinked(0)))
+			.unwrap()
+		{
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked(_) => {
 				let key_postfix = storage_key.as_ref();
 				attendees.push(
