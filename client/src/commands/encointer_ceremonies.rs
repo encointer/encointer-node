@@ -28,13 +28,14 @@ use encointer_primitives::{
 	communities::CommunityIdentifier,
 	scheduler::CeremonyPhaseType,
 };
+use itertools::Itertools;
 use log::{debug, error, info};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSignature;
-use std::{cell::RefCell, collections::HashMap};
+use std::collections::HashMap;
 use substrate_api_client::{
 	ac_compose_macros::{compose_call, compose_extrinsic, rpc_params},
 	ac_primitives::{Bytes, SignExtrinsic},
@@ -288,22 +289,32 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			println!("{a:?}");
 		}
 
-		let meetup_count = api
-			.get_storage_map("EncointerCeremonies", "MeetupCount", (cid, cindex), at_block)
+		let mut meetup_sizes: HashMap<MeetupIndexType, usize> = HashMap::new();
+		let _: Vec<_> = api
+			.get_community_ceremony_stats((cid, cindex), at_block)
 			.await
 			.unwrap()
-			.unwrap_or(0u64);
+			.meetups
+			.iter()
+			.map(|m| meetup_sizes.insert(m.index, m.registrations.len()))
+			.collect();
+
 		let mut all_votes: HashMap<MeetupIndexType, f64> = HashMap::new();
-		for m in 1..=meetup_count {
+		for m in meetup_sizes.keys().sorted() {
 			let mut votes: Vec<u32> = Vec::with_capacity(32);
 			for a in attestation_states.iter() {
-				if a.meetup_index == m {
+				if a.meetup_index == *m {
 					votes.push(a.vote);
 				}
 			}
 			let mean_vote: f64 = votes.iter().sum::<u32>() as f64 / votes.len() as f64;
-			all_votes.insert(m, mean_vote);
-			println!("meetup {m} votes: mean: {:.3}, {:?}", mean_vote, votes);
+			all_votes.insert(*m, mean_vote);
+			println!(
+				"CSVmeetupVotes: {cindex}, {cid}, {m}, {}, {:.3}, {:?}",
+				meetup_sizes.get(m).unwrap(),
+				mean_vote,
+				votes.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(";")
+			);
 		}
 
 		println!("CSV: {cindex}, {cid}, {wcount}, {}", all_votes.values().sum::<f64>());

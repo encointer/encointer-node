@@ -2123,6 +2123,7 @@ dependencies = [
  "futures",
  "geojson",
  "hex",
+ "itertools 0.10.5",
  "log",
  "pallet-encointer-balances",
  "pallet-encointer-ceremonies",

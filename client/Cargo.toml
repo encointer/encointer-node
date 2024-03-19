@@ -44,3 +44,4 @@ sp-keyring = { workspace = true }
 sp-keystore = { workspace = true, features = ["std"] }
 sp-rpc = { workspace = true }
 sp-runtime = { workspace = true, features = ["std"] }
+itertools = "0.10.5"
