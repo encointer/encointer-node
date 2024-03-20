@@ -178,7 +178,7 @@ class Client:
                 participants = []
                 while len(lines) > 0:
                     l = lines.pop(0)
-                    if ('MeetupRegistry' in l) or ('total' in l) or ('CSV' in l):
+                    if ('MeetupRegistry' in l) or ('total' in l) or ('CSV:' in l):
                         break
                     participants.append(l.strip())
                 meetups.append(participants)
