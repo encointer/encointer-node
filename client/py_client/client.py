@@ -178,7 +178,7 @@ class Client:
                 participants = []
                 while len(lines) > 0:
                     l = lines.pop(0)
-                    if ('MeetupRegistry' in l) or ('total' in l):
+                    if ('MeetupRegistry' in l) or ('total' in l) or ('CSV:' in l):
                         break
                     participants.append(l.strip())
                 meetups.append(participants)
@@ -257,37 +257,37 @@ class Client:
     def create_faucet(self, account, facuet_name, amount, drip_amount, whitelist, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["create-faucet", account, facuet_name, str(amount), str(drip_amount)] + whitelist, cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def drip_faucet(self, account, facuet_account, cindex, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["drip-faucet", account, facuet_account, str(cindex)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def dissolve_faucet(self, account, facuet_account, beneficiary, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["dissolve-faucet", "--signer", account, facuet_account, beneficiary], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def close_faucet(self, account, facuet_account, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["close-faucet", account, facuet_account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def set_faucet_reserve_amount(self, account, amount, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["set-faucet-reserve-amount", "--signer", account, str(amount)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def submit_set_inactivity_timeout_proposal(self, account, inactivity_timeout, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["submit-set-inactivity-timeout-proposal", account, str(inactivity_timeout)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def vote(self, account, proposal_id, vote, reputations, cid=None, pay_fees_in_cc=False):
         reputations = [f'{cid}_{cindex}' for [cid,cindex] in reputations]
         reputation_vec = ','.join(reputations)
         ret = self.run_cli_command(["vote", account, str(proposal_id), vote, reputation_vec], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def update_proposal_state(self, account, proposal_id, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(["update-proposal-state", account, str(proposal_id)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
-    
+
     def list_proposals(self):
         ret = self.run_cli_command(["list-proposals"])
         return ret.stdout.decode("utf-8").strip()

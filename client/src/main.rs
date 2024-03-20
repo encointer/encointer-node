@@ -232,6 +232,10 @@ fn main() {
 		.add_cmd(
 		    Command::new("list-communities")
 		        .description("list all registered communities")
+				.options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .at_block_arg()
+		        })
 		        .runner(commands::encointer_communities::list_communities),
 		)
 		.add_cmd(
@@ -261,8 +265,9 @@ fn main() {
 		    Command::new("list-participants")
 		        .description("list all registered participants supplied community identifier and ceremony index")
 		        .options(|app| {
-		        app.setting(AppSettings::ColoredHelp)
+		        app.setting(AppSettings::ColoredHelp).setting(AppSettings::AllowNegativeNumbers)
 		            .ceremony_index_arg()
+					.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::list_participants),
 		)
@@ -270,8 +275,9 @@ fn main() {
 		    Command::new("list-meetups")
 		        .description("list all assigned meetups for supplied community identifier and ceremony index")
 		        .options(|app| {
-		            app.setting(AppSettings::ColoredHelp)
+		            app.setting(AppSettings::ColoredHelp).setting(AppSettings::AllowNegativeNumbers)
 		                .ceremony_index_arg()
+						.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::list_meetups),
 		)
@@ -279,8 +285,9 @@ fn main() {
 		    Command::new("print-ceremony-stats")
 		        .description("pretty prints all information for a community ceremony")
 		        .options(|app| {
-		            app.setting(AppSettings::ColoredHelp)
+		            app.setting(AppSettings::ColoredHelp).setting(AppSettings::AllowNegativeNumbers)
 		                .ceremony_index_arg()
+						.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::print_ceremony_stats),
 		)
@@ -288,8 +295,9 @@ fn main() {
 		    Command::new("list-attestees")
 		        .description("list all attestees for participants for supplied community identifier and ceremony index")
 		        .options(|app| {
-		            app.setting(AppSettings::ColoredHelp)
+		            app.setting(AppSettings::ColoredHelp).setting(AppSettings::AllowNegativeNumbers)
 		                .ceremony_index_arg()
+						.at_block_arg()
 		        })
 		        .runner(commands::encointer_ceremonies::list_attestees),
 		)
@@ -327,7 +335,7 @@ fn main() {
 		    Command::new("unregister-participant")
 		        .description("Unregister encointer ceremony participant for supplied community")
 		        .options(|app| {
-		            app.setting(AppSettings::ColoredHelp)
+		            app.setting(AppSettings::ColoredHelp).setting(AppSettings::AllowNegativeNumbers)
 		            .account_arg()
 		            .signer_arg("Account which signs the tx.")
 		            .ceremony_index_arg()
@@ -357,7 +365,7 @@ fn main() {
 		        .description("creates a proof of ProofOfAttendances for an <account> for the given ceremony index")
 		        .options(|app| {
 		            app.setting(AppSettings::ColoredHelp)
-		                .setting(AppSettings::AllowLeadingHyphen)
+		                .setting(AppSettings::AllowNegativeNumbers)
 		                .account_arg()
 		                .ceremony_index_arg()
 		        })

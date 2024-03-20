@@ -2,6 +2,7 @@ use crate::{Api, CommunitiesApi, Result, SchedulerApi};
 use encointer_ceremonies_assignment::{
 	assignment_fn_inverse, meetup_index, meetup_location, meetup_time,
 };
+use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, MeetupTimeOffsetType,
@@ -14,6 +15,7 @@ use log::warn;
 use serde::{Deserialize, Serialize};
 use sp_runtime::AccountId32 as AccountId;
 use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
+
 pub type Moment = u64;
 
 pub const ENCOINTER_CEREMONIES: &str = "EncointerCeremonies";
@@ -23,91 +25,120 @@ pub const ONE_DAY: Moment = 86_400_000;
 
 #[maybe_async::maybe_async(?Send)]
 pub trait CeremoniesApi {
-	async fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment>;
+	async fn get_assignments(
+		&self,
+		community_ceremony: &CommunityCeremony,
+		maybe_at: Option<Hash>,
+	) -> Result<Assignment>;
 	async fn get_assignment_counts(
 		&self,
 		community_ceremony: &CommunityCeremony,
+		maybe_at: Option<Hash>,
 	) -> Result<AssignmentCount>;
 
 	async fn get_bootstrapper(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>>;
 
 	async fn get_reputable(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>>;
 
 	async fn get_endorsee(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>>;
 
 	async fn get_newbie(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>>;
 
 	async fn get_registration(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
+		maybe_at: Option<Hash>,
 	) -> Result<Registration>;
 
 	async fn get_meetup_count(
 		&self,
 		community_ceremony: &CommunityCeremony,
+		maybe_at: Option<Hash>,
 	) -> Result<MeetupIndexType>;
 
 	async fn get_meetup_index(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<MeetupIndexType>>;
 
 	async fn get_meetup_location(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<Location>>;
 
 	async fn get_meetup_participants(
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Vec<AccountId>>;
 
-	async fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>>;
+	async fn get_meetup_time_offset(
+		&self,
+		maybe_at: Option<Hash>,
+	) -> Result<Option<MeetupTimeOffsetType>>;
 
-	async fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment>;
+	async fn get_meetup_time(
+		&self,
+		location: Location,
+		one_day: Moment,
+		maybe_at: Option<Hash>,
+	) -> Result<Moment>;
 
 	async fn get_community_ceremony_stats(
 		&self,
 		community_ceremony: CommunityCeremony,
+		maybe_at: Option<Hash>,
 	) -> Result<CommunityCeremonyStats>;
 
 	async fn get_attestees(
 		&self,
 		community_ceremony: CommunityCeremony,
 		participant_index: ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Vec<AccountId>>;
 
 	async fn get_meetup_participant_count_vote(
 		&self,
 		community_ceremony: CommunityCeremony,
 		account_id: AccountId,
+		maybe_at: Option<Hash>,
 	) -> Result<u32>;
 }
 
 #[maybe_async::maybe_async(?Send)]
 impl CeremoniesApi for Api {
-	async fn get_assignments(&self, community_ceremony: &CommunityCeremony) -> Result<Assignment> {
-		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, None)
+	async fn get_assignments(
+		&self,
+		community_ceremony: &CommunityCeremony,
+		maybe_at: Option<Hash>,
+	) -> Result<Assignment> {
+		self.get_storage_map(ENCOINTER_CEREMONIES, "Assignments", community_ceremony, maybe_at)
 			.await?
 			.ok_or_else(|| ApiClientError::Other("Assignments don't exist".into()))
 	}
@@ -115,8 +146,9 @@ impl CeremoniesApi for Api {
 	async fn get_assignment_counts(
 		&self,
 		community_ceremony: &CommunityCeremony,
+		maybe_at: Option<Hash>,
 	) -> Result<AssignmentCount> {
-		self.get_storage_map(ENCOINTER_CEREMONIES, "AssignmentCounts", community_ceremony, None)
+		self.get_storage_map(ENCOINTER_CEREMONIES, "AssignmentCounts", community_ceremony, maybe_at)
 			.await?
 			.ok_or_else(|| ApiClientError::Other("AssignmentCounts not found".into()))
 	}
@@ -125,13 +157,14 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>> {
 		self.get_storage_double_map(
 			ENCOINTER_CEREMONIES,
 			"BootstrapperRegistry",
 			community_ceremony,
 			p,
-			None,
+			maybe_at,
 		)
 		.await
 	}
@@ -140,13 +173,14 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>> {
 		self.get_storage_double_map(
 			ENCOINTER_CEREMONIES,
 			"ReputableRegistry",
 			community_ceremony,
 			p,
-			None,
+			maybe_at,
 		)
 		.await
 	}
@@ -155,13 +189,14 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>> {
 		self.get_storage_double_map(
 			ENCOINTER_CEREMONIES,
 			"EndorseeRegistry",
 			community_ceremony,
 			p,
-			None,
+			maybe_at,
 		)
 		.await
 	}
@@ -170,13 +205,14 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		p: &ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<AccountId>> {
 		self.get_storage_double_map(
 			ENCOINTER_CEREMONIES,
 			"NewbieRegistry",
 			community_ceremony,
 			p,
-			None,
+			maybe_at,
 		)
 		.await
 	}
@@ -185,6 +221,7 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
+		maybe_at: Option<Hash>,
 	) -> Result<Registration> {
 		let index_query = |storage_key| async move {
 			self.get_storage_double_map(
@@ -192,7 +229,7 @@ impl CeremoniesApi for Api {
 				storage_key,
 				community_ceremony,
 				account_id,
-				None,
+				maybe_at,
 			)
 			.await
 		};
@@ -215,9 +252,10 @@ impl CeremoniesApi for Api {
 	async fn get_meetup_count(
 		&self,
 		community_ceremony: &CommunityCeremony,
+		maybe_at: Option<Hash>,
 	) -> Result<MeetupIndexType> {
 		Ok(self
-			.get_storage_map(ENCOINTER_CEREMONIES, "MeetupCount", community_ceremony, None)
+			.get_storage_map(ENCOINTER_CEREMONIES, "MeetupCount", community_ceremony, maybe_at)
 			.await?
 			.unwrap_or(0))
 	}
@@ -226,24 +264,25 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		account_id: &AccountId,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<MeetupIndexType>> {
-		let meetup_count = self.get_meetup_count(community_ceremony).await?;
+		let meetup_count = self.get_meetup_count(community_ceremony, maybe_at).await?;
 
 		if meetup_count == 0 {
 			warn!("Meetup Count is 0.");
 			return Ok(None)
 		}
 
-		let assignments = self.get_assignments(community_ceremony).await?;
+		let assignments = self.get_assignments(community_ceremony, maybe_at).await?;
 
 		// Some helper queries to make below code more readable.
 		let bootstrapper_count = || async {
 			Ok::<ParticipantIndexType, ApiClientError>(
-				self.get_assignment_counts(community_ceremony).await?.bootstrappers,
+				self.get_assignment_counts(community_ceremony, maybe_at).await?.bootstrappers,
 			)
 		};
 
-		let registration = self.get_registration(community_ceremony, account_id).await?;
+		let registration = self.get_registration(community_ceremony, account_id, maybe_at).await?;
 
 		let meetup_index_fn =
 			|p_index, assignment_params| meetup_index(p_index, assignment_params, meetup_count);
@@ -268,9 +307,11 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Option<Location>> {
 		let locations = self.get_locations(community_ceremony.0).await?;
-		let location_assignment_params = self.get_assignments(community_ceremony).await?.locations;
+		let location_assignment_params =
+			self.get_assignments(community_ceremony, maybe_at).await?.locations;
 
 		Ok(meetup_location(meetup_index, locations, location_assignment_params))
 	}
@@ -279,9 +320,10 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: &CommunityCeremony,
 		meetup_index: MeetupIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Vec<AccountId>> {
 		let meetup_index_zero_based = meetup_index - 1;
-		let meetup_count = self.get_meetup_count(community_ceremony).await?;
+		let meetup_count = self.get_meetup_count(community_ceremony, maybe_at).await?;
 
 		if meetup_index_zero_based > meetup_count {
 			return Err(ApiClientError::Other(
@@ -292,8 +334,8 @@ impl CeremoniesApi for Api {
 			))
 		}
 
-		let params = self.get_assignments(community_ceremony).await?;
-		let assigned = self.get_assignment_counts(community_ceremony).await?;
+		let params = self.get_assignments(community_ceremony, maybe_at).await?;
+		let assigned = self.get_assignment_counts(community_ceremony, maybe_at).await?;
 
 		let bootstrappers_reputables = stream::iter(
 			assignment_fn_inverse(
@@ -305,7 +347,7 @@ impl CeremoniesApi for Api {
 			.unwrap_or_default(),
 		)
 		.filter_map(|p_index| async move {
-			get_bootstrapper_or_reputable(self, community_ceremony, p_index, &assigned)
+			get_bootstrapper_or_reputable(self, community_ceremony, p_index, &assigned, maybe_at)
 				.await
 				.ok()
 				.flatten()
@@ -323,7 +365,7 @@ impl CeremoniesApi for Api {
 			.filter(|p| p < &assigned.endorsees),
 		)
 		.filter_map(|p| async move {
-			self.get_endorsee(community_ceremony, &(p + 1)).await.ok().flatten()
+			self.get_endorsee(community_ceremony, &(p + 1), maybe_at).await.ok().flatten()
 		});
 
 		let newbies = stream::iter(
@@ -338,19 +380,27 @@ impl CeremoniesApi for Api {
 			.filter(|p| p < &assigned.newbies),
 		)
 		.filter_map(|p| async move {
-			self.get_newbie(community_ceremony, &(p + 1)).await.ok().flatten()
+			self.get_newbie(community_ceremony, &(p + 1), maybe_at).await.ok().flatten()
 		});
 
 		Ok(bootstrappers_reputables.chain(endorsees).chain(newbies).collect().await)
 	}
 
-	async fn get_meetup_time_offset(&self) -> Result<Option<MeetupTimeOffsetType>> {
-		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", None).await
+	async fn get_meetup_time_offset(
+		&self,
+		maybe_at: Option<Hash>,
+	) -> Result<Option<MeetupTimeOffsetType>> {
+		self.get_storage(ENCOINTER_CEREMONIES, "MeetupTimeOffset", maybe_at).await
 	}
 
-	async fn get_meetup_time(&self, location: Location, one_day: Moment) -> Result<Moment> {
-		let attesting_start = self.get_start_of_attesting_phase().await?;
-		let offset = self.get_meetup_time_offset().await?.unwrap_or(0);
+	async fn get_meetup_time(
+		&self,
+		location: Location,
+		one_day: Moment,
+		maybe_at: Option<Hash>,
+	) -> Result<Moment> {
+		let attesting_start = self.get_start_of_attesting_phase(maybe_at).await?;
+		let offset = self.get_meetup_time_offset(maybe_at).await?.unwrap_or(0);
 
 		Ok(meetup_time(location, attesting_start, one_day, offset))
 	}
@@ -358,23 +408,26 @@ impl CeremoniesApi for Api {
 	async fn get_community_ceremony_stats(
 		&self,
 		community_ceremony: CommunityCeremony,
+		maybe_at: Option<Hash>,
 	) -> Result<CommunityCeremonyStats> {
-		let assignment = self.get_assignments(&community_ceremony).await?;
-		let assignment_count = self.get_assignment_counts(&community_ceremony).await?;
-		let mcount = self.get_meetup_count(&community_ceremony).await?;
+		let assignment = self.get_assignments(&community_ceremony, maybe_at).await?;
+		let assignment_count = self.get_assignment_counts(&community_ceremony, maybe_at).await?;
+		let mcount = self.get_meetup_count(&community_ceremony, maybe_at).await?;
 
 		let mut meetups = vec![];
 
 		// get stats of every meetup
 		for m in 1..=mcount {
-			let m_location = self.get_meetup_location(&community_ceremony, m).await?.unwrap();
-			let time = self.get_meetup_time(m_location, ONE_DAY).await.unwrap_or(0);
-			let participants = self.get_meetup_participants(&community_ceremony, m).await?;
+			let m_location =
+				self.get_meetup_location(&community_ceremony, m, maybe_at).await?.unwrap();
+			let time = self.get_meetup_time(m_location, ONE_DAY, maybe_at).await.unwrap_or(0);
+			let participants =
+				self.get_meetup_participants(&community_ceremony, m, maybe_at).await?;
 
 			let mut registrations = vec![];
 
 			for p in participants.into_iter() {
-				let r = self.get_registration(&community_ceremony, &p).await?;
+				let r = self.get_registration(&community_ceremony, &p, maybe_at).await?;
 				registrations.push((p, r))
 			}
 
@@ -394,13 +447,14 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: CommunityCeremony,
 		p_index: ParticipantIndexType,
+		maybe_at: Option<Hash>,
 	) -> Result<Vec<AccountId>> {
 		self.get_storage_double_map(
 			"EncointerCeremonies",
 			"AttestationRegistry",
 			community_ceremony,
 			p_index,
-			None,
+			maybe_at,
 		)
 		.await?
 		.ok_or_else(|| ApiClientError::Other("Attestees don't exist".into()))
@@ -410,13 +464,14 @@ impl CeremoniesApi for Api {
 		&self,
 		community_ceremony: CommunityCeremony,
 		account_id: AccountId,
+		maybe_at: Option<Hash>,
 	) -> Result<u32> {
 		self.get_storage_double_map(
 			"EncointerCeremonies",
 			"MeetupParticipantCountVote",
 			community_ceremony,
 			account_id,
-			None,
+			maybe_at,
 		)
 		.await?
 		.ok_or_else(|| ApiClientError::Other("MeetupParticipantCountVote don't exist".into()))
@@ -428,12 +483,13 @@ async fn get_bootstrapper_or_reputable(
 	community_ceremony: &CommunityCeremony,
 	p_index: ParticipantIndexType,
 	assigned: &AssignmentCount,
+	maybe_at: Option<Hash>,
 ) -> Result<Option<AccountId>> {
 	if p_index < assigned.bootstrappers {
-		return api.get_bootstrapper(community_ceremony, &(p_index + 1)).await
+		return api.get_bootstrapper(community_ceremony, &(p_index + 1), maybe_at).await
 	} else if p_index < assigned.bootstrappers + assigned.reputables {
 		return api
-			.get_reputable(community_ceremony, &(p_index - assigned.bootstrappers + 1))
+			.get_reputable(community_ceremony, &(p_index - assigned.bootstrappers + 1), maybe_at)
 			.await
 	}
 

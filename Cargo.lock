@@ -2109,7 +2109,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-client-notee"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "clap 2.34.0",
  "clap-nested",
@@ -2123,6 +2123,7 @@ dependencies = [
  "futures",
  "geojson",
  "hex",
+ "itertools 0.10.5",
  "log",
  "pallet-encointer-balances",
  "pallet-encointer-ceremonies",
@@ -2158,7 +2159,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "clap 4.5.1",
  "encointer-balances-tx-payment-rpc",
