@@ -37,6 +37,7 @@ substrate-client-keystore = { workspace = true }
 # substrate deps
 frame-support = { workspace = true, features = ["std"] }
 frame-system = { workspace = true, features = ["std"] }
+itertools = "0.10.5"
 pallet-transaction-payment = { workspace = true, features = ["std"] }
 sp-application-crypto = { workspace = true, features = ["std"] }
 sp-core = { workspace = true, features = ["std"] }
@@ -44,4 +45,3 @@ sp-keyring = { workspace = true }
 sp-keystore = { workspace = true, features = ["std"] }
 sp-rpc = { workspace = true }
 sp-runtime = { workspace = true, features = ["std"] }
-itertools = "0.10.5"
