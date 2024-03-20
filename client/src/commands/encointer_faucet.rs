@@ -257,14 +257,14 @@ pub fn list_faucets(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 		let api = get_chain_api(matches).await;
 
 		let is_verbose = matches.verbose_flag();
-		let at_block = matches.at_block_arg();
+		let maybe_at = matches.at_block_arg();
 
 		let key_prefix =
 			api.get_storage_map_key_prefix("EncointerFaucet", "Faucets").await.unwrap();
 
 		let max_keys = 1000;
 		let storage_keys = api
-			.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+			.get_storage_keys_paged(Some(key_prefix), max_keys, None, maybe_at)
 			.await
 			.unwrap();
 
@@ -277,7 +277,7 @@ pub fn list_faucets(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 			let faucet_address =
 				AccountId::decode(&mut key_postfix[key_postfix.len() - 32..].as_ref()).unwrap();
 			let faucet: Faucet<AccountId, Balance> =
-				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
+				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 
 			if is_verbose {
 				println!("address: {}", faucet_address.to_ss58check());

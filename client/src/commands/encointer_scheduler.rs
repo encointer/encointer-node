@@ -79,8 +79,8 @@ pub fn next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Err
 	.into()
 }
 
-pub async fn get_ceremony_index(api: &Api, at_block: Option<Hash>) -> CeremonyIndexType {
-	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", at_block)
+pub async fn get_ceremony_index(api: &Api, maybe_at: Option<Hash>) -> CeremonyIndexType {
+	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", maybe_at)
 		.await
 		.unwrap()
 		.unwrap()

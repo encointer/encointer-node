@@ -47,11 +47,11 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let at_block = matches.at_block_arg();
+		let maybe_at = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
 				.await;
-		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
+		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -70,7 +70,7 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 			println!("Querying {}", registries[i]);
 
 			let count: ParticipantIndexType = api
-				.get_storage_map(ENCOINTER_CEREMONIES, counts[i], (cid, cindex), at_block)
+				.get_storage_map(ENCOINTER_CEREMONIES, counts[i], (cid, cindex), maybe_at)
 				.await
 				.unwrap()
 				.unwrap_or(0);
@@ -83,7 +83,7 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 						registries[i],
 						(cid, cindex),
 						p_index,
-						at_block,
+						maybe_at,
 					)
 					.await
 					.unwrap()
@@ -108,11 +108,11 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let at_block = matches.at_block_arg();
+		let maybe_at = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
 				.await;
-		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
+		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -123,7 +123,7 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 
 		println!("listing meetups for cid {cid} and ceremony nr {cindex}");
 
-		let stats = api.get_community_ceremony_stats(community_ceremony, at_block).await.unwrap();
+		let stats = api.get_community_ceremony_stats(community_ceremony, maybe_at).await.unwrap();
 
 		let mut num_assignees = 0u64;
 
@@ -163,11 +163,11 @@ pub fn print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let at_block = matches.at_block_arg();
+		let maybe_at = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
 				.await;
-		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
+		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -176,7 +176,7 @@ pub fn print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 
 		let community_ceremony = (cid, cindex);
 
-		let stats = api.get_community_ceremony_stats(community_ceremony, at_block).await.unwrap();
+		let stats = api.get_community_ceremony_stats(community_ceremony, maybe_at).await.unwrap();
 
 		// serialization prints the the account id better than `debug`
 		println!("{}", serde_json::to_string_pretty(&stats).unwrap());
@@ -188,12 +188,12 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let at_block = matches.at_block_arg();
+		let maybe_at = matches.at_block_arg();
 		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), at_block)
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
 				.await;
 
-		let current_ceremony_index = get_ceremony_index(&api, at_block).await;
+		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -202,7 +202,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 
 		println!("listing attestees for cid {cid} and ceremony nr {cindex}");
 
-		let wcount = get_attestee_count(&api, (cid, cindex), at_block).await;
+		let wcount = get_attestee_count(&api, (cid, cindex), maybe_at).await;
 		println!("number of attestees:  {wcount}");
 
 		println!("listing participants for cid {cid} and ceremony nr {cindex}");
@@ -217,7 +217,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 						ENCOINTER_CEREMONIES,
 						counts_local[count_index],
 						(cid, cindex),
-						at_block,
+						maybe_at,
 					)
 					.await
 			}
@@ -235,7 +235,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 						registries_local[registry_index],
 						(cid, cindex),
 						p_index,
-						at_block,
+						maybe_at,
 					)
 					.await
 			}
@@ -252,7 +252,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			for p_index in 1..count + 1 {
 				let accountid: AccountId = account_query(i, p_index).await.unwrap().unwrap();
 
-				match get_participant_attestation_index(&api, (cid, cindex), &accountid, at_block)
+				match get_participant_attestation_index(&api, (cid, cindex), &accountid, maybe_at)
 					.await
 				{
 					Some(windex) =>
@@ -267,13 +267,13 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		for w in 1..wcount + 1 {
 			let attestor = participants_windex[&w].clone();
 			let meetup_index = api
-				.get_meetup_index(&(cid, cindex), &attestor, at_block)
+				.get_meetup_index(&(cid, cindex), &attestor, maybe_at)
 				.await
 				.unwrap()
 				.unwrap();
-			let attestees = api.get_attestees((cid, cindex), w, at_block).await.unwrap();
+			let attestees = api.get_attestees((cid, cindex), w, maybe_at).await.unwrap();
 			let vote = api
-				.get_meetup_participant_count_vote((cid, cindex), attestor.clone(), at_block)
+				.get_meetup_participant_count_vote((cid, cindex), attestor.clone(), maybe_at)
 				.await
 				.unwrap_or(0);
 			let attestation_state =
@@ -291,7 +291,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 
 		let mut meetup_sizes: HashMap<MeetupIndexType, usize> = HashMap::new();
 		let _: Vec<_> = api
-			.get_community_ceremony_stats((cid, cindex), at_block)
+			.get_community_ceremony_stats((cid, cindex), maybe_at)
 			.await
 			.unwrap()
 			.meetups
@@ -337,16 +337,16 @@ pub fn list_reputables(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
         let api = get_chain_api(matches).await;
 
         let is_verbose = matches.verbose_flag();
-        let at_block = matches.at_block_arg();
+        let maybe_at = matches.at_block_arg();
 
-        let lifetime = get_reputation_lifetime(&api, at_block).await;
-        let current_ceremony_index = get_ceremony_index(&api, at_block).await;
+        let lifetime = get_reputation_lifetime(&api, maybe_at).await;
+        let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
 
 
         let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
         let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
 
-        let community_ids = get_community_identifiers(&api, at_block).await.expect("no communities found");
+        let community_ids = get_community_identifiers(&api, maybe_at).await.expect("no communities found");
 
         let mut reputables_csv = Vec::new();
 
@@ -355,7 +355,7 @@ pub fn list_reputables(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
             println!("Community ID: {community_id:?}");
             let mut reputables: HashMap<AccountId, usize> = HashMap::new();
             for ceremony_index in &ceremony_indices {
-                let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), at_block).await;
+                let (attendees, noshows) = get_attendees_for_community_ceremony(&api, (community_id, *ceremony_index), maybe_at).await;
                 println!("Cycle ID {ceremony_index:?}: Total attested attendees: {:} (noshows: {:})", attendees.len(), noshows.len());
                 for attendee in attendees {
                     reputables_csv.push(format!("{community_id:?},{ceremony_index:?},{}", attendee.to_ss58check()));
@@ -887,7 +887,7 @@ async fn get_reputation_history(
 async fn get_attendees_for_community_ceremony(
 	api: &Api,
 	community_ceremony: CommunityCeremony,
-	at_block: Option<Hash>,
+	maybe_at: Option<Hash>,
 ) -> (Vec<AccountId>, Vec<AccountId>) {
 	let key_prefix = api
 		.get_storage_double_map_key_prefix(
@@ -899,7 +899,7 @@ async fn get_attendees_for_community_ceremony(
 		.unwrap();
 	let max_keys = 1000;
 	let storage_keys = api
-		.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+		.get_storage_keys_paged(Some(key_prefix), max_keys, None, maybe_at)
 		.await
 		.unwrap();
 
@@ -910,7 +910,7 @@ async fn get_attendees_for_community_ceremony(
 	let mut noshows = Vec::new();
 	for storage_key in storage_keys.iter() {
 		match api
-			.get_storage_by_key(storage_key.clone(), at_block)
+			.get_storage_by_key(storage_key.clone(), maybe_at)
 			.await
 			.unwrap_or(Some(Reputation::VerifiedLinked(0)))
 			.unwrap()
@@ -932,8 +932,8 @@ async fn get_attendees_for_community_ceremony(
 	(attendees, noshows)
 }
 
-async fn get_reputation_lifetime(api: &Api, at_block: Option<Hash>) -> ReputationLifetimeType {
-	api.get_storage("EncointerCeremonies", "ReputationLifetime", at_block)
+async fn get_reputation_lifetime(api: &Api, maybe_at: Option<Hash>) -> ReputationLifetimeType {
+	api.get_storage("EncointerCeremonies", "ReputationLifetime", maybe_at)
 		.await
 		.unwrap()
 		.unwrap_or(5)

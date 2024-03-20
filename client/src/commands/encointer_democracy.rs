@@ -48,12 +48,12 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let at_block = matches.at_block_arg();
+		let maybe_at = matches.at_block_arg();
 		let key_prefix =
 			api.get_storage_map_key_prefix("EncointerDemocracy", "Proposals").await.unwrap();
 		let max_keys = 1000;
 		let storage_keys = api
-			.get_storage_keys_paged(Some(key_prefix), max_keys, None, at_block)
+			.get_storage_keys_paged(Some(key_prefix), max_keys, None, maybe_at)
 			.await
 			.unwrap();
 		if storage_keys.len() == max_keys as usize {
@@ -66,7 +66,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					.unwrap();
 			println!("id: {}", proposal_id);
 			let proposal: Proposal<Moment> =
-				api.get_storage_by_key(storage_key.clone(), at_block).await.unwrap().unwrap();
+				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 			println!("action: {:?}", proposal.action);
 			println!("start block: {}", proposal.start);
 			println!("start cindex: {}", proposal.start_cindex);

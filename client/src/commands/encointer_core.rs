@@ -235,10 +235,10 @@ pub async fn get_community_issuance(
 async fn get_demurrage_per_block(
 	api: &Api,
 	cid: CommunityIdentifier,
-	at_block: Option<Hash>,
+	maybe_at: Option<Hash>,
 ) -> Demurrage {
 	let d: Option<Demurrage> = api
-		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, at_block)
+		.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, maybe_at)
 		.await
 		.unwrap();
 
