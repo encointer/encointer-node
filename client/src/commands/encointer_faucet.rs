@@ -1,6 +1,5 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
 	utils::{
 		collective_propose_call, contains_sudo_pallet, ensure_payment, get_chain_api,
 		get_councillors,
@@ -9,7 +8,9 @@ use crate::{
 	},
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::{EncointerXt, ParentchainExtrinsicSigner};
+use encointer_api_client_extension::{
+	set_api_extrisic_params_builder, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
+};
 use encointer_node_notee_runtime::{AccountId, Balance};
 use encointer_primitives::faucet::{Faucet, FaucetNameType, FromStr, WhiteListType};
 use log::{error, info};
@@ -37,7 +38,7 @@ pub fn create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 		let whitelist = if let Some(wl) = matches.whitelist_arg() {
 			let whitelist_vec: Vec<_> = futures::future::join_all(wl.into_iter().map(|c| {
 				let api_local = api2.clone();
-				async move { verify_cid(&api_local, c, None).await }
+				async move { api_local.verify_cid(c, None).await }
 			}))
 			.await;
 			Some(WhiteListType::try_from(whitelist_vec).unwrap())
@@ -95,8 +96,9 @@ pub fn drip_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Er
 		let mut api = get_chain_api(matches).await;
 		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
 
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 
 		let cindex = matches.cindex_arg().unwrap();
 		let faucet_account = get_accountid_from_str(matches.faucet_account_arg().unwrap());

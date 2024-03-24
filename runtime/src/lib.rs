@@ -136,7 +136,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node-notee"),
 	impl_name: create_runtime_str!("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 31,
+	spec_version: 32,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -408,7 +408,8 @@ parameter_types! {
 
 impl pallet_encointer_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Pallet<Runtime>;
+	type OnCeremonyPhaseChange =
+		(pallet_encointer_ceremonies::Pallet<Runtime>, pallet_encointer_democracy::Pallet<Runtime>);
 	type MomentsPerDay = MomentsPerDay;
 	type CeremonyMaster = EnsureRoot<AccountId>;
 	type WeightInfo = weights::pallet_encointer_scheduler::WeightInfo<Runtime>;
@@ -525,7 +526,7 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfirmationPeriod:BlockNumber = 20;
+	pub const ConfirmationPeriod: Moment = 5 * 60 * 1000; // [ms]
 	pub const ProposalLifetime: Moment = 20 * 60 * 1000; // [ms]
 }
 

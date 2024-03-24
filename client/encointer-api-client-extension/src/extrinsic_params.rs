@@ -1,4 +1,4 @@
-use crate::ExtrinsicAddress;
+use crate::{Api, CommunitiesApi, ExtrinsicAddress};
 use encointer_node_notee_runtime::{Hash, Index, Signature};
 use encointer_primitives::communities::CommunityIdentifier;
 use parity_scale_codec::{Decode, Encode};
@@ -53,4 +53,14 @@ impl From<CommunityCurrencyTip> for u128 {
 	fn from(tip: CommunityCurrencyTip) -> Self {
 		tip.tip
 	}
+}
+
+pub async fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&str>) {
+	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
+	if let Some(tx_payment_cid) = tx_payment_cid_arg {
+		tx_params = tx_params.tip(
+			CommunityCurrencyTip::new(0).of_community(api.verify_cid(tx_payment_cid, None).await),
+		);
+	}
+	let _ = &api.set_additional_params(tx_params);
 }

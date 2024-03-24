@@ -14,10 +14,12 @@ then run this script
 import json
 import os
 import click
+from time import sleep
 
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ASSETS_PATH
+
 
 account1 = '//Alice'
 account2 = '//Bob'
@@ -359,8 +361,8 @@ def test_democracy(client, cid):
     client.vote("//Bob", 1, "aye", [[cid, cindex]])
     client.vote("//Charlie", 1, "aye", [[cid, cindex]])
 
-
-    client.await_block(21)
+    print("waiting 5min for confirmation phase to end")
+    sleep(60*5+1)
     client.update_proposal_state("//Alice", 1)
     proposals = client.list_proposals()
     print(proposals)
@@ -370,7 +372,7 @@ def test_democracy(client, cid):
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
-@click.option('--signer', help='optional account keypair creating the community')
+@click.option('--signer', default='//Bob', help='optional account keypair creating the community')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')

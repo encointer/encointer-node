@@ -563,14 +563,34 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_set_inactivity_timeout_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-update-nominal-income-proposal")
+				.description("Submit update nominal income proposal for specified community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.nominal_income_arg()
+				})
+				.runner(commands::encointer_democracy::submit_update_nominal_income_proposal),
+		)
+		.add_cmd(
 			Command::new("list-proposals")
 				.description("list all proposals.")
 				.options(|app| {
 					app.setting(AppSettings::ColoredHelp)
 						.at_block_arg()
+						.all_flag()
 				})
 			   .runner(commands::encointer_democracy::list_proposals),
 				)
+        .add_cmd(
+            Command::new("list-enactment-queue")
+                .description("list queued proposal enactments")
+                .options(|app| {
+                    app.setting(AppSettings::ColoredHelp)
+                        .at_block_arg()
+                })
+                .runner(commands::encointer_democracy::list_enactment_queue),
+        )
 		.add_cmd(
 			Command::new("vote")
 				.description("Submit vote for porposal. Vote is either ay or nay. Reputation vec to be specified as cid1_cindex1,cid2_cindex2,...")
