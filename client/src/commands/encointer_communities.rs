@@ -18,10 +18,11 @@ use encointer_api_client_extension::{
 };
 use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
-	communities::{CidName, CommunityIdentifier},
+	balances::{BalanceType, Demurrage},
+	communities::{CidName, CommunityIdentifier, CommunityMetadata},
 	scheduler::CeremonyPhaseType,
 };
-use log::{error, info};
+use log::{error, info, warn};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
@@ -160,15 +161,26 @@ pub fn list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
+		let maybe_at = matches.at_block_arg();
+		if maybe_at.is_some() {
+			warn!("fetching community names doesn't support --at. will fetch current communities and apply --at to values")
+		}
 		let names = get_cid_names(&api).await.unwrap();
 		println!("number of communities:  {}", names.len());
 		for n in names.iter() {
 			let loc = api.get_locations(n.cid).await.unwrap();
+			let cii = get_nominal_income(&api, n.cid, maybe_at).await.unwrap();
+            let demurrage = get_demurrage_per_block(&api, n.cid, maybe_at).await.unwrap();
+            let meta = get_community_metadata(&api, n.cid, maybe_at).await.unwrap();
 			println!(
-				"{}: {} locations: {}",
+				"{}: {}, locations: {}, nominal income: {} {}, demurrage: {:?}/block, {:?}",
 				n.cid,
 				String::from_utf8(n.name.to_vec()).unwrap(),
-				loc.len()
+				loc.len(),
+                cii,
+                String::from_utf8_lossy(&meta.symbol),
+                demurrage,
+                meta.rules
 			);
 		}
 		Ok(())
@@ -204,6 +216,35 @@ pub async fn get_community_identifiers(
 	maybe_at: Option<Hash>,
 ) -> Option<Vec<CommunityIdentifier>> {
 	api.get_storage("EncointerCommunities", "CommunityIdentifiers", maybe_at)
+		.await
+		.unwrap()
+}
+
+pub async fn get_nominal_income(
+	api: &Api,
+	cid: CommunityIdentifier,
+	maybe_at: Option<Hash>,
+) -> Option<BalanceType> {
+	api.get_storage_map("EncointerCommunities", "NominalIncome", cid, maybe_at)
+		.await
+		.unwrap()
+}
+
+pub async fn get_demurrage_per_block(
+	api: &Api,
+	cid: CommunityIdentifier,
+	maybe_at: Option<Hash>,
+) -> Option<Demurrage> {
+	api.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, maybe_at)
+		.await
+		.unwrap()
+}
+pub async fn get_community_metadata(
+	api: &Api,
+	cid: CommunityIdentifier,
+	maybe_at: Option<Hash>,
+) -> Option<CommunityMetadata> {
+	api.get_storage_map("EncointerCommunities", "CommunityMetadata", cid, maybe_at)
 		.await
 		.unwrap()
 }
