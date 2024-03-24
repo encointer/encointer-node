@@ -361,6 +361,7 @@ def test_democracy(client, cid):
     client.vote("//Bob", 1, "aye", [[cid, cindex]])
     client.vote("//Charlie", 1, "aye", [[cid, cindex]])
 
+    print("waiting 5min for confirmation phase to end")
     sleep(60*5+1)
     client.update_proposal_state("//Alice", 1)
     proposals = client.list_proposals()
