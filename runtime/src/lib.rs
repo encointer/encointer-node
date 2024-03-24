@@ -408,7 +408,8 @@ parameter_types! {
 
 impl pallet_encointer_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnCeremonyPhaseChange = pallet_encointer_ceremonies::Pallet<Runtime>;
+	type OnCeremonyPhaseChange =
+		(pallet_encointer_ceremonies::Pallet<Runtime>, pallet_encointer_democracy::Pallet<Runtime>);
 	type MomentsPerDay = MomentsPerDay;
 	type CeremonyMaster = EnsureRoot<AccountId>;
 	type WeightInfo = weights::pallet_encointer_scheduler::WeightInfo<Runtime>;

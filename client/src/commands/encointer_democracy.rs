@@ -107,6 +107,36 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	})
 	.into()
 }
+
+pub fn list_enactment_queue(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let maybe_at = matches.at_block_arg();
+		let key_prefix = api
+			.get_storage_map_key_prefix("EncointerDemocracy", "EnactmentQueue")
+			.await
+			.unwrap();
+		let max_keys = 1000;
+		let storage_keys = api
+			.get_storage_keys_paged(Some(key_prefix), max_keys, None, maybe_at)
+			.await
+			.unwrap();
+		if storage_keys.len() == max_keys as usize {
+			error!("results can be wrong because max keys reached for query")
+		}
+		for storage_key in storage_keys.iter() {
+			let maybe_proposal_id: Option<ProposalIdType> =
+				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap();
+			if let Some(proposal_id) = maybe_proposal_id {
+				println!("{}", proposal_id);
+			}
+		}
+		Ok(())
+	})
+	.into()
+}
+
 pub fn vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
