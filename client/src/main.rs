@@ -563,6 +563,16 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_set_inactivity_timeout_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-update-nominal-income-proposal")
+				.description("Submit update nominal income proposal for specified community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.nominal_income_arg()
+				})
+				.runner(commands::encointer_democracy::submit_update_nominal_income_proposal),
+		)
+		.add_cmd(
 			Command::new("list-proposals")
 				.description("list all proposals.")
 				.options(|app| {

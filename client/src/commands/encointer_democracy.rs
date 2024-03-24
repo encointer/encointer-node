@@ -44,6 +44,36 @@ pub fn submit_set_inactivity_timeout_proposal(
 	})
 	.into()
 }
+
+pub fn submit_update_nominal_income_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let cid =
+			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let new_income = matches.nominal_income_arg().unwrap();
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::UpdateNominalIncome(cid, new_income)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Proposal Submitted: Update nominal income for cid {cid} to {new_income}");
+		Ok(())
+	})
+	.into()
+}
 pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {

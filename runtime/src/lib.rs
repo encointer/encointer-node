@@ -136,7 +136,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node-notee"),
 	impl_name: create_runtime_str!("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 31,
+	spec_version: 32,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -525,7 +525,7 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfirmationPeriod:BlockNumber = 20;
+	pub const ConfirmationPeriod: Moment = 5 * 60 * 1000; // [ms]
 	pub const ProposalLifetime: Moment = 20 * 60 * 1000; // [ms]
 }
 

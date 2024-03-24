@@ -370,7 +370,7 @@ def test_democracy(client, cid):
 
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
-@click.option('--signer', help='optional account keypair creating the community')
+@click.option('--signer', default='//Bob', help='optional account keypair creating the community')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
