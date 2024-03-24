@@ -4,8 +4,8 @@ use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, Api, CommunitiesApi, DemocracyApi, EncointerXt, Moment,
-	ParentchainExtrinsicSigner,
+	set_api_extrisic_params_builder, Api, CeremoniesApi, CommunitiesApi, DemocracyApi, EncointerXt,
+	Moment, ParentchainExtrinsicSigner, SchedulerApi,
 };
 use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
@@ -127,6 +127,13 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				),
 				_ => None,
 			};
+			let electorate = get_relevant_electorate(
+				&api,
+				proposal.start_cindex,
+				proposal.action.clone().get_access_policy(),
+				maybe_at,
+			)
+			.await;
 			println!("action: {:?}", proposal.action);
 			println!("started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
 			println!(
@@ -134,7 +141,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				(start + proposal_lifetime.clone()).format("%Y-%m-%d %H:%M:%S %Z").to_string()
 			);
 			println!("start cindex: {}", proposal.start_cindex);
-			// todo! println!("current electorate estimate: {electorate}");
+			println!("current electorate estimate: {electorate}");
 			println!("state: {:?}", proposal.state);
 			if let Some(since) = maybe_confirming_since {
 				println!(
@@ -253,28 +260,36 @@ pub fn update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> Result<()
 	.into()
 }
 
+/// count reputation assuming we would start
 async fn get_relevant_electorate(
-	_api: &Api,
-	_scope: ProposalAccessPolicy,
-	_maybe_at: Option<Hash>,
+	api: &Api,
+	proposal_start_cindex: CeremonyIndexType,
+	scope: ProposalAccessPolicy,
+	maybe_at: Option<Hash>,
 ) -> ReputationCountType {
-	// let lifetime = get_reputation_lifetime(api, maybe_at);
-	// match scope {
-	// 	ProposalAccessPolicy::Community(cid) =>
-	// 		crate::commands::encointer_ceremonies::get_reputation_count(
-	// 			&api,
-	// 			(cid, proposal.start_cindex),
-	// 			maybe_at,
-	// 		)
-	// 		.await,
-	// 	ProposalAccessPolicy::Global =>
-	// 		crate::commands::encointer_ceremonies::get_global_reputation_count(
-	// 			&api,
-	// 			proposal.start_cindex,
-	// 			maybe_at,
-	// 		)
-	// 		.await,
-	// }
-	// .unwarp_or(0)
-	unimplemented!();
+	if let Ok((reputation_lifetime, cycle_duration, proposal_lifetime)) = tokio::try_join!(
+		api.get_reputation_lifetime(maybe_at),
+		api.get_cycle_duration(maybe_at),
+		api.get_proposal_lifetime()
+	) {
+		let proposal_lifetime_cycles =
+			u32::try_from(proposal_lifetime.as_millis().div_ceil(cycle_duration as u128)).unwrap();
+		let relevant_cindexes = (proposal_start_cindex
+			.saturating_sub(reputation_lifetime)
+			.saturating_add(proposal_lifetime_cycles)..=
+			proposal_start_cindex.saturating_sub(2u32))
+			.collect::<Vec<CeremonyIndexType>>();
+		let mut count: ReputationCountType = 0;
+		for c in relevant_cindexes {
+			count += match scope {
+				ProposalAccessPolicy::Community(cid) =>
+					api.get_reputation_count((cid, c), maybe_at).await.unwrap_or(0),
+				ProposalAccessPolicy::Global =>
+					api.get_global_reputation_count(c, maybe_at).await.unwrap_or(0),
+			};
+		}
+		return count
+	} else {
+		panic!("couldn't fetch some values")
+	}
 }
