@@ -9,6 +9,7 @@ version = "1.8.2"
 # todo migrate to clap >=3 https://github.com/encointer/encointer-node/issues/107
 clap = "2.33"
 clap-nested = "0.4.0"
+chrono = "0.4.35"
 env_logger = { workspace = true }
 futures = { workspace = true }
 geojson = { workspace = true }

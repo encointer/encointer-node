@@ -2,13 +2,22 @@ use crate::{
 	cli_args::EncointerArgsExtractor,
 	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
 };
+use std::time::Duration;
 
-use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
+use crate::{
+	commands::encointer_ceremonies::get_reputation_lifetime,
+	utils::{ensure_payment, get_chain_api, keys::get_pair_from_str},
+};
+use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
-use encointer_api_client_extension::{EncointerXt, Moment, ParentchainExtrinsicSigner};
+use encointer_api_client_extension::{Api, EncointerXt, Moment, ParentchainExtrinsicSigner};
+use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
-	ceremonies::{CeremonyIndexType, CommunityCeremony},
-	democracy::{Proposal, ProposalAction, ProposalIdType, ReputationVec, Vote},
+	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
+	democracy::{
+		Proposal, ProposalAccessPolicy, ProposalAction, ProposalIdType, ProposalState,
+		ReputationVec, Vote,
+	},
 };
 use log::error;
 use parity_scale_codec::{Decode, Encode};
@@ -89,6 +98,8 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		if storage_keys.len() == max_keys as usize {
 			error!("results can be wrong because max keys reached for query")
 		}
+		let confirmation_period = get_confirmation_period(&api).await;
+		let proposal_lifetime = get_proposal_lifetime(&api).await;
 		for storage_key in storage_keys.iter() {
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
@@ -97,10 +108,41 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			println!("id: {}", proposal_id);
 			let proposal: Proposal<Moment> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
+			let start = DateTime::<Utc>::from_timestamp_millis(
+				TryInto::<i64>::try_into(proposal.start).unwrap(),
+			)
+			.unwrap();
+			// let electorate = get_relevant_electorate(
+			// 	&api,
+			// 	proposal.action.clone().get_access_policy(),
+			// 	maybe_at,
+			// )
+			// .await;
+			let maybe_confirming_since = match proposal.state {
+				ProposalState::Confirming { since } => Some(
+					DateTime::<Utc>::from_timestamp_millis(
+						TryInto::<i64>::try_into(since).unwrap(),
+					)
+					.unwrap(),
+				),
+				_ => None,
+			};
 			println!("action: {:?}", proposal.action);
-			println!("start block: {}", proposal.start);
+			println!("started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
+			println!(
+				"ends after: {}",
+				(start + proposal_lifetime.clone()).format("%Y-%m-%d %H:%M:%S %Z").to_string()
+			);
 			println!("start cindex: {}", proposal.start_cindex);
+			// todo! println!("current electorate estimate: {electorate}");
 			println!("state: {:?}", proposal.state);
+			if let Some(since) = maybe_confirming_since {
+				println!(
+					"confirming since: {} until {}",
+					since.format("%Y-%m-%d %H:%M:%S %Z").to_string(),
+					(since + confirmation_period).format("%Y-%m-%d %H:%M:%S %Z").to_string()
+				)
+			}
 			println!("");
 		}
 		Ok(())
@@ -209,4 +251,46 @@ pub fn update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> Result<()
 		Ok(())
 	})
 	.into()
+}
+
+async fn get_proposal_lifetime(api: &Api) -> Duration {
+	Duration::from_millis(
+		api.get_constant::<Moment>("EncointerDemocracy", "ProposalLifetime")
+			.await
+			.unwrap(),
+	)
+}
+async fn get_confirmation_period(api: &Api) -> Duration {
+	Duration::from_millis(
+		api.get_constant::<Moment>("EncointerDemocracy", "ConfirmationPeriod")
+			.await
+			.unwrap(),
+	)
+}
+
+async fn get_relevant_electorate(
+	api: &Api,
+	scope: ProposalAccessPolicy,
+	maybe_at: Option<Hash>,
+) -> ReputationCountType {
+	// let lifetime = get_reputation_lifetime(api, maybe_at);
+	// match scope {
+	// 	ProposalAccessPolicy::Community(cid) =>
+	// 		crate::commands::encointer_ceremonies::get_reputation_count(
+	// 			&api,
+	// 			(cid, proposal.start_cindex),
+	// 			maybe_at,
+	// 		)
+	// 		.await,
+	// 	ProposalAccessPolicy::Global =>
+	// 		crate::commands::encointer_ceremonies::get_global_reputation_count(
+	// 			&api,
+	// 			proposal.start_cindex,
+	// 			maybe_at,
+	// 		)
+	// 		.await,
+	// }
+	// .unwarp_or(0)
+	unimplemented!();
+	0
 }

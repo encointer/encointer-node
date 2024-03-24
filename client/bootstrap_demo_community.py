@@ -14,10 +14,12 @@ then run this script
 import json
 import os
 import click
+from time import sleep
 
 from py_client.client import Client
 from py_client.scheduler import CeremonyPhase
 from py_client.ipfs import Ipfs, ASSETS_PATH
+
 
 account1 = '//Alice'
 account2 = '//Bob'
@@ -359,8 +361,7 @@ def test_democracy(client, cid):
     client.vote("//Bob", 1, "aye", [[cid, cindex]])
     client.vote("//Charlie", 1, "aye", [[cid, cindex]])
 
-
-    client.await_block(21)
+    sleep(60*5+1)
     client.update_proposal_state("//Alice", 1)
     proposals = client.list_proposals()
     print(proposals)

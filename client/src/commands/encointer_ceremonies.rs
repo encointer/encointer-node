@@ -23,7 +23,7 @@ use encointer_primitives::{
 	ceremonies::{
 		AttestationIndexType, CeremonyIndexType, ClaimOfAttendance, CommunityCeremony,
 		CommunityReputation, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
-		ReputationLifetimeType,
+		ReputationCountType, ReputationLifetimeType,
 	},
 	communities::CommunityIdentifier,
 	scheduler::CeremonyPhaseType,
@@ -933,7 +933,7 @@ async fn get_attendees_for_community_ceremony(
 	(attendees, noshows)
 }
 
-async fn get_reputation_lifetime(api: &Api, maybe_at: Option<Hash>) -> ReputationLifetimeType {
+pub async fn get_reputation_lifetime(api: &Api, maybe_at: Option<Hash>) -> ReputationLifetimeType {
 	api.get_storage("EncointerCeremonies", "ReputationLifetime", maybe_at)
 		.await
 		.unwrap()
@@ -1083,6 +1083,25 @@ async fn get_participant_attestation_index(
 	maybe_at: Option<Hash>,
 ) -> Option<ParticipantIndexType> {
 	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, maybe_at)
+		.await
+		.unwrap()
+}
+
+pub async fn get_reputation_count(
+	api: &Api,
+	community_ceremony: CommunityCeremony,
+	maybe_at: Option<Hash>,
+) -> Option<ReputationCountType> {
+	api.get_storage_map("EncointerCeremonies", "ReputationCount", community_ceremony, maybe_at)
+		.await
+		.unwrap()
+}
+pub async fn get_global_reputation_count(
+	api: &Api,
+	cindex: CeremonyIndexType,
+	maybe_at: Option<Hash>,
+) -> Option<ReputationCountType> {
+	api.get_storage_map("EncointerCeremonies", "GlobalReputationCount", cindex, maybe_at)
 		.await
 		.unwrap()
 }
