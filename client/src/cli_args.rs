@@ -551,6 +551,6 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn nominal_income_arg(&self) -> Option<BalanceType> {
 		self.value_of(NOMINAL_INCOME_ARG)
-			.map(|v| BalanceType::from_num(v.parse::<u128>().unwrap()))
+			.map(|v| BalanceType::from_num(v.parse::<f64>().unwrap()))
 	}
 }
