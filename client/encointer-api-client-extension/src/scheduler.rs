@@ -13,6 +13,7 @@ pub trait SchedulerApi {
 		phase: CeremonyPhaseType,
 		maybe_at: Option<Hash>,
 	) -> Result<Moment>;
+	async fn get_cycle_duration(&self, maybe_at: Option<Hash>) -> Result<Moment>;
 	async fn get_start_of_attesting_phase(&self, maybe_at: Option<Hash>) -> Result<Moment>;
 }
 
@@ -45,6 +46,15 @@ impl SchedulerApi for Api {
 		self.get_storage_map("EncointerScheduler", "PhaseDurations", phase, maybe_at)
 			.await?
 			.ok_or_else(|| ApiClientError::Other("Couldn't get PhaseDuration".into()))
+	}
+
+	async fn get_cycle_duration(&self, maybe_at: Option<Hash>) -> Result<Moment> {
+		let parts = tokio::try_join!(
+			self.get_phase_duration(CeremonyPhaseType::Registering, maybe_at),
+			self.get_phase_duration(CeremonyPhaseType::Assigning, maybe_at),
+			self.get_phase_duration(CeremonyPhaseType::Attesting, maybe_at)
+		)?;
+		Ok(parts.0 + parts.1 + parts.2)
 	}
 
 	async fn get_start_of_attesting_phase(&self, maybe_at: Option<Hash>) -> Result<Moment> {
