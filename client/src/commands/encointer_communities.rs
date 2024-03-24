@@ -16,15 +16,12 @@ use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
 };
 
-use encointer_primitives::{
-	scheduler::CeremonyPhaseType,
-};
+use encointer_primitives::scheduler::CeremonyPhaseType;
 use log::{error, info, warn};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
-
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
