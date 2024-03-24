@@ -169,9 +169,9 @@ pub fn list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 		println!("number of communities:  {}", names.len());
 		for n in names.iter() {
 			let loc = api.get_locations(n.cid).await.unwrap();
-			let cii = get_nominal_income(&api, n.cid, maybe_at).await.unwrap();
-            let demurrage = get_demurrage_per_block(&api, n.cid, maybe_at).await.unwrap();
-            let meta = get_community_metadata(&api, n.cid, maybe_at).await.unwrap();
+			let cii = get_nominal_income(&api, n.cid, maybe_at).await.unwrap_or_default();
+            let demurrage = get_demurrage_per_block(&api, n.cid, maybe_at).await.unwrap_or_default();
+            let meta = get_community_metadata(&api, n.cid, maybe_at).await.unwrap_or_default();
 			println!(
 				"{}: {}, locations: {}, nominal income: {} {}, demurrage: {:?}/block, {:?}",
 				n.cid,

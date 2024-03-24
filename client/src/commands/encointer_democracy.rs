@@ -105,9 +105,12 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			let proposal_id =
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
-			println!("id: {}", proposal_id);
 			let proposal: Proposal<Moment> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
+			if !matches.all_flag() && matches!(proposal.state, ProposalState::Cancelled) {
+				continue
+			}
+			println!("id: {}", proposal_id);
 			let start = DateTime::<Utc>::from_timestamp_millis(
 				TryInto::<i64>::try_into(proposal.start).unwrap(),
 			)

@@ -578,6 +578,7 @@ fn main() {
 				.options(|app| {
 					app.setting(AppSettings::ColoredHelp)
 						.at_block_arg()
+						.all_flag()
 				})
 			   .runner(commands::encointer_democracy::list_proposals),
 				)
