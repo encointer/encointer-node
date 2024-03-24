@@ -254,9 +254,9 @@ pub fn update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> Result<()
 }
 
 async fn get_relevant_electorate(
-	api: &Api,
-	scope: ProposalAccessPolicy,
-	maybe_at: Option<Hash>,
+	_api: &Api,
+	_scope: ProposalAccessPolicy,
+	_maybe_at: Option<Hash>,
 ) -> ReputationCountType {
 	// let lifetime = get_reputation_lifetime(api, maybe_at);
 	// match scope {

@@ -7,7 +7,7 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, Api, BazaarApi, CommunitiesApi, EncointerXt,
+	set_api_extrisic_params_builder, BazaarApi, CommunitiesApi, EncointerXt,
 	ParentchainExtrinsicSigner,
 };
 use parity_scale_codec::Encode;

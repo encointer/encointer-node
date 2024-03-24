@@ -13,12 +13,10 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, Api, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
+	set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
 };
-use encointer_node_notee_runtime::Hash;
+
 use encointer_primitives::{
-	balances::{BalanceType, Demurrage},
-	communities::{CidName, CommunityIdentifier, CommunityMetadata},
 	scheduler::CeremonyPhaseType,
 };
 use log::{error, info, warn};
@@ -26,7 +24,7 @@ use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
-use substrate_api_client::{ac_compose_macros::rpc_params, rpc::Request, GetStorage};
+
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

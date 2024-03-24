@@ -9,14 +9,14 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, Api, ParentchainExtrinsicSigner, SchedulerApi,
+	set_api_extrisic_params_builder, ParentchainExtrinsicSigner, SchedulerApi,
 };
-use encointer_node_notee_runtime::{Hash, Moment};
-use encointer_primitives::ceremonies::CeremonyIndexType;
+use encointer_node_notee_runtime::{Moment};
+
 use log::{debug, info};
 
 use sp_keyring::AccountKeyring;
-use substrate_api_client::{ac_compose_macros::compose_call, GetStorage};
+use substrate_api_client::{ac_compose_macros::compose_call};
 
 pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();

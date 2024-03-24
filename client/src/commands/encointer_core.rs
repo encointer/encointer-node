@@ -9,8 +9,7 @@ use crate::{
 };
 use clap::{value_t, ArgMatches};
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, Api, CommunitiesApi, CommunityCurrencyTip,
-	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ParentchainExtrinsicSigner,
+	set_api_extrisic_params_builder, Api, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
 };
 use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, RuntimeEvent};
 use encointer_primitives::balances::{to_U64F64, BalanceEntry, BalanceType, Demurrage};
