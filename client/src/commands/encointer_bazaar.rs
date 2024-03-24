@@ -7,20 +7,12 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, Api, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
-};
-use encointer_node_notee_runtime::AccountId;
-use encointer_primitives::{
-	bazaar::{Business, BusinessIdentifier, OfferingData},
-	communities::CommunityIdentifier,
+	set_api_extrisic_params_builder, Api, BazaarApi, CommunitiesApi, EncointerXt,
+	ParentchainExtrinsicSigner,
 };
 use parity_scale_codec::Encode;
 use sp_core::{sr25519 as sr25519_core, Pair};
-use substrate_api_client::{
-	ac_compose_macros::{compose_extrinsic, rpc_params},
-	rpc::Request,
-	SubmitAndWatch, XtStatus,
-};
+use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
 pub fn create_business(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
@@ -53,7 +45,7 @@ pub fn list_businesses(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
 		let cid = api
 			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
 			.await;
-		let businesses = get_businesses(&api, cid).await.unwrap();
+		let businesses = api.get_businesses(cid).await.unwrap();
 		// only print plain businesses to be able to parse them in python scripts
 		println!("{businesses:?}");
 		Ok(())
@@ -67,7 +59,7 @@ pub fn list_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		let cid = api
 			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
 			.await;
-		let offerings = get_offerings(&api, cid).await.unwrap();
+		let offerings = api.get_offerings(cid).await.unwrap();
 		// only print plain offerings to be able to parse them in python scripts
 		println!("{offerings:?}");
 		Ok(())
@@ -83,7 +75,7 @@ pub fn list_business_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<
 		let cid = api
 			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
 			.await;
-		let offerings = get_offerings_for_business(&api, cid, account).await.unwrap();
+		let offerings = api.get_offerings_for_business(cid, account).await.unwrap();
 		// only print plain offerings to be able to parse them in python scripts
 		println!("{offerings:?}");
 		Ok(())
@@ -135,29 +127,4 @@ async fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> 
 		report.status
 	);
 	Ok(())
-}
-async fn get_businesses(api: &Api, cid: CommunityIdentifier) -> Option<Vec<Business<AccountId>>> {
-	api.client()
-		.request("encointer_bazaarGetBusinesses", rpc_params![cid])
-		.await
-		.expect("Could not find any businesses...")
-}
-
-async fn get_offerings(api: &Api, cid: CommunityIdentifier) -> Option<Vec<OfferingData>> {
-	api.client()
-		.request("encointer_bazaarGetOfferings", rpc_params![cid])
-		.await
-		.expect("Could not find any business offerings...")
-}
-
-async fn get_offerings_for_business(
-	api: &Api,
-	cid: CommunityIdentifier,
-	account_id: AccountId,
-) -> Option<Vec<OfferingData>> {
-	let b_id = BusinessIdentifier::new(cid, account_id);
-	api.client()
-		.request("encointer_bazaarGetOfferingsForBusiness", rpc_params![b_id])
-		.await
-		.expect("Could not find any business offerings...")
 }

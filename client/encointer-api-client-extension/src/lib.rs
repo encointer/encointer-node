@@ -16,12 +16,14 @@ pub type Api = substrate_api_client::Api<EncointerConfig, JsonrpseeClient>;
 pub type ParentchainExtrinsicSigner = ExtrinsicSigner<EncointerConfig>;
 pub type ExtrinsicAddress = <EncointerConfig as Config>::Address;
 
+pub use bazaar::*;
 pub use ceremonies::*;
 pub use communities::*;
 pub use democracy::*;
 pub use extrinsic_params::*;
 pub use scheduler::*;
 
+mod bazaar;
 mod ceremonies;
 mod communities;
 mod democracy;
