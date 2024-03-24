@@ -1,12 +1,11 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::encointer_core::set_api_extrisic_params_builder,
 	utils::{ensure_payment, get_chain_api, keys::get_accountid_from_str},
 	PREFUNDING_NR_OF_TRANSFER_EXTRINSICS,
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	Api, EncointerXt, ExtrinsicAddress, ParentchainExtrinsicSigner,
+	set_api_extrisic_params_builder, Api, EncointerXt, ExtrinsicAddress, ParentchainExtrinsicSigner,
 };
 use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash};
 use log::{debug, info};

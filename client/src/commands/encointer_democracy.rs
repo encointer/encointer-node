@@ -1,16 +1,12 @@
-use crate::{
-	cli_args::EncointerArgsExtractor,
-	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
-};
-use std::time::Duration;
+use crate::cli_args::EncointerArgsExtractor;
 
-use crate::{
-	commands::encointer_ceremonies::get_reputation_lifetime,
-	utils::{ensure_payment, get_chain_api, keys::get_pair_from_str},
-};
+use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
-use encointer_api_client_extension::{Api, EncointerXt, Moment, ParentchainExtrinsicSigner};
+use encointer_api_client_extension::{
+	set_api_extrisic_params_builder, Api, CommunitiesApi, DemocracyApi, EncointerXt, Moment,
+	ParentchainExtrinsicSigner,
+};
 use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
@@ -63,8 +59,9 @@ pub fn submit_update_nominal_income_proposal(
 		let who = matches.account_arg().map(get_pair_from_str).unwrap();
 		let mut api = get_chain_api(matches).await;
 		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let new_income = matches.nominal_income_arg().unwrap();
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
@@ -98,8 +95,8 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		if storage_keys.len() == max_keys as usize {
 			error!("results can be wrong because max keys reached for query")
 		}
-		let confirmation_period = get_confirmation_period(&api).await;
-		let proposal_lifetime = get_proposal_lifetime(&api).await;
+		let confirmation_period = api.get_confirmation_period().await.unwrap();
+		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
 		for storage_key in storage_keys.iter() {
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
@@ -208,7 +205,7 @@ pub fn vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 					async move {
 						let cc: Vec<_> = rep.split("_").collect();
 						(
-							verify_cid(&api_local, cc[0], None).await,
+							api_local.verify_cid(cc[0], None).await,
 							cc[1].parse::<CeremonyIndexType>().unwrap(),
 						)
 					}
@@ -256,21 +253,6 @@ pub fn update_proposal_state(_args: &str, matches: &ArgMatches<'_>) -> Result<()
 	.into()
 }
 
-async fn get_proposal_lifetime(api: &Api) -> Duration {
-	Duration::from_millis(
-		api.get_constant::<Moment>("EncointerDemocracy", "ProposalLifetime")
-			.await
-			.unwrap(),
-	)
-}
-async fn get_confirmation_period(api: &Api) -> Duration {
-	Duration::from_millis(
-		api.get_constant::<Moment>("EncointerDemocracy", "ConfirmationPeriod")
-			.await
-			.unwrap(),
-	)
-}
-
 async fn get_relevant_electorate(
 	api: &Api,
 	scope: ProposalAccessPolicy,
@@ -295,5 +277,4 @@ async fn get_relevant_electorate(
 	// }
 	// .unwarp_or(0)
 	unimplemented!();
-	0
 }

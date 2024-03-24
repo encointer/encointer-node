@@ -1,13 +1,14 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
 	utils::{
 		ensure_payment, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
 	},
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::{Api, EncointerXt, ParentchainExtrinsicSigner};
+use encointer_api_client_extension::{
+	set_api_extrisic_params_builder, Api, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
+};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{
 	bazaar::{Business, BusinessIdentifier, OfferingData},
@@ -49,8 +50,9 @@ pub fn list_businesses(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let businesses = get_businesses(&api, cid).await.unwrap();
 		// only print plain businesses to be able to parse them in python scripts
 		println!("{businesses:?}");
@@ -62,8 +64,9 @@ pub fn list_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let offerings = get_offerings(&api, cid).await.unwrap();
 		// only print plain offerings to be able to parse them in python scripts
 		println!("{offerings:?}");
@@ -77,8 +80,9 @@ pub fn list_business_offerings(_args: &str, matches: &ArgMatches<'_>) -> Result<
 	rt.block_on(async {
 		let account = matches.account_arg().map(get_accountid_from_str).unwrap();
 		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let offerings = get_offerings_for_business(&api, cid, account).await.unwrap();
 		// only print plain offerings to be able to parse them in python scripts
 		println!("{offerings:?}");
@@ -111,8 +115,9 @@ async fn send_bazaar_xt(matches: &ArgMatches<'_>, bazaar_call: &BazaarCalls) -> 
 	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(
 		business_owner.clone(),
 	)));
-	let cid =
-		verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+	let cid = api
+		.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+		.await;
 	let ipfs_cid = matches.ipfs_cid_arg().expect("ipfs cid needed");
 
 	let tx_payment_cid_arg = matches.tx_payment_cid_arg();

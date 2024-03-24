@@ -1,6 +1,5 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::encointer_core::{set_api_extrisic_params_builder, verify_cid},
 	community_spec::{
 		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
 		CommunitySpec,
@@ -14,7 +13,7 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	Api, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
+	set_api_extrisic_params_builder, Api, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
 };
 use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
@@ -111,7 +110,7 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 
         let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 
-        let cid = verify_cid(&api, matches.cid_arg().unwrap(), None).await;
+        let cid = api.verify_cid(matches.cid_arg().unwrap(), None).await;
 
         let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
             {
@@ -165,13 +164,13 @@ pub fn list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 		if maybe_at.is_some() {
 			warn!("fetching community names doesn't support --at. will fetch current communities and apply --at to values")
 		}
-		let names = get_cid_names(&api).await.unwrap();
+		let names = api.get_cid_names().await.unwrap();
 		println!("number of communities:  {}", names.len());
 		for n in names.iter() {
 			let loc = api.get_locations(n.cid).await.unwrap();
-			let cii = get_nominal_income(&api, n.cid, maybe_at).await.unwrap_or_default();
-            let demurrage = get_demurrage_per_block(&api, n.cid, maybe_at).await.unwrap_or_default();
-            let meta = get_community_metadata(&api, n.cid, maybe_at).await.unwrap_or_default();
+			let cii = api.get_nominal_income(n.cid, maybe_at).await.unwrap_or_default();
+            let demurrage = api.get_demurrage_per_block(n.cid, maybe_at).await.unwrap_or_default();
+            let meta = api.get_community_metadata(n.cid, maybe_at).await.unwrap_or_default();
 			println!(
 				"{}: {}, locations: {}, nominal income: {} {}, demurrage: {:?}/block, {:?}",
 				n.cid,
@@ -192,9 +191,9 @@ pub fn list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
 		let maybe_at = matches.at_block_arg();
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-				.await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+			.await;
 		println!("listing locations for cid {cid}");
 		let loc = api.get_locations(cid).await.unwrap();
 		for l in loc.iter() {
@@ -209,49 +208,4 @@ pub fn list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		Ok(())
 	})
 	.into()
-}
-
-pub async fn get_community_identifiers(
-	api: &Api,
-	maybe_at: Option<Hash>,
-) -> Option<Vec<CommunityIdentifier>> {
-	api.get_storage("EncointerCommunities", "CommunityIdentifiers", maybe_at)
-		.await
-		.unwrap()
-}
-
-pub async fn get_nominal_income(
-	api: &Api,
-	cid: CommunityIdentifier,
-	maybe_at: Option<Hash>,
-) -> Option<BalanceType> {
-	api.get_storage_map("EncointerCommunities", "NominalIncome", cid, maybe_at)
-		.await
-		.unwrap()
-}
-
-pub async fn get_demurrage_per_block(
-	api: &Api,
-	cid: CommunityIdentifier,
-	maybe_at: Option<Hash>,
-) -> Option<Demurrage> {
-	api.get_storage_map("EncointerBalances", "DemurragePerBlock", cid, maybe_at)
-		.await
-		.unwrap()
-}
-pub async fn get_community_metadata(
-	api: &Api,
-	cid: CommunityIdentifier,
-	maybe_at: Option<Hash>,
-) -> Option<CommunityMetadata> {
-	api.get_storage_map("EncointerCommunities", "CommunityMetadata", cid, maybe_at)
-		.await
-		.unwrap()
-}
-
-/// This rpc needs to have offchain indexing enabled in the node.
-pub async fn get_cid_names(api: &Api) -> Option<Vec<CidName>> {
-	api.client().request("encointer_getAllCommunities", rpc_params![]).await.expect(
-		"No communities returned. Are you running the node with `--enable-offchain-indexing true`?",
-	)
 }

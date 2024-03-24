@@ -1,6 +1,6 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::{encointer_communities::get_community_identifiers, frame::get_block_number},
+	commands::frame::get_block_number,
 	exit_code,
 	utils::{
 		ensure_payment, get_chain_api,
@@ -9,8 +9,8 @@ use crate::{
 };
 use clap::{value_t, ArgMatches};
 use encointer_api_client_extension::{
-	Api, CommunityCurrencyTip, CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt,
-	ParentchainExtrinsicSigner,
+	set_api_extrisic_params_builder, Api, CommunitiesApi, CommunityCurrencyTip,
+	CommunityCurrencyTipExtrinsicParamsBuilder, EncointerXt, ParentchainExtrinsicSigner,
 };
 use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, RuntimeEvent};
 use encointer_primitives::balances::{to_U64F64, BalanceEntry, BalanceType, Demurrage};
@@ -96,7 +96,7 @@ pub fn transfer(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		let tx_hash = match matches.cid_arg() {
 			Some(cid_str) => {
-				let cid = verify_cid(&api, cid_str, None).await;
+				let cid = api.verify_cid(cid_str, None).await;
 				let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
 					.expect("amount can be converted to fixpoint");
 
@@ -161,7 +161,7 @@ pub fn transfer_all(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		let tx_hash = match matches.cid_arg() {
 			Some(cid_str) => {
-				let cid = verify_cid(&api, cid_str, None).await;
+				let cid = api.verify_cid(cid_str, None).await;
 				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 				let xt: EncointerXt<_> =
@@ -197,7 +197,7 @@ pub async fn get_community_balance(
 	account_id: &AccountId,
 	maybe_at: Option<Hash>,
 ) -> BalanceType {
-	let cid = verify_cid(api, cid_str, maybe_at).await;
+	let cid = api.verify_cid(cid_str, maybe_at).await;
 	let bn = get_block_number(api, maybe_at).await;
 	let dr = get_demurrage_per_block(api, cid, maybe_at).await;
 
@@ -217,7 +217,7 @@ pub async fn get_community_issuance(
 	cid_str: &str,
 	maybe_at: Option<Hash>,
 ) -> BalanceType {
-	let cid = verify_cid(api, cid_str, maybe_at).await;
+	let cid = api.verify_cid(cid_str, maybe_at).await;
 	let bn = get_block_number(api, maybe_at).await;
 	let dr = get_demurrage_per_block(api, cid, maybe_at).await;
 
@@ -270,7 +270,7 @@ pub async fn get_asset_fee_details(
 	cid_str: &str,
 	encoded_xt: &Bytes,
 ) -> Option<FeeDetails<NumberOrHex>> {
-	let cid = verify_cid(api, cid_str, None).await;
+	let cid = api.verify_cid(cid_str, None).await;
 
 	api.client()
 		.request("encointer_queryAssetFeeDetails", rpc_params![cid, encoded_xt])
@@ -292,15 +292,6 @@ pub fn apply_demurrage(
 	);
 	let exp_result = exp(exponent).unwrap();
 	entry.principal.checked_mul(to_U64F64(exp_result).unwrap()).unwrap()
-}
-
-pub async fn verify_cid(api: &Api, cid: &str, maybe_at: Option<Hash>) -> CommunityIdentifier {
-	let cids = get_community_identifiers(api, maybe_at).await.expect("no community registered");
-	let cid = CommunityIdentifier::from_str(cid).unwrap();
-	if !cids.contains(&cid) {
-		panic!("cid {cid} does not exist on chain");
-	}
-	cid
 }
 
 async fn listen(matches: &ArgMatches<'_>) {
@@ -410,14 +401,4 @@ async fn listen(matches: &ArgMatches<'_>) {
 			Err(_) => error!("couldn't decode event record list"),
 		}
 	}
-}
-
-pub async fn set_api_extrisic_params_builder(api: &mut Api, tx_payment_cid_arg: Option<&str>) {
-	let mut tx_params = CommunityCurrencyTipExtrinsicParamsBuilder::new().tip(0);
-	if let Some(tx_payment_cid) = tx_payment_cid_arg {
-		tx_params = tx_params.tip(
-			CommunityCurrencyTip::new(0).of_community(verify_cid(api, tx_payment_cid, None).await),
-		);
-	}
-	let _ = &api.set_additional_params(tx_params);
 }

@@ -1,10 +1,5 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::{
-		encointer_communities::get_community_identifiers,
-		encointer_core::{set_api_extrisic_params_builder, verify_cid},
-		encointer_scheduler::get_ceremony_index,
-	},
 	exit_code,
 	utils::{
 		collective_propose_call, contains_sudo_pallet, ensure_payment, get_chain_api,
@@ -15,15 +10,14 @@ use crate::{
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	Api, ApiClientError, AttestationState, CeremoniesApi, EncointerXt, ParentchainExtrinsicSigner,
-	SchedulerApi, ENCOINTER_CEREMONIES,
+	set_api_extrisic_params_builder, Api, ApiClientError, AttestationState, CeremoniesApi,
+	CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
 use encointer_node_notee_runtime::{AccountId, Hash, Moment, Signature, ONE_DAY};
 use encointer_primitives::{
 	ceremonies::{
 		AttestationIndexType, CeremonyIndexType, ClaimOfAttendance, CommunityCeremony,
 		CommunityReputation, MeetupIndexType, ParticipantIndexType, ProofOfAttendance, Reputation,
-		ReputationCountType, ReputationLifetimeType,
 	},
 	communities::CommunityIdentifier,
 	scheduler::CeremonyPhaseType,
@@ -48,10 +42,10 @@ pub fn list_participants(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
 		let maybe_at = matches.at_block_arg();
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-				.await;
-		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+			.await;
+		let current_ceremony_index = api.get_ceremony_index(maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -109,10 +103,10 @@ pub fn list_meetups(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
 		let maybe_at = matches.at_block_arg();
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-				.await;
-		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+			.await;
+		let current_ceremony_index = api.get_ceremony_index(maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -164,10 +158,10 @@ pub fn print_ceremony_stats(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
 		let maybe_at = matches.at_block_arg();
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-				.await;
-		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+			.await;
+		let current_ceremony_index = api.get_ceremony_index(maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -189,11 +183,11 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
 		let maybe_at = matches.at_block_arg();
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-				.await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+			.await;
 
-		let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
+		let current_ceremony_index = api.get_ceremony_index(maybe_at).await;
 
 		let cindex = matches.ceremony_index_arg().map_or_else(
 			|| current_ceremony_index,
@@ -202,7 +196,7 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 
 		println!("listing attestees for cid {cid} and ceremony nr {cindex}");
 
-		let wcount = get_attestee_count(&api, (cid, cindex), maybe_at).await;
+		let wcount = api.get_attestee_count((cid, cindex), maybe_at).await;
 		println!("number of attestees:  {wcount}");
 
 		println!("listing participants for cid {cid} and ceremony nr {cindex}");
@@ -252,7 +246,8 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			for p_index in 1..count + 1 {
 				let accountid: AccountId = account_query(i, p_index).await.unwrap().unwrap();
 
-				match get_participant_attestation_index(&api, (cid, cindex), &accountid, maybe_at)
+				match api
+					.get_participant_attestation_index((cid, cindex), &accountid, maybe_at)
 					.await
 				{
 					Some(windex) =>
@@ -339,14 +334,14 @@ pub fn list_reputables(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
         let is_verbose = matches.verbose_flag();
         let maybe_at = matches.at_block_arg();
 
-        let lifetime = get_reputation_lifetime(&api, maybe_at).await;
-        let current_ceremony_index = get_ceremony_index(&api, maybe_at).await;
+        let lifetime = api.get_reputation_lifetime(maybe_at).await.unwrap_or(5);
+        let current_ceremony_index = api.get_ceremony_index(maybe_at).await;
 
 
         let first_ceremony_index_of_interest = current_ceremony_index.saturating_sub(lifetime);
         let ceremony_indices: Vec<u32> = (first_ceremony_index_of_interest..current_ceremony_index).collect();
 
-        let community_ids = get_community_identifiers(&api, maybe_at).await.expect("no communities found");
+        let community_ids = api.get_community_identifiers(maybe_at).await.expect("no communities found");
 
         let mut reputables_csv = Vec::new();
 
@@ -385,9 +380,10 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		};
 
 		let api = get_chain_api(matches).await;
-		let cindex = get_ceremony_index(&api, None).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cindex = api.get_ceremony_index(None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 
 		let current_phase = api.get_current_phase(None).await.unwrap();
 		if !(current_phase == CeremonyPhaseType::Registering ||
@@ -440,9 +436,10 @@ pub fn register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		};
 
 		let api = get_chain_api(matches).await;
-		let cindex = get_ceremony_index(&api, None).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cindex = api.get_ceremony_index(None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let rep = get_reputation(&api, &accountid, cid, cindex - 1, None).await;
 		info!("{} has reputation {:?}", accountid, rep);
 		let proof = match rep {
@@ -490,12 +487,13 @@ pub fn unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 
 		let api = get_chain_api(matches).await;
 
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 
 		let cc = match matches.ceremony_index_arg() {
 			Some(cindex_arg) => {
-				let current_ceremony_index = get_ceremony_index(&api, None).await;
+				let current_ceremony_index = api.get_ceremony_index(None).await;
 				let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
 				Some((cid, cindex))
 			},
@@ -531,8 +529,9 @@ pub fn endorse(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error>
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let mut api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		endorse_newcomers(&mut api, cid, matches).await.unwrap();
 
 		Ok(())
@@ -546,8 +545,9 @@ pub fn bootstrappers_with_remaining_newbie_tickets(
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let bs_with_tickets: Vec<BootstrapperWithTickets> =
 			get_bootstrappers_with_remaining_newbie_tickets(&api, cid).await.unwrap();
 
@@ -571,13 +571,14 @@ pub fn get_proof_of_attendance(_args: &str, matches: &ArgMatches<'_>) -> Result<
 		let accountid = get_accountid_from_str(arg_who);
 		let api = get_chain_api(matches).await;
 
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
+		let current_ceremony_index = api.get_ceremony_index(None).await;
 
 		let cindex_arg = matches.ceremony_index_arg().unwrap_or(-1);
 		let cindex = into_effective_cindex(cindex_arg, current_ceremony_index);
 
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 
 		debug!("Getting proof for ceremony index: {:?}", cindex);
 		let proof = prove_attendance(accountid, cid, cindex, arg_who);
@@ -613,8 +614,9 @@ pub fn attest_attendees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 
 		let xt: EncointerXt<_> = compose_extrinsic!(
 			api,
@@ -637,8 +639,9 @@ pub fn new_claim(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Erro
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		let arg_who = matches.account_arg().unwrap();
 		let claimant = get_pair_from_str(arg_who);
 
@@ -656,8 +659,9 @@ pub fn claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
 		let api = get_chain_api(matches).await;
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 
 		let signer = match matches.signer_arg() {
 			Some(sig) => get_pair_from_str(sig),
@@ -672,7 +676,7 @@ pub fn claim_reward(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::E
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		if matches.all_flag() {
-			let mut cindex = get_ceremony_index(&api, None).await;
+			let mut cindex = api.get_ceremony_index(None).await;
 			if api.get_current_phase(None).await.unwrap() == CeremonyPhaseType::Registering {
 				cindex -= 1;
 			}
@@ -787,7 +791,7 @@ pub fn purge_community_ceremony(_args: &str, matches: &ArgMatches<'_>) -> Result
 		let mut api = get_chain_api(matches).await;
 		api.set_signer(signer);
 
-		let current_ceremony_index = get_ceremony_index(&api, None).await;
+		let current_ceremony_index = api.get_ceremony_index(None).await;
 
 		let from_cindex_arg = matches.from_cindex_arg().unwrap_or(0);
 		let to_cindex_arg = matches.to_cindex_arg().unwrap_or(0);
@@ -798,8 +802,9 @@ pub fn purge_community_ceremony(_args: &str, matches: &ArgMatches<'_>) -> Result
 		if from_cindex > to_cindex {
 			panic!("'from' <= 'to' ceremony index violated");
 		}
-		let cid =
-			verify_cid(&api, matches.cid_arg().expect("please supply argument --cid"), None).await;
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
 		println!("purging ceremony index range [{from_cindex}  {to_cindex}] for community {cid}");
 
 		let calls: Vec<_> = (from_cindex..=to_cindex)
@@ -933,20 +938,13 @@ async fn get_attendees_for_community_ceremony(
 	(attendees, noshows)
 }
 
-pub async fn get_reputation_lifetime(api: &Api, maybe_at: Option<Hash>) -> ReputationLifetimeType {
-	api.get_storage("EncointerCeremonies", "ReputationLifetime", maybe_at)
-		.await
-		.unwrap()
-		.unwrap_or(5)
-}
-
 async fn new_claim_for(
 	api: &Api,
 	claimant: &sr25519::Pair,
 	cid: CommunityIdentifier,
 	n_participants: u32,
 ) -> Vec<u8> {
-	let cindex = get_ceremony_index(api, None).await;
+	let cindex = api.get_ceremony_index(None).await;
 	let mindex = api
 		.get_meetup_index(&(cid, cindex), &claimant.public().into(), None)
 		.await
@@ -1063,45 +1061,4 @@ async fn get_bootstrappers_with_remaining_newbie_tickets(
 	}
 
 	Ok(bs_with_tickets)
-}
-
-async fn get_attestee_count(
-	api: &Api,
-	key: CommunityCeremony,
-	maybe_at: Option<Hash>,
-) -> ParticipantIndexType {
-	api.get_storage_map("EncointerCeremonies", "AttestationCount", key, maybe_at)
-		.await
-		.unwrap()
-		.unwrap_or(0)
-}
-
-async fn get_participant_attestation_index(
-	api: &Api,
-	key: CommunityCeremony,
-	accountid: &AccountId,
-	maybe_at: Option<Hash>,
-) -> Option<ParticipantIndexType> {
-	api.get_storage_double_map("EncointerCeremonies", "AttestationIndex", key, accountid, maybe_at)
-		.await
-		.unwrap()
-}
-
-pub async fn get_reputation_count(
-	api: &Api,
-	community_ceremony: CommunityCeremony,
-	maybe_at: Option<Hash>,
-) -> Option<ReputationCountType> {
-	api.get_storage_map("EncointerCeremonies", "ReputationCount", community_ceremony, maybe_at)
-		.await
-		.unwrap()
-}
-pub async fn get_global_reputation_count(
-	api: &Api,
-	cindex: CeremonyIndexType,
-	maybe_at: Option<Hash>,
-) -> Option<ReputationCountType> {
-	api.get_storage_map("EncointerCeremonies", "GlobalReputationCount", cindex, maybe_at)
-		.await
-		.unwrap()
 }

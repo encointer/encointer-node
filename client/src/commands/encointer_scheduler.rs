@@ -1,6 +1,6 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
-	commands::{encointer_core::set_api_extrisic_params_builder, frame::get_block_number},
+	commands::frame::get_block_number,
 	utils::{
 		collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
 		keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
@@ -8,7 +8,9 @@ use crate::{
 	},
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::{Api, ParentchainExtrinsicSigner, SchedulerApi};
+use encointer_api_client_extension::{
+	set_api_extrisic_params_builder, Api, ParentchainExtrinsicSigner, SchedulerApi,
+};
 use encointer_node_notee_runtime::{Hash, Moment};
 use encointer_primitives::ceremonies::CeremonyIndexType;
 use log::{debug, info};
@@ -24,7 +26,7 @@ pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Erro
 		// >>>> add some debug info as well
 		let bn = get_block_number(&api, None).await;
 		debug!("block number: {}", bn);
-		let cindex = get_ceremony_index(&api, None).await;
+		let cindex = api.get_ceremony_index(None).await;
 		info!("ceremony index: {}", cindex);
 		let tnext: Moment = api.get_next_phase_timestamp(None).await.unwrap();
 		debug!("next phase timestamp: {}", tnext);
@@ -77,11 +79,4 @@ pub fn next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Err
 		Ok(())
 	})
 	.into()
-}
-
-pub async fn get_ceremony_index(api: &Api, maybe_at: Option<Hash>) -> CeremonyIndexType {
-	api.get_storage("EncointerScheduler", "CurrentCeremonyIndex", maybe_at)
-		.await
-		.unwrap()
-		.unwrap()
 }

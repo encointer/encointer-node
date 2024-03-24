@@ -18,10 +18,12 @@ pub type ExtrinsicAddress = <EncointerConfig as Config>::Address;
 
 pub use ceremonies::*;
 pub use communities::*;
+pub use democracy::*;
 pub use extrinsic_params::*;
 pub use scheduler::*;
 
 mod ceremonies;
 mod communities;
+mod democracy;
 mod extrinsic_params;
 mod scheduler;

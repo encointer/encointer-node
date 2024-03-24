@@ -2,11 +2,11 @@ use crate::{Api, CommunitiesApi, Result, SchedulerApi};
 use encointer_ceremonies_assignment::{
 	assignment_fn_inverse, meetup_index, meetup_location, meetup_time,
 };
-use encointer_node_notee_runtime::Hash;
+use encointer_node_notee_runtime::{CeremonyIndexType, Hash};
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, MeetupTimeOffsetType,
-		ParticipantIndexType,
+		ParticipantIndexType, ReputationCountType, ReputationLifetimeType,
 	},
 	communities::Location,
 };
@@ -15,7 +15,6 @@ use log::warn;
 use serde::{Deserialize, Serialize};
 use sp_runtime::AccountId32 as AccountId;
 use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
-
 pub type Moment = u64;
 
 pub const ENCOINTER_CEREMONIES: &str = "EncointerCeremonies";
@@ -129,6 +128,31 @@ pub trait CeremoniesApi {
 		account_id: AccountId,
 		maybe_at: Option<Hash>,
 	) -> Result<u32>;
+	async fn get_global_reputation_count(
+		&self,
+		cindex: CeremonyIndexType,
+		maybe_at: Option<Hash>,
+	) -> Result<ReputationCountType>;
+	async fn get_reputation_count(
+		&self,
+		community_ceremony: CommunityCeremony,
+		maybe_at: Option<Hash>,
+	) -> Result<ReputationCountType>;
+	async fn get_reputation_lifetime(
+		&self,
+		maybe_at: Option<Hash>,
+	) -> Result<ReputationLifetimeType>;
+	async fn get_participant_attestation_index(
+		&self,
+		key: CommunityCeremony,
+		accountid: &encointer_node_notee_runtime::AccountId,
+		maybe_at: Option<Hash>,
+	) -> Option<ParticipantIndexType>;
+	async fn get_attestee_count(
+		&self,
+		key: CommunityCeremony,
+		maybe_at: Option<Hash>,
+	) -> ParticipantIndexType;
 }
 
 #[maybe_async::maybe_async(?Send)]
@@ -475,6 +499,60 @@ impl CeremoniesApi for Api {
 		)
 		.await?
 		.ok_or_else(|| ApiClientError::Other("MeetupParticipantCountVote don't exist".into()))
+	}
+
+	async fn get_reputation_count(
+		&self,
+		community_ceremony: CommunityCeremony,
+		maybe_at: Option<Hash>,
+	) -> Result<ReputationCountType> {
+		self.get_storage_map("EncointerCeremonies", "ReputationCount", community_ceremony, maybe_at)
+			.await?
+			.ok_or_else(|| ApiClientError::Other("ReputationCount not found".into()))
+	}
+	async fn get_global_reputation_count(
+		&self,
+		cindex: CeremonyIndexType,
+		maybe_at: Option<Hash>,
+	) -> Result<ReputationCountType> {
+		self.get_storage_map("EncointerCeremonies", "GlobalReputationCount", cindex, maybe_at)
+			.await?
+			.ok_or_else(|| ApiClientError::Other("GlobalReputationCount not found".into()))
+	}
+	async fn get_reputation_lifetime(
+		&self,
+		maybe_at: Option<Hash>,
+	) -> Result<ReputationLifetimeType> {
+		self.get_storage("EncointerCeremonies", "ReputationLifetime", maybe_at)
+			.await?
+			.ok_or_else(|| ApiClientError::Other("ReputationLifetime not found".into()))
+	}
+	async fn get_attestee_count(
+		&self,
+		key: CommunityCeremony,
+		maybe_at: Option<Hash>,
+	) -> ParticipantIndexType {
+		self.get_storage_map("EncointerCeremonies", "AttestationCount", key, maybe_at)
+			.await
+			.unwrap()
+			.unwrap_or(0)
+	}
+
+	async fn get_participant_attestation_index(
+		&self,
+		key: CommunityCeremony,
+		accountid: &encointer_node_notee_runtime::AccountId,
+		maybe_at: Option<Hash>,
+	) -> Option<ParticipantIndexType> {
+		self.get_storage_double_map(
+			"EncointerCeremonies",
+			"AttestationIndex",
+			key,
+			accountid,
+			maybe_at,
+		)
+		.await
+		.unwrap()
 	}
 }
 

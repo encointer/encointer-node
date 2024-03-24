@@ -1,10 +1,11 @@
 use crate::{Api, Moment, Result};
 use encointer_node_notee_runtime::Hash;
-use encointer_primitives::scheduler::CeremonyPhaseType;
+use encointer_primitives::{ceremonies::CeremonyIndexType, scheduler::CeremonyPhaseType};
 use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
 
 #[maybe_async::maybe_async(?Send)]
 pub trait SchedulerApi {
+	async fn get_ceremony_index(&self, maybe_at: Option<Hash>) -> CeremonyIndexType;
 	async fn get_current_phase(&self, maybe_at: Option<Hash>) -> Result<CeremonyPhaseType>;
 	async fn get_next_phase_timestamp(&self, maybe_at: Option<Hash>) -> Result<Moment>;
 	async fn get_phase_duration(
@@ -17,6 +18,13 @@ pub trait SchedulerApi {
 
 #[maybe_async::maybe_async(?Send)]
 impl SchedulerApi for Api {
+	async fn get_ceremony_index(&self, maybe_at: Option<Hash>) -> CeremonyIndexType {
+		self.get_storage("EncointerScheduler", "CurrentCeremonyIndex", maybe_at)
+			.await
+			.unwrap()
+			.expect("ceremony index not set")
+	}
+
 	async fn get_current_phase(&self, maybe_at: Option<Hash>) -> Result<CeremonyPhaseType> {
 		self.get_storage("EncointerScheduler", "CurrentPhase", maybe_at)
 			.await?
