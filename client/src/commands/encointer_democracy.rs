@@ -97,6 +97,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		}
 		let confirmation_period = api.get_confirmation_period().await.unwrap();
 		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
+		let min_turnout_permill = api.get_min_turnout().await.unwrap();
 		for storage_key in storage_keys.iter() {
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
@@ -134,18 +135,32 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				maybe_at,
 			)
 			.await;
-			println!("action: {:?}", proposal.action);
-			println!("started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
+			let tally = api.get_tally(proposal_id, maybe_at).await.unwrap().unwrap_or_default();
+			println!("🛠️ action: {:?}", proposal.action);
+			println!("▶️ started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
 			println!(
-				"ends after: {}",
+				"🏁 ends after: {}",
 				(start + proposal_lifetime.clone()).format("%Y-%m-%d %H:%M:%S %Z").to_string()
 			);
 			println!("start cindex: {}", proposal.start_cindex);
-			println!("current electorate estimate: {electorate}");
+			println!("👥 electorate: {electorate}");
+			println!(
+				"🗳 turnout: {} votes = {:.3}% of electorate (turnout threshold {} votes = {:.3}%)",
+				tally.turnout,
+				100f64 * tally.turnout as f64 / electorate as f64,
+				min_turnout_permill as f64 * electorate as f64 / 1000f64,
+				min_turnout_permill as f64 / 10f64
+			);
+			println!(
+				"🗳 approval: {} votes = {:.3}% Aye (AQB approval threshold: {:.3}%)",
+				tally.ayes,
+				100f64 * tally.ayes as f64 / tally.turnout as f64,
+				approval_threshold_percent(electorate, tally.turnout)
+			);
 			println!("state: {:?}", proposal.state);
 			if let Some(since) = maybe_confirming_since {
 				println!(
-					"confirming since: {} until {}",
+					"👍 confirming since: {} until {}",
 					since.format("%Y-%m-%d %H:%M:%S %Z").to_string(),
 					(since + confirmation_period).format("%Y-%m-%d %H:%M:%S %Z").to_string()
 				)
@@ -292,4 +307,8 @@ async fn get_relevant_electorate(
 	} else {
 		panic!("couldn't fetch some values")
 	}
+}
+
+fn approval_threshold_percent(electorate: u128, turnout: u128) -> f64 {
+	100f64 / (1f64 + (turnout as f64 / electorate as f64).sqrt())
 }
