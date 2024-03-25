@@ -553,6 +553,25 @@ fn main() {
 		       .runner(commands::encointer_faucet::list_faucets)
 		)
 		.add_cmd(
+			Command::new("list-commitments")
+				.description("list all reputation commitments")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.purpose_id_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_reputation_commitments::list_commitments)
+		)
+		.add_cmd(
+			Command::new("list-purposes")
+				.description("list all reputation commitment purpose descriptors")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.at_block_arg()
+				})
+				.runner(commands::encointer_reputation_commitments::list_purposes)
+		)
+		.add_cmd(
 			Command::new("submit-set-inactivity-timeout-proposal")
 				.description("Submit set inactivity timeout proposal")
 				.options(|app| {

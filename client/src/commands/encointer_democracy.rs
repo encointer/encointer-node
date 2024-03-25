@@ -108,7 +108,6 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			if !matches.all_flag() && matches!(proposal.state, ProposalState::Cancelled) {
 				continue
 			}
-			println!("id: {}", proposal_id);
 			let start = DateTime::<Utc>::from_timestamp_millis(
 				TryInto::<i64>::try_into(proposal.start).unwrap(),
 			)
@@ -136,6 +135,11 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			)
 			.await;
 			let tally = api.get_tally(proposal_id, maybe_at).await.unwrap().unwrap_or_default();
+			let purpose_id = api.get_purpose_id(proposal_id, maybe_at).await.unwrap().unwrap();
+			println!(
+				"Proposal id: {} (reputation commitment purpose id: {})",
+				proposal_id, purpose_id
+			);
 			println!("🛠 action: {:?}", proposal.action);
 			println!("▶️ started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
 			println!(

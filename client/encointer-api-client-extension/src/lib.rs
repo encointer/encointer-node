@@ -21,6 +21,7 @@ pub use ceremonies::*;
 pub use communities::*;
 pub use democracy::*;
 pub use extrinsic_params::*;
+pub use reputation_commitments::*;
 pub use scheduler::*;
 
 mod bazaar;
@@ -28,4 +29,5 @@ mod ceremonies;
 mod communities;
 mod democracy;
 mod extrinsic_params;
+mod reputation_commitments;
 mod scheduler;
