@@ -136,13 +136,13 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 			)
 			.await;
 			let tally = api.get_tally(proposal_id, maybe_at).await.unwrap().unwrap_or_default();
-			println!("🛠️ action: {:?}", proposal.action);
+			println!("🛠 action: {:?}", proposal.action);
 			println!("▶️ started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
 			println!(
 				"🏁 ends after: {}",
 				(start + proposal_lifetime.clone()).format("%Y-%m-%d %H:%M:%S %Z").to_string()
 			);
-			println!("start cindex: {}", proposal.start_cindex);
+			println!("🔄 start cindex: {}", proposal.start_cindex);
 			println!("👥 electorate: {electorate}");
 			println!(
 				"🗳 turnout: {} votes = {:.3}% of electorate (turnout threshold {} votes = {:.3}%)",
