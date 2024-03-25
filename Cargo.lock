@@ -2109,7 +2109,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-client-notee"
-version = "1.8.2"
+version = "1.8.3"
 dependencies = [
  "chrono",
  "clap 2.34.0",
@@ -2160,7 +2160,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "1.8.2"
+version = "1.8.3"
 dependencies = [
  "clap 4.5.1",
  "encointer-balances-tx-payment-rpc",
