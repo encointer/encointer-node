@@ -4,11 +4,7 @@ use encointer_api_client_extension::{
 	CeremoniesApi, CommunitiesApi, ReputationCommitmentsApi, SchedulerApi,
 };
 use encointer_node_notee_runtime::{AccountId, Hash};
-use encointer_primitives::{
-	ceremonies::CeremonyIndexType,
-	democracy::ProposalIdType,
-	reputation_commitments::{DescriptorType, PurposeIdType},
-};
+use encointer_primitives::reputation_commitments::{DescriptorType, PurposeIdType};
 use log::{debug, error};
 use parity_scale_codec::{Decode, Encode};
 use sp_core::crypto::Ss58Codec;
