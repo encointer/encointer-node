@@ -1,5 +1,5 @@
 use clap::{App, Arg, ArgMatches};
-use encointer_primitives::balances::BalanceType;
+use encointer_primitives::{balances::BalanceType, reputation_commitments::PurposeIdType};
 use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
@@ -34,6 +34,8 @@ const VOTE_ARG: &str = "vote";
 const REPUTATION_VEC_ARG: &str = "reputation-vec";
 const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
 const NOMINAL_INCOME_ARG: &str = "nominal-income";
+
+const PURPOSE_ID_ARG: &str = "purpose-id";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -70,6 +72,7 @@ pub trait EncointerArgs<'b> {
 	fn reputation_vec_arg(self) -> Self;
 	fn inactivity_timeout_arg(self) -> Self;
 	fn nominal_income_arg(self) -> Self;
+	fn purpose_id_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -106,6 +109,7 @@ pub trait EncointerArgsExtractor {
 	fn reputation_vec_arg(&self) -> Option<Vec<&str>>;
 	fn inactivity_timeout_arg(&self) -> Option<u32>;
 	fn nominal_income_arg(&self) -> Option<BalanceType>;
+	fn purpose_id_arg(&self) -> Option<PurposeIdType>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -432,6 +436,15 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("nominal income"),
 		)
 	}
+	fn purpose_id_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(PURPOSE_ID_ARG)
+				.takes_value(true)
+				.required(false)
+				.value_name("PURPOSE_ID")
+				.help("reputation commitment purpose id"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -552,5 +565,8 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	fn nominal_income_arg(&self) -> Option<BalanceType> {
 		self.value_of(NOMINAL_INCOME_ARG)
 			.map(|v| BalanceType::from_num(v.parse::<f64>().unwrap()))
+	}
+	fn purpose_id_arg(&self) -> Option<PurposeIdType> {
+		self.value_of(PURPOSE_ID_ARG).map(|v| v.parse().unwrap())
 	}
 }

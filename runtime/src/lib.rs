@@ -535,7 +535,7 @@ impl pallet_encointer_democracy::Config for Runtime {
 	type MaxReputationVecLength = ConstU32<64>;
 	type ConfirmationPeriod = ConfirmationPeriod;
 	type ProposalLifetime = ProposalLifetime;
-	type MinTurnout = ConstU128<1>;
+	type MinTurnout = ConstU128<1>; // permill of electorate: 1 = 0.1%, 50 = 5.0%
 	type WeightInfo = weights::pallet_encointer_democracy::WeightInfo<Runtime>;
 }
 
