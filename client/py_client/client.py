@@ -115,7 +115,7 @@ class Client:
         else:
             payload = {'accounts': accounts}
             try:
-                requests.get(faucet_url, params=payload, timeout=10)
+                requests.get(faucet_url, params=payload, timeout=20)
             except requests.exceptions.Timeout:
                 print("faucet timeout")
 

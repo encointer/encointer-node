@@ -346,11 +346,12 @@ def vote_on_proposals(client: Client, cid: str, voters: list):
             for voter in voters:
                 reputations = [[t[1], t[0]] for t in client.reputation(voter)]
                 if len(reputations) == 0:
-                    print(f"no reputations for {voter}")
+                    print(f"no reputations for {voter}. can't vote")
                     continue
                 vote = random.choices(choices, weights)[0]
                 print(f"voting {vote} on proposal {proposal.id} with {voter} and reputations {reputations}")
-                client.vote(voter, proposal.id, "aye", reputations)
+                client.vote(voter, proposal.id, vote, reputations)
+        client.await_block()
 
 
 def update_proposal_states(client: Client, who: str):
@@ -359,7 +360,7 @@ def update_proposal_states(client: Client, who: str):
         print(
             f"checking proposal {proposal.id}, state: {proposal.state}, approval: {proposal.approval} turnout: {proposal.turnout}")
         if proposal.state in ['Ongoing', 'Confirming']:
-            print(f"updateing proposal {proposal.id}")
+            print(f"updating proposal {proposal.id}")
             client.update_proposal_state(who, proposal.id)
 
 
