@@ -32,7 +32,7 @@ import os
 
 import click
 import ast
-
+import random
 from math import floor
 
 from py_client.communities import random_community_spec, COMMUNITY_SPECS_PATH
@@ -70,6 +70,7 @@ def init(ctx):
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ASSETS_PATH)
+    ipfs_cid = "QmDUMMYikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
     try:
         ipfs_cid = Ipfs.add_recursive(root_dir, ctx['ipfs_local'])
     except:
@@ -98,6 +99,7 @@ def init(ctx):
 def purge_communities():
     purge_prompt(COMMUNITY_SPECS_PATH, 'communities')
 
+
 @cli.command()
 @click.pass_obj
 def execute_current_phase(ctx):
@@ -117,8 +119,10 @@ def _execute_current_phase(client: Client):
             client.claim_reward(account, cid)
         client.await_block(3)
 
-        total_supply = write_current_stats(client, accounts, cid)
+        update_proposal_states(client, accounts[0])
+        submit_democracy_proposals(client, cid, accounts[0])
 
+        total_supply = write_current_stats(client, accounts, cid)
         if total_supply > 0:
             init_new_community_members(client, cid, len(accounts))
 
@@ -132,8 +136,11 @@ def _execute_current_phase(client: Client):
         meetups = client.list_meetups(cid)
         meetup_sizes = list(map(lambda x: len(x), meetups))
         print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
+        update_proposal_states(client, accounts[0])
+        vote_on_proposals(client, cid, accounts)
     if phase == 'Attesting':
         meetups = client.list_meetups(cid)
+        update_proposal_states(client, accounts[0])
         print(f'****** Performing {len(meetups)} meetups')
         for meetup in meetups:
             perform_meetup(client, meetup, cid)
@@ -158,7 +165,7 @@ def benchmark(ctx):
 def test(ctx):
     py_client = ctx['client']
     print('will grow population for fixed number of ceremonies')
-    for i in range(3*2+1):
+    for i in range(3 * 2 + 1):
         phase = _execute_current_phase(py_client)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
@@ -219,7 +226,7 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
     start = 0
     for endorser, endorsement_count in endorsers_and_tickets:
         # execute endorsements per bootstrapper
-        end = start+endorsement_count
+        end = start + endorsement_count
 
         print(f'bootstrapper {endorser} endorses {endorsement_count} accounts.')
 
@@ -271,7 +278,6 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
         client.await_block()
         print(f'Added endorsees to community: {len(endorsees)}')
 
-
     newbies = client.create_accounts(get_newbie_amount(current_community_size + len(endorsees)))
 
     print(f'Add newbies to community {len(newbies)}')
@@ -305,7 +311,10 @@ def register_participants(client: Client, accounts, cid):
         client.await_block()
 
         for p in need_refunding:
-            client.register_participant(p, cid)
+            try:
+                client.register_participant(p, cid)
+            except ExtrinsicFeePaymentImpossible:
+                print("refunding failed")
 
 
 def perform_meetup(client: Client, meetup, cid):
@@ -316,6 +325,42 @@ def perform_meetup(client: Client, meetup, cid):
         attestor = meetup[p_index]
         attendees = meetup[:p_index] + meetup[p_index + 1:]
         client.attest_attendees(attestor, cid, attendees)
+
+
+def submit_democracy_proposals(client: Client, cid: str, proposer: str):
+    print("submitting new democracy proposals")
+    client.submit_update_nominal_income_proposal(proposer, 1.1, cid)
+
+
+def vote_on_proposals(client: Client, cid: str, voters: list):
+    proposals = client.get_proposals()
+    for proposal in proposals:
+        print(
+            f"checking proposal {proposal.id}, state: {proposal.state}, approval: {proposal.approval} turnout: {proposal.turnout}")
+        if proposal.state == 'Ongoing':
+            choices = ['aye', 'nay']
+            target_approval = random.random()
+            print(f"setting target approval to {target_approval * 100}%")
+            weights = [target_approval, 1 - target_approval]
+
+            for voter in voters:
+                reputations = [[t[1], t[0]] for t in client.reputation(voter)]
+                if len(reputations) == 0:
+                    print(f"no reputations for {voter}")
+                    continue
+                vote = random.choices(choices, weights)[0]
+                print(f"voting {vote} on proposal {proposal.id} with {voter} and reputations {reputations}")
+                client.vote(voter, proposal.id, "aye", reputations)
+
+
+def update_proposal_states(client: Client, who: str):
+    proposals = client.get_proposals()
+    for proposal in proposals:
+        print(
+            f"checking proposal {proposal.id}, state: {proposal.state}, approval: {proposal.approval} turnout: {proposal.turnout}")
+        if proposal.state in ['Ongoing', 'Confirming']:
+            print(f"updateing proposal {proposal.id}")
+            client.update_proposal_state(who, proposal.id)
 
 
 if __name__ == '__main__':
