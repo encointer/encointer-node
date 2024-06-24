@@ -26,96 +26,96 @@ serde_json = "1.0.114"
 tokio = { version = "1.33", features = ["rt-multi-thread", "macros", "time"] }
 
 # encointer deps
-encointer-balances-tx-payment = { default-features = false, version = "7.0.0" }
-encointer-balances-tx-payment-rpc = { version = "7.0.0" }
-encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "7.0.0" }
-encointer-ceremonies-assignment = { version = "7.0.0" }
-encointer-primitives = { default-features = false, version = "7.0.0" }
-pallet-encointer-balances = { default-features = false, version = "7.0.0" }
-pallet-encointer-bazaar = { default-features = false, version = "7.0.0" }
-pallet-encointer-bazaar-rpc = { version = "7.0.0" }
-pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "7.0.0" }
-pallet-encointer-ceremonies = { default-features = false, version = "7.0.0" }
-pallet-encointer-ceremonies-rpc = { version = "7.0.0" }
-pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "7.0.0" }
-pallet-encointer-communities = { default-features = false, version = "7.0.0" }
-pallet-encointer-communities-rpc = { version = "7.0.0" }
-pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "7.0.0" }
-pallet-encointer-democracy = { default-features = false, version = "7.0.0" }
-pallet-encointer-faucet = { default-features = false, version = "7.0.0" }
-pallet-encointer-reputation-commitments = { default-features = false, version = "7.0.0" }
-pallet-encointer-scheduler = { default-features = false, version = "7.0.0" }
+encointer-balances-tx-payment = { default-features = false, version = "11.0.0" }
+encointer-balances-tx-payment-rpc = { version = "11.0.0" }
+encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "11.0.0" }
+encointer-ceremonies-assignment = { version = "11.0.0" }
+encointer-primitives = { default-features = false, version = "11.0.0" }
+pallet-encointer-balances = { default-features = false, version = "11.0.0" }
+pallet-encointer-bazaar = { default-features = false, version = "11.0.0" }
+pallet-encointer-bazaar-rpc = { version = "11.0.0" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "11.0.0" }
+pallet-encointer-ceremonies = { default-features = false, version = "11.0.0" }
+pallet-encointer-ceremonies-rpc = { version = "11.0.0" }
+pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "11.0.0" }
+pallet-encointer-communities = { default-features = false, version = "11.0.0" }
+pallet-encointer-communities-rpc = { version = "11.0.0" }
+pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "11.0.0" }
+pallet-encointer-democracy = { default-features = false, version = "11.0.0" }
+pallet-encointer-faucet = { default-features = false, version = "11.0.0" }
+pallet-encointer-reputation-commitments = { default-features = false, version = "11.0.0" }
+pallet-encointer-scheduler = { default-features = false, version = "11.0.0" }
 
 
 # substrate deps
-frame-benchmarking = { default-features = false, version = "30.0.0" }
-frame-benchmarking-cli = { version = "34.0.0" }
-frame-executive = { default-features = false, version = "30.0.0" }
-frame-support = { default-features = false, version = "30.0.0" }
-frame-system = { default-features = false, version = "30.0.0" }
-frame-system-benchmarking = { default-features = false, version = "30.0.0" }
-frame-system-rpc-runtime-api = { default-features = false, version = "28.0.0" }
-frame-try-runtime = { default-features = false, version = "0.36.0" }
+frame-benchmarking = { version = "34.0.0", default-features = false }
+frame-benchmarking-cli = { version = "38.0.0" }
+frame-executive = { version = "34.0.0", default-features = false }
+frame-support = { version = "34.0.0", default-features = false }
+frame-system = { version = "34.0.1", default-features = false }
+frame-system-benchmarking = { version = "34.0.0", default-features = false }
+frame-system-rpc-runtime-api = { version = "32.0.0", default-features = false }
+frame-try-runtime = { version = "0.40.0", default-features = false }
 hex-literal = { version = "0.4.1" }
 jsonrpsee = { version = "0.22.0", features = ["server"] }
-pallet-asset-tx-payment = { default-features = false, version = "30.0.0" }
-pallet-aura = { default-features = false, version = "29.0.0" }
-pallet-balances = { default-features = false, version = "30.0.0" }
-pallet-grandpa = { default-features = false, version = "30.0.0" }
-pallet-insecure-randomness-collective-flip = { default-features = false, version = "18.0.0" }
-pallet-proxy = { default-features = false, version = "30.0.0" }
-pallet-scheduler = { default-features = false, version = "31.0.0" }
-pallet-sudo = { default-features = false, version = "30.0.0" }
-pallet-timestamp = { default-features = false, version = "29.0.0" }
-pallet-transaction-payment = { default-features = false, version = "30.0.0" }
-pallet-transaction-payment-rpc = { version = "32.0.0" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "30.0.0" }
-pallet-treasury = { default-features = false, version = "29.0.0" }
-pallet-utility = { default-features = false, version = "30.0.0" }
-sc-basic-authorship = { version = "0.36.0" }
-sc-chain-spec = "29.0.0"
-sc-cli = { version = "0.38.0" }
-sc-client-api = { version = "30.0.0" }
-sc-consensus = { version = "0.35.0" }
-sc-consensus-aura = { version = "0.36.0" }
-sc-consensus-grandpa = { version = "0.21.0" }
-sc-executor = { version = "0.34.0" }
-sc-keystore = { version = "27.0.0" }
-sc-network = { version = "0.36.0" }
-sc-offchain = { version = "31.0.0" }
-sc-rpc = "31.0.0"
-sc-rpc-api = "0.35.0"
-sc-service = { version = "0.37.0" }
-sc-telemetry = { version = "17.0.0" }
-sc-transaction-pool = { version = "30.0.0" }
-sc-transaction-pool-api = { version = "30.0.0" }
-sp-api = { default-features = false, version = "28.0.0" }
-sp-application-crypto = { default-features = false, version = "32.0.0" }
-sp-arithmetic = { default-features = false, version = "25.0.0" }
-sp-block-builder = { default-features = false, version = "28.0.0" }
-sp-blockchain = "30.0.0"
-sp-consensus = { version = "0.34.0" }
-sp-consensus-aura = { default-features = false, version = "0.34.0" }
-sp-consensus-grandpa = { version = "15.0.0" }
-sp-core = { default-features = false, version = "30.0.0" }
-sp-genesis-builder = { default-features = false, version = "0.9.0" }
-sp-inherents = { default-features = false, version = "28.0.0" }
-sp-io = { default-features = false, version = "32.0.0" }
-sp-keyring = "33.0.0"
-sp-keystore = "0.36.0"
-sp-offchain = { default-features = false, version = "28.0.0" }
-sp-rpc = "28.0.0"
-sp-runtime = { default-features = false, version = "33.0.0" }
-sp-session = { default-features = false, version = "29.0.0" }
-sp-staking = { default-features = false, version = "28.0.0" }
-sp-std = { default-features = false, version = "14.0.0" }
-sp-storage = { default-features = false, version = "20.0.0" }
-sp-timestamp = { version = "28.0.0" }
-sp-transaction-pool = { default-features = false, version = "28.0.0" }
-sp-version = { default-features = false, version = "31.0.0" }
-substrate-frame-rpc-system = { version = "30.0.0" }
+pallet-asset-tx-payment = { version = "34.0.0", default-features = false }
+pallet-aura = { version = "33.0.0", default-features = false }
+pallet-balances = { version = "35.0.0", default-features = false }
+pallet-grandpa = { version = "34.0.0", default-features = false }
+pallet-insecure-randomness-collective-flip = { version = "22.0.0", default-features = false }
+pallet-proxy = { version = "34.0.0", default-features = false }
+pallet-scheduler = { version = "35.0.0", default-features = false }
+pallet-sudo = { version = "34.0.0", default-features = false }
+pallet-timestamp = { version = "33.0.0", default-features = false }
+pallet-transaction-payment = { version = "34.0.0", default-features = false }
+pallet-transaction-payment-rpc = { version = "36.0.0" }
+pallet-transaction-payment-rpc-runtime-api = { version = "34.0.0", default-features = false }
+pallet-treasury = { version = "33.0.0", default-features = false }
+pallet-utility = { version = "34.0.0", default-features = false }
+sc-basic-authorship = { version = "0.40.0" }
+sc-chain-spec = "33.0.0"
+sc-cli = { version = "0.42.0" }
+sc-client-api = { version = "34.0.0" }
+sc-consensus = { version = "0.39.1" }
+sc-consensus-aura = { version = "0.40.0" }
+sc-consensus-grandpa = { version = "0.25.0" }
+sc-executor = { version = "0.38.0" }
+sc-keystore = { version = "31.0.0" }
+sc-network = { version = "0.40.0" }
+sc-offchain = { version = "35.0.0" }
+sc-rpc = "35.0.0"
+sc-rpc-api = "0.39.0"
+sc-service = { version = "0.41.0" }
+sc-telemetry = { version = "20.0.0" }
+sc-transaction-pool = { version = "34.0.0" }
+sc-transaction-pool-api = { version = "34.0.0" }
+sp-api = { version = "32.0.0", default-features = false }
+sp-application-crypto = { version = "36.0.0", default-features = false }
+sp-arithmetic = { version = "26.0.0", default-features = false }
+sp-block-builder = { version = "32.0.0", default-features = false }
+sp-blockchain = "34.0.0"
+sp-consensus = { version = "0.38.0" }
+sp-consensus-aura = { version = "0.38.0", default-features = false }
+sp-consensus-grandpa = { version = "19.0.0" }
+sp-core = { version = "33.0.1", default-features = false }
+sp-genesis-builder = { version = "0.13.0", default-features = false }
+sp-inherents = { version = "32.0.0", default-features = false }
+sp-io = { version = "36.0.0", default-features = false }
+sp-keyring = "37.0.0"
+sp-keystore = "0.39.0"
+sp-offchain = { version = "32.0.0", default-features = false }
+sp-rpc = "31.0.0"
+sp-runtime = { version = "37.0.0", default-features = false }
+sp-session = { version = "33.0.0", default-features = false }
+sp-staking = { version = "32.0.0", default-features = false }
+sp-std = { version = "14.0.0", default-features = false }
+sp-storage = { version = "21.0.0", default-features = false }
+sp-timestamp = { version = "32.0.0" }
+sp-transaction-pool = { version = "32.0.0", default-features = false }
+sp-version = { version = "35.0.0", default-features = false }
+substrate-frame-rpc-system = { version = "34.0.0" }
 
-substrate-wasm-builder = "19.0.0"
+substrate-wasm-builder = "22.0.0"
 substrate-build-script-utils = "11.0.0"
 
 substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"] }
@@ -125,35 +125,35 @@ substrate-client-keystore = { version = "0.10.0" }
 [patch.crates-io]
 ## api client
 # todo: temporary patch until ^0.17.1 is released
-ac-compose-macros = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
-ac-node-api = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
-ac-primitives = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
-substrate-api-client = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
-substrate-client-keystore = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable" }
+ac-compose-macros = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.12" }
+ac-node-api = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.12" }
+ac-primitives = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.12" }
+substrate-api-client = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.12" }
+substrate-client-keystore = { git = "https://github.com/brenzi/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.12" }
 #ac-node-api = { path = "../../substrate-api-client/node-api" }
 #ac-primitives = { path = "../../substrate-api-client/primitives" }
 #substrate-api-client = { path = "../../substrate-api-client" }
 #substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
 ## encointer
-#encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
-#encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
-#encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
-#encointer-ceremonies-assignment = { path = "../pallets/ceremonies/assignment" }
-#encointer-primitives = { path = "../pallets/primitives" }
-#pallet-encointer-balances = { path = "../pallets/balances" }
-#pallet-encointer-bazaar = { path = "../pallets/bazaar" }
-#pallet-encointer-bazaar-rpc = { path = "../pallets/bazaar/rpc" }
-#pallet-encointer-bazaar-rpc-runtime-api = { path = "../pallets/bazaar/rpc/runtime-api" }
-#pallet-encointer-ceremonies = { path = "../pallets/ceremonies" }
-#pallet-encointer-ceremonies-rpc = { path = "../pallets/ceremonies/rpc" }
-#pallet-encointer-ceremonies-rpc-runtime-api = { path = "../pallets/ceremonies/rpc/runtime-api" }
-#pallet-encointer-communities = { path = "../pallets/communities" }
-#pallet-encointer-communities-rpc = { path = "../pallets/communities/rpc" }
-#pallet-encointer-communities-rpc-runtime-api = { path = "../pallets/communities/rpc/runtime-api" }
-#pallet-encointer-democracy = { path = "../pallets/democracy" }
-#pallet-encointer-faucet = { path = "../pallets/faucet" }
-#pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
-#pallet-encointer-scheduler = { path = "../pallets/scheduler" }
+encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
+encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
+encointer-balances-tx-payment-rpc-runtime-api = { path = "../pallets/balances-tx-payment/rpc/runtime-api" }
+encointer-ceremonies-assignment = { path = "../pallets/ceremonies/assignment" }
+encointer-primitives = { path = "../pallets/primitives" }
+pallet-encointer-balances = { path = "../pallets/balances" }
+pallet-encointer-bazaar = { path = "../pallets/bazaar" }
+pallet-encointer-bazaar-rpc = { path = "../pallets/bazaar/rpc" }
+pallet-encointer-bazaar-rpc-runtime-api = { path = "../pallets/bazaar/rpc/runtime-api" }
+pallet-encointer-ceremonies = { path = "../pallets/ceremonies" }
+pallet-encointer-ceremonies-rpc = { path = "../pallets/ceremonies/rpc" }
+pallet-encointer-ceremonies-rpc-runtime-api = { path = "../pallets/ceremonies/rpc/runtime-api" }
+pallet-encointer-communities = { path = "../pallets/communities" }
+pallet-encointer-communities-rpc = { path = "../pallets/communities/rpc" }
+pallet-encointer-communities-rpc-runtime-api = { path = "../pallets/communities/rpc/runtime-api" }
+pallet-encointer-democracy = { path = "../pallets/democracy" }
+pallet-encointer-faucet = { path = "../pallets/faucet" }
+pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
+pallet-encointer-scheduler = { path = "../pallets/scheduler" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }
