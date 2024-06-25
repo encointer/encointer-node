@@ -110,17 +110,17 @@ def _execute_current_phase(client: Client):
     client = client
     cid = read_cid()
     phase = client.get_phase()
-    print(f'phase is {phase}')
+    cindex = client.get_cindex()
+    print(f'🕑 phase is {phase} and ceremony index is {cindex}')
     accounts = client.list_accounts()
     print(f'number of known accounts: {len(accounts)}')
     if phase == 'Registering':
-        print("all participants claim their potential reward")
+        print("🏆 all participants claim their potential reward")
         for account in accounts:
             client.claim_reward(account, cid)
         client.await_block(3)
 
         update_proposal_states(client, accounts[0])
-        submit_democracy_proposals(client, cid, accounts[0])
 
         total_supply = write_current_stats(client, accounts, cid)
         if total_supply > 0:
@@ -135,13 +135,14 @@ def _execute_current_phase(client: Client):
     if phase == "Assigning":
         meetups = client.list_meetups(cid)
         meetup_sizes = list(map(lambda x: len(x), meetups))
-        print(f'meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
+        print(f'🔎 meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
         update_proposal_states(client, accounts[0])
-        vote_on_proposals(client, cid, accounts)
+        submit_democracy_proposals(client, cid, accounts[0])
     if phase == 'Attesting':
         meetups = client.list_meetups(cid)
         update_proposal_states(client, accounts[0])
-        print(f'****** Performing {len(meetups)} meetups')
+        vote_on_proposals(client, cid, accounts)
+        print(f'🫂 Performing {len(meetups)} meetups')
         for meetup in meetups:
             perform_meetup(client, meetup, cid)
         client.await_block()
