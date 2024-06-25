@@ -105,7 +105,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					.unwrap();
 			let proposal: Proposal<Moment> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
-			if !matches.all_flag() && matches!(proposal.state, ProposalState::Cancelled) {
+			if !matches.all_flag() && !proposal.state.can_update() {
 				continue
 			}
 			let start = DateTime::<Utc>::from_timestamp_millis(
