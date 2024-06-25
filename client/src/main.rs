@@ -253,6 +253,11 @@ fn main() {
 		        .runner(commands::encointer_scheduler::get_phase),
 		)
 		.add_cmd(
+			Command::new("get-cindex")
+				.description("read current ceremony index from chain")
+				.runner(commands::encointer_scheduler::get_cindex),
+		)
+		.add_cmd(
 		    Command::new("next-phase")
 		        .description("Advance ceremony state machine to next phase by ROOT call")
 		        .options(|app| {

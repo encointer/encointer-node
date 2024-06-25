@@ -38,6 +38,23 @@ pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Erro
 	})
 	.into()
 }
+
+pub fn get_cindex(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+
+		// >>>> add some debug info as well
+		let bn = get_block_number(&api, None).await;
+		debug!("block number: {}", bn);
+		let cindex = api.get_ceremony_index(None).await;
+		info!("ceremony index: {}", cindex);
+		println!("{cindex}");
+		Ok(())
+	})
+	.into()
+}
+
 pub fn next_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
