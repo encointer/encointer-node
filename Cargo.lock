@@ -2022,6 +2022,8 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67c466a69a149cb35514574a3b0058a8cb7e4cfb15b392225a35fc781e755f54"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -2037,6 +2039,8 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment-rpc"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06cd71562f9981e5722670836f3ae60e8e5e217b8b37e8e33d636d21b4641296"
 dependencies = [
  "encointer-balances-tx-payment-rpc-runtime-api",
  "encointer-primitives",
@@ -2060,6 +2064,8 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment-rpc-runtime-api"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7220c25dae65ebcfde3bbea2c1d169c56741a92acb8c1d0b82b8809701467283"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -2072,6 +2078,8 @@ dependencies = [
 [[package]]
 name = "encointer-ceremonies-assignment"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be6a06805ee275e93e2543d76538c34405439ab6088c7724fe442e8d29084599"
 dependencies = [
  "encointer-primitives",
  "sp-runtime",
@@ -2118,6 +2126,8 @@ dependencies = [
 [[package]]
 name = "encointer-meetup-validation"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4664b36d1158fe2d8e90e1a9d89fa45200105029a1292b9b6edfaac52ddb1114"
 dependencies = [
  "encointer-primitives",
  "parity-scale-codec",
@@ -2246,6 +2256,8 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "11.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee2519c8ee397365b6b5b84098dfe920aa3ff84ee27c5a158223192b45b142f2"
 dependencies = [
  "bs58 0.5.0",
  "crc",
@@ -2265,6 +2277,8 @@ dependencies = [
 [[package]]
 name = "encointer-rpc"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68ef8d6e3388655889da82fd678428d8feff5d0952acb36f8db1767a15a73e3d"
 dependencies = [
  "jsonrpsee",
  "jsonrpsee-core",
@@ -2331,6 +2345,8 @@ checksum = "e48c92028aaa870e83d51c64e5d4e0b6981b360c522198c23959f219a4e1b15b"
 [[package]]
 name = "ep-core"
 version = "11.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05eb4fcf3f5c2bcced16499e74ee9829983663722f4449ee9c79496a5b2de7d8"
 dependencies = [
  "array-bytes",
  "impl-serde",
@@ -5393,6 +5409,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37a527ce0abfcfe62c0e9b9a0772facc4d2a4ec3ed269da5ded5fb2d1b35f0d5"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -5411,6 +5429,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "646cca7f47cd9ba94b0e92d2d1e0327152437aa2b67785d44925a8362a361e19"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -5427,6 +5447,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1dc36f66523b12a5a7adc7b07edb371eff326ba125d6034c1a95b464246a875"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -5446,6 +5468,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc-runtime-api"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "befa77924c47ce57b00d053fd002269e8f9520d643467fcf2ea0b01d88db6003"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -5457,6 +5481,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "174936fba6ad6e0be525badc71f8adf0982a71b238b2b7ccbd5d2423d89b92be"
 dependencies = [
  "encointer-ceremonies-assignment",
  "encointer-meetup-validation",
@@ -5481,6 +5507,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies-rpc"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b9072027fb7a3887dcbbf1640e3fb865bfd5a1db295a455ab602fd520eaff57"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -5500,6 +5528,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies-rpc-runtime-api"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e4923ce777cc534790cd0d57cee3b09c670e378c7dc9ad30bad14b08b2a45ca"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -5511,6 +5541,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fc0498810c0b746f4fd5210f7bc1064589bb87dfb4317c9a336daaa758bee00"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -5529,6 +5561,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6df7688d2f5ca1b11f8c34f598722a9eb584086e8343a094bf0a985a36b2f50"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -5549,6 +5583,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aa18149c7f17eca9f185dc47760675eac1b3be32b1d6a787c38b6cf53862e7e"
 dependencies = [
  "encointer-primitives",
  "parity-scale-codec",
@@ -5559,6 +5595,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-democracy"
 version = "11.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb2a10b15349823d4a9afb51129b377e89d14391141a1e9e37b73190f343be1d"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -5582,6 +5620,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-faucet"
 version = "11.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b04d1b00cd8d5783d74a88cb7ffc33367a96138f4d12987cf9b2a26e670f649"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -5601,6 +5641,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-reputation-commitments"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "436aea4f58a8f164d450d54f87452dcddd405941c54dc728a65450ec4ad26830"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -5622,6 +5664,8 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "11.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1483fa1559e20a8a704c7861f5668dc4dc751e29d2b77344f58a8770d3eaad1"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
