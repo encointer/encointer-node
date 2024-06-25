@@ -26,25 +26,25 @@ serde_json = "1.0.114"
 tokio = { version = "1.33", features = ["rt-multi-thread", "macros", "time"] }
 
 # encointer deps
-encointer-balances-tx-payment = { default-features = false, version = "11.0.0" }
-encointer-balances-tx-payment-rpc = { version = "11.0.0" }
-encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "11.0.0" }
-encointer-ceremonies-assignment = { version = "11.0.0" }
-encointer-primitives = { default-features = false, version = "11.0.0" }
-pallet-encointer-balances = { default-features = false, version = "11.0.0" }
-pallet-encointer-bazaar = { default-features = false, version = "11.0.0" }
-pallet-encointer-bazaar-rpc = { version = "11.0.0" }
-pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "11.0.0" }
-pallet-encointer-ceremonies = { default-features = false, version = "11.0.0" }
-pallet-encointer-ceremonies-rpc = { version = "11.0.0" }
-pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "11.0.0" }
-pallet-encointer-communities = { default-features = false, version = "11.0.0" }
-pallet-encointer-communities-rpc = { version = "11.0.0" }
-pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "11.0.0" }
-pallet-encointer-democracy = { default-features = false, version = "11.0.0" }
-pallet-encointer-faucet = { default-features = false, version = "11.0.0" }
-pallet-encointer-reputation-commitments = { default-features = false, version = "11.0.0" }
-pallet-encointer-scheduler = { default-features = false, version = "11.0.0" }
+encointer-balances-tx-payment = { default-features = false, version = "~11.1.0" }
+encointer-balances-tx-payment-rpc = { version = "~11.1.0" }
+encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "~11.1.0" }
+encointer-ceremonies-assignment = { version = "~11.1.0" }
+encointer-primitives = { default-features = false, version = "~11.2.0" }
+pallet-encointer-balances = { default-features = false, version = "~11.1.0" }
+pallet-encointer-bazaar = { default-features = false, version = "~11.1.0" }
+pallet-encointer-bazaar-rpc = { version = "~11.1.0" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "~11.1.0" }
+pallet-encointer-ceremonies = { default-features = false, version = "~11.1.0" }
+pallet-encointer-ceremonies-rpc = { version = "~11.1.0" }
+pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "~11.1.0" }
+pallet-encointer-communities = { default-features = false, version = "~11.1.0" }
+pallet-encointer-communities-rpc = { version = "~11.1.0" }
+pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "~11.1.0" }
+pallet-encointer-democracy = { default-features = false, version = "~11.2.0" }
+pallet-encointer-faucet = { default-features = false, version = "~11.2.0" }
+pallet-encointer-reputation-commitments = { default-features = false, version = "~11.1.0" }
+pallet-encointer-scheduler = { default-features = false, version = "~11.1.0" }
 
 
 # substrate deps
