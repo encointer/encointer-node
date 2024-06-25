@@ -99,6 +99,8 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		let confirmation_period = api.get_confirmation_period().await.unwrap();
 		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
 		let min_turnout_permill = api.get_min_turnout().await.unwrap();
+		println!("📜 Number of proposals: {}, global config: proposal lifetime: {:?}, confirmation period: {:?}, min turnout: {:.3}%", storage_keys.len(), proposal_lifetime, confirmation_period, min_turnout_permill as f64 / 10f64);
+		let mut proposals: Vec<(ProposalIdType, Proposal<Moment>)> = Vec::new();
 		for storage_key in storage_keys.iter() {
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
@@ -106,9 +108,13 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					.unwrap();
 			let proposal: Proposal<Moment> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
-			if !matches.all_flag() && matches!(proposal.state, ProposalState::Cancelled) {
+			if !matches.all_flag() && proposal.state.has_failed() {
 				continue
 			}
+			proposals.push((proposal_id, proposal));
+		};
+		proposals.sort_by_key(|p| p.0);
+		for (proposal_id, proposal) in proposals.iter() {
 			let start = DateTime::<Utc>::from_timestamp_millis(
 				TryInto::<i64>::try_into(proposal.start).unwrap(),
 			)
@@ -135,11 +141,11 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				maybe_at,
 			)
 			.await;
-			let tally = api.get_tally(proposal_id, maybe_at).await.unwrap().unwrap_or_default();
-			let purpose_id = api.get_purpose_id(proposal_id, maybe_at).await.unwrap().unwrap();
+			let tally = api.get_tally(*proposal_id, maybe_at).await.unwrap().unwrap_or_default();
+			let purpose_id = api.get_purpose_id(*proposal_id, maybe_at).await.unwrap().unwrap();
 			println!(
 				"Proposal id: {} (reputation commitment purpose id: {})",
-				proposal_id, purpose_id
+				*proposal_id, purpose_id
 			);
 			println!("🛠 action: {:?}", proposal.action);
 			println!("▶️ started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());

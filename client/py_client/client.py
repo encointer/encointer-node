@@ -61,10 +61,10 @@ class Client:
                 rust_client = DEFAULT_CLIENT
 
         if node_url:
-            print("connecting to remote chain: ", node_url)
+            print("🔌 connecting to remote chain: ", node_url)
             self.cli = [rust_client, '-u', node_url, '-p', str(port)]
         else:
-            print("connecting to local chain")
+            print("🔌 connecting to local chain")
             self.cli = [rust_client, '-p', str(port)]
 
     def run_cli_command(self, command, cid=None, pay_fees_in_cc=False, ipfs_cid=None, **kwargs):
@@ -83,15 +83,19 @@ class Client:
         ret = self.run_cli_command(["get-phase"])
         return ret.stdout.strip().decode("utf-8")
 
+    def get_cindex(self):
+        ret = self.run_cli_command(["get-cindex"])
+        return int(ret.stdout.strip().decode("utf-8"))
+
     def go_to_phase(self, phase):
-        print("Advancing to phase: " + str(phase))
+        print("⏱ Advancing to phase: " + str(phase))
         while True:
             p = CeremonyPhase[self.get_phase()]
             if p == phase:
-                print(f"Arrived at {p}.")
+                print(f"⏱ Arrived at {p}.")
                 return
             else:
-                print(f"Phase is: {p}. Need to advance")
+                print(f"⏱ Phase is: {p}. Need to advance")
                 self.next_phase()
 
     def list_accounts(self):
