@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.5.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "ac-primitives",
  "log",
@@ -25,7 +25,7 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.6.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "ac-primitives",
  "bitvec",
@@ -35,8 +35,8 @@ dependencies = [
  "hex",
  "log",
  "parity-scale-codec",
- "scale-bits",
- "scale-decode",
+ "scale-bits 0.4.0",
+ "scale-decode 0.10.0",
  "scale-encode",
  "scale-info",
  "scale-value",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "ac-primitives"
 version = "0.9.1"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "frame-system",
  "impl-serde",
@@ -4745,7 +4745,7 @@ dependencies = [
  "blake3",
  "frame-metadata 16.0.0",
  "parity-scale-codec",
- "scale-decode",
+ "scale-decode 0.13.1",
  "scale-info",
 ]
 
@@ -8376,14 +8376,38 @@ dependencies = [
 
 [[package]]
 name = "scale-bits"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "036575c29af9b6e4866ffb7fa055dbf623fe7a9cc159b33786de6013a6969d89"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
+name = "scale-bits"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e57b1e7f6b65ed1f04e79a85a57d755ad56d76fdf1e9bddcc9ae14f71fcdcf54"
 dependencies = [
  "parity-scale-codec",
- "scale-info",
  "scale-type-resolver",
- "serde",
+]
+
+[[package]]
+name = "scale-decode"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7caaf753f8ed1ab4752c6afb20174f03598c664724e0e32628e161c21000ff76"
+dependencies = [
+ "derive_more",
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-bits 0.4.0",
+ "scale-decode-derive",
+ "scale-info",
+ "smallvec",
 ]
 
 [[package]]
@@ -8394,20 +8418,19 @@ checksum = "e98f3262c250d90e700bb802eb704e1f841e03331c2eb815e46516c4edbf5b27"
 dependencies = [
  "derive_more",
  "parity-scale-codec",
- "primitive-types",
- "scale-bits",
- "scale-decode-derive",
+ "scale-bits 0.6.0",
  "scale-type-resolver",
  "smallvec",
 ]
 
 [[package]]
 name = "scale-decode-derive"
-version = "0.13.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bb22f574168103cdd3133b19281639ca65ad985e24612728f727339dcaf4021"
+checksum = "d3475108a1b62c7efd1b5c65974f30109a598b2f45f23c9ae030acb9686966db"
 dependencies = [
  "darling",
+ "proc-macro-crate 1.3.1",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -8415,24 +8438,24 @@ dependencies = [
 
 [[package]]
 name = "scale-encode"
-version = "0.7.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ba0b9c48dc0eb20c60b083c29447c0c4617cb7c4a4c9fef72aa5c5bc539e15e"
+checksum = "6d70cb4b29360105483fac1ed567ff95d65224a14dd275b6303ed0a654c78de5"
 dependencies = [
  "derive_more",
  "parity-scale-codec",
  "primitive-types",
- "scale-bits",
+ "scale-bits 0.4.0",
  "scale-encode-derive",
- "scale-type-resolver",
+ "scale-info",
  "smallvec",
 ]
 
 [[package]]
 name = "scale-encode-derive"
-version = "0.7.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82ab7e60e2d9c8d47105f44527b26f04418e5e624ffc034f6b4a86c0ba19c5bf"
+checksum = "995491f110efdc6bea96d6a746140e32bfceb4ea47510750a5467295a4707a25"
 dependencies = [
  "darling",
  "proc-macro-crate 1.3.1",
@@ -8472,26 +8495,21 @@ name = "scale-type-resolver"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0cded6518aa0bd6c1be2b88ac81bf7044992f0f154bfbabd5ad34f43512abcb"
-dependencies = [
- "scale-info",
- "smallvec",
-]
 
 [[package]]
 name = "scale-value"
-version = "0.16.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2cf9738c263c665144177201126bdad39d3d62512152f178f35002228026976"
+checksum = "58223c7691bf0bd46b43c9aea6f0472d1067f378d574180232358d7c6e0a8089"
 dependencies = [
  "derive_more",
  "either",
  "frame-metadata 15.1.0",
  "parity-scale-codec",
- "scale-bits",
- "scale-decode",
+ "scale-bits 0.4.0",
+ "scale-decode 0.10.0",
  "scale-encode",
  "scale-info",
- "scale-type-resolver",
 ]
 
 [[package]]
@@ -9833,7 +9851,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.17.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -9882,7 +9900,7 @@ checksum = "b285e7d183a32732fdc119f3d81b7915790191fad602b7c709ef247073c77a2e"
 [[package]]
 name = "substrate-client-keystore"
 version = "0.10.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "array-bytes",
  "async-trait",
