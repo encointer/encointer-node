@@ -338,7 +338,7 @@ def vote_on_proposals(client: Client, cid: str, voters: list):
     for proposal in proposals:
         print(
             f"checking proposal {proposal.id}, state: {proposal.state}, approval: {proposal.approval} turnout: {proposal.turnout}")
-        if proposal.state == 'Ongoing' and proposal.turnout == 0:
+        if proposal.state == 'Ongoing' and proposal.turnout <= 1:
             choices = ['aye', 'nay']
             target_approval = random.random()
             target_turnout = random.random()
