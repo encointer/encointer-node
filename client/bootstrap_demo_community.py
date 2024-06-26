@@ -43,7 +43,7 @@ number of participants assigned:  {number}"""
 def check_reputation(client, cid, account, cindex, reputation):
     rep = client.reputation(account)
     print(rep)
-    if (str(cindex), f" {cid}", reputation) not in rep:
+    if (str(cindex), cid, reputation) not in rep:
         print(f"🔎 Reputation for {account} in cid {cid} cindex {cindex} is not {reputation}")
         exit(1)
 
