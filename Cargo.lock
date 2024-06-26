@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.5.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
 dependencies = [
  "ac-primitives",
  "log",
@@ -25,7 +25,7 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.6.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
 dependencies = [
  "ac-primitives",
  "bitvec",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "ac-primitives"
 version = "0.9.1"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
 dependencies = [
  "frame-system",
  "impl-serde",
@@ -9833,7 +9833,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.17.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -9882,7 +9882,7 @@ checksum = "b285e7d183a32732fdc119f3d81b7915790191fad602b7c709ef247073c77a2e"
 [[package]]
 name = "substrate-client-keystore"
 version = "0.10.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#2a54107a99f9d8b520e2e3b3c71ab70cbff93cf5"
 dependencies = [
  "array-bytes",
  "async-trait",
