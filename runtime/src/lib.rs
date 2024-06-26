@@ -480,7 +480,7 @@ pub struct NoConversion;
 impl ConversionFromAssetBalance<u128, (), u128> for NoConversion {
 	type Error = ();
 	fn from_asset_balance(balance: Balance, _asset_id: ()) -> Result<Balance, Self::Error> {
-		return Ok(balance)
+		return Ok(balance);
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn ensure_successful(_: ()) {}
@@ -590,6 +590,7 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
+	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =

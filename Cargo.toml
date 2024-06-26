@@ -51,6 +51,7 @@ pallet-encointer-scheduler = { default-features = false, version = "~12.1.0" }
 frame-benchmarking = { version = "35.0.0", default-features = false }
 frame-benchmarking-cli = { version = "39.0.0" }
 frame-executive = { version = "35.0.0", default-features = false }
+frame-metadata-hash-extension = { version = "0.3.0", default-features = false }
 frame-support = { version = "35.0.0", default-features = false }
 frame-system = { version = "35.0.0", default-features = false }
 frame-system-benchmarking = { version = "35.0.0", default-features = false }
@@ -125,11 +126,11 @@ substrate-client-keystore = { version = "0.10.0" }
 [patch.crates-io]
 ## api client
 # todo: temporary patch until ^0.17.1 is released
-ac-compose-macros = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.13" }
-ac-node-api = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.13" }
-ac-primitives = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.13" }
-substrate-api-client = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.13" }
-substrate-client-keystore = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-sdk-1.13" }
+ac-compose-macros = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
+ac-node-api = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
+ac-primitives = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
+substrate-api-client = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
+substrate-client-keystore = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
 #ac-node-api = { path = "../../substrate-api-client/node-api" }
 #ac-primitives = { path = "../../substrate-api-client/primitives" }
 #substrate-api-client = { path = "../../substrate-api-client" }

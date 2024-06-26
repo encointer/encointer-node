@@ -28,6 +28,7 @@ futures = { workspace = true }
 log = { workspace = true }
 serde_json = { workspace = true }
 
+frame-metadata-hash-extension = { workspace = true, features = ["std"] }
 frame-system = { workspace = true, features = ["std"] }
 pallet-asset-tx-payment = { workspace = true, features = ["std"] }
 sc-cli = { workspace = true }

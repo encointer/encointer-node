@@ -15,7 +15,7 @@ dependencies = [
 [[package]]
 name = "ac-compose-macros"
 version = "0.5.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#673dfb2f152ab06a532e668af95eca93666fc910"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "ac-primitives",
  "log",
@@ -25,7 +25,7 @@ dependencies = [
 [[package]]
 name = "ac-node-api"
 version = "0.6.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#673dfb2f152ab06a532e668af95eca93666fc910"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "ac-primitives",
  "bitvec",
@@ -35,8 +35,8 @@ dependencies = [
  "hex",
  "log",
  "parity-scale-codec",
- "scale-bits",
- "scale-decode",
+ "scale-bits 0.4.0",
+ "scale-decode 0.10.0",
  "scale-encode",
  "scale-info",
  "scale-value",
@@ -53,7 +53,7 @@ dependencies = [
 [[package]]
 name = "ac-primitives"
 version = "0.9.1"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#673dfb2f152ab06a532e668af95eca93666fc910"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "frame-system",
  "impl-serde",
@@ -2148,6 +2148,7 @@ dependencies = [
  "encointer-node-notee-runtime",
  "frame-benchmarking",
  "frame-benchmarking-cli",
+ "frame-metadata-hash-extension",
  "frame-system",
  "frame-try-runtime",
  "futures",
@@ -2204,6 +2205,7 @@ dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
  "frame-executive",
+ "frame-metadata-hash-extension",
  "frame-support",
  "frame-system",
  "frame-system-benchmarking",
@@ -2718,6 +2720,22 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+]
+
+[[package]]
+name = "frame-metadata-hash-extension"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba1fa15dc90efe948898c06a3be111628230db100ffa2907e662062e9c9d1abd"
+dependencies = [
+ "array-bytes",
+ "docify",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -4716,6 +4734,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "808b50db46293432a45e63bc15ea51e0ab4c0a1647b8eb114e31a3e698dd6fbe"
 dependencies = [
  "hash-db",
+]
+
+[[package]]
+name = "merkleized-metadata"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f313fcff1d2a4bcaa2deeaa00bf7530d77d5f7bd0467a117dde2e29a75a7a17a"
+dependencies = [
+ "array-bytes",
+ "blake3",
+ "frame-metadata 16.0.0",
+ "parity-scale-codec",
+ "scale-decode 0.13.1",
+ "scale-info",
 ]
 
 [[package]]
@@ -8355,6 +8387,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "scale-bits"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e57b1e7f6b65ed1f04e79a85a57d755ad56d76fdf1e9bddcc9ae14f71fcdcf54"
+dependencies = [
+ "parity-scale-codec",
+ "scale-type-resolver",
+]
+
+[[package]]
 name = "scale-decode"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8363,9 +8405,22 @@ dependencies = [
  "derive_more",
  "parity-scale-codec",
  "primitive-types",
- "scale-bits",
+ "scale-bits 0.4.0",
  "scale-decode-derive",
  "scale-info",
+ "smallvec",
+]
+
+[[package]]
+name = "scale-decode"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e98f3262c250d90e700bb802eb704e1f841e03331c2eb815e46516c4edbf5b27"
+dependencies = [
+ "derive_more",
+ "parity-scale-codec",
+ "scale-bits 0.6.0",
+ "scale-type-resolver",
  "smallvec",
 ]
 
@@ -8391,7 +8446,7 @@ dependencies = [
  "derive_more",
  "parity-scale-codec",
  "primitive-types",
- "scale-bits",
+ "scale-bits 0.4.0",
  "scale-encode-derive",
  "scale-info",
  "smallvec",
@@ -8437,6 +8492,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "scale-type-resolver"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0cded6518aa0bd6c1be2b88ac81bf7044992f0f154bfbabd5ad34f43512abcb"
+
+[[package]]
 name = "scale-value"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8446,8 +8507,8 @@ dependencies = [
  "either",
  "frame-metadata 15.1.0",
  "parity-scale-codec",
- "scale-bits",
- "scale-decode",
+ "scale-bits 0.4.0",
+ "scale-decode 0.10.0",
  "scale-encode",
  "scale-info",
 ]
@@ -9791,7 +9852,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "0.17.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#673dfb2f152ab06a532e668af95eca93666fc910"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "ac-compose-macros",
  "ac-node-api",
@@ -9840,7 +9901,7 @@ checksum = "b285e7d183a32732fdc119f3d81b7915790191fad602b7c709ef247073c77a2e"
 [[package]]
 name = "substrate-client-keystore"
 version = "0.10.0"
-source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-sdk-1.13#673dfb2f152ab06a532e668af95eca93666fc910"
+source = "git+https://github.com/encointer/substrate-api-client.git?branch=crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13#84f2f7f0aa966d383184eee02b0873fc92aef305"
 dependencies = [
  "array-bytes",
  "async-trait",
@@ -9925,13 +9986,22 @@ version = "23.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dc993ad871b63fbba60362f3ea86583f5e7e1256e8fdcb3b5b249c9ead354bf"
 dependencies = [
+ "array-bytes",
  "build-helper",
  "cargo_metadata",
  "console",
  "filetime",
+ "frame-metadata 16.0.0",
+ "merkleized-metadata",
+ "parity-scale-codec",
  "parity-wasm",
  "polkavm-linker",
+ "sc-executor",
+ "sp-core",
+ "sp-io",
  "sp-maybe-compressed-blob",
+ "sp-tracing",
+ "sp-version",
  "strum 0.26.3",
  "tempfile",
  "toml 0.8.8",
