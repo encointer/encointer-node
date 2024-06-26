@@ -106,6 +106,10 @@ class Client:
         ret = self.run_cli_command(["new-account"])
         return ret.stdout.decode("utf-8").strip()
 
+    def export_secret(self, account):
+        ret = self.run_cli_command(["export-secret", account])
+        return ret.stdout.decode("utf-8").strip()
+
     def create_accounts(self, amount):
         return [self.new_account() for _ in range(0, amount)]
 

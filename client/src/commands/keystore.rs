@@ -6,7 +6,7 @@ use clap::ArgMatches;
 use log::info;
 use sp_application_crypto::{ed25519, sr25519, Ss58Codec};
 use sp_keystore::Keystore;
-use std::path::PathBuf;
+use std::{env, fs, io::Read, path::PathBuf};
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 pub fn new_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
@@ -36,5 +36,21 @@ pub fn list_accounts(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), clap:
 		println!("{}", pubkey.to_ss58check());
 	}
 	drop(store);
+	Ok(())
+}
+
+pub fn export_secret(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let arg_account = matches.value_of("account").unwrap();
+	let mut path = env::current_dir().expect("Failed to get current directory");
+	path.push("my_keystore");
+	let pubkey = sr25519::Public::from_ss58check(arg_account)
+		.expect("arg should be ss58 encoded public key");
+	let key_type = array_bytes::bytes2hex("", SR25519.0);
+	let key = array_bytes::bytes2hex("", pubkey);
+	path.push(key_type + key.as_str());
+	let mut file = fs::File::open(&path).expect("Failed to open keystore file");
+	let mut contents = String::new();
+	file.read_to_string(&mut contents).expect("Failed to read file contents");
+	println!("{}", contents);
 	Ok(())
 }

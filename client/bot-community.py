@@ -338,20 +338,30 @@ def vote_on_proposals(client: Client, cid: str, voters: list):
     for proposal in proposals:
         print(
             f"checking proposal {proposal.id}, state: {proposal.state}, approval: {proposal.approval} turnout: {proposal.turnout}")
-        if proposal.state == 'Ongoing':
+        if proposal.state == 'Ongoing' and proposal.turnout == 0:
             choices = ['aye', 'nay']
             target_approval = random.random()
-            print(f"setting target approval to {target_approval * 100}%")
+            target_turnout = random.random()
+            print(
+                f"🗳 voting on proposal {proposal.id} with target approval of {target_approval * 100}% and target turnout of {target_turnout * 100}%")
             weights = [target_approval, 1 - target_approval]
-
-            for voter in voters:
-                reputations = [[t[1], t[0]] for t in client.reputation(voter)]
-                if len(reputations) == 0:
-                    print(f"no reputations for {voter}. can't vote")
-                    continue
-                vote = random.choices(choices, weights)[0]
-                print(f"voting {vote} on proposal {proposal.id} with {voter} and reputations {reputations}")
-                client.vote(voter, proposal.id, vote, reputations)
+            try:
+                active_voters = voters[0:round(len(voters) * target_turnout)]
+                print(f"will attempt to vote with {len(active_voters) - 1} accounts")
+                is_first_voter_with_rep = True
+                for voter in active_voters:
+                    reputations = [[t[1], t[0]] for t in client.reputation(voter)]
+                    if len(reputations) == 0:
+                        print(f"no reputations for {voter}. can't vote")
+                        continue
+                    if is_first_voter_with_rep:
+                        print(f"👉 will not vote with {voter}: mnemonic: {client.export_secret(voter)}")
+                        is_first_voter_with_rep = False
+                    vote = random.choices(choices, weights)[0]
+                    print(f"voting {vote} on proposal {proposal.id} with {voter} and reputations {reputations}")
+                    client.vote(voter, proposal.id, vote, reputations)
+            except:
+                print(f"voting failed")
         client.await_block()
 
 

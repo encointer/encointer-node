@@ -2090,6 +2090,7 @@ dependencies = [
 name = "encointer-client-notee"
 version = "1.12.0"
 dependencies = [
+ "array-bytes",
  "chrono",
  "clap 2.34.0",
  "clap-nested",

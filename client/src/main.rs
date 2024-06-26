@@ -86,6 +86,21 @@ fn main() {
 		        .runner(commands::keystore::new_account),
 		)
 		.add_cmd(
+		    Command::new("export-secret")
+		        .description("prints the mnemonic phrase for an account in the keystore")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("account")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("AccountId to be exported"),
+						)
+		        })
+		        .runner(commands::keystore::export_secret),
+		)
+		.add_cmd(
 		    Command::new("list-accounts")
 		        .description("lists all accounts in keystore")
 		        .runner(commands::keystore::list_accounts),

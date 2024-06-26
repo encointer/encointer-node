@@ -7,6 +7,7 @@ version = "1.12.0"
 
 [dependencies]
 # todo migrate to clap >=3 https://github.com/encointer/encointer-node/issues/107
+array-bytes = "6.2.2"
 chrono = "0.4.35"
 clap = "2.33"
 clap-nested = "0.4.0"
