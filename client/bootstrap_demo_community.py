@@ -158,9 +158,9 @@ def test_reputation_caching(client, cid):
     # check if the reputation cache was updated
     rep = client.reputation(account1)
     print(rep)
-    if ('1', ' sqm1v79dF6b', 'VerifiedLinked(2)') not in rep or (
-            '2', ' sqm1v79dF6b', 'VerifiedLinked(3)') not in rep or (
-            '3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+    if ('1', 'sqm1v79dF6b', 'VerifiedLinked(2)') not in rep or (
+            '2', 'sqm1v79dF6b', 'VerifiedLinked(3)') not in rep or (
+            '3', 'sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
         print("wrong reputation")
         exit(1)
 
