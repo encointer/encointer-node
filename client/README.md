@@ -156,3 +156,11 @@ create a proposal:
 ```
 RUST_LOG=info ../target/release/encointer-client-notee -u wss://rococo.api.encointer.org -p 443 new-community test-data/leu.rococo.json
 ```
+
+## Logging
+
+A reasonably verbose log:
+
+```bash
+export RUST_LOG=debug,substrate_api_client=warn,ws=warn,mio=warn,ac_node_api=warn,sp_io=warn,tungstenite=warn,rustls=info,soketto=info
+```

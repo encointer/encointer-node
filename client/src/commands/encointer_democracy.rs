@@ -80,6 +80,7 @@ pub fn submit_update_nominal_income_proposal(
 	})
 	.into()
 }
+
 pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -258,7 +259,7 @@ pub fn vote(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await;
 		println!("Vote submitted: {vote_raw:?} for proposal {proposal_id:?}");
 		Ok(())
 	})

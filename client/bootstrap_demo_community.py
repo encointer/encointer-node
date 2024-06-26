@@ -43,7 +43,7 @@ number of participants assigned:  {number}"""
 def check_reputation(client, cid, account, cindex, reputation):
     rep = client.reputation(account)
     print(rep)
-    if (str(cindex), f" {cid}", reputation) not in rep:
+    if (str(cindex), cid, reputation) not in rep:
         print(f"🔎 Reputation for {account} in cid {cid} cindex {cindex} is not {reputation}")
         exit(1)
 
@@ -158,9 +158,9 @@ def test_reputation_caching(client, cid):
     # check if the reputation cache was updated
     rep = client.reputation(account1)
     print(rep)
-    if ('1', ' sqm1v79dF6b', 'VerifiedLinked(2)') not in rep or (
-            '2', ' sqm1v79dF6b', 'VerifiedLinked(3)') not in rep or (
-            '3', ' sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+    if ('1', 'sqm1v79dF6b', 'VerifiedLinked(2)') not in rep or (
+            '2', 'sqm1v79dF6b', 'VerifiedLinked(3)') not in rep or (
+            '3', 'sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
         print("wrong reputation")
         exit(1)
 
@@ -175,7 +175,7 @@ def test_reputation_caching(client, cid):
     rep = client.reputation(account1)
     print(rep)
     # after the registration the second reputation should now be linked
-    if ('3', ' sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
+    if ('3', 'sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
         print("reputation not linked")
         exit(1)
 
@@ -404,7 +404,7 @@ def test_democracy(client, cid):
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
-@click.option('--signer', default='//Bob', help='optional account keypair creating the community')
+@click.option('--signer', help='optional account keypair creating the community')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')

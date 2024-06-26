@@ -14,14 +14,13 @@ import subprocess
 from time import sleep
 from py_client.client import Client
 
-
 app = flask.Flask(__name__)
 app.config['DEBUG'] = True
 CLIENT = Client()
 
 
 def faucet(accounts):
-    for x in range(0, 180):  # try 100 times
+    for x in range(0, 1):  # try multiple
         try:
             CLIENT.faucet(accounts, is_faucet=True)
             CLIENT.await_block()  # wait for transaction to complete
@@ -50,5 +49,5 @@ def faucet_service():
     else:
         return "no accounts provided to drip to\n"
 
-app.run()
 
+app.run()
