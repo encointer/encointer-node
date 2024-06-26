@@ -175,7 +175,7 @@ def test_reputation_caching(client, cid):
     rep = client.reputation(account1)
     print(rep)
     # after the registration the second reputation should now be linked
-    if ('3', ' sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
+    if ('3', 'sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
         print("reputation not linked")
         exit(1)
 
