@@ -18,8 +18,8 @@ encointer-ceremonies-assignment = { workspace = true, features = ["std"] }
 encointer-node-notee-runtime = { path = "../../runtime" }
 encointer-primitives = { workspace = true, features = ["std"] }
 
+ac-keystore = { workspace = true }
 substrate-api-client = { workspace = true }
-substrate-client-keystore = { workspace = true }
 
 # substrate deps
 sp-core = { workspace = true, features = ["std"] }

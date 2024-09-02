@@ -136,7 +136,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node-notee"),
 	impl_name: create_runtime_str!("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 34,
+	spec_version: 350,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -489,19 +489,14 @@ impl ConversionFromAssetBalance<u128, (), u128> for NoConversion {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = pallet_balances::Pallet<Runtime>;
-	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type RuntimeEvent = RuntimeEvent;
-	type OnSlash = (); //No proposal
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod; //Cannot be 0: Error: Thread 'tokio-runtime-worker' panicked at 'attempt to calculate the remainder with a divisor of zero
 	type Burn = (); //No burn
 	type BurnDestination = (); //No burn
 	type SpendFunds = (); //No spend, no bounty
 	type MaxApprovals = MaxApprovals;
-	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>; //No spend, no bounty
 	type AssetKind = ();
 	type Beneficiary = AccountId;

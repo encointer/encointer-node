@@ -3,7 +3,7 @@ name = "encointer-client-notee"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 #keep with node version. major, minor and patch
-version = "1.13.0"
+version = "1.14.0"
 
 [dependencies]
 # todo migrate to clap >=3 https://github.com/encointer/encointer-node/issues/107
@@ -33,8 +33,8 @@ pallet-encointer-communities = { workspace = true, features = ["std"] }
 pallet-encointer-scheduler = { workspace = true, features = ["std"] }
 
 # scs deps
+ac-keystore = { workspace = true }
 substrate-api-client = { workspace = true, features = ["std"] }
-substrate-client-keystore = { workspace = true }
 
 # substrate deps
 frame-support = { workspace = true, features = ["std"] }

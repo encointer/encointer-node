@@ -26,76 +26,76 @@ serde_json = "1.0.114"
 tokio = { version = "1.33", features = ["rt-multi-thread", "macros", "time"] }
 
 # encointer deps
-encointer-balances-tx-payment = { default-features = false, version = "~12.1.0" }
-encointer-balances-tx-payment-rpc = { version = "~12.1.0" }
-encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "~12.1.0" }
-encointer-ceremonies-assignment = { version = "~12.1.0" }
-encointer-primitives = { default-features = false, version = "~12.2.0" }
-pallet-encointer-balances = { default-features = false, version = "~12.1.0" }
-pallet-encointer-bazaar = { default-features = false, version = "~12.1.0" }
-pallet-encointer-bazaar-rpc = { version = "~12.1.0" }
-pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "~12.1.0" }
-pallet-encointer-ceremonies = { default-features = false, version = "~12.1.0" }
-pallet-encointer-ceremonies-rpc = { version = "~12.1.0" }
-pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "~12.1.0" }
-pallet-encointer-communities = { default-features = false, version = "~12.1.0" }
-pallet-encointer-communities-rpc = { version = "~12.1.0" }
-pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "~12.1.0" }
-pallet-encointer-democracy = { default-features = false, version = "~12.2.0" }
-pallet-encointer-faucet = { default-features = false, version = "~12.2.0" }
-pallet-encointer-reputation-commitments = { default-features = false, version = "~12.1.0" }
-pallet-encointer-scheduler = { default-features = false, version = "~12.1.0" }
+encointer-balances-tx-payment = { default-features = false, version = "~13.1.0" }
+encointer-balances-tx-payment-rpc = { version = "~13.1.0" }
+encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "~13.1.0" }
+encointer-ceremonies-assignment = { version = "~13.1.0" }
+encointer-primitives = { default-features = false, version = "~13.2.0" }
+pallet-encointer-balances = { default-features = false, version = "~13.1.0" }
+pallet-encointer-bazaar = { default-features = false, version = "~13.1.0" }
+pallet-encointer-bazaar-rpc = { version = "~13.1.0" }
+pallet-encointer-bazaar-rpc-runtime-api = { default-features = false, version = "~13.1.0" }
+pallet-encointer-ceremonies = { default-features = false, version = "~13.1.0" }
+pallet-encointer-ceremonies-rpc = { version = "~13.1.0" }
+pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, version = "~13.1.0" }
+pallet-encointer-communities = { default-features = false, version = "~13.1.0" }
+pallet-encointer-communities-rpc = { version = "~13.1.0" }
+pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "~13.1.0" }
+pallet-encointer-democracy = { default-features = false, version = "~13.2.0" }
+pallet-encointer-faucet = { default-features = false, version = "~13.2.0" }
+pallet-encointer-reputation-commitments = { default-features = false, version = "~13.1.0" }
+pallet-encointer-scheduler = { default-features = false, version = "~13.1.0" }
 
 
 # substrate deps
-frame-benchmarking = { version = "35.0.0", default-features = false }
-frame-benchmarking-cli = { version = "39.0.0" }
-frame-executive = { version = "35.0.0", default-features = false }
-frame-metadata-hash-extension = { version = "0.3.0", default-features = false }
-frame-support = { version = "35.0.0", default-features = false }
-frame-system = { version = "35.0.0", default-features = false }
-frame-system-benchmarking = { version = "35.0.0", default-features = false }
+frame-benchmarking = { version = "36.0.0", default-features = false }
+frame-benchmarking-cli = { version = "40.0.0" }
+frame-executive = { version = "36.0.0", default-features = false }
+frame-metadata-hash-extension = { version = "0.4.0", default-features = false }
+frame-support = { version = "36.0.0", default-features = false }
+frame-system = { version = "36.1.0", default-features = false }
+frame-system-benchmarking = { version = "36.0.0", default-features = false }
 frame-system-rpc-runtime-api = { version = "33.0.0", default-features = false }
-frame-try-runtime = { version = "0.41.0", default-features = false }
+frame-try-runtime = { version = "0.42.0", default-features = false }
 hex-literal = { version = "0.4.1" }
-jsonrpsee = { version = "0.22.0", features = ["server"] }
-pallet-asset-tx-payment = { version = "35.0.0", default-features = false }
-pallet-aura = { version = "34.0.0", default-features = false }
-pallet-balances = { version = "36.0.0", default-features = false }
-pallet-grandpa = { version = "35.0.0", default-features = false }
-pallet-insecure-randomness-collective-flip = { version = "23.0.0", default-features = false }
-pallet-proxy = { version = "35.0.0", default-features = false }
-pallet-scheduler = { version = "36.0.0", default-features = false }
-pallet-sudo = { version = "35.0.0", default-features = false }
-pallet-timestamp = { version = "34.0.0", default-features = false }
-pallet-transaction-payment = { version = "35.0.0", default-features = false }
-pallet-transaction-payment-rpc = { version = "37.0.0" }
-pallet-transaction-payment-rpc-runtime-api = { version = "35.0.0", default-features = false }
-pallet-treasury = { version = "34.0.0", default-features = false }
-pallet-utility = { version = "35.0.0", default-features = false }
-sc-basic-authorship = { version = "0.41.0" }
-sc-chain-spec = "34.0.0"
-sc-cli = { version = "0.43.0" }
-sc-client-api = { version = "35.0.0" }
-sc-consensus = { version = "0.40.0" }
-sc-consensus-aura = { version = "0.41.0" }
-sc-consensus-grandpa = { version = "0.26.0" }
+jsonrpsee = { version = "0.23", features = ["server"] }
+pallet-asset-tx-payment = { version = "36.0.0", default-features = false }
+pallet-aura = { version = "35.0.0", default-features = false }
+pallet-balances = { version = "37.0.0", default-features = false }
+pallet-grandpa = { version = "36.0.0", default-features = false }
+pallet-insecure-randomness-collective-flip = { version = "24.0.0", default-features = false }
+pallet-proxy = { version = "36.0.0", default-features = false }
+pallet-scheduler = { version = "37.0.0", default-features = false }
+pallet-sudo = { version = "36.0.0", default-features = false }
+pallet-timestamp = { version = "35.0.0", default-features = false }
+pallet-transaction-payment = { version = "36.0.0", default-features = false }
+pallet-transaction-payment-rpc = { version = "38.0.0" }
+pallet-transaction-payment-rpc-runtime-api = { version = "36.0.0", default-features = false }
+pallet-treasury = { version = "35.0.0", default-features = false }
+pallet-utility = { version = "36.0.0", default-features = false }
+sc-basic-authorship = { version = "0.42.0" }
+sc-chain-spec = "35.0.0"
+sc-cli = { version = "0.44.0" }
+sc-client-api = { version = "35.1.0" }
+sc-consensus = { version = "0.41.0" }
+sc-consensus-aura = { version = "0.42.0" }
+sc-consensus-grandpa = { version = "0.27.0" }
 sc-executor = { version = "0.39.0" }
 sc-keystore = { version = "32.0.0" }
-sc-network = { version = "0.41.0" }
-sc-offchain = { version = "36.0.0" }
-sc-rpc = "36.0.0"
-sc-rpc-api = "0.40.0"
-sc-service = { version = "0.42.0" }
-sc-telemetry = { version = "21.0.0" }
+sc-network = { version = "0.42.0" }
+sc-offchain = { version = "37.0.0" }
+sc-rpc = "37.0.0"
+sc-rpc-api = "0.41.0"
+sc-service = { version = "0.43.0" }
+sc-telemetry = { version = "22.0.0" }
 sc-transaction-pool = { version = "35.0.0" }
 sc-transaction-pool-api = { version = "35.0.0" }
 sp-api = { version = "33.0.0", default-features = false }
 sp-application-crypto = { version = "37.0.0", default-features = false }
 sp-arithmetic = { version = "26.0.0", default-features = false }
 sp-block-builder = { version = "33.0.0", default-features = false }
-sp-blockchain = "35.0.0"
-sp-consensus = { version = "0.39.0" }
+sp-blockchain = "35.1.0"
+sp-consensus = { version = "0.39.1" }
 sp-consensus-aura = { version = "0.39.0", default-features = false }
 sp-consensus-grandpa = { version = "20.0.0" }
 sp-core = { version = "34.0.0", default-features = false }
@@ -114,27 +114,30 @@ sp-storage = { version = "21.0.0", default-features = false }
 sp-timestamp = { version = "33.0.0" }
 sp-transaction-pool = { version = "33.0.0", default-features = false }
 sp-version = { version = "36.0.0", default-features = false }
-substrate-frame-rpc-system = { version = "35.0.0" }
+substrate-frame-rpc-system = { version = "36.0.0" }
 
 substrate-wasm-builder = "23.0.0"
 substrate-build-script-utils = "11.0.0"
 
-substrate-api-client = { version = "0.17.0", features = ["jsonrpsee-client"] }
-substrate-client-keystore = { version = "0.10.0" }
-#only while debugging
+substrate-api-client = { version = "0.18.0", features = ["jsonrpsee-client"] }
+ac-keystore = { version = "0.18.0" }
 
 [patch.crates-io]
 ## api client
-# todo: temporary patch until ^0.17.1 is released
-ac-compose-macros = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
-ac-node-api = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
-ac-primitives = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
-substrate-api-client = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
-substrate-client-keystore = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.17.0-patch-for-stable-check-metadata-hash-sdk-1.13" }
+# patch needed because release 0.18 isn't depending on sdk 1.14
+ac-compose-macros = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.18.0-sdk-v1.14" }
+ac-keystore = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.18.0-sdk-v1.14" }
+ac-node-api = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.18.0-sdk-v1.14" }
+ac-primitives = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.18.0-sdk-v1.14" }
+substrate-api-client = { git = "https://github.com/encointer/substrate-api-client.git", branch = "crates-io-v0.18.0-sdk-v1.14" }
+## local patching
+#ac-compose-macros = { path = "../../substrate-api-client/compose-macros" }
 #ac-node-api = { path = "../../substrate-api-client/node-api" }
 #ac-primitives = { path = "../../substrate-api-client/primitives" }
 #substrate-api-client = { path = "../../substrate-api-client" }
-#substrate-client-keystore = { path = "../../substrate-api-client/client-keystore" }
+#ac-keystore = { path = "../../substrate-api-client/keystore" }
+
+
 ## encointer
 #encointer-balances-tx-payment = { path = "../pallets/balances-tx-payment" }
 #encointer-balances-tx-payment-rpc = { path = "../pallets/balances-tx-payment/rpc" }
