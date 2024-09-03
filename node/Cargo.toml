@@ -89,11 +89,19 @@ frame-try-runtime = { workspace = true, optional = true }
 default = []
 runtime-benchmarks = [
     "encointer-node-notee-runtime/runtime-benchmarks",
-    "frame-benchmarking/runtime-benchmarks",
     "frame-benchmarking-cli/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+    "pallet-asset-tx-payment/runtime-benchmarks",
+    "sc-service/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = [
     "encointer-node-notee-runtime/try-runtime",
+    "frame-system/try-runtime",
+    "frame-try-runtime/try-runtime",
+    "pallet-asset-tx-payment/try-runtime",
+    "sp-runtime/try-runtime",
 ]
