@@ -119,7 +119,7 @@ substrate-frame-rpc-system = { version = "36.0.0" }
 substrate-wasm-builder = "23.0.0"
 substrate-build-script-utils = "11.0.0"
 
-substrate-api-client = { version = "0.18.0", features = ["jsonrpsee-client"] }
+substrate-api-client = { version = "0.18.0", features = ["jsonrpsee-client", "disable-metadata-hash-check"] }
 ac-keystore = { version = "0.18.0" }
 
 [patch.crates-io]
