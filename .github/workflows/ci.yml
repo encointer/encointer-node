@@ -5,7 +5,7 @@ on:
   push:
     branches: [ master, sgx-master ]
     tags:
-    - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches: [ master, sgx-master ]
 #  schedule:
@@ -29,38 +29,38 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Install protoc
-      run: sudo apt-get install protobuf-compiler
+      - name: Install protoc
+        run: sudo apt-get install protobuf-compiler
 
-      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-    - name: Setup Rust toolchain
-      run: rustup show
+        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: rustup show
 
-    - name: Cache Rust Dependecies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-          enclave/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Rust Dependecies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            enclave/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Build
-      run: cargo build --release
-    - name: Upload node
-      uses: actions/upload-artifact@v3
-      with:
-        name: encointer-node-notee-${{ github.sha }}
-        path: target/release/encointer-node-notee
-    - name: Upload CLI client
-      uses: actions/upload-artifact@v3
-      with:
-        name: encointer-client-notee-${{ github.sha }}
-        path: target/release/encointer-client-notee
+      - name: Build
+        run: cargo build --release
+      - name: Upload node
+        uses: actions/upload-artifact@v3
+        with:
+          name: encointer-node-notee-${{ github.sha }}
+          path: target/release/encointer-node-notee
+      - name: Upload CLI client
+        uses: actions/upload-artifact@v3
+        with:
+          name: encointer-client-notee-${{ github.sha }}
+          path: target/release/encointer-client-notee
 
   build-try-runtime-and-benchmarks:
     runs-on: ubuntu-latest
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        runtime: ["encointer-node-notee"]
+        runtime: [ "encointer-node-notee" ]
     steps:
       - uses: actions/checkout@v3
 
@@ -120,7 +120,7 @@ jobs:
         uses: chevdor/srtool-actions@v0.9.2
         with:
           image: paritytech/srtool
-          tag: 1.74.0
+          tag: 1.77.0
           chain: ${{ matrix.runtime }}
           runtime_dir: runtime
 
@@ -178,28 +178,28 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Install protoc
-      run: sudo apt-get install protobuf-compiler
+      - name: Install protoc
+        run: sudo apt-get install protobuf-compiler
 
-      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-    - name: Setup Rust toolchain
-      run: rustup show
+        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: rustup show
 
-    - name: Cache Rust Dependecies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-          enclave/target
-        key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Rust Dependecies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            enclave/target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: cargo test
-      run: cargo test --all
+      - name: cargo test
+        run: cargo test --all
 
   check:
     name: Rust check ${{ matrix.check }} (${{ matrix.rust-target }})
@@ -261,60 +261,60 @@ jobs:
       matrix:
         test: [ test_bootstrap_demo_community.sh, test_bot_community.sh, test_register_business.sh ]
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: encointer-node-notee-${{ github.sha }}
+      - name: download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: encointer-node-notee-${{ github.sha }}
 
-    - name: download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: encointer-client-notee-${{ github.sha }}
+      - name: download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: encointer-client-notee-${{ github.sha }}
 
-    - name: fix permissions of artifacts and move to original folder
-      run: |
-        chmod +x encointer-node-notee
-        chmod +x encointer-client-notee
-        mkdir -p target/release
-        mv encointer-*-notee target/release
+      - name: fix permissions of artifacts and move to original folder
+        run: |
+          chmod +x encointer-node-notee
+          chmod +x encointer-client-notee
+          mkdir -p target/release
+          mv encointer-*-notee target/release
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.7
-    - name: install py dependencies
-      run: ./scripts/install_python_deps.sh
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - name: install py dependencies
+        run: ./scripts/install_python_deps.sh
 
-    - name: Set up ipfs
-      uses: ibnesayeed/setup-ipfs@master
-      with:
-        run_daemon: true
+      - name: Set up ipfs
+        uses: ibnesayeed/setup-ipfs@master
+        with:
+          run_daemon: true
 
-    - name: start dev node
-      run:
-        ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
+      - name: start dev node
+        run:
+          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
 
-    - name: start faucet service
-      run: |
-        cd client
-        python faucet.py &
+      - name: start faucet service
+        run: |
+          cd client
+          python faucet.py &
 
-    - name: start phase accelerator service
-      run: |
-        cd client
-        python phase.py --idle-blocks 3 &
+      - name: start phase accelerator service
+        run: |
+          cd client
+          python phase.py --idle-blocks 3 &
 
-    - name: Test ${{ matrix.test }}
-      working-directory: ./scripts/ci
-      run: source ./init_env.sh && ./${{ matrix.test }}
+      - name: Test ${{ matrix.test }}
+        working-directory: ./scripts/ci
+        run: source ./init_env.sh && ./${{ matrix.test }}
 
   release:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    needs: [build, unit-tests, check, integration-test]
+    needs: [ build, unit-tests, check, integration-test ]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}
       asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
@@ -358,10 +358,10 @@ jobs:
   publish-runtimes:
     name: Publish Runtimes
     runs-on: ubuntu-latest
-    needs: [release, build-runtimes]
+    needs: [ release, build-runtimes ]
     strategy:
       matrix:
-        runtime: ["encointer-node-notee"]
+        runtime: [ "encointer-node-notee" ]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
