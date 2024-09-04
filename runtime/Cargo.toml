@@ -76,7 +76,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
 
 [build-dependencies]
-substrate-wasm-builder = { workspace = true, optional = true, features = ["metadata-hash"] }
+substrate-wasm-builder = { workspace = true, optional = true, default-features = true, features = ["metadata-hash"] }
 
 [features]
 default = ["std"]
@@ -92,7 +92,7 @@ std = [
     "frame-system-benchmarking?/std",
     "frame-system-rpc-runtime-api/std",
     "frame-system/std",
-    "frame-try-runtime/std",
+    "frame-try-runtime?/std",
     "log/std",
     "pallet-asset-tx-payment/std",
     "pallet-aura/std",
@@ -137,6 +137,7 @@ std = [
     "sp-transaction-pool/std",
     "sp-version/std",
     "substrate-wasm-builder",
+    "serde?/std",
 ]
 runtime-benchmarks = [
     "encointer-balances-tx-payment/runtime-benchmarks",
