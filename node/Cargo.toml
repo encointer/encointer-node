@@ -26,7 +26,7 @@ substrate-build-script-utils = { workspace = true }
 clap = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["std"] }
 
 frame-metadata-hash-extension = { workspace = true, features = ["std"] }
 frame-system = { workspace = true, features = ["std"] }

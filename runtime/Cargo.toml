@@ -10,9 +10,11 @@ repository = "https://github.com/encointer/encointer-node/"
 version = "1.14.350"
 
 [dependencies]
+log = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true, optional = true }
+serde_json = { features = ["alloc"], workspace = true }
 
 # encointer deps
 encointer-balances-tx-payment = { workspace = true }
@@ -91,6 +93,7 @@ std = [
     "frame-system-rpc-runtime-api/std",
     "frame-system/std",
     "frame-try-runtime/std",
+    "log/std",
     "pallet-asset-tx-payment/std",
     "pallet-aura/std",
     "pallet-balances/std",
@@ -118,6 +121,7 @@ std = [
     "parity-scale-codec/std",
     "scale-info/std",
     "serde",
+    "serde_json/std",
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",
