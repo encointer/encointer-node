@@ -5,6 +5,7 @@
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
 use frame_support::{
 	derive_impl,
 	genesis_builder_helper::{build_state, get_preset},
@@ -136,7 +137,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node-notee"),
 	impl_name: create_runtime_str!("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 34,
+	spec_version: 350,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -489,19 +490,14 @@ impl ConversionFromAssetBalance<u128, (), u128> for NoConversion {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = pallet_balances::Pallet<Runtime>;
-	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type RuntimeEvent = RuntimeEvent;
-	type OnSlash = (); //No proposal
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod; //Cannot be 0: Error: Thread 'tokio-runtime-worker' panicked at 'attempt to calculate the remainder with a divisor of zero
 	type Burn = (); //No burn
 	type BurnDestination = (); //No burn
 	type SpendFunds = (); //No spend, no bounty
 	type MaxApprovals = MaxApprovals;
-	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>; //No spend, no bounty
 	type AssetKind = ();
 	type Beneficiary = AccountId;
@@ -509,6 +505,8 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter = NoConversion;
 	type PayoutPeriod = PayoutSpendPeriod;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl pallet_encointer_reputation_commitments::Config for Runtime {
@@ -615,12 +613,8 @@ pub type Executive = frame_executive::Executive<
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
-#[macro_use]
-extern crate frame_benchmarking;
-
-#[cfg(feature = "runtime-benchmarks")]
 mod benches {
-	define_benchmarks!(
+	frame_benchmarking::define_benchmarks!(
 		[frame_benchmarking, BaselineBench::<Runtime>]
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
@@ -884,6 +878,7 @@ impl_runtime_apis! {
 			use baseline::Pallet as BaselineBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
+
 			list_benchmarks!(list, extra);
 
 			let storage_info = AllPalletsWithSystem::storage_info();

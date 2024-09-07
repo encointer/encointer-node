@@ -10,7 +10,7 @@ log = { workspace = true }
 maybe-async = { workspace = true }
 parity-scale-codec = { workspace = true }
 serde = { workspace = true, features = ["std"] }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["std"] }
 tokio = { workspace = true }
 
 # encointer deps
@@ -18,8 +18,8 @@ encointer-ceremonies-assignment = { workspace = true, features = ["std"] }
 encointer-node-notee-runtime = { path = "../../runtime" }
 encointer-primitives = { workspace = true, features = ["std"] }
 
+ac-keystore = { workspace = true }
 substrate-api-client = { workspace = true }
-substrate-client-keystore = { workspace = true }
 
 # substrate deps
 sp-core = { workspace = true, features = ["std"] }

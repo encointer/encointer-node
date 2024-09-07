@@ -198,6 +198,7 @@ impl Encode for OpaqueCall {
 
 /// Utils around key management for
 pub mod keys {
+	use ac_keystore::LocalKeystore;
 	use encointer_node_notee_runtime::{AccountId, Signature};
 	use log::{debug, trace};
 	use sp_application_crypto::sr25519;
@@ -207,7 +208,6 @@ pub mod keys {
 	};
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 	use std::path::PathBuf;
-	use substrate_client_keystore::LocalKeystore;
 
 	type AccountPublic = <Signature as Verify>::Signer;
 

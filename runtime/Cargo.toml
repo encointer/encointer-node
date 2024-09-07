@@ -7,12 +7,14 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "1.13.34"
+version = "1.14.350"
 
 [dependencies]
+log = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true, optional = true }
+serde_json = { features = ["alloc"], workspace = true }
 
 # encointer deps
 encointer-balances-tx-payment = { workspace = true }
@@ -74,7 +76,7 @@ frame-system-benchmarking = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
 
 [build-dependencies]
-substrate-wasm-builder = { workspace = true, optional = true, features = ["metadata-hash"] }
+substrate-wasm-builder = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
@@ -83,12 +85,15 @@ std = [
     "encointer-balances-tx-payment/std",
     "encointer-primitives/serde_derive",
     "encointer-primitives/std",
+    "frame-benchmarking?/std",
     "frame-executive/std",
     "frame-metadata-hash-extension/std",
     "frame-support/std",
+    "frame-system-benchmarking?/std",
     "frame-system-rpc-runtime-api/std",
     "frame-system/std",
-    "frame-try-runtime/std",
+    "frame-try-runtime?/std",
+    "log/std",
     "pallet-asset-tx-payment/std",
     "pallet-aura/std",
     "pallet-balances/std",
@@ -106,14 +111,17 @@ std = [
     "pallet-grandpa/std",
     "pallet-insecure-randomness-collective-flip/std",
     "pallet-proxy/std",
+    "pallet-scheduler/std",
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment-rpc-runtime-api/std",
     "pallet-transaction-payment/std",
     "pallet-treasury/std",
+    "pallet-utility/std",
     "parity-scale-codec/std",
     "scale-info/std",
     "serde",
+    "serde_json/std",
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",
@@ -123,17 +131,23 @@ std = [
     "sp-offchain/std",
     "sp-runtime/std",
     "sp-session/std",
+    "sp-staking/std",
     "sp-std/std",
+    "sp-storage/std",
     "sp-transaction-pool/std",
     "sp-version/std",
     "substrate-wasm-builder",
+    "serde?/std",
 ]
 runtime-benchmarks = [
+    "encointer-balances-tx-payment/runtime-benchmarks",
+    "encointer-primitives/runtime-benchmarks",
     "frame-benchmarking/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "frame-system-benchmarking/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
     "hex-literal",
+    "pallet-asset-tx-payment/runtime-benchmarks",
     "pallet-balances/runtime-benchmarks",
     "pallet-encointer-balances/runtime-benchmarks",
     "pallet-encointer-bazaar/runtime-benchmarks",
@@ -144,11 +158,19 @@ runtime-benchmarks = [
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
     "pallet-grandpa/runtime-benchmarks",
+    "pallet-proxy/runtime-benchmarks",
+    "pallet-scheduler/runtime-benchmarks",
+    "pallet-sudo/runtime-benchmarks",
     "pallet-timestamp/runtime-benchmarks",
+    "pallet-treasury/runtime-benchmarks",
+    "pallet-utility/runtime-benchmarks",
     "sp-runtime/runtime-benchmarks",
+    "sp-staking/runtime-benchmarks",
 ]
 
 try-runtime = [
+    "encointer-balances-tx-payment/try-runtime",
+    "encointer-primitives/try-runtime",
     "frame-executive/try-runtime",
     "frame-support/try-runtime",
     "frame-system/try-runtime",
@@ -173,4 +195,13 @@ try-runtime = [
     "pallet-transaction-payment/try-runtime",
     "pallet-treasury/try-runtime",
     "pallet-utility/try-runtime",
+    "sp-runtime/try-runtime",
 ]
+
+# Enable metadata hash generation at compile time for the `CheckMetadataHash` extension.
+metadata-hash = ["substrate-wasm-builder?/metadata-hash"]
+
+# A feature that should be enabled when the runtime should be built for on-chain
+# deployment. This will disable stuff that shouldn't be part of the on-chain wasm
+# to make it smaller, like logging for example.
+on-chain-release-build = ["metadata-hash", "sp-api/disable-logging"]

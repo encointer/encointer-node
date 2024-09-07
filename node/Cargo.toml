@@ -11,7 +11,7 @@ repository = "https://github.com/encointer/encointer-node"
 #   * Align major and minor version with polkadot-sdk major.minor.
 #   * Bump patch version for new releases, and make it the release tag.
 #   * The client should follow this version.
-version = "1.13.0"
+version = "1.14.0"
 
 [[bin]]
 name = "encointer-node-notee"
@@ -26,7 +26,7 @@ substrate-build-script-utils = { workspace = true }
 clap = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["std"] }
 
 frame-metadata-hash-extension = { workspace = true, features = ["std"] }
 frame-system = { workspace = true, features = ["std"] }
@@ -89,11 +89,19 @@ frame-try-runtime = { workspace = true, optional = true }
 default = []
 runtime-benchmarks = [
     "encointer-node-notee-runtime/runtime-benchmarks",
-    "frame-benchmarking/runtime-benchmarks",
     "frame-benchmarking-cli/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+    "pallet-asset-tx-payment/runtime-benchmarks",
+    "sc-service/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = [
     "encointer-node-notee-runtime/try-runtime",
+    "frame-system/try-runtime",
+    "frame-try-runtime/try-runtime",
+    "pallet-asset-tx-payment/try-runtime",
+    "sp-runtime/try-runtime",
 ]

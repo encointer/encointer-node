@@ -2,12 +2,12 @@ use crate::{
 	cli_args::EncointerArgsExtractor,
 	utils::keys::{KEYSTORE_PATH, SR25519},
 };
+use ac_keystore::{KeystoreExt, LocalKeystore};
 use clap::ArgMatches;
 use log::info;
 use sp_application_crypto::{ed25519, sr25519, Ss58Codec};
 use sp_keystore::Keystore;
 use std::{env, fs, io::Read, path::PathBuf};
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
 pub fn new_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
