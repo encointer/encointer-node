@@ -49,6 +49,7 @@ where
 	C::Api:
 		pallet_encointer_communities_rpc_runtime_api::CommunitiesApi<Block, AccountId, BlockNumber>,
 	C::Api: pallet_encointer_bazaar_rpc_runtime_api::BazaarApi<Block, AccountId>,
+	C::Api: pallet_encointer_treasuries_rpc_runtime_api::TreasuriesApi<Block, AccountId>,
 	C::Api: encointer_balances_tx_payment_rpc_runtime_api::BalancesTxPaymentApi<
 		Block,
 		Balance,
@@ -63,6 +64,7 @@ where
 	use pallet_encointer_bazaar_rpc::{BazaarApiServer, BazaarRpc};
 	use pallet_encointer_ceremonies_rpc::{CeremoniesApiServer, CeremoniesRpc};
 	use pallet_encointer_communities_rpc::{CommunitiesApiServer, CommunitiesRpc};
+	use pallet_encointer_treasuries_rpc::{TreasuriesApiServer, TreasuriesRpc};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -75,6 +77,7 @@ where
 	module.merge(BalancesTxPaymentRpc::new(client.clone()).into_rpc())?;
 
 	module.merge(BazaarRpc::new(client.clone()).into_rpc())?;
+	module.merge(TreasuriesRpc::new(client.clone()).into_rpc())?;
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed

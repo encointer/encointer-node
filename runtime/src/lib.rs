@@ -536,6 +536,15 @@ impl pallet_encointer_democracy::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_democracy::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const TreasuriesPalletId: PalletId = PalletId(*b"trsrysId");
+}
+impl pallet_encointer_treasuries::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = pallet_balances::Pallet<Runtime>;
+	type PalletId = TreasuriesPalletId;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub struct Runtime
@@ -566,6 +575,8 @@ construct_runtime!(
 		EncointerReputationCommitments: pallet_encointer_reputation_commitments::{Pallet, Call, Storage, Event<T>} = 65,
 		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 66,
 		EncointerDemocracy: pallet_encointer_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 67,
+		EncointerTreasuries: pallet_encointer_treasuries::{Pallet, Event<T>} = 68,
+
 	}
 );
 
@@ -863,6 +874,13 @@ impl_runtime_apis! {
 			BalanceToCommunityBalance::<Runtime>::to_asset_balance(amount, asset_id).map_err(|_e|
 				encointer_balances_tx_payment_rpc_runtime_api::Error::RuntimeError
 			)
+		}
+	}
+
+	impl pallet_encointer_treasuries_rpc_runtime_api::TreasuriesApi<Block, AccountId> for Runtime {
+
+		fn get_community_treasury_account_unchecked(maybecid: &Option<CommunityIdentifier>) -> AccountId {
+			EncointerTreasuries::get_community_treasury_account_unchecked(*maybecid)
 		}
 	}
 

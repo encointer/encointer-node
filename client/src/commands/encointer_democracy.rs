@@ -7,7 +7,7 @@ use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, CeremoniesApi, CommunitiesApi, DemocracyApi, EncointerXt,
 	Moment, ParentchainExtrinsicSigner, SchedulerApi,
 };
-use encointer_node_notee_runtime::Hash;
+use encointer_node_notee_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
 	democracy::{
@@ -39,7 +39,7 @@ pub fn submit_set_inactivity_timeout_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::SetInactivityTimeout(inactivity_timeout)
+			ProposalAction::<AccountId, Balance>::SetInactivityTimeout(inactivity_timeout)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -70,7 +70,7 @@ pub fn submit_update_nominal_income_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::UpdateNominalIncome(cid, new_income)
+			ProposalAction::<AccountId, Balance>::UpdateNominalIncome(cid, new_income)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -100,13 +100,13 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
 		let min_turnout_permill = api.get_min_turnout().await.unwrap();
 		println!("📜 Number of proposals: {}, global config: proposal lifetime: {:?}, confirmation period: {:?}, min turnout: {:.3}%", storage_keys.len(), proposal_lifetime, confirmation_period, min_turnout_permill as f64 / 10f64);
-		let mut proposals: Vec<(ProposalIdType, Proposal<Moment>)> = Vec::new();
+		let mut proposals: Vec<(ProposalIdType, Proposal<Moment, AccountId, Balance>)> = Vec::new();
 		for storage_key in storage_keys.iter() {
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
-			let proposal: Proposal<Moment> =
+			let proposal: Proposal<Moment, AccountId, Balance> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 			if !matches.all_flag() && proposal.state.has_failed() {
 				continue

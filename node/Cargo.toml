@@ -81,6 +81,8 @@ pallet-encointer-ceremonies-rpc = { workspace = true }
 pallet-encointer-ceremonies-rpc-runtime-api = { workspace = true, features = ["std"] }
 pallet-encointer-communities-rpc = { workspace = true }
 pallet-encointer-communities-rpc-runtime-api = { workspace = true, features = ["std"] }
+pallet-encointer-treasuries-rpc = { workspace = true }
+pallet-encointer-treasuries-rpc-runtime-api = { workspace = true, features = ["std"] }
 
 # CLI-specific dependencies
 frame-try-runtime = { workspace = true, optional = true }

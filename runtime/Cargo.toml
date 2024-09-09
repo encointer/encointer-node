@@ -31,6 +31,8 @@ pallet-encointer-democracy = { workspace = true }
 pallet-encointer-faucet = { workspace = true }
 pallet-encointer-reputation-commitments = { workspace = true }
 pallet-encointer-scheduler = { workspace = true }
+pallet-encointer-treasuries = { workspace = true }
+pallet-encointer-treasuries-rpc-runtime-api = { workspace = true }
 
 # substrate deps
 frame-executive = { workspace = true }
@@ -108,6 +110,8 @@ std = [
     "pallet-encointer-faucet/std",
     "pallet-encointer-reputation-commitments/std",
     "pallet-encointer-scheduler/std",
+    "pallet-encointer-treasuries-rpc-runtime-api/std",
+    "pallet-encointer-treasuries/std",
     "pallet-grandpa/std",
     "pallet-insecure-randomness-collective-flip/std",
     "pallet-proxy/std",
@@ -157,6 +161,7 @@ runtime-benchmarks = [
     "pallet-encointer-faucet/runtime-benchmarks",
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
+    "pallet-encointer-treasuries/runtime-benchmarks",
     "pallet-grandpa/runtime-benchmarks",
     "pallet-proxy/runtime-benchmarks",
     "pallet-scheduler/runtime-benchmarks",
@@ -186,6 +191,7 @@ try-runtime = [
     "pallet-encointer-faucet/try-runtime",
     "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
+    "pallet-encointer-treasuries/try-runtime",
     "pallet-grandpa/try-runtime",
     "pallet-insecure-randomness-collective-flip/try-runtime",
     "pallet-proxy/try-runtime",
