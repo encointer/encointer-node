@@ -6,5 +6,6 @@ pub mod encointer_democracy;
 pub mod encointer_faucet;
 pub mod encointer_reputation_commitments;
 pub mod encointer_scheduler;
+pub mod encointer_treasuries;
 pub mod frame;
 pub mod keystore;

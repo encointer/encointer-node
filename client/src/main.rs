@@ -650,6 +650,11 @@ fn main() {
 				})
 				.runner(commands::encointer_democracy::update_proposal_state),
 		)
+		.add_cmd(
+			Command::new("get-treasury")
+				.description("get treasury address for a community")
+				.runner(commands::encointer_treasuries::get_treasury_account),
+		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {
 			println!("No subcommand matched");
