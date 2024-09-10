@@ -1,6 +1,9 @@
 use crate::cli_args::EncointerArgsExtractor;
 
-use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
+use crate::utils::{
+	ensure_payment, get_chain_api,
+	keys::{get_accountid_from_str, get_pair_from_str},
+};
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
 use encointer_api_client_extension::{
@@ -81,6 +84,44 @@ pub fn submit_update_nominal_income_proposal(
 	.into()
 }
 
+pub fn submit_spend_native_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let maybecid = if let Some(cid) = matches.cid_arg() {
+			Some(api.verify_cid(cid, None).await)
+		} else {
+			None
+		};
+		let arg_to = matches.value_of("to").unwrap();
+		let to = get_accountid_from_str(arg_to);
+		let amount = matches
+			.value_of("amount")
+			.unwrap()
+			.parse::<u128>()
+			.expect("amount can be converted to u128");
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::<AccountId, Balance>::SpendNative(maybecid, to.clone(), amount)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Proposal Submitted: Spend Native for cid {maybecid:?} to {to}, amount {amount}");
+		Ok(())
+	})
+	.into()
+}
 pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
