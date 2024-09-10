@@ -612,6 +612,29 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_update_nominal_income_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-spend-native-proposal")
+				.description("Submit 'spend native' proposal for specified community, amount and beneficiary")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("beneficiary's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("amount to be transferred"),
+						)
+				})
+				.runner(commands::encointer_democracy::submit_spend_native_proposal),
+		)
+		.add_cmd(
 			Command::new("list-proposals")
 				.description("list all proposals.")
 				.options(|app| {
@@ -649,6 +672,11 @@ fn main() {
 					app.setting(AppSettings::ColoredHelp).account_arg().proposal_id_arg()
 				})
 				.runner(commands::encointer_democracy::update_proposal_state),
+		)
+		.add_cmd(
+			Command::new("get-treasury")
+				.description("get treasury address for a community")
+				.runner(commands::encointer_treasuries::get_treasury_account),
 		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {

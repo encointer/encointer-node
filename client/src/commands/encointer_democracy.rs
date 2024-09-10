@@ -1,13 +1,16 @@
 use crate::cli_args::EncointerArgsExtractor;
 
-use crate::utils::{ensure_payment, get_chain_api, keys::get_pair_from_str};
+use crate::utils::{
+	ensure_payment, get_chain_api,
+	keys::{get_accountid_from_str, get_pair_from_str},
+};
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, CeremoniesApi, CommunitiesApi, DemocracyApi, EncointerXt,
 	Moment, ParentchainExtrinsicSigner, SchedulerApi,
 };
-use encointer_node_notee_runtime::Hash;
+use encointer_node_notee_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
 	democracy::{
@@ -39,7 +42,7 @@ pub fn submit_set_inactivity_timeout_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::SetInactivityTimeout(inactivity_timeout)
+			ProposalAction::<AccountId, Balance>::SetInactivityTimeout(inactivity_timeout)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -70,7 +73,7 @@ pub fn submit_update_nominal_income_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::UpdateNominalIncome(cid, new_income)
+			ProposalAction::<AccountId, Balance>::UpdateNominalIncome(cid, new_income)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -81,6 +84,44 @@ pub fn submit_update_nominal_income_proposal(
 	.into()
 }
 
+pub fn submit_spend_native_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let maybecid = if let Some(cid) = matches.cid_arg() {
+			Some(api.verify_cid(cid, None).await)
+		} else {
+			None
+		};
+		let arg_to = matches.value_of("to").unwrap();
+		let to = get_accountid_from_str(arg_to);
+		let amount = matches
+			.value_of("amount")
+			.unwrap()
+			.parse::<u128>()
+			.expect("amount can be converted to u128");
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::<AccountId, Balance>::SpendNative(maybecid, to.clone(), amount)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Proposal Submitted: Spend Native for cid {maybecid:?} to {to}, amount {amount}");
+		Ok(())
+	})
+	.into()
+}
 pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -100,13 +141,13 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
 		let min_turnout_permill = api.get_min_turnout().await.unwrap();
 		println!("📜 Number of proposals: {}, global config: proposal lifetime: {:?}, confirmation period: {:?}, min turnout: {:.3}%", storage_keys.len(), proposal_lifetime, confirmation_period, min_turnout_permill as f64 / 10f64);
-		let mut proposals: Vec<(ProposalIdType, Proposal<Moment>)> = Vec::new();
+		let mut proposals: Vec<(ProposalIdType, Proposal<Moment, AccountId, Balance>)> = Vec::new();
 		for storage_key in storage_keys.iter() {
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
-			let proposal: Proposal<Moment> =
+			let proposal: Proposal<Moment, AccountId, Balance> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 			if !matches.all_flag() && proposal.state.has_failed() {
 				continue

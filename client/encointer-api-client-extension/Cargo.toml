@@ -1,6 +1,7 @@
 [package]
 name = "encointer-api-client-extension"
-version = "0.8.2"
+# align with encointer pallet crates versions
+version = "13.3.2"
 edition = "2021"
 
 [dependencies]

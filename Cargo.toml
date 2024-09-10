@@ -31,7 +31,7 @@ encointer-balances-tx-payment = { default-features = false, version = "~13.1.0" 
 encointer-balances-tx-payment-rpc = { version = "~13.1.0" }
 encointer-balances-tx-payment-rpc-runtime-api = { default-features = false, version = "~13.1.0" }
 encointer-ceremonies-assignment = { version = "~13.1.0" }
-encointer-primitives = { default-features = false, version = "~13.2.0" }
+encointer-primitives = { default-features = false, version = "~13.3.0" }
 pallet-encointer-balances = { default-features = false, version = "~13.1.0" }
 pallet-encointer-bazaar = { default-features = false, version = "~13.1.0" }
 pallet-encointer-bazaar-rpc = { version = "~13.1.0" }
@@ -42,10 +42,13 @@ pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, versio
 pallet-encointer-communities = { default-features = false, version = "~13.1.0" }
 pallet-encointer-communities-rpc = { version = "~13.1.0" }
 pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "~13.1.0" }
-pallet-encointer-democracy = { default-features = false, version = "~13.2.0" }
+pallet-encointer-democracy = { default-features = false, version = "~13.3.0" }
 pallet-encointer-faucet = { default-features = false, version = "~13.2.0" }
 pallet-encointer-reputation-commitments = { default-features = false, version = "~13.1.0" }
 pallet-encointer-scheduler = { default-features = false, version = "~13.1.0" }
+pallet-encointer-treasuries = { default-features = false, version = "~13.3.0" }
+pallet-encointer-treasuries-rpc = { version = "~13.3.0" }
+pallet-encointer-treasuries-rpc-runtime-api = { default-features = false, version = "~13.3.0" }
 
 
 # substrate deps
@@ -159,6 +162,9 @@ substrate-api-client = { git = "https://github.com/encointer/substrate-api-clien
 #pallet-encointer-faucet = { path = "../pallets/faucet" }
 #pallet-encointer-reputation-commitments = { path = "../pallets/reputation-commitments" }
 #pallet-encointer-scheduler = { path = "../pallets/scheduler" }
+#pallet-encointer-treasuries = { path = "../pallets/treasuries" }
+#pallet-encointer-treasuries-rpc = { path = "../pallets/treasuries/rpc" }
+#pallet-encointer-treasuries-rpc-runtime-api = { path = "../pallets/treasuries/rpc/runtime-api" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }
