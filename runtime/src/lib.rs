@@ -137,7 +137,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("encointer-node-notee"),
 	impl_name: create_runtime_str!("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 360,
+	spec_version: 361,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -608,10 +608,7 @@ pub type UncheckedExtrinsic =
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 /// storage migrations to be applied upon runtime upgrade
-pub type Migrations = (
-	pallet_grandpa::migrations::MigrateV4ToV5<Runtime>,
-	pallet_encointer_ceremonies::migrations::v2::MigrateToV2<Runtime>,
-);
+pub type Migrations = (pallet_encointer_democracy::migrations::v1::MigrateV0toV1purging<Runtime>,);
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<

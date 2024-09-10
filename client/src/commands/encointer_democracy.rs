@@ -18,7 +18,7 @@ use encointer_primitives::{
 		ReputationVec, Vote,
 	},
 };
-use log::error;
+use log::{debug, error};
 use parity_scale_codec::{Decode, Encode};
 use sp_core::{sr25519 as sr25519_core, ConstU32};
 use substrate_api_client::{
@@ -143,10 +143,12 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		println!("📜 Number of proposals: {}, global config: proposal lifetime: {:?}, confirmation period: {:?}, min turnout: {:.3}%", storage_keys.len(), proposal_lifetime, confirmation_period, min_turnout_permill as f64 / 10f64);
 		let mut proposals: Vec<(ProposalIdType, Proposal<Moment, AccountId, Balance>)> = Vec::new();
 		for storage_key in storage_keys.iter() {
+			debug!("storage_key: 0x{}", hex::encode(storage_key));
 			let key_postfix = storage_key.as_ref();
 			let proposal_id =
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
+			debug!("proposalid: {:?}", proposal_id);
 			let proposal: Proposal<Moment, AccountId, Balance> =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 			if !matches.all_flag() && proposal.state.has_failed() {
