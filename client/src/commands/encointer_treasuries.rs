@@ -13,7 +13,6 @@ pub fn get_treasury_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 			None
 		};
 		let treasury = api.get_community_treasury_account_unchecked(maybecid).await.unwrap();
-		// only print plain businesses to be able to parse them in python scripts
 		println!("{treasury}");
 		Ok(())
 	})
