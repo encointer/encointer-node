@@ -1,10 +1,13 @@
 # encointer-node
 
 Encointer-node is the implementation of the [encointer.org](https://encointer.org) blockchain.
-Use this together with the mobile phone app [encointer mobile app](https://github.com/encointer/encointer-wallet-flutter)
+Use this together with the mobile phone
+app [encointer mobile app](https://github.com/encointer/encointer-wallet-flutter)
 
 The cli client is based on [substrate-api-client](https://github.com/scs/substrate-api-client)
-The Trusted Execution version for Testnet Cantillon is on branch [sgx-master](https://github.com/encointer/encointer-node/tree/sgx-master) based on [substraTEE project](https://github.com/scs/substraTEE).
+The Trusted Execution version for Testnet Cantillon is on
+branch [sgx-master](https://github.com/encointer/encointer-node/tree/sgx-master) based
+on [substraTEE project](https://github.com/scs/substraTEE).
 
 ## Building
 
@@ -52,10 +55,7 @@ cargo build --release --features try-runtime
 Then test state migrations with against live data on the Gesell network with:
 
 ```bash
-./target/release/encointer-node-notee try-runtime \
-  --runtime ./target/release/wbuild/encointer-node-notee-runtime/encointer_node_notee_runtime.wasm \
-  on-runtime-upgrade --checks=all \
-  live --uri wss://gesell.encointer.org:443
+try-runtime --runtime target/release/wbuild/encointer-node-notee-runtime/encointer_node_notee_runtime.compact.compressed.wasm on-runtime-upgrade --checks=pre-and-post --disable-spec-version-check live --uri wss://gesell.encointer.org:443
 ```
 
 ### Run with docker
@@ -73,6 +73,7 @@ docker run -p 30333:30333 -p 9944:9944 -p 9933:9933 -p 9615:9615 \
 ```
 
 ## Run Testnet Gesell Node
+
 Join our testnet as a full node with
 
 ```bash
@@ -81,7 +82,9 @@ RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer=debug
 ```
 
 ## CLI client
-We currently have limited support for the [polkadot-js apps](https://polkadot.js.org/apps) UI. Encointer comes with a cli application instead that supports all interactions with the chain
+
+We currently have limited support for the [polkadot-js apps](https://polkadot.js.org/apps) UI. Encointer comes with a
+cli application instead that supports all interactions with the chain
 
 ### Run Client
 
@@ -93,17 +96,21 @@ encointer-node/client> ../target/release/encointer-client-notee list_meetup_regi
 encointer-node/client> ../target/release/encointer-client-notee list_witnesses_registry
 encointer-node/client> ../target/release/encointer-client-notee --help
 ```
+
 The master of ceremony can play fast-forward for demo purposes (ceremonies only happen ~monthly. not good for demos)
+
 ```bash
 encointer-node/client> ./encointer-client-notee next_phase
 ```
 
 To run a full demo (you may need to fix ports in the scripts if you change them):
+
 ```
 encointer-node/client> ./bootstrap_demo_community.sh
 ```
 
 ### Run with docker
+
 ```bash
 docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
 
@@ -117,6 +124,7 @@ docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://ho
 ### Grow Bot Community
 
 Assuming a local node is running with default ports:
+
 ```bash
 pip3 install pip install geojson pyproj RandomWords substrate-interface
 # in first terminal, do this to accelerate phase progress
@@ -131,15 +139,18 @@ pip3 install pip install geojson pyproj RandomWords substrate-interface
 ## Web UI
 
 There is no fully featured UI yet, but you can use [polkadot-js apps](https://github.com/polkadot-js/apps).
-This allows you to explore chain state but it doesn't support all types of extrinsic parameters needed. Use our CLI client instead.
+This allows you to explore chain state but it doesn't support all types of extrinsic parameters needed. Use our CLI
+client instead.
 
 ## Mobile App
 
-The PoC1 Android App doesn't work with this release anymore, but you can watch progress at [encointer-app](https://github.com/encointer/encointer-app)
+The PoC1 Android App doesn't work with this release anymore, but you can watch progress
+at [encointer-app](https://github.com/encointer/encointer-app)
 
 ## Dev-Remarks
 
 ### Benchmarking
+
 For benchmarking a new pallet you need to do the following:
 
 1. Add the new pallet to be benchmarked to the `define_benchmarks!` macro in the runtime.

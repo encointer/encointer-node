@@ -2177,7 +2177,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "1.14.360"
+version = "1.14.361"
 dependencies = [
  "encointer-balances-tx-payment",
  "encointer-balances-tx-payment-rpc-runtime-api",
@@ -5836,9 +5836,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-encointer-democracy"
-version = "13.3.0"
+version = "13.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9727ac7dc16c57b6e8de5b21f60d3f7554b93817d41f25c11e0c809cba174ef"
+checksum = "c965285fcc2af6c45c8c542df717cc0d45cd4186a4f78ec894819c14b22e92a2"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
