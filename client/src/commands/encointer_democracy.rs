@@ -13,6 +13,7 @@ use encointer_api_client_extension::{
 use encointer_node_notee_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
+	common::{FromStr, PalletString},
 	democracy::{
 		Proposal, ProposalAccessPolicy, ProposalAction, ProposalIdType, ProposalState,
 		ReputationVec, Vote,
@@ -84,6 +85,37 @@ pub fn submit_update_nominal_income_proposal(
 	.into()
 }
 
+pub fn submit_petition(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let maybecid = if let Some(cid) = matches.cid_arg() {
+			Some(api.verify_cid(cid, None).await)
+		} else {
+			None
+		};
+		let demand_str = matches.value_of("demand").unwrap();
+		let demand = PalletString::from_str(demand_str)
+			.expect("Petition demand too long. must be < 256 chars");
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::<AccountId, Balance>::Petition(maybecid, demand.clone())
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Proposal Submitted: Petition for cid {maybecid:?} demanding: {demand_str}");
+		Ok(())
+	})
+	.into()
+}
 pub fn submit_spend_native_proposal(
 	_args: &str,
 	matches: &ArgMatches<'_>,
