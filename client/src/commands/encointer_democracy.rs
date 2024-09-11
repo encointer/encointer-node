@@ -14,6 +14,7 @@ use encointer_node_notee_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
 	common::{FromStr, PalletString},
+	communities::CommunityIdentifier,
 	democracy::{
 		Proposal, ProposalAccessPolicy, ProposalAction, ProposalIdType, ProposalState,
 		ReputationVec, Vote,
@@ -222,7 +223,18 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				"Proposal id: {} (reputation commitment purpose id: {})",
 				*proposal_id, purpose_id
 			);
-			println!("🛠 action: {:?}", proposal.action);
+			let proposal_str = match &proposal.action {
+				ProposalAction::SetInactivityTimeout(timeout) =>
+					format!("Set inactivity timeout to {timeout}"),
+				ProposalAction::UpdateNominalIncome(cid, income) =>
+					format!("Update nominal income for {cid} to {income}"),
+				ProposalAction::Petition(maybecid, demand) =>
+					format!("Petition for {} demanding: {}", cid_or_global(maybecid), String::from_utf8_lossy(demand)),
+				ProposalAction::SpendNative(maybecid, to, amount) =>
+					format!("Spend Native from {} treasury to {to}, amount {amount}", cid_or_global(maybecid)),
+				_ => format!("{:?}", proposal.action),
+			};
+			println!("🛠 action: {:?}", proposal_str);
 			println!("▶️ started at: {}", start.format("%Y-%m-%d %H:%M:%S %Z").to_string());
 			println!(
 				"🏁 ends after: {}",
@@ -397,4 +409,11 @@ async fn get_relevant_electorate(
 
 fn approval_threshold_percent(electorate: u128, turnout: u128) -> f64 {
 	100f64 / (1f64 + (turnout as f64 / electorate as f64).sqrt())
+}
+
+fn cid_or_global(maybecid: &Option<CommunityIdentifier>) -> String {
+	match maybecid {
+		Some(cid) => format!("{:?}", cid),
+		None => "global".into(),
+	}
 }
