@@ -612,6 +612,22 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_update_nominal_income_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-petition")
+				.description("Submit a petition for specified community (if --cid specified) or global")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("demand")
+								.takes_value(true)
+								.required(true)
+								.value_name("DEMAND")
+								.help("what the petition demands"),
+						)
+				})
+				.runner(commands::encointer_democracy::submit_petition),
+		)
+		.add_cmd(
 			Command::new("submit-spend-native-proposal")
 				.description("Submit 'spend native' proposal for specified community, amount and beneficiary")
 				.options(|app| {
