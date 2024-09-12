@@ -23,7 +23,7 @@ def parse_proposals(text):
         proposal = "Proposal id:" + proposal  # Add back the identifier
         lines = proposal.split("\n")
         id = int(re.search(r'\d+', lines[0]).group())
-        action = re.search(r'action:\w+\([\w, .]+\)', lines[1]).group()
+        action = re.search(r'action:\s*"?([^"]+)"?', lines[1]).group()
         started = datetime.strptime(re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', lines[2]).group(),
                                     '%Y-%m-%d %H:%M:%S')
         ends = datetime.strptime(re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', lines[3]).group(),
