@@ -4,13 +4,16 @@
     "meta": {
       "name": "PAYNUQ",
       "symbol": "PNQ",
-      "assets": "QmSpwTDiKbRVqHaV2LvaUVkwZkkuF8w1BjTjwXD9PEzHnd"
+      "assets": "QmSpwTDiKbRVqHaV2LvaUVkwZkkuF8w1BjTjwXD9PEzHnd",
+      "url": "",
+      "announcementSigner": null,
+      "rules": "loCoFlex"
     },
     "bootstrappers": [
       "HTvN9bSsAeWCpLNojCXwARNn4EznM6jMk96uwyDttsqMM2S",
       "F84knPZ9DJFFDb6Kw7cWduprZhfLQsyJzWrSAVuYfGiWFQC",
-      "Czw16WsyX322MaJhUDab5QzTuHbJK2AdTW3zgp2neqt8k9d"
-      "EhcZu7emtX2qTQHb1thFJTdrw45eXidSFZP9YPxvUC6YUTU"
+      "Czw16WsyX322MaJhUDab5QzTuHbJK2AdTW3zgp2neqt8k9d",
+      "EhcZu7emtX2qTQHb1thFJTdrw45eXidSFZP9YPxvUC6YUTU",
       "JKS7Kcwox9FugRuQXmfKHs5uSSRfNanG2Qh9UaLiWAkv1Pf"
     ],
     "demurrage_halving_blocks": 10512000,
