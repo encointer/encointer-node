@@ -52,12 +52,12 @@ jobs:
       - name: Build
         run: cargo build --release
       - name: Upload node
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: encointer-node-notee-${{ github.sha }}
           path: target/release/encointer-node-notee
       - name: Upload CLI client
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: encointer-client-notee-${{ github.sha }}
           path: target/release/encointer-client-notee
@@ -88,12 +88,12 @@ jobs:
       - name: Build
         run: cargo build --release --features try-runtime,runtime-benchmarks
       - name: Upload node
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: encointer-node-notee-try-runtime-and-benchmarks-${{ github.sha }}
           path: target/release/encointer-node-notee
       - name: Upload CLI client
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: encointer-client-notee-try-runtime-and-benchmarks-${{ github.sha }}
           path: target/release/encointer-client-notee
@@ -156,7 +156,7 @@ jobs:
       #          cat ${{ matrix.chain }}-diff.txt
 
       - name: Upload ${{ matrix.runtime }} srtool json
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.runtime }}-srtool-json-${{ github.sha }}
           path: |
@@ -168,7 +168,7 @@ jobs:
 
 
       - name: Upload ${{ matrix.runtime }} runtime
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.runtime }}-runtime-${{ github.sha }}
           path: |
@@ -264,12 +264,12 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: encointer-node-notee-${{ github.sha }}
 
       - name: download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: encointer-client-notee-${{ github.sha }}
 
@@ -322,12 +322,12 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Download Encointer Node
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: encointer-node-notee-${{ github.sha }}
 
       - name: Download Encointer Client
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: encointer-client-notee-${{ github.sha }}
 
@@ -364,7 +364,7 @@ jobs:
         runtime: [ "encointer-node-notee" ]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - name: Set up Ruby 3
         uses: ruby/setup-ruby@v1
         with:
