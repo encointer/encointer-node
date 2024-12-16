@@ -1,8 +1,11 @@
 use crate::cli_args::EncointerArgsExtractor;
 
-use crate::utils::{
-	ensure_payment, get_chain_api,
-	keys::{get_accountid_from_str, get_pair_from_str},
+use crate::{
+	community_spec::demurrage_per_block_from_halving_blocks,
+	utils::{
+		ensure_payment, get_chain_api,
+		keys::{get_accountid_from_str, get_pair_from_str},
+	},
 };
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
@@ -86,6 +89,38 @@ pub fn submit_update_nominal_income_proposal(
 	.into()
 }
 
+pub fn submit_update_demurrage_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
+		let new_demurrage_halving_blocks = matches.demurrage_halving_blocks_arg().unwrap();
+		let new_demurrage_per_block =
+			demurrage_per_block_from_halving_blocks(new_demurrage_halving_blocks);
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::<AccountId, Balance>::UpdateDemurrage(cid, new_demurrage_per_block)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!("Proposal Submitted: Update demurrage for cid {cid} to {new_demurrage_per_block}");
+		Ok(())
+	})
+	.into()
+}
 pub fn submit_petition(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {

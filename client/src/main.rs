@@ -612,6 +612,16 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_update_nominal_income_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-update-demurrage-proposal")
+				.description("Submit update demurrage proposal for specified community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.demurrage_halving_blocks_arg()
+				})
+				.runner(commands::encointer_democracy::submit_update_demurrage_proposal),
+		)
+		.add_cmd(
 			Command::new("submit-petition")
 				.description("Submit a petition for specified community (if --cid specified) or global")
 				.options(|app| {

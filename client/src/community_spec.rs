@@ -119,12 +119,8 @@ impl CommunitySpec for serde_json::Value {
 	fn demurrage(&self) -> Option<Demurrage> {
 		match serde_json::from_value::<u64>(self["community"]["demurrage_halving_blocks"].clone()) {
 			Ok(demurrage_halving_blocks) => {
-				let demurrage_rate = ln::<Demurrage, Demurrage>(Demurrage::from_num(0.5))
-					.unwrap()
-					.checked_mul(Demurrage::from_num(-1))
-					.unwrap()
-					.checked_div(Demurrage::from_num(demurrage_halving_blocks))
-					.unwrap();
+				let demurrage_rate =
+					demurrage_per_block_from_halving_blocks(demurrage_halving_blocks);
 
 				log::info!(
 					"demurrage halving blocks: {} which translates to a rate of {} ",
@@ -197,4 +193,13 @@ pub fn add_location_call(
 	loc: Location,
 ) -> AddLocationCall {
 	compose_call!(metadata, "EncointerCommunities", "add_location", cid, loc).unwrap()
+}
+
+pub fn demurrage_per_block_from_halving_blocks(halving_blocks: u64) -> Demurrage {
+	ln::<Demurrage, Demurrage>(Demurrage::from_num(0.5))
+		.unwrap()
+		.checked_mul(Demurrage::from_num(-1))
+		.unwrap()
+		.checked_div(Demurrage::from_num(halving_blocks))
+		.unwrap()
 }
