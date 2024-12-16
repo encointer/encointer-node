@@ -34,7 +34,7 @@ const VOTE_ARG: &str = "vote";
 const REPUTATION_VEC_ARG: &str = "reputation-vec";
 const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
 const NOMINAL_INCOME_ARG: &str = "nominal-income";
-
+const DEMURRAGE_HALVING_BLOCKS_ARG: &str = "demurage-halving-blocks";
 const PURPOSE_ID_ARG: &str = "purpose-id";
 
 pub trait EncointerArgs<'b> {
@@ -72,6 +72,7 @@ pub trait EncointerArgs<'b> {
 	fn reputation_vec_arg(self) -> Self;
 	fn inactivity_timeout_arg(self) -> Self;
 	fn nominal_income_arg(self) -> Self;
+	fn demurrage_halving_blocks_arg(self) -> Self;
 	fn purpose_id_arg(self) -> Self;
 }
 
@@ -109,6 +110,7 @@ pub trait EncointerArgsExtractor {
 	fn reputation_vec_arg(&self) -> Option<Vec<&str>>;
 	fn inactivity_timeout_arg(&self) -> Option<u32>;
 	fn nominal_income_arg(&self) -> Option<BalanceType>;
+	fn demurrage_halving_blocks_arg(&self) -> Option<u64>;
 	fn purpose_id_arg(&self) -> Option<PurposeIdType>;
 }
 
@@ -436,6 +438,15 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("nominal income"),
 		)
 	}
+	fn demurrage_halving_blocks_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(DEMURRAGE_HALVING_BLOCKS_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("DEMURRAGE_HALVING_BLOCKS")
+				.help("demurrage halving blocks"),
+		)
+	}
 	fn purpose_id_arg(self) -> Self {
 		self.arg(
 			Arg::with_name(PURPOSE_ID_ARG)
@@ -565,6 +576,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	fn nominal_income_arg(&self) -> Option<BalanceType> {
 		self.value_of(NOMINAL_INCOME_ARG)
 			.map(|v| BalanceType::from_num(v.parse::<f64>().unwrap()))
+	}
+	fn demurrage_halving_blocks_arg(&self) -> Option<u64> {
+		self.value_of(DEMURRAGE_HALVING_BLOCKS_ARG).map(|v| v.parse().unwrap())
 	}
 	fn purpose_id_arg(&self) -> Option<PurposeIdType> {
 		self.value_of(PURPOSE_ID_ARG).map(|v| v.parse().unwrap())
