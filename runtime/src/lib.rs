@@ -410,8 +410,9 @@ parameter_types! {
 
 impl pallet_encointer_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	// attention!: EncointerDemocracy must be first hook as it potentially changes the rules for following hooks
 	type OnCeremonyPhaseChange =
-		(pallet_encointer_ceremonies::Pallet<Runtime>, pallet_encointer_democracy::Pallet<Runtime>);
+		(pallet_encointer_democracy::Pallet<Runtime>, pallet_encointer_ceremonies::Pallet<Runtime>);
 	type MomentsPerDay = MomentsPerDay;
 	type CeremonyMaster = EnsureRoot<AccountId>;
 	type WeightInfo = weights::pallet_encointer_scheduler::WeightInfo<Runtime>;
