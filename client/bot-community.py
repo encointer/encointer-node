@@ -51,22 +51,26 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
+@click.option('-f', '--faucet_url', default='http://localhost:5000/api',
+              help='url for the faucet (only needed for test/benchmark cmd)')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, remote_chain):
+def cli(ctx, client, port, ipfs_local, url, faucet_url):
     ctx.ensure_object(dict)
-    cl = set_local_or_remote_chain(client, port, remote_chain)
+    cl = set_local_or_remote_chain(client, port, url)
     ctx.obj['client'] = cl
     ctx.obj['port'] = port
     ctx.obj['ipfs_local'] = ipfs_local
-    ctx.obj['remote_chain'] = remote_chain
+    ctx.obj['url'] = url
+    ctx.obj['faucet_url'] = faucet_url
 
 
 @cli.command()
 @click.pass_obj
 def init(ctx):
     client = ctx['client']
+    faucet_url = ctx['faucet_url']
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ASSETS_PATH)
@@ -76,7 +80,7 @@ def init(ctx):
     except:
         print("add image to ipfs failed")
     print('initializing community')
-    b = init_bootstrappers(client)
+    b = init_bootstrappers(client, faucet_url)
     client.await_block()
     specfile = random_community_spec(b, ipfs_cid, NUMBER_OF_LOCATIONS)
     print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
@@ -103,10 +107,10 @@ def purge_communities():
 @cli.command()
 @click.pass_obj
 def execute_current_phase(ctx):
-    return _execute_current_phase(ctx['client'])
+    return _execute_current_phase(ctx['client'], ctx['faucet_url'])
 
 
-def _execute_current_phase(client: Client):
+def _execute_current_phase(client: Client, faucet_url: str):
     client = client
     cid = read_cid()
     phase = client.get_phase()
@@ -124,12 +128,12 @@ def _execute_current_phase(client: Client):
 
         total_supply = write_current_stats(client, accounts, cid)
         if total_supply > 0:
-            init_new_community_members(client, cid, len(accounts))
+            init_new_community_members(client, cid, len(accounts), faucet_url=faucet_url)
 
         # updated account list with new community members
         accounts = client.list_accounts()
 
-        register_participants(client, accounts, cid)
+        register_participants(client, accounts, cid, faucet_url=faucet_url)
         client.await_block()
 
     if phase == "Assigning":
@@ -153,9 +157,10 @@ def _execute_current_phase(client: Client):
 @click.pass_obj
 def benchmark(ctx):
     py_client = ctx['client']
+    faucet_url = ctx['faucet_url']
     print('will grow population forever')
     while True:
-        phase = _execute_current_phase(py_client)
+        phase = _execute_current_phase(py_client, faucet_url=faucet_url)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
             py_client.await_block()
@@ -165,18 +170,19 @@ def benchmark(ctx):
 @click.pass_obj
 def test(ctx):
     py_client = ctx['client']
+    faucet_url = ctx['faucet_url']
     print('will grow population for fixed number of ceremonies')
     for i in range(3 * 2 + 1):
-        phase = _execute_current_phase(py_client)
+        phase = _execute_current_phase(py_client, faucet_url=faucet_url)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
             py_client.await_block()
 
 
-def init_bootstrappers(client: Client):
+def init_bootstrappers(client: Client, faucet_url: str):
     bootstrappers = client.create_accounts(10)
     print('created bootstrappers: ' + ' '.join(bootstrappers))
-    client.faucet(bootstrappers)
+    client.faucet(bootstrappers, faucet_url=faucet_url)
     client.await_block()
     return bootstrappers
 
@@ -260,7 +266,12 @@ def write_current_stats(client: Client, accounts, cid):
     return total
 
 
-def init_new_community_members(client: Client, cid: str, current_community_size: int):
+def init_new_community_members(
+        client: Client,
+        cid: str,
+        current_community_size: int,
+        faucet_url: str
+):
     """ Initializes new community members based on the `current_community_size` and the amount of endorsements we can
         perform.
 
@@ -285,7 +296,7 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
 
     new_members = newbies + endorsees
 
-    client.faucet(new_members)
+    client.faucet(new_members, faucet_url=faucet_url)
     client.await_block()
 
     print(f'Fauceted new community members {len(new_members)}')
@@ -293,7 +304,7 @@ def init_new_community_members(client: Client, cid: str, current_community_size:
     return new_members
 
 
-def register_participants(client: Client, accounts, cid):
+def register_participants(client: Client, accounts, cid, faucet_url: str):
     print(f'registering {len(accounts)} participants')
     need_refunding = []
     for p in accounts:
@@ -307,7 +318,7 @@ def register_participants(client: Client, accounts, cid):
 
     if len(need_refunding) > 0:
         print(f'the following accounts are out of funds and will be refunded {need_refunding}')
-        client.faucet(need_refunding)
+        client.faucet(need_refunding, faucet_url=faucet_url)
 
         client.await_block()
 

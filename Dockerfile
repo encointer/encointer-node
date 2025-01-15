@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 LABEL description="This is the 2nd stage: a very small image where we copy the Substrate binary."
 
-RUN apt-get update && \ 
+RUN apt-get update && \
 apt-get install -y jq python3 python3-pip
 
 RUN python3 -m pip install --upgrade pip
@@ -24,9 +24,17 @@ COPY encointer-client-notee /
 
 RUN mkdir /client
 COPY client/py_client /py_client
-COPY client/bootstrap_demo_community.py /
-COPY client/cli.py /
 COPY client/test-data /test-data
+
+# all python scripts (some of them aren supported by the entryfile.sh yet).
+COPY client/bootstrap_demo_community.py /
+COPY client/bot-community.py /
+COPY client/bot-stats-golden.csv /
+COPY client/cli.py /
+COPY client/faucet.py /
+COPY client/phase.py /
+COPY client/typedefs.json /
+COPY client/register-random-businesses-and-offerings.py /
 
 RUN chmod +x /encointer-client-notee
 #RUN chmod +x /usr/local/bin/healthcheck9933.sh
@@ -40,7 +48,7 @@ RUN ldd /encointer-client-notee && \
 #	rm -rf /usr/bin /usr/sbin /usr/share/man
 
 #USER encointer
-EXPOSE 30333 9933 9944 9615
+EXPOSE 30333 9933 9944 9615 5000
 VOLUME ["/data"]
 
 ENTRYPOINT ["/entryscript.sh"]

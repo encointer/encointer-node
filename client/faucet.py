@@ -12,14 +12,19 @@ import flask
 from flask import request, jsonify
 import subprocess
 from time import sleep
+import click
+
 from py_client.client import Client
 
 app = flask.Flask(__name__)
 app.config['DEBUG'] = True
-CLIENT = Client()
+CLIENT = None
 
 
 def faucet(accounts):
+    if CLIENT is None:
+        raise RuntimeError("CLIENT is not initialized.")
+
     for x in range(0, 1):  # try multiple
         try:
             CLIENT.faucet(accounts, is_faucet=True)
@@ -50,4 +55,17 @@ def faucet_service():
         return "no accounts provided to drip to\n"
 
 
-app.run()
+@click.command()
+@click.option('--client', default='../target/release/encointer-client-notee',
+              help='Client binary to communicate with the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
+def main(client, url, port):
+    global CLIENT  # Declare CLIENT as global to modify the global variable
+    CLIENT = Client(rust_client=client, node_url=url, port=port)
+    # make the app listen from outside the docker container
+    app.run(host="0.0.0.0")
+
+
+if __name__ == "__main__":
+    main()

@@ -21,13 +21,13 @@ env:
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -39,15 +39,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - name: Cache Rust Dependecies
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            enclave/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "release"
 
       - name: Build
         run: cargo build --release
@@ -63,7 +57,7 @@ jobs:
           path: target/release/encointer-client-notee
 
   build-try-runtime-and-benchmarks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -75,15 +69,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - name: Cache Rust Dependecies
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            enclave/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "release"
 
       - name: Build
         run: cargo build --release --features try-runtime,runtime-benchmarks
@@ -100,7 +88,7 @@ jobs:
 
   build-runtimes:
     name: Build Runtimes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         runtime: [ "encointer-node-notee" ]
@@ -115,6 +103,7 @@ jobs:
           restore-keys: |
             srtool-target-${{ matrix.runtime }}-
             srtool-target-
+
       - name: Srtool build
         id: srtool_build
         uses: chevdor/srtool-actions@v0.9.2
@@ -166,7 +155,6 @@ jobs:
             ${{ matrix.runtime }}-metadata.json
       #            ${{ matrix.runtime }}-diff.txt
 
-
       - name: Upload ${{ matrix.runtime }} runtime
         uses: actions/upload-artifact@v4
         with:
@@ -176,7 +164,7 @@ jobs:
             ${{ steps.srtool_build.outputs.wasm_compressed }}
 
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -188,15 +176,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - name: Cache Rust Dependecies
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            enclave/target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "debug"
 
       - name: cargo test
         run: cargo test --all
@@ -206,7 +188,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-22.04 ]
         rust: [ stable ]
         rust-target: [ x86_64-unknown-linux-gnu ]
         check: [ +nightly fmt --all -- --check, clippy -p encointer-client-notee ]
@@ -235,13 +217,13 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.rust-target }}-${{ matrix.check }}
+          shared-key: "debug"
 
       - name: ${{ matrix.check }}
         run: cargo ${{ matrix.check }}
 
   cargo-toml-fmt:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: "tamasfe/taplo:0.7.0-alpine"
     steps:
       - uses: actions/checkout@v3
@@ -255,7 +237,7 @@ jobs:
 
   integration-test:
     name: ${{ matrix.test }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build
     strategy:
       matrix:
@@ -310,10 +292,120 @@ jobs:
         working-directory: ./scripts/ci
         run: source ./init_env.sh && ./${{ matrix.test }}
 
+  integration-test-docker:
+    name: ${{ matrix.test }}
+    runs-on: ubuntu-22.04
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - bootstrap_demo_community.py --signer //Bob --test
+          - bot-community-test -f http://host.docker.internal:5000/api
+          # Todo: #386
+          # - test-register-businesses -f http://host.docker.internal:5000/api
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: encointer-node-notee-${{ github.sha }}
+          # for debugging the integration tests, we can just download an image from a previous run
+      #          name: encointer-node-notee-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
+      #          github-token: ${{ github.token }}
+      #          run-id: 12787265993
+
+      - name: download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: encointer-client-notee-${{ github.sha }}
+          # for debugging the integration tests, we can just download an image from a previous run
+      #          name: encointer-client-notee-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
+      #          github-token: ${{ github.token }}
+      #          run-id: 12787265993
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-node
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Docker build client
+        run: |
+          docker build \
+            --cache-from=type=gha \
+            -t encointer-client-test .
+
+      - name: Docker build node
+        run: |
+          docker build \
+          --cache-from=type=gha \
+          -f Dockerfile-node \
+          -t encointer-node-test . 
+
+      - name: Set up ipfs
+        uses: ibnesayeed/setup-ipfs@master
+        with:
+          run_daemon: true
+
+      - name: start dev node
+        run: |
+          docker run -p 30333:30333 -p 9944:9944 -p 9615:9615 \
+            encointer-node-test \
+            --dev \
+            --enable-offchain-indexing=true \
+            --rpc-methods=unsafe \
+            -lencointer=debug,parity_ws=warn \
+            --rpc-external &
+
+      - name: start faucet service
+        run: |
+          docker run -p 5000:5000 \
+            --add-host host.docker.internal:host-gateway \
+            encointer-client-test faucet.py \
+            -u ws://host.docker.internal \
+            --port 9944 &
+
+      - name: start phase accelerator service
+        run: |
+          docker run \
+            --add-host host.docker.internal:host-gateway \
+            encointer-client-test phase.py \
+            -u ws://host.docker.internal \
+            --port 9944 --idle-blocks 3 &
+
+      - name: Test ${{ matrix.test }}
+        run: |
+          docker run \
+            --add-host host.docker.internal:host-gateway \
+            encointer-client-test ${{ matrix.test }} \
+            -u ws://host.docker.internal \
+            --port 9944 \
+
   release:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [ build, unit-tests, check, integration-test ]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}
@@ -357,7 +449,7 @@ jobs:
 
   publish-runtimes:
     name: Publish Runtimes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [ release, build-runtimes ]
     strategy:
       matrix:
