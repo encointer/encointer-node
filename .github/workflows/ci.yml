@@ -298,6 +298,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         test:
           - bootstrap_demo_community.py --signer //Bob --test,
