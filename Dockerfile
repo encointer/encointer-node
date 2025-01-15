@@ -18,7 +18,7 @@ RUN mv /usr/share/ca* /tmp && \
 WORKDIR /
 
 COPY scripts/docker/entryscript.sh /
-COPY encointer-client-notee /
+COPY target/release/encointer-client-notee /
 
 #COPY ./scripts/healthcheck9933.sh /usr/local/bin
 
@@ -26,26 +26,20 @@ RUN mkdir /client
 COPY client/py_client /py_client
 COPY client/test-data /test-data
 
-# all python scripts
-COPY client/batch.py /
+# all python scripts (some of them aren supported by the entryfile.sh yet).
 COPY client/bazaar.py /
 COPY client/bootstrap_demo_community.py /
 COPY client/bot-community.py /
 COPY client/bot-stats-golden.csv /
 COPY client/cli.py /
-COPY client/dump-accounts.py /
-COPY client/dump_drips.py /
-COPY client/dump_teleports.py /
 COPY client/faucet.py /
-COPY client/fetch-account-history.py /
-COPY client/invoice.py /
 COPY client/phase.py /
+COPY client/typedefs.json /
 COPY client/publish-assets.py /
 COPY client/register-business-simple.py /
 COPY client/register-random-businesses-and-offerings.py /
 COPY client/upload-folder-to-ipfs-and-return-cid.py /
 COPY client/upload-image-to-ipfs-and-return-cid.py /
-COPY client/voucher.py /
 
 RUN chmod +x /encointer-client-notee
 #RUN chmod +x /usr/local/bin/healthcheck9933.sh
