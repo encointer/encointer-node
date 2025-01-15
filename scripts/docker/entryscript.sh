@@ -17,6 +17,12 @@ case $1 in
     /bot-community.py --client /encointer-client-notee $PARAMS
     ;;
 
+  check-bot-stats)
+    # Stats should be the string from "$(cat client/bot-stats.csv)"
+    $STATS > bot-stats.csv
+    diff bot-stats.csv bot-stats-golden.csv
+    ;;
+
   phase.py)
     /phase.py --client /encointer-client-notee $PARAMS
     ;;
