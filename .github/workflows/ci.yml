@@ -26,277 +26,277 @@ jobs:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
-
-        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-      - name: Setup Rust toolchain
-        run: rustup show
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "release"
-
-      - name: Build
-        run: cargo build --release
-      - name: Upload node
-        uses: actions/upload-artifact@v4
-        with:
-          name: encointer-node-notee-${{ github.sha }}
-          path: target/release/encointer-node-notee
-      - name: Upload CLI client
-        uses: actions/upload-artifact@v4
-        with:
-          name: encointer-client-notee-${{ github.sha }}
-          path: target/release/encointer-client-notee
-
-  build-try-runtime-and-benchmarks:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
-
-        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-      - name: Setup Rust toolchain
-        run: rustup show
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "release"
-
-      - name: Build
-        run: cargo build --release --features try-runtime,runtime-benchmarks
-      - name: Upload node
-        uses: actions/upload-artifact@v4
-        with:
-          name: encointer-node-notee-try-runtime-and-benchmarks-${{ github.sha }}
-          path: target/release/encointer-node-notee
-      - name: Upload CLI client
-        uses: actions/upload-artifact@v4
-        with:
-          name: encointer-client-notee-try-runtime-and-benchmarks-${{ github.sha }}
-          path: target/release/encointer-client-notee
-
-  build-runtimes:
-    name: Build Runtimes
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        runtime: [ "encointer-node-notee" ]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Cache target dir
-        uses: actions/cache@v3
-        with:
-          path: "${{ github.workspace }}/runtime/target"
-          key: srtool-target-${{ matrix.runtime }}-${{ github.sha }}
-          restore-keys: |
-            srtool-target-${{ matrix.runtime }}-
-            srtool-target-
-
-      - name: Srtool build
-        id: srtool_build
-        uses: chevdor/srtool-actions@v0.9.2
-        with:
-          image: paritytech/srtool
-          tag: 1.77.0
-          chain: ${{ matrix.runtime }}
-          runtime_dir: runtime
-
-      - name: Summary
-        run: |
-          echo '${{ steps.srtool_build.outputs.json }}' | jq > ${{ matrix.runtime }}-srtool-digest.json
-          cat ${{ matrix.runtime }}-srtool-digest.json
-          echo "Compact Runtime: ${{ steps.srtool_build.outputs.wasm }}"
-          echo "Compressed Runtime: ${{ steps.srtool_build.outputs.wasm_compressed }}"
-      # We now get extra information thanks to subwasm
-      - name: Install subwasm
-        run: |
-          wget https://github.com/chevdor/subwasm/releases/download/v${{ env.SUBWASM_VERSION }}/subwasm_linux_amd64_v${{ env.SUBWASM_VERSION }}.deb
-          sudo dpkg -i subwasm_linux_amd64_v${{ env.SUBWASM_VERSION }}.deb
-          subwasm --version
-      - name: Show Runtime information
-        shell: bash
-        run: |
-          subwasm info ${{ steps.srtool_build.outputs.wasm }}
-          subwasm info ${{ steps.srtool_build.outputs.wasm_compressed }}
-          subwasm --json info ${{ steps.srtool_build.outputs.wasm }} > ${{ matrix.runtime }}-info.json
-          subwasm --json info ${{ steps.srtool_build.outputs.wasm_compressed }} > ${{ matrix.runtime }}-compressed-info.json
-      - name: Extract the metadata
-        shell: bash
-        run: |
-          subwasm meta ${{ steps.srtool_build.outputs.wasm }}
-          subwasm --json meta ${{ steps.srtool_build.outputs.wasm }} > ${{ matrix.runtime }}-metadata.json
-      # This is unsupported it wants to diff the metadata with a running chain. i.e. wss://kusama-<matrix.chain>-rpc.parity.io
-      #      - name: Check the metadata diff
-      #        shell: bash
-      #        run: |
-      #          subwasm diff ${{ steps.srtool_build.outputs.wasm }} --chain-b ${{ matrix.chain }} > ${{ matrix.chain }}-diff.txt
-      #          cat ${{ matrix.chain }}-diff.txt
-
-      - name: Upload ${{ matrix.runtime }} srtool json
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.runtime }}-srtool-json-${{ github.sha }}
-          path: |
-            ${{ matrix.runtime }}-srtool-digest.json
-            ${{ matrix.runtime }}-info.json
-            ${{ matrix.runtime }}-compressed-info.json
-            ${{ matrix.runtime }}-metadata.json
-      #            ${{ matrix.runtime }}-diff.txt
-
-
-      - name: Upload ${{ matrix.runtime }} runtime
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.runtime }}-runtime-${{ github.sha }}
-          path: |
-            ${{ steps.srtool_build.outputs.wasm }}
-            ${{ steps.srtool_build.outputs.wasm_compressed }}
-
-  unit-tests:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
-
-        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-      - name: Setup Rust toolchain
-        run: rustup show
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "debug"
-
-      - name: cargo test
-        run: cargo test --all
-
-  check:
-    name: Rust check ${{ matrix.check }} (${{ matrix.rust-target }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ ubuntu-22.04 ]
-        rust: [ stable ]
-        rust-target: [ x86_64-unknown-linux-gnu ]
-        check: [ +nightly fmt --all -- --check, clippy -p encointer-client-notee ]
-    env:
-      RUST_BACKTRACE: full
-      RUSTV: ${{ matrix.rust }}
-      TARGET: ${{ matrix.rust-target }}
-    steps:
-      - name: Install nightly toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          components: rustfmt
-
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
-
-      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-      - name: Setup Rust toolchain
-        run: rustup show
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "debug"
-
-      - name: ${{ matrix.check }}
-        run: cargo ${{ matrix.check }}
-
-  cargo-toml-fmt:
-    runs-on: ubuntu-22.04
-    container: "tamasfe/taplo:0.7.0-alpine"
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run Taplo fmt
-        run: taplo fmt --check
-
-      - name: Fail-fast; cancel other jobs
-        if: failure()
-        uses: andymckay/cancel-action@0.3
-
-  integration-test:
-    name: ${{ matrix.test }}
-    runs-on: ubuntu-22.04
-    needs: build
-    strategy:
-      matrix:
-        test: [ test_bootstrap_demo_community.sh, test_bot_community.sh, test_register_business.sh ]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: encointer-node-notee-${{ github.sha }}
-
-      - name: download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: encointer-client-notee-${{ github.sha }}
-
-      - name: fix permissions of artifacts and move to original folder
-        run: |
-          chmod +x encointer-node-notee
-          chmod +x encointer-client-notee
-          mkdir -p target/release
-          mv encointer-*-notee target/release
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.7
-      - name: install py dependencies
-        run: ./scripts/install_python_deps.sh
-
-      - name: Set up ipfs
-        uses: ibnesayeed/setup-ipfs@master
-        with:
-          run_daemon: true
-
-      - name: start dev node
-        run:
-          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
-
-      - name: start faucet service
-        run: |
-          cd client
-          python faucet.py &
-
-      - name: start phase accelerator service
-        run: |
-          cd client
-          python phase.py --idle-blocks 3 &
-
-      - name: Test ${{ matrix.test }}
-        working-directory: ./scripts/ci
-        run: source ./init_env.sh && ./${{ matrix.test }}
+  #  build:
+  #    runs-on: ubuntu-22.04
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #
+  #      - name: Install protoc
+  #        run: sudo apt-get install protobuf-compiler
+  #
+  #        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+  #        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+  #      - name: Setup Rust toolchain
+  #        run: rustup show
+  #
+  #      - uses: Swatinem/rust-cache@v2
+  #        with:
+  #          shared-key: "release"
+  #
+  #      - name: Build
+  #        run: cargo build --release
+  #      - name: Upload node
+  #        uses: actions/upload-artifact@v4
+  #        with:
+  #          name: encointer-node-notee-${{ github.sha }}
+  #          path: target/release/encointer-node-notee
+  #      - name: Upload CLI client
+  #        uses: actions/upload-artifact@v4
+  #        with:
+  #          name: encointer-client-notee-${{ github.sha }}
+  #          path: target/release/encointer-client-notee
+  #
+  #  build-try-runtime-and-benchmarks:
+  #    runs-on: ubuntu-22.04
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #
+  #      - name: Install protoc
+  #        run: sudo apt-get install protobuf-compiler
+  #
+  #        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+  #        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+  #      - name: Setup Rust toolchain
+  #        run: rustup show
+  #
+  #      - uses: Swatinem/rust-cache@v2
+  #        with:
+  #          shared-key: "release"
+  #
+  #      - name: Build
+  #        run: cargo build --release --features try-runtime,runtime-benchmarks
+  #      - name: Upload node
+  #        uses: actions/upload-artifact@v4
+  #        with:
+  #          name: encointer-node-notee-try-runtime-and-benchmarks-${{ github.sha }}
+  #          path: target/release/encointer-node-notee
+  #      - name: Upload CLI client
+  #        uses: actions/upload-artifact@v4
+  #        with:
+  #          name: encointer-client-notee-try-runtime-and-benchmarks-${{ github.sha }}
+  #          path: target/release/encointer-client-notee
+  #
+  #  build-runtimes:
+  #    name: Build Runtimes
+  #    runs-on: ubuntu-22.04
+  #    strategy:
+  #      matrix:
+  #        runtime: [ "encointer-node-notee" ]
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #
+  #      - name: Cache target dir
+  #        uses: actions/cache@v3
+  #        with:
+  #          path: "${{ github.workspace }}/runtime/target"
+  #          key: srtool-target-${{ matrix.runtime }}-${{ github.sha }}
+  #          restore-keys: |
+  #            srtool-target-${{ matrix.runtime }}-
+  #            srtool-target-
+  #
+  #      - name: Srtool build
+  #        id: srtool_build
+  #        uses: chevdor/srtool-actions@v0.9.2
+  #        with:
+  #          image: paritytech/srtool
+  #          tag: 1.77.0
+  #          chain: ${{ matrix.runtime }}
+  #          runtime_dir: runtime
+  #
+  #      - name: Summary
+  #        run: |
+  #          echo '${{ steps.srtool_build.outputs.json }}' | jq > ${{ matrix.runtime }}-srtool-digest.json
+  #          cat ${{ matrix.runtime }}-srtool-digest.json
+  #          echo "Compact Runtime: ${{ steps.srtool_build.outputs.wasm }}"
+  #          echo "Compressed Runtime: ${{ steps.srtool_build.outputs.wasm_compressed }}"
+  #      # We now get extra information thanks to subwasm
+  #      - name: Install subwasm
+  #        run: |
+  #          wget https://github.com/chevdor/subwasm/releases/download/v${{ env.SUBWASM_VERSION }}/subwasm_linux_amd64_v${{ env.SUBWASM_VERSION }}.deb
+  #          sudo dpkg -i subwasm_linux_amd64_v${{ env.SUBWASM_VERSION }}.deb
+  #          subwasm --version
+  #      - name: Show Runtime information
+  #        shell: bash
+  #        run: |
+  #          subwasm info ${{ steps.srtool_build.outputs.wasm }}
+  #          subwasm info ${{ steps.srtool_build.outputs.wasm_compressed }}
+  #          subwasm --json info ${{ steps.srtool_build.outputs.wasm }} > ${{ matrix.runtime }}-info.json
+  #          subwasm --json info ${{ steps.srtool_build.outputs.wasm_compressed }} > ${{ matrix.runtime }}-compressed-info.json
+  #      - name: Extract the metadata
+  #        shell: bash
+  #        run: |
+  #          subwasm meta ${{ steps.srtool_build.outputs.wasm }}
+  #          subwasm --json meta ${{ steps.srtool_build.outputs.wasm }} > ${{ matrix.runtime }}-metadata.json
+  #      # This is unsupported it wants to diff the metadata with a running chain. i.e. wss://kusama-<matrix.chain>-rpc.parity.io
+  #      #      - name: Check the metadata diff
+  #      #        shell: bash
+  #      #        run: |
+  #      #          subwasm diff ${{ steps.srtool_build.outputs.wasm }} --chain-b ${{ matrix.chain }} > ${{ matrix.chain }}-diff.txt
+  #      #          cat ${{ matrix.chain }}-diff.txt
+  #
+  #      - name: Upload ${{ matrix.runtime }} srtool json
+  #        uses: actions/upload-artifact@v4
+  #        with:
+  #          name: ${{ matrix.runtime }}-srtool-json-${{ github.sha }}
+  #          path: |
+  #            ${{ matrix.runtime }}-srtool-digest.json
+  #            ${{ matrix.runtime }}-info.json
+  #            ${{ matrix.runtime }}-compressed-info.json
+  #            ${{ matrix.runtime }}-metadata.json
+  #      #            ${{ matrix.runtime }}-diff.txt
+  #
+  #
+  #      - name: Upload ${{ matrix.runtime }} runtime
+  #        uses: actions/upload-artifact@v4
+  #        with:
+  #          name: ${{ matrix.runtime }}-runtime-${{ github.sha }}
+  #          path: |
+  #            ${{ steps.srtool_build.outputs.wasm }}
+  #            ${{ steps.srtool_build.outputs.wasm_compressed }}
+  #
+  #  unit-tests:
+  #    runs-on: ubuntu-22.04
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #
+  #      - name: Install protoc
+  #        run: sudo apt-get install protobuf-compiler
+  #
+  #        # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+  #        # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+  #      - name: Setup Rust toolchain
+  #        run: rustup show
+  #
+  #      - uses: Swatinem/rust-cache@v2
+  #        with:
+  #          shared-key: "debug"
+  #
+  #      - name: cargo test
+  #        run: cargo test --all
+  #
+  #  check:
+  #    name: Rust check ${{ matrix.check }} (${{ matrix.rust-target }})
+  #    runs-on: ${{ matrix.os }}
+  #    strategy:
+  #      matrix:
+  #        os: [ ubuntu-22.04 ]
+  #        rust: [ stable ]
+  #        rust-target: [ x86_64-unknown-linux-gnu ]
+  #        check: [ +nightly fmt --all -- --check, clippy -p encointer-client-notee ]
+  #    env:
+  #      RUST_BACKTRACE: full
+  #      RUSTV: ${{ matrix.rust }}
+  #      TARGET: ${{ matrix.rust-target }}
+  #    steps:
+  #      - name: Install nightly toolchain
+  #        uses: actions-rs/toolchain@v1
+  #        with:
+  #          profile: minimal
+  #          toolchain: nightly
+  #          components: rustfmt
+  #
+  #      - name: Checkout
+  #        uses: actions/checkout@v3
+  #
+  #      - name: Install protoc
+  #        run: sudo apt-get install protobuf-compiler
+  #
+  #      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+  #      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+  #      - name: Setup Rust toolchain
+  #        run: rustup show
+  #
+  #      - uses: Swatinem/rust-cache@v2
+  #        with:
+  #          shared-key: "debug"
+  #
+  #      - name: ${{ matrix.check }}
+  #        run: cargo ${{ matrix.check }}
+  #
+  #  cargo-toml-fmt:
+  #    runs-on: ubuntu-22.04
+  #    container: "tamasfe/taplo:0.7.0-alpine"
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #
+  #      - name: Run Taplo fmt
+  #        run: taplo fmt --check
+  #
+  #      - name: Fail-fast; cancel other jobs
+  #        if: failure()
+  #        uses: andymckay/cancel-action@0.3
+  #
+  #  integration-test:
+  #    name: ${{ matrix.test }}
+  #    runs-on: ubuntu-22.04
+  #    needs: build
+  #    strategy:
+  #      matrix:
+  #        test: [ test_bootstrap_demo_community.sh, test_bot_community.sh, test_register_business.sh ]
+  #    steps:
+  #      - uses: actions/checkout@v3
+  #
+  #      - name: download build artifacts
+  #        uses: actions/download-artifact@v4
+  #        with:
+  #          name: encointer-node-notee-${{ github.sha }}
+  #
+  #      - name: download build artifacts
+  #        uses: actions/download-artifact@v4
+  #        with:
+  #          name: encointer-client-notee-${{ github.sha }}
+  #
+  #      - name: fix permissions of artifacts and move to original folder
+  #        run: |
+  #          chmod +x encointer-node-notee
+  #          chmod +x encointer-client-notee
+  #          mkdir -p target/release
+  #          mv encointer-*-notee target/release
+  #
+  #      - name: Set up Python
+  #        uses: actions/setup-python@v4
+  #        with:
+  #          python-version: 3.7
+  #      - name: install py dependencies
+  #        run: ./scripts/install_python_deps.sh
+  #
+  #      - name: Set up ipfs
+  #        uses: ibnesayeed/setup-ipfs@master
+  #        with:
+  #          run_daemon: true
+  #
+  #      - name: start dev node
+  #        run:
+  #          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
+  #
+  #      - name: start faucet service
+  #        run: |
+  #          cd client
+  #          python faucet.py &
+  #
+  #      - name: start phase accelerator service
+  #        run: |
+  #          cd client
+  #          python phase.py --idle-blocks 3 &
+  #
+  #      - name: Test ${{ matrix.test }}
+  #        working-directory: ./scripts/ci
+  #        run: source ./init_env.sh && ./${{ matrix.test }}
 
   integration-test-docker:
     name: ${{ matrix.test }}
     runs-on: ubuntu-22.04
-    needs: build
+    #    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -402,91 +402,91 @@ jobs:
             -r ws://host.docker.internal \
             --port 9944 \
 
-  release:
-    name: Draft Release
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-22.04
-    needs: [ build, unit-tests, check, integration-test ]
-    outputs:
-      release_url: ${{ steps.create-release.outputs.html_url }}
-      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Download Encointer Node
-        uses: actions/download-artifact@v4
-        with:
-          name: encointer-node-notee-${{ github.sha }}
-
-      - name: Download Encointer Client
-        uses: actions/download-artifact@v4
-        with:
-          name: encointer-client-notee-${{ github.sha }}
-
-      - name: Create required package.json
-        run: test -f package.json || echo '{}' >package.json
-
-      - name: Changelog
-        uses: scottbrenner/generate-changelog-action@master
-        id: Changelog
-
-      - name: Display structure of downloaded files
-        run: ls -R
-        working-directory: .
-
-      - name: Release
-        id: create-release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          body: |
-            ${{ steps.Changelog.outputs.changelog }}
-          draft: true
-          files: |
-            encointer-node-notee
-            encointer-client-notee
-
-  publish-runtimes:
-    name: Publish Runtimes
-    runs-on: ubuntu-22.04
-    needs: [ release, build-runtimes ]
-    strategy:
-      matrix:
-        runtime: [ "encointer-node-notee" ]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v4
-      - name: Set up Ruby 3
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
-
-      - name: Get runtime version
-        id: get-runtime-ver
-        run: |
-          ls
-          ls "${{ matrix.runtime }}-runtime-${{ github.sha }}"
-          runtime_ver="$(ruby -e 'require "./scripts/github/lib.rb"; puts get_runtime()')"
-          echo "Found version: >$runtime_ver<"
-          echo "runtime_ver={$runtime_ver}" >> $GITHUB_OUTPUT
-
-      - name: Upload compact ${{ matrix.runtime }} wasm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.asset_upload_url }}
-          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
-          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
-          asset_content_type: application/wasm
-
-      - name: Upload compressed ${{ matrix.runtime }} wasm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.asset_upload_url }}
-          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.compressed.wasm"
-          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.compressed.wasm
-          asset_content_type: application/wasm
+#  release:
+#    name: Draft Release
+#    if: startsWith(github.ref, 'refs/tags/')
+#    runs-on: ubuntu-22.04
+#    needs: [ build, unit-tests, check, integration-test ]
+#    outputs:
+#      release_url: ${{ steps.create-release.outputs.html_url }}
+#      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - name: Download Encointer Node
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: encointer-node-notee-${{ github.sha }}
+#
+#      - name: Download Encointer Client
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: encointer-client-notee-${{ github.sha }}
+#
+#      - name: Create required package.json
+#        run: test -f package.json || echo '{}' >package.json
+#
+#      - name: Changelog
+#        uses: scottbrenner/generate-changelog-action@master
+#        id: Changelog
+#
+#      - name: Display structure of downloaded files
+#        run: ls -R
+#        working-directory: .
+#
+#      - name: Release
+#        id: create-release
+#        uses: softprops/action-gh-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          body: |
+#            ${{ steps.Changelog.outputs.changelog }}
+#          draft: true
+#          files: |
+#            encointer-node-notee
+#            encointer-client-notee
+#
+#  publish-runtimes:
+#    name: Publish Runtimes
+#    runs-on: ubuntu-22.04
+#    needs: [ release, build-runtimes ]
+#    strategy:
+#      matrix:
+#        runtime: [ "encointer-node-notee" ]
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: actions/download-artifact@v4
+#      - name: Set up Ruby 3
+#        uses: ruby/setup-ruby@v1
+#        with:
+#          ruby-version: '3.0'
+#
+#      - name: Get runtime version
+#        id: get-runtime-ver
+#        run: |
+#          ls
+#          ls "${{ matrix.runtime }}-runtime-${{ github.sha }}"
+#          runtime_ver="$(ruby -e 'require "./scripts/github/lib.rb"; puts get_runtime()')"
+#          echo "Found version: >$runtime_ver<"
+#          echo "runtime_ver={$runtime_ver}" >> $GITHUB_OUTPUT
+#
+#      - name: Upload compact ${{ matrix.runtime }} wasm
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ needs.release.outputs.asset_upload_url }}
+#          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
+#          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
+#          asset_content_type: application/wasm
+#
+#      - name: Upload compressed ${{ matrix.runtime }} wasm
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ needs.release.outputs.asset_upload_url }}
+#          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.compressed.wasm"
+#          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.compressed.wasm
+#          asset_content_type: application/wasm
