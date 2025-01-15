@@ -356,13 +356,6 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache-node
           cache-to: type=local,dest=/tmp/.buildx-cache-node
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.7
-      - name: install py dependencies
-        run: ./scripts/install_python_deps.sh
-
       - name: Set up ipfs
         uses: ibnesayeed/setup-ipfs@master
         with:
