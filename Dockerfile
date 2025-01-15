@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 LABEL description="This is the 2nd stage: a very small image where we copy the Substrate binary."
 
-RUN apt-get update && \ 
+RUN apt-get update && \
 apt-get install -y jq python3 python3-pip
 
 RUN python3 -m pip install --upgrade pip
@@ -18,7 +18,7 @@ RUN mv /usr/share/ca* /tmp && \
 WORKDIR /
 
 COPY scripts/docker/entryscript.sh /
-COPY target/release/encointer-client-notee /
+COPY encointer-client-notee /
 
 #COPY ./scripts/healthcheck9933.sh /usr/local/bin
 
