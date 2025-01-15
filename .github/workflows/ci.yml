@@ -350,10 +350,17 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Docker build client
-        run: docker build . -t encointer-client-test
+        run: |
+          docker build \
+            --cache-from=type=gha \
+            -t encointer-client-test .
 
       - name: Docker build node
-        run: docker build -f Dockerfile-node . -t encointer-node-test
+        run: |
+          docker build \
+          --cache-from=type=gha \
+          -f Dockerfile-node \
+          -t encointer-node-test . 
 
       - name: Set up ipfs
         uses: ibnesayeed/setup-ipfs@master
