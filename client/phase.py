@@ -26,7 +26,7 @@ global patience
 @click.command()
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
-@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('--idle-blocks', default=10, help='how many idle blocks to await before moving to next phase')
 def main(client, url, port, idle_blocks):

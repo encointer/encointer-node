@@ -27,7 +27,7 @@ global IPFS_LOCAL
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 def register_businesses_and_offerings(client, port, ipfs_local, url):
     client = set_local_or_remote_chain(client, port, url)
