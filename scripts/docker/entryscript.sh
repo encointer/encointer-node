@@ -14,16 +14,24 @@ case $1 in
     ;;
 
   bot-community-test)
+    # Example: note the port mapping, because we run the faucet at port 5000 in another container ...
+    # docker run -it -p 5005:5000 --add-host host.docker.internal:host-gateway test-client bot-community-test -r ws://host.docker.internal --port 9944 -f http://host.docker.internal:5000/api
+
+    # currently broken, for some reason it can't connect to the faucet
     /bot-community.py --client /encointer-client-notee $PARAMS init
 #    /bot-community.py --client /encointer-client-notee $PARAMS test
 #    diff bot-stats.csv bot-stats-golden.csv
     ;;
 
   phase.py)
+    # Example: note the port mapping, because we run another the faucet exposing 5000
+    # docker run -it -p 5001:5000 --add-host host.docker.internal:host-gateway test-client phase.py -r ws://host.docker.internal --port 9944 --idle-blocks 3
     /phase.py --client /encointer-client-notee $PARAMS
     ;;
 
   faucet.py)
+    # Example:
+    # docker run -it --add-host host.docker.internal:host-gateway test-client faucet.py -u ws://host.docker.internal --port 9944
     /faucet.py --client /encointer-client-notee $PARAMS
     ;;
 
