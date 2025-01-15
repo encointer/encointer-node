@@ -353,13 +353,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Login to Dockerhub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Build and push
+      - name: Docker build client
         id: docker_build
         uses: docker/build-push-action@v3
         with:
@@ -369,7 +363,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      - name: Build and push
+      - name: Docker build node
         id: docker_build_node
         uses: docker/build-push-action@v3
         with:
