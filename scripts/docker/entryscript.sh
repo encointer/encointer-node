@@ -19,8 +19,8 @@ case $1 in
 
     # currently broken, for some reason it can't connect to the faucet
     /bot-community.py --client /encointer-client-notee $PARAMS init
-#    /bot-community.py --client /encointer-client-notee $PARAMS test
-#    diff bot-stats.csv bot-stats-golden.csv
+    /bot-community.py --client /encointer-client-notee $PARAMS test
+    diff bot-stats.csv bot-stats-golden.csv
     ;;
 
   phase.py)
@@ -31,7 +31,7 @@ case $1 in
 
   faucet.py)
     # Example:
-    # docker run -it --add-host host.docker.internal:host-gateway test-client faucet.py -u ws://host.docker.internal --port 9944
+    # docker run -it -p 5000:5000 --add-host host.docker.internal:host-gateway test-client faucet.py -u ws://host.docker.internal --port 9944
     /faucet.py --client /encointer-client-notee $PARAMS
     ;;
 
