@@ -303,7 +303,7 @@ jobs:
         test:
           - bootstrap_demo_community.py --signer //Bob --test
           - bot-community-test -f http://host.docker.internal:5000/api
-          # not working yet
+          # Todo: #386
           # - test-register-businesses -f http://host.docker.internal:5000/api
     steps:
       - uses: actions/checkout@v3
@@ -387,7 +387,7 @@ jobs:
 
       - name: start phase accelerator service
         run: |
-          docker run -p 6000:5000 \
+          docker run \
             --add-host host.docker.internal:host-gateway \
             encointer-client-test phase.py \
             -u ws://host.docker.internal \
@@ -395,7 +395,7 @@ jobs:
 
       - name: Test ${{ matrix.test }}
         run: |
-          docker run -p 7000:5000 \
+          docker run \
             --add-host host.docker.internal:host-gateway \
             encointer-client-test ${{ matrix.test }} \
             -u ws://host.docker.internal \
