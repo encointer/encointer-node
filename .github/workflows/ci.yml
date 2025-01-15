@@ -21,13 +21,13 @@ env:
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -63,7 +63,7 @@ jobs:
           path: target/release/encointer-client-notee
 
   build-try-runtime-and-benchmarks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -100,7 +100,7 @@ jobs:
 
   build-runtimes:
     name: Build Runtimes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         runtime: [ "encointer-node-notee" ]
@@ -176,7 +176,7 @@ jobs:
             ${{ steps.srtool_build.outputs.wasm_compressed }}
 
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
@@ -206,7 +206,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-22.04 ]
         rust: [ stable ]
         rust-target: [ x86_64-unknown-linux-gnu ]
         check: [ +nightly fmt --all -- --check, clippy -p encointer-client-notee ]
@@ -241,7 +241,7 @@ jobs:
         run: cargo ${{ matrix.check }}
 
   cargo-toml-fmt:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: "tamasfe/taplo:0.7.0-alpine"
     steps:
       - uses: actions/checkout@v3
@@ -255,7 +255,7 @@ jobs:
 
   integration-test:
     name: ${{ matrix.test }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build
     strategy:
       matrix:
@@ -312,7 +312,7 @@ jobs:
 
   integration-test-docker:
     name: ${{ matrix.test }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build
     strategy:
       matrix:
@@ -320,6 +320,7 @@ jobs:
           - bootstrap_demo_community.py --signer //Bob --test,
           - bot-community-test -f http://host.docker.internal:5000/api,
           - test-register-businesses -f http://host.docker.internal:5000/api
+      ]
     steps:
       - uses: actions/checkout@v3
 
@@ -423,7 +424,7 @@ jobs:
   release:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [ build, unit-tests, check, integration-test ]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}
@@ -467,7 +468,7 @@ jobs:
 
   publish-runtimes:
     name: Publish Runtimes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [ release, build-runtimes ]
     strategy:
       matrix:
