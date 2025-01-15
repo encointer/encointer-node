@@ -363,39 +363,38 @@ jobs:
           run_daemon: true
 
       - name: start dev node
-        run:
+        run: |
           docker run -p 30333:30333 -p 9944:9944 -p 9615:9615 \
-          encointer-node-test \
-          --dev \
-          --enable-offchain-indexing true \
-          --rpc-methods unsafe \
-          -lencointer=debug,parity_ws=warn \
-          --rpc-external \
-
+            encointer-node-test \
+            --dev \
+            --enable-offchain-indexing=true \
+            --rpc-methods=unsafe \
+            -lencointer=debug,parity_ws=warn \
+            --rpc-external &
 
       - name: start faucet service
-        run:
+        run: |
           docker run -p 5000:5000 \
-          --add-host host.docker.internal:host-gateway \
-          encointer-client-test faucet.py \
-          -u ws://host.docker.internal \
-          --port 9944 &
+            --add-host host.docker.internal:host-gateway \
+            encointer-client-test faucet.py \
+            -u ws://host.docker.internal \
+            --port 9944 &
 
       - name: start phase accelerator service
-        run:
+        run: |
           docker run -p 5001:5000 \
-          --add-host host.docker.internal:host-gateway \
-          encointer-client-test phase.py \
-          -r ws://host.docker.internal \
-          --port 9944 --idle-blocks 3 &
+            --add-host host.docker.internal:host-gateway \
+            encointer-client-test phase.py \
+            -r ws://host.docker.internal \
+            --port 9944 --idle-blocks 3 &
 
       - name: Test ${{ matrix.test }}
-        run:
+        run: |
           docker run -p 5005:5000 \
-          --add-host host.docker.internal:host-gateway \
-          encointer-client-test ${{ matrix.test }} \
-          -r ws://host.docker.internal \
-          --port 9944 \
+            --add-host host.docker.internal:host-gateway \
+            encointer-client-test ${{ matrix.test }} \
+            -r ws://host.docker.internal \
+            --port 9944 \
 
   release:
     name: Draft Release
