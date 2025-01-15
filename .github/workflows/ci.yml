@@ -398,7 +398,7 @@ jobs:
           docker run -p 7000:5000 \
             --add-host host.docker.internal:host-gateway \
             encointer-client-test ${{ matrix.test }} \
-            -r ws://host.docker.internal \
+            -u ws://host.docker.internal \
             --port 9944 \
 
 #  release:
