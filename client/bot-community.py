@@ -51,18 +51,18 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
 @click.option('-f', '--faucet_url', default='http://localhost:5000/api',
               help='url for the faucet (only needed for test/benchmark cmd)')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, remote_chain, faucet_url):
+def cli(ctx, client, port, ipfs_local, url, faucet_url):
     ctx.ensure_object(dict)
-    cl = set_local_or_remote_chain(client, port, remote_chain)
+    cl = set_local_or_remote_chain(client, port, url)
     ctx.obj['client'] = cl
     ctx.obj['port'] = port
     ctx.obj['ipfs_local'] = ipfs_local
-    ctx.obj['remote_chain'] = remote_chain
+    ctx.obj['url'] = url
     ctx.obj['faucet_url'] = faucet_url
 
 

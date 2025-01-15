@@ -24,20 +24,19 @@ global patience
 
 
 @click.command()
-@click.option('-r', '--remote-chain', default='ws://127.0.0.1',
-              help='choose one of the remote chains: gesell, or the url')
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('--idle-blocks', default=10, help='how many idle blocks to await before moving to next phase')
-def main(remote_chain, client, port, idle_blocks):
-    client = set_local_or_remote_chain(client, port, remote_chain)
+def main(client, url, port, idle_blocks):
+    client = set_local_or_remote_chain(client, port, url)
     global COUNT, patience
     patience = idle_blocks
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
     substrate = SubstrateInterface(
-        url=get_node_url(node_url=remote_chain, port=port),
+        url=get_node_url(node_url=url, port=port),
         ss58_format=42,
         type_registry_preset='substrate-node-template',
         type_registry=custom_type_registry

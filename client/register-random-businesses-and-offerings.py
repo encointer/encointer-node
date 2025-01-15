@@ -3,7 +3,6 @@
 This is a test script that registers random businesses and offerings in a community which has been previously created with ./bot-community.py init
 """
 
-
 import glob
 import json
 import random
@@ -23,13 +22,15 @@ ICON_PATH = './test-data/assets/icons/community_icon.png'
 
 global IPFS_LOCAL
 
+
 @click.command()
-@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--client', default='../target/release/encointer-client-notee',
+              help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
-@click.option('-r', '--remote_chain', default=None, help='choose one of the remote chains: gesell.')
-def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
-    client = set_local_or_remote_chain(client, port, remote_chain)
+def register_businesses_and_offerings(client, port, ipfs_local, url):
+    client = set_local_or_remote_chain(client, port, url)
     global IPFS_LOCAL
     IPFS_LOCAL = ipfs_local
     owners = shop_owners()
@@ -83,6 +84,7 @@ def register_businesses_and_offerings(client, port, ipfs_local, remote_chain):
         print("registering offerings failed")
         exit(1)
     print(client.list_offerings_for_business(cid, owners[0]))
+
 
 def create_businesses(amount: int):
     """

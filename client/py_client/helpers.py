@@ -72,11 +72,7 @@ def generate_file_list(path_to_files):
 
 
 def set_local_or_remote_chain(client: str, port: str, node_url: str):
-    if node_url is None:
-        client = Client(rust_client=client, port=port)
+    if node_url == "gesell":
+        return Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
     else:
-        if node_url == "gesell":
-            client = Client(rust_client=client, node_url='wss://gesell.encointer.org', port=443)
-        else:
-            client = Client(rust_client=client, node_url=node_url, port=port)
-    return client
+        return Client(rust_client=client, node_url=node_url, port=port)

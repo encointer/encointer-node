@@ -30,25 +30,25 @@ import tempfile
 import os
 
 
-
-
 @click.group()
-@click.option('--cid', required=True, help='the community identifier of the community you want to register your business in (11 digits).')
+@click.option('--cid', required=True,
+              help='the community identifier of the community you want to register your business in (11 digits).')
 @click.option('--bizaccount', required=False, help='the account of the owner in ss58 format or raw_seed.')
 @click.option('--price', default='0', help='price of your offering.')
-@click.option('--client', default='../target/release/encointer-client-notee', help='Client binary to communicate with the chain.')
+@click.option('--client', default='../target/release/encointer-client-notee',
+              help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
-@click.option('-r', '--remote_chain', default=None, help='choose remote chain: gesell.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
 @click.pass_context
-def cli(ctx, client, port, cid, bizaccount, price, remote_chain):
+def cli(ctx, client, port, cid, bizaccount, price, url):
     ctx.ensure_object(dict)
-    cl = set_local_or_remote_chain(client, port, remote_chain)
+    cl = set_local_or_remote_chain(client, port, url)
     ctx.obj['client'] = cl
     ctx.obj['port'] = port
     ctx.obj['cid'] = cid
     ctx.obj['bizaccount'] = bizaccount
     # ctx.obj['ipfs_local'] = ipfs_local
-    ctx.obj['remote_chain'] = remote_chain
+    ctx.obj['url'] = url
     ctx.obj['price'] = price
 
 
@@ -132,6 +132,7 @@ def register_offering(ctx, specfile):
     except:
         print("error creating an offering entry")
 
+
 @cli.command()
 @click.pass_obj
 def list_businesses(ctx):
@@ -142,6 +143,7 @@ def list_businesses(ctx):
     """
     client = ctx['client']
     print(client.list_businesses(ctx['cid']))
+
 
 @cli.command()
 @click.pass_obj
@@ -158,6 +160,7 @@ def list_offerings(ctx):
         print(client.list_offerings(ctx['cid']))
     else:
         print(client.list_offerings_for_business(ctx['cid'], ctx["bizaccount"]))
+
 
 if __name__ == '__main__':
     cli(obj={})
