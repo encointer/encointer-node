@@ -17,7 +17,6 @@ case $1 in
     # Example: note the port mapping, because we run the faucet at port 5000 in another container ...
     # docker run -it -p 5005:5000 --add-host host.docker.internal:host-gateway test-client bot-community-test -r ws://host.docker.internal --port 9944 -f http://host.docker.internal:5000/api
 
-    # currently broken, for some reason it can't connect to the faucet
     /bot-community.py --client /encointer-client-notee $PARAMS init
     /bot-community.py --client /encointer-client-notee $PARAMS test
     diff bot-stats.csv bot-stats-golden.csv
