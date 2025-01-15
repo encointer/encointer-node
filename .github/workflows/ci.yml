@@ -310,12 +310,18 @@ jobs:
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: encointer-node-notee-${{ github.sha }}
+          name: encointer-node-notee-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
+          # for debugging the integration tests, we can just download an image from a previous run
+          github-token: ${{ github.token }}
+          run-id: 12772420910
 
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: encointer-client-notee-${{ github.sha }}
+          name: encointer-client-notee-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
+          # for debugging the integration tests, we can just download an image from a previous run
+          github-token: ${{ github.token }}
+          run-id: 12772420910
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
