@@ -39,15 +39,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - name: Cache Rust Dependecies
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            enclave/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "release"
 
       - name: Build
         run: cargo build --release
@@ -75,15 +69,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - name: Cache Rust Dependecies
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            enclave/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "release"
 
       - name: Build
         run: cargo build --release --features try-runtime,runtime-benchmarks
@@ -115,6 +103,7 @@ jobs:
           restore-keys: |
             srtool-target-${{ matrix.runtime }}-
             srtool-target-
+
       - name: Srtool build
         id: srtool_build
         uses: chevdor/srtool-actions@v0.9.2
@@ -188,15 +177,9 @@ jobs:
       - name: Setup Rust toolchain
         run: rustup show
 
-      - name: Cache Rust Dependecies
-        uses: actions/cache@v3
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            enclave/target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          shared-key: "debug"
 
       - name: cargo test
         run: cargo test --all
@@ -235,7 +218,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.rust-target }}-${{ matrix.check }}
+          shared-key: "debug"
 
       - name: ${{ matrix.check }}
         run: cargo ${{ matrix.check }}
