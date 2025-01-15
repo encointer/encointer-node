@@ -301,8 +301,8 @@ jobs:
       fail-fast: false
       matrix:
         test:
-          - bootstrap_demo_community.py --signer //Bob --test,
-          - bot-community-test -f http://host.docker.internal:5000/api,
+          - bootstrap_demo_community.py --signer //Bob --test
+          - bot-community-test -f http://host.docker.internal:5000/api
           - test-register-businesses -f http://host.docker.internal:5000/api
     steps:
       - uses: actions/checkout@v3
