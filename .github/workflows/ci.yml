@@ -379,7 +379,7 @@ jobs:
 
       - name: start phase accelerator service
         run: |
-          docker run -p 5001:5000 \
+          docker run -p 6000:5000 \
             --add-host host.docker.internal:host-gateway \
             encointer-client-test phase.py \
             -r ws://host.docker.internal \
@@ -387,7 +387,7 @@ jobs:
 
       - name: Test ${{ matrix.test }}
         run: |
-          docker run -p 5005:5000 \
+          docker run -p 7000:5000 \
             --add-host host.docker.internal:host-gateway \
             encointer-client-test ${{ matrix.test }} \
             -r ws://host.docker.internal \
