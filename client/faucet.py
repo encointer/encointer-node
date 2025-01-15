@@ -12,11 +12,13 @@ import flask
 from flask import request, jsonify
 import subprocess
 from time import sleep
+import click
+
 from py_client.client import Client
 
 app = flask.Flask(__name__)
 app.config['DEBUG'] = True
-CLIENT = Client()
+CLIENT = None
 
 
 def faucet(accounts):
@@ -50,4 +52,15 @@ def faucet_service():
         return "no accounts provided to drip to\n"
 
 
-app.run()
+@click.command()
+@click.option('--client', default='../target/release/encointer-client-notee',
+              help='Client binary to communicate with the chain.')
+@click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
+def main(client, url, port):
+    CLIENT = Client(rust_client=client, node_url=url, port=port)
+    app.run()
+
+
+if __name__ == "__main__":
+    main()

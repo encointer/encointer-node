@@ -21,6 +21,10 @@ case $1 in
     /phase.py --client /encointer-client-notee $PARAMS
     ;;
 
+  faucet.py)
+    /faucet.py --client /encointer-client-notee $PARAMS
+    ;;
+
 # Does not work yet because the script wants the options like: cli.py --client <client> -u url -p port <cmd> <command params>
 #  cli.py)
 #    /cli.py $PARAMS
