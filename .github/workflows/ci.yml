@@ -390,7 +390,7 @@ jobs:
           docker run -p 6000:5000 \
             --add-host host.docker.internal:host-gateway \
             encointer-client-test phase.py \
-            -r ws://host.docker.internal \
+            -u ws://host.docker.internal \
             --port 9944 --idle-blocks 3 &
 
       - name: Test ${{ matrix.test }}
