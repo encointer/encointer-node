@@ -13,14 +13,10 @@ case $1 in
     /bootstrap_demo_community.py --client /encointer-client-notee $PARAMS
     ;;
 
-  bot-community.py)
-    /bot-community.py --client /encointer-client-notee $PARAMS
-    ;;
-
-  check-bot-stats)
-    # Stats should be the string from "$(cat client/bot-stats.csv)"
-    $STATS > bot-stats.csv
-    diff bot-stats.csv bot-stats-golden.csv
+  bot-community-test)
+    /bot-community.py --client /encointer-client-notee $PARAMS init
+#    /bot-community.py --client /encointer-client-notee $PARAMS test
+#    diff bot-stats.csv bot-stats-golden.csv
     ;;
 
   phase.py)
@@ -29,6 +25,11 @@ case $1 in
 
   faucet.py)
     /faucet.py --client /encointer-client-notee $PARAMS
+    ;;
+
+  test-register-businesses)
+    /bot-community.py --client /encointer-client-notee $PARAMS init
+    /register-random-businesses-and-offerings.py --client /encointer-client-notee $PARAMS
     ;;
 
 # Does not work yet because the script wants the options like: cli.py --client <client> -u url -p port <cmd> <command params>

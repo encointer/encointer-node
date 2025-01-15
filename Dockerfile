@@ -27,7 +27,6 @@ COPY client/py_client /py_client
 COPY client/test-data /test-data
 
 # all python scripts (some of them aren supported by the entryfile.sh yet).
-COPY client/bazaar.py /
 COPY client/bootstrap_demo_community.py /
 COPY client/bot-community.py /
 COPY client/bot-stats-golden.csv /
@@ -35,11 +34,7 @@ COPY client/cli.py /
 COPY client/faucet.py /
 COPY client/phase.py /
 COPY client/typedefs.json /
-COPY client/publish-assets.py /
-COPY client/register-business-simple.py /
 COPY client/register-random-businesses-and-offerings.py /
-COPY client/upload-folder-to-ipfs-and-return-cid.py /
-COPY client/upload-image-to-ipfs-and-return-cid.py /
 
 RUN chmod +x /encointer-client-notee
 #RUN chmod +x /usr/local/bin/healthcheck9933.sh
@@ -53,7 +48,7 @@ RUN ldd /encointer-client-notee && \
 #	rm -rf /usr/bin /usr/sbin /usr/share/man
 
 #USER encointer
-EXPOSE 30333 9933 9944 9615
+EXPOSE 30333 9933 9944 9615 5000
 VOLUME ["/data"]
 
 ENTRYPOINT ["/entryscript.sh"]

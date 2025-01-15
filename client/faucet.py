@@ -59,7 +59,8 @@ def faucet_service():
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 def main(client, url, port):
     CLIENT = Client(rust_client=client, node_url=url, port=port)
-    app.run()
+    # make the app listen from outside the docker container
+    app.run(host="0.0.0.0")
 
 
 if __name__ == "__main__":
