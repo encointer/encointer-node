@@ -34,9 +34,10 @@ case $1 in
     /faucet.py --client /encointer-client-notee $PARAMS
     ;;
 
-  test-register-businesses)
-    /bot-community.py --client /encointer-client-notee $PARAMS init
-    /register-random-businesses-and-offerings.py --client /encointer-client-notee $PARAMS
+# not working yet, bot-commynity, and egister-random-businesses-and-offering have different interface. It is a pain.
+#  test-register-businesses)
+#    /bot-community.py --client /encointer-client-notee $PARAMS init
+#    /register-random-businesses-and-offerings.py --client /encointer-client-notee $PARAMS
     ;;
 
 # Does not work yet because the script wants the options like: cli.py --client <client> -u url -p port <cmd> <command params>
