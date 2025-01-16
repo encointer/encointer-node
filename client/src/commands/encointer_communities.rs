@@ -75,7 +75,7 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
             }
         };
 
-        if matches.should_send_tx() {
+        if !matches.dryrun_flag() {
             info!("Sending transactions");
         } else {
             info!("skipping sending transactions");

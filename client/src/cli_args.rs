@@ -37,7 +37,6 @@ const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
 const NOMINAL_INCOME_ARG: &str = "nominal-income";
 const DEMURRAGE_HALVING_BLOCKS_ARG: &str = "demurage-halving-blocks";
 const PURPOSE_ID_ARG: &str = "purpose-id";
-const SHOULD_SEND_TX_ARG: &str = "should-send-tx";
 const WRAP_CALL_ARG: &str = "wrap-call";
 
 pub trait EncointerArgs<'b> {
@@ -77,7 +76,6 @@ pub trait EncointerArgs<'b> {
 	fn nominal_income_arg(self) -> Self;
 	fn demurrage_halving_blocks_arg(self) -> Self;
 	fn purpose_id_arg(self) -> Self;
-	fn should_send_tx(self) -> Self;
 	fn wrap_call(self) -> Self;
 }
 
@@ -117,7 +115,6 @@ pub trait EncointerArgsExtractor {
 	fn nominal_income_arg(&self) -> Option<BalanceType>;
 	fn demurrage_halving_blocks_arg(&self) -> Option<u64>;
 	fn purpose_id_arg(&self) -> Option<PurposeIdType>;
-	fn should_send_tx(&self) -> bool;
 	fn wrap_call(&self) -> CallWrapping;
 }
 
@@ -464,25 +461,16 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 		)
 	}
 
-	fn should_send_tx(self) -> Self {
-		self.arg(
-			Arg::with_name(SHOULD_SEND_TX_ARG)
-				.takes_value(false)
-				.required(false)
-				.default_value("true")
-				.value_name("SHOULD_SEND_TX")
-				.help("If the transaction should be sent"),
-		)
-	}
-
 	fn wrap_call(self) -> Self {
         self.arg(
-            Arg::with_name(WRAP_CALL_ARG)
-                .takes_value(true)
-                .required(false)
-                .default_value("none")
-                .value_name("")
-                .help("If the transaction should be wrapped with a sudo/collective call or not."),
+			Arg::with_name(WRAP_CALL_ARG)
+				.short("w")
+				.long("wrap-call")
+				.takes_value(true)
+				.required(false)
+				.default_value("none")
+				.value_name("none|sudo|collective")
+				.help("If the transaction should be wrapped with a sudo/collective call or not."),
         )
 	}
 }
@@ -612,10 +600,6 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	fn purpose_id_arg(&self) -> Option<PurposeIdType> {
 		self.value_of(PURPOSE_ID_ARG).map(|v| v.parse().unwrap())
 	}
-
-    fn should_send_tx(&self) -> bool {
-        self.value_of(SHOULD_SEND_TX_ARG).map(|v| v.parse().unwrap()).unwrap_or(true)
-    }
 
     fn wrap_call(&self) -> CallWrapping {
         self.value_of(WRAP_CALL_ARG).map(|v| v.parse().unwrap()).unwrap_or(CallWrapping::None)
