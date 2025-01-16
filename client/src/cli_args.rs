@@ -478,7 +478,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	fn wrap_call(self) -> Self {
         self.arg(
             Arg::with_name(WRAP_CALL_ARG)
-                .takes_value(false)
+                .takes_value(true)
                 .required(false)
                 .default_value("none")
                 .value_name("")
