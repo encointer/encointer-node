@@ -225,6 +225,8 @@ fn main() {
 		                    .help("enhanced geojson file that specifies a community"),
 		            )
 		            .signer_arg("account with necessary privileges")
+						.should_send_tx()
+						.wrap_call()
 		        })
 		        .runner(commands::encointer_communities::new_community),
 		)

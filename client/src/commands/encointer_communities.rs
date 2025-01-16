@@ -1,19 +1,19 @@
 use crate::{
-	cli_args::EncointerArgsExtractor,
-	community_spec::{
-		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
-		CommunitySpec,
-	},
-	exit_code,
-	utils::{
-		batch_call, collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
-		keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
-		OpaqueCall,
-	},
+    cli_args::EncointerArgsExtractor,
+    community_spec::{
+        add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
+        CommunitySpec,
+    },
+    exit_code,
+    utils::{
+        batch_call, collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
+        keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
+        OpaqueCall,
+    },
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-	set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
+    set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
 };
 
 use encointer_primitives::scheduler::CeremonyPhaseType;
@@ -22,10 +22,11 @@ use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
+use crate::utils::CallWrapping;
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
         // -----setup
         let spec_file = matches.value_of("specfile").unwrap();
         let spec = read_community_spec_from_file(spec_file);
@@ -45,10 +46,15 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(api.metadata(), cid, l)).collect();
         let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls));
 
+        (new_community_call, add_location_batch_call) = match matches.wrap_call() {
+            CallWrapping::None => {
+                (new_community_call, add_location_batch_call)
+            }
+            CallWrapping::Sudo => {
+                if !contains_sudo_pallet(api.metadata()) {
+                    panic!("Want to wrap call with sudo, but sudo does not exist on this chain.");
+                }
 
-        if matches.signer_arg().is_none() {
-            // return calls as `OpaqueCall`s to get the same return type in both branches
-            (new_community_call, add_location_batch_call) = if contains_sudo_pallet(api.metadata()) {
                 let sudo_new_community = sudo_call(api.metadata(), new_community_call);
                 let sudo_add_location_batch = sudo_call(api.metadata(), add_location_batch_call);
                 info!("Printing raw sudo calls for js/apps for cid: {}", cid);
@@ -56,8 +62,8 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
                 print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 
                 (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
-
-            } else {
+            }
+            CallWrapping::Collective => {
                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
                 info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
                 let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
@@ -66,7 +72,14 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
                 print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
 
                 (OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
-            };
+            }
+        };
+
+        if matches.should_send_tx() {
+            info!("Sending transactions");
+        } else {
+            info!("skipping sending transactions");
+            return Ok(());
         }
 
         // ---- send xt's to chain
@@ -83,13 +96,12 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         }
         send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg).await;
         Ok(())
-
     })
         .into()
 }
 pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
         // -----setup
         let spec_file = matches.value_of("specfile").unwrap();
         let spec = read_community_spec_from_file(spec_file);
@@ -107,14 +119,14 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 
         let cid = api.verify_cid(matches.cid_arg().unwrap(), None).await;
 
-        let add_location_calls: Vec<AddLocationCall>= spec.locations().into_iter().map(|l|
+        let add_location_calls: Vec<AddLocationCall> = spec.locations().into_iter().map(|l|
             {
                 info!("adding location {:?}", l);
                 add_location_call(api.metadata(), cid, l)
             }
         ).collect();
 
-        let mut add_location_maybe_batch_call = match  add_location_calls.as_slice() {
+        let mut add_location_maybe_batch_call = match add_location_calls.as_slice() {
             [call] => OpaqueCall::from_tuple(call),
             _ => OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls.clone()))
         };
@@ -147,60 +159,59 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
             send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call).await, tx_payment_cid_arg).await;
         }
         Ok(())
-
     })
         .into()
 }
 pub fn list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let maybe_at = matches.at_block_arg();
-		if maybe_at.is_some() {
-			warn!("fetching community names doesn't support --at. will fetch current communities and apply --at to values")
-		}
-		let names = api.get_cid_names().await.unwrap();
-		println!("number of communities:  {}", names.len());
-		for n in names.iter() {
-			let loc = api.get_locations(n.cid).await.unwrap();
-			let cii = api.get_nominal_income(n.cid, maybe_at).await.unwrap_or_default();
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let api = get_chain_api(matches).await;
+        let maybe_at = matches.at_block_arg();
+        if maybe_at.is_some() {
+            warn!("fetching community names doesn't support --at. will fetch current communities and apply --at to values")
+        }
+        let names = api.get_cid_names().await.unwrap();
+        println!("number of communities:  {}", names.len());
+        for n in names.iter() {
+            let loc = api.get_locations(n.cid).await.unwrap();
+            let cii = api.get_nominal_income(n.cid, maybe_at).await.unwrap_or_default();
             let demurrage = api.get_demurrage_per_block(n.cid, maybe_at).await.unwrap_or_default();
             let meta = api.get_community_metadata(n.cid, maybe_at).await.unwrap_or_default();
-			println!(
-				"{}: {}, locations: {}, nominal income: {} {}, demurrage: {:?}/block, {:?}",
-				n.cid,
-				String::from_utf8(n.name.to_vec()).unwrap(),
-				loc.len(),
+            println!(
+                "{}: {}, locations: {}, nominal income: {} {}, demurrage: {:?}/block, {:?}",
+                n.cid,
+                String::from_utf8(n.name.to_vec()).unwrap(),
+                loc.len(),
                 cii,
                 String::from_utf8_lossy(&meta.symbol),
                 demurrage,
                 meta.rules
-			);
-		}
-		Ok(())
-	})
-	.into()
+            );
+        }
+        Ok(())
+    })
+        .into()
 }
 pub fn list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let maybe_at = matches.at_block_arg();
-		let cid = api
-			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-			.await;
-		println!("listing locations for cid {cid}");
-		let loc = api.get_locations(cid).await.unwrap();
-		for l in loc.iter() {
-			println!(
-				"lat: {} lon: {} (raw lat: {} lon: {})",
-				l.lat,
-				l.lon,
-				i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
-				i128::decode(&mut l.lon.encode().as_slice()).unwrap()
-			);
-		}
-		Ok(())
-	})
-	.into()
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let api = get_chain_api(matches).await;
+        let maybe_at = matches.at_block_arg();
+        let cid = api
+            .verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+            .await;
+        println!("listing locations for cid {cid}");
+        let loc = api.get_locations(cid).await.unwrap();
+        for l in loc.iter() {
+            println!(
+                "lat: {} lon: {} (raw lat: {} lon: {})",
+                l.lat,
+                l.lon,
+                i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
+                i128::decode(&mut l.lon.encode().as_slice()).unwrap()
+            );
+        }
+        Ok(())
+    })
+        .into()
 }

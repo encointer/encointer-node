@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use crate::{
 	commands::encointer_core::{get_asset_fee_details, get_community_balance},
 	exit_code, BalanceType,
@@ -46,6 +47,25 @@ pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C
 /// Wraps the supplied calls in a batch call
 pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8; 2], Vec<C>) {
 	compose_call!(metadata, "Utility", "batch", calls).unwrap()
+}
+
+pub enum CallWrapping {
+	None,
+	Sudo,
+	Collective,
+}
+
+impl FromStr for CallWrapping {
+	type Err = &'static str;
+
+	fn from_str(value: &str) -> std::result::Result<Self, Self::Err> {
+		match value {
+			"none" => Ok(CallWrapping::None),
+			"sudo" => Ok(CallWrapping::Sudo),
+			"collective" => Ok(CallWrapping::Collective),
+			_ => Err("unknown call wrapping type"),
+		}
+	}
 }
 
 /// ([pallet_index, call_index], threshold, Proposal,length_bound)
@@ -237,7 +257,7 @@ pub mod keys {
 			_ => {
 				if sr25519::Public::from_ss58check(account).is_err() {
 					// could be mnemonic phrase
-					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0
+					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0;
 				}
 				debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 				// open store without password protection
