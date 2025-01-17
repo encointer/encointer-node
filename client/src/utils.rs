@@ -44,8 +44,9 @@ pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C
 	compose_call!(metadata, "Sudo", "sudo", call).unwrap()
 }
 
+pub type BatchCall<C> = ([u8; 2], Vec<C>);
 /// Wraps the supplied calls in a batch call
-pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8; 2], Vec<C>) {
+pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> BatchCall<C> {
 	compose_call!(metadata, "Utility", "batch", calls).unwrap()
 }
 
