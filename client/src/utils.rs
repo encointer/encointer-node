@@ -49,6 +49,7 @@ pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8
 	compose_call!(metadata, "Utility", "batch", calls).unwrap()
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Ord, PartialOrd)]
 pub enum CallWrapping {
 	None,
 	Sudo,

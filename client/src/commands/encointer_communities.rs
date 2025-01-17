@@ -46,6 +46,8 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(api.metadata(), cid, l)).collect();
         let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls));
 
+        info!("XT call wrapping: {:?}", matches.wrap_call());
+
         (new_community_call, add_location_batch_call) = match matches.wrap_call() {
             CallWrapping::None => {
                 (new_community_call, add_location_batch_call)
