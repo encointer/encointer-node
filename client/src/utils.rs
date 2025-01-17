@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use crate::{
 	commands::encointer_core::{get_asset_fee_details, get_community_balance},
 	exit_code, BalanceType,
@@ -11,6 +10,7 @@ use log::{debug, error, info};
 use parity_scale_codec::{Compact, Encode};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
+use std::str::FromStr;
 use substrate_api_client::{
 	ac_compose_macros::compose_call,
 	ac_node_api::Metadata,

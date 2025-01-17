@@ -465,7 +465,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 	}
 
 	fn wrap_call_arg(self) -> Self {
-        self.arg(
+		self.arg(
 			Arg::with_name(WRAP_CALL_ARG)
 				.short("w")
 				.long("wrap-call")
@@ -474,7 +474,7 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.default_value("none")
 				.value_name("none|sudo|collective")
 				.help("If the transaction should be wrapped with a sudo/collective call or not."),
-        )
+		)
 	}
 
 	fn batch_size_arg(self) -> Self {
@@ -617,10 +617,11 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 		self.value_of(PURPOSE_ID_ARG).map(|v| v.parse().unwrap())
 	}
 
-    fn wrap_call_arg(&self) -> CallWrapping {
-        self.value_of(WRAP_CALL_ARG).map(|v| v.parse().unwrap()).unwrap_or(CallWrapping::None)
-
-    }
+	fn wrap_call_arg(&self) -> CallWrapping {
+		self.value_of(WRAP_CALL_ARG)
+			.map(|v| v.parse().unwrap())
+			.unwrap_or(CallWrapping::None)
+	}
 
 	fn batch_size_arg(&self) -> u32 {
 		self.value_of(BATCH_SIZE_ARG).map(|v| v.parse().unwrap()).unwrap_or(100)
