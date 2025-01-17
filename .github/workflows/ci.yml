@@ -300,8 +300,8 @@ jobs:
       fail-fast: false
       matrix:
         test:
-          - bootstrap_demo_community.py --signer //Bob --test
-          - bot-community-test -f http://host.docker.internal:5000/api
+          - bootstrap_demo_community.py --signer //Bob --call-wrapping sudo --test
+          - bot-community-test -f --call-wrapping sudo http://host.docker.internal:5000/api
           # Todo: #386
           # - test-register-businesses -f http://host.docker.internal:5000/api
     steps:

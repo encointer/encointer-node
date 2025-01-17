@@ -143,12 +143,12 @@ class Client:
                 (cindex, cid, rep.strip().split('::')[1]))
         return reputation_history
 
-    def new_community(self, specfile, signer=None, wrap_call="none", pay_fees_in_cc=False):
+    def new_community(self, specfile, signer=None, wrap_call="none", batch_size=100, pay_fees_in_cc=False):
         cmd = ["new-community", specfile]
         if signer:
             cmd += ["--signer", signer]
 
-        cmd += ["--wrap-call", wrap_call]
+        cmd += ["--wrap-call", wrap_call, "--batch-size", str(batch_size)]
         ret = self.run_cli_command(cmd, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
