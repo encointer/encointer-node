@@ -77,10 +77,11 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
                 info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
                 let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
-                let propose_add_location_batch = add_location_batch_call
-                    .into_iter()
-                    .map(|call| collective_propose_call(api.metadata(), threshold, call)).collect::<Vec<_>>();
                 print_raw_call("collective_propose(new_community)", &propose_new_community);
+
+
+                let propose_add_location_batch = add_location_batch_call
+                    .map(|call| collective_propose_call(api.metadata(), threshold, call)).collect::<Vec<_>>();
 
                 for call in propose_add_location_batch.iter() {
                     print_raw_call("collective_propose(utility_batch(add_location))", &call);
