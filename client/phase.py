@@ -52,10 +52,10 @@ def main(client, url, port, idle_blocks):
 def subscription_handler(event_count, update_nr, subscription_id):
     global COUNT, patience
     print(f'events: {event_count}, idle blocks {COUNT}')
-    if COUNT > patience:
-        return update_nr
-    elif event_count.value <= INTRINSIC_EVENTS:
+    if event_count.value <= INTRINSIC_EVENTS:
         COUNT += 1
+        if COUNT > patience:
+            return update_nr
     else:
         COUNT = 0
 
