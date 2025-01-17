@@ -42,21 +42,23 @@ from py_client.client import Client, ExtrinsicFeePaymentImpossible, ExtrinsicWro
 from py_client.ipfs import Ipfs, ASSETS_PATH
 
 KEYSTORE_PATH = './my_keystore'
-NUMBER_OF_LOCATIONS = 100
-MAX_POPULATION = 10 * NUMBER_OF_LOCATIONS
 NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 
 
 @click.group()
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
-@click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-f', '--faucet_url', default='http://localhost:5000/api',
               help='url for the faucet (only needed for test/benchmark cmd)')
+@click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
+# interestingly, the error can be misleading, it can be: 1. TX would exhaust block limits, 2. invalid collective propose weight
+@click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 7 (maybe a bit more))')
+@click.option('-n', '--number-of-locations', default=100, help='number of locations to generate for the bot-community')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, url, faucet_url):
+def cli(ctx, client, port, ipfs_local, url, faucet_url, wrap_call, batch_size, number_of_locations):
     ctx.ensure_object(dict)
     cl = set_local_or_remote_chain(client, port, url)
     ctx.obj['client'] = cl
@@ -64,6 +66,10 @@ def cli(ctx, client, port, ipfs_local, url, faucet_url):
     ctx.obj['ipfs_local'] = ipfs_local
     ctx.obj['url'] = url
     ctx.obj['faucet_url'] = faucet_url
+    ctx.obj['wrap_call'] = wrap_call
+    ctx.obj['batch_size'] = batch_size
+    ctx.obj['number_of_locations'] = number_of_locations
+    ctx.obj['max_population'] = number_of_locations * 10
 
 
 @cli.command()
@@ -71,6 +77,9 @@ def cli(ctx, client, port, ipfs_local, url, faucet_url):
 def init(ctx):
     client = ctx['client']
     faucet_url = ctx['faucet_url']
+    wrap_call = ctx['wrap_call']
+    batch_size = ctx['batch_size']
+    number_of_locations = ctx['number_of_locations']
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ASSETS_PATH)
@@ -82,7 +91,7 @@ def init(ctx):
     print('initializing community')
     b = init_bootstrappers(client, faucet_url)
     client.await_block()
-    specfile = random_community_spec(b, ipfs_cid, NUMBER_OF_LOCATIONS)
+    specfile = random_community_spec(b, ipfs_cid, number_of_locations)
     print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
 
     while True:
@@ -92,7 +101,7 @@ def init(ctx):
         print(f"waiting for ceremony phase Registering. now is {phase}")
         client.await_block()
 
-    cid = client.new_community(specfile, signer='//Alice')
+    cid = client.new_community(specfile, signer='//Alice', wrap_call=wrap_call, batch_size=batch_size)
     print(f'created community with cid: {cid}')
     write_cid(cid)
     client.await_block()
@@ -107,12 +116,13 @@ def purge_communities():
 @cli.command()
 @click.pass_obj
 def execute_current_phase(ctx):
-    return _execute_current_phase(ctx['client'], ctx['faucet_url'])
+    return _execute_current_phase(ctx, ctx['client'], ctx['faucet_url'])
 
 
-def _execute_current_phase(client: Client, faucet_url: str):
+def _execute_current_phase(ctx, client: Client, faucet_url: str):
     client = client
     cid = read_cid()
+    max_population = ctx["max_population"]
     phase = client.get_phase()
     cindex = client.get_cindex()
     print(f'🕑 phase is {phase} and ceremony index is {cindex}')
@@ -128,7 +138,7 @@ def _execute_current_phase(client: Client, faucet_url: str):
 
         total_supply = write_current_stats(client, accounts, cid)
         if total_supply > 0:
-            init_new_community_members(client, cid, len(accounts), faucet_url=faucet_url)
+            init_new_community_members(client, cid, len(accounts), faucet_url=faucet_url, max_population=max_population)
 
         # updated account list with new community members
         accounts = client.list_accounts()
@@ -160,7 +170,7 @@ def benchmark(ctx):
     faucet_url = ctx['faucet_url']
     print('will grow population forever')
     while True:
-        phase = _execute_current_phase(py_client, faucet_url=faucet_url)
+        phase = _execute_current_phase(ctx, py_client, faucet_url=faucet_url)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
             py_client.await_block()
@@ -173,7 +183,7 @@ def test(ctx):
     faucet_url = ctx['faucet_url']
     print('will grow population for fixed number of ceremonies')
     for i in range(3 * 2 + 1):
-        phase = _execute_current_phase(py_client, faucet_url=faucet_url)
+        phase = _execute_current_phase(ctx, py_client, faucet_url=faucet_url)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
             py_client.await_block()
@@ -247,11 +257,11 @@ def endorse_new_accounts(client: Client, cid: str, bootstrappers_and_tickets, en
     return endorsees
 
 
-def get_newbie_amount(current_population: int):
+def get_newbie_amount(current_population: int, max_population: int):
     return min(
         # register more than can participate, to test restrictions
         floor(current_population / 1.5),
-        MAX_POPULATION - current_population
+        max_population - current_population
     )
 
 
@@ -270,7 +280,8 @@ def init_new_community_members(
         client: Client,
         cid: str,
         current_community_size: int,
-        faucet_url: str
+        faucet_url: str,
+        max_population: int
 ):
     """ Initializes new community members based on the `current_community_size` and the amount of endorsements we can
         perform.
@@ -290,7 +301,7 @@ def init_new_community_members(
         client.await_block()
         print(f'Added endorsees to community: {len(endorsees)}')
 
-    newbies = client.create_accounts(get_newbie_amount(current_community_size + len(endorsees)))
+    newbies = client.create_accounts(get_newbie_amount(current_community_size + len(endorsees), max_population))
 
     print(f'Add newbies to community {len(newbies)}')
 

@@ -67,9 +67,9 @@ def update_spec_with_cid(file, cid):
         spec_json.truncate()
 
 
-def create_community(client, spec_file_path, ipfs_local, signer):
+def create_community(client, spec_file_path, ipfs_local, signer, wrap_call="none", batch_size=100):
     # non sudoer can create community on gesell (provide --signer but don't use //Alice), but not on parachain (where council will create)
-    cid = client.new_community(spec_file_path, signer=signer)
+    cid = client.new_community(spec_file_path, signer=signer, wrap_call=wrap_call, batch_size=batch_size)
     if len(cid) > 10:
         print(f'👬 Registered community with cid: {cid}')
     else:
@@ -411,9 +411,11 @@ def test_democracy(client, cid):
 @click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}',
               help='Specify community spec-file to be registered.')
 @click.option('-t', '--test', is_flag=True, help='if set, run integration tests.')
-def main(ipfs_local, client, signer, url, port, spec_file, test):
+@click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
+@click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 15)')
+def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batch_size):
     client = Client(rust_client=client, node_url=url, port=port)
-    cid = create_community(client, spec_file, ipfs_local, signer)
+    cid = create_community(client, spec_file, ipfs_local, signer, wrap_call=wrap_call, batch_size=batch_size)
 
     newbie = client.create_accounts(1)[0]
     faucet(client, cid, [account3, newbie])

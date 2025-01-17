@@ -17,8 +17,9 @@ from py_client.helpers import set_local_or_remote_chain
 global COUNT
 COUNT = 0
 
-# a solochain has timestamp.set event in every block, a parachain additionaly has parachainSystem.setValidationData
-INTRINSIC_EVENTS = 2
+# a solochain has timestamp.set event in every block, a parachain additionaly has parachainSystem.setValidationData and
+# a balance transfer for the collator rewards.
+INTRINSIC_EVENTS = 3
 
 global patience
 
@@ -51,10 +52,10 @@ def main(client, url, port, idle_blocks):
 def subscription_handler(event_count, update_nr, subscription_id):
     global COUNT, patience
     print(f'events: {event_count}, idle blocks {COUNT}')
-    if COUNT > patience:
-        return update_nr
-    elif event_count.value <= INTRINSIC_EVENTS:
+    if event_count.value <= INTRINSIC_EVENTS:
         COUNT += 1
+        if COUNT > patience:
+            return update_nr
     else:
         COUNT = 0
 

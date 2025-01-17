@@ -10,6 +10,7 @@ use log::{debug, error, info};
 use parity_scale_codec::{Compact, Encode};
 use sp_core::H256;
 use sp_runtime::traits::Convert;
+use std::str::FromStr;
 use substrate_api_client::{
 	ac_compose_macros::compose_call,
 	ac_node_api::Metadata,
@@ -43,9 +44,30 @@ pub fn sudo_call<C: Encode + Clone>(metadata: &Metadata, call: C) -> ([u8; 2], C
 	compose_call!(metadata, "Sudo", "sudo", call).unwrap()
 }
 
+pub type BatchCall<C> = ([u8; 2], Vec<C>);
 /// Wraps the supplied calls in a batch call
-pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> ([u8; 2], Vec<C>) {
+pub fn batch_call<C: Encode + Clone>(metadata: &Metadata, calls: Vec<C>) -> BatchCall<C> {
 	compose_call!(metadata, "Utility", "batch", calls).unwrap()
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Ord, PartialOrd)]
+pub enum CallWrapping {
+	None,
+	Sudo,
+	Collective,
+}
+
+impl FromStr for CallWrapping {
+	type Err = &'static str;
+
+	fn from_str(value: &str) -> std::result::Result<Self, Self::Err> {
+		match value {
+			"none" => Ok(CallWrapping::None),
+			"sudo" => Ok(CallWrapping::Sudo),
+			"collective" => Ok(CallWrapping::Collective),
+			_ => Err("unknown call wrapping type"),
+		}
+	}
 }
 
 /// ([pallet_index, call_index], threshold, Proposal,length_bound)
@@ -237,7 +259,7 @@ pub mod keys {
 			_ => {
 				if sr25519::Public::from_ss58check(account).is_err() {
 					// could be mnemonic phrase
-					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0
+					return sr25519::AppPair::from_string_with_seed(account, None).unwrap().0;
 				}
 				debug!("fetching from keystore at {}", &KEYSTORE_PATH);
 				// open store without password protection

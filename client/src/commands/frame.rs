@@ -89,5 +89,6 @@ async fn reasonable_native_balance(api: &Api) -> u128 {
 		.unwrap()
 		.base_fee;
 	let ed = api.get_existential_deposit().await.unwrap();
-	ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS
+	// on the parachain we need this factor of 100 for some reason.
+	ed + fee * PREFUNDING_NR_OF_TRANSFER_EXTRINSICS * 1000
 }
