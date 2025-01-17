@@ -17,8 +17,9 @@ from py_client.helpers import set_local_or_remote_chain
 global COUNT
 COUNT = 0
 
-# a solochain has timestamp.set event in every block, a parachain additionaly has parachainSystem.setValidationData
-INTRINSIC_EVENTS = 2
+# a solochain has timestamp.set event in every block, a parachain additionaly has parachainSystem.setValidationData and
+# a balance transfer for the collator rewards.
+INTRINSIC_EVENTS = 3
 
 global patience
 
