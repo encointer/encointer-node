@@ -55,8 +55,9 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-f', '--faucet_url', default='http://localhost:5000/api',
               help='url for the faucet (only needed for test/benchmark cmd)')
+@click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, url, faucet_url):
+def cli(ctx, client, port, ipfs_local, url, faucet_url, wrap_call):
     ctx.ensure_object(dict)
     cl = set_local_or_remote_chain(client, port, url)
     ctx.obj['client'] = cl
@@ -64,6 +65,7 @@ def cli(ctx, client, port, ipfs_local, url, faucet_url):
     ctx.obj['ipfs_local'] = ipfs_local
     ctx.obj['url'] = url
     ctx.obj['faucet_url'] = faucet_url
+    ctx.obj['wrap_call'] = wrap_call
 
 
 @cli.command()
@@ -71,6 +73,7 @@ def cli(ctx, client, port, ipfs_local, url, faucet_url):
 def init(ctx):
     client = ctx['client']
     faucet_url = ctx['faucet_url']
+    wrap_call = ctx['wrap_call']
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ASSETS_PATH)
@@ -92,7 +95,7 @@ def init(ctx):
         print(f"waiting for ceremony phase Registering. now is {phase}")
         client.await_block()
 
-    cid = client.new_community(specfile, signer='//Alice')
+    cid = client.new_community(specfile, signer='//Alice', wrap_call=wrap_call)
     print(f'created community with cid: {cid}')
     write_cid(cid)
     client.await_block()
