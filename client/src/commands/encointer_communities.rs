@@ -12,16 +12,17 @@ use crate::{
     },
 };
 use clap::ArgMatches;
-use encointer_api_client_extension::{
-    set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
-};
+use encointer_primitives::communities::{CommunityIdentifier, Location};
+use encointer_api_client_extension::{set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi};
 
 use encointer_primitives::scheduler::CeremonyPhaseType;
+use itertools::Itertools;
 use log::{error, info, warn};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::AccountKeyring;
+use substrate_api_client::ac_node_api::Metadata;
 use crate::utils::CallWrapping;
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
@@ -41,16 +42,16 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 
 
         // ------- create calls for xt's
-        let mut new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, api.metadata()));
+        let new_community_call = OpaqueCall::from_tuple(&new_community_call(&spec, api.metadata()));
         // only the first meetup location has been registered now. register all others one-by-one
-        let add_location_calls = spec.locations().into_iter().skip(1).map(|l| add_location_call(api.metadata(), cid, l)).collect();
-        let mut add_location_batch_call = OpaqueCall::from_tuple(&batch_call(api.metadata(), add_location_calls));
+        let add_location_calls = create_add_location_batches(api.metadata(), spec.locations(), cid, matches.batch_size_arg());
+        let add_location_batch_call = add_location_calls.into_iter().map(|call| OpaqueCall::from_tuple(&batch_call(api.metadata(), call)));
 
-        info!("XT call wrapping: {:?}", matches.wrap_call());
+        info!("XT call wrapping: {:?}", matches.wrap_call_arg());
 
-        (new_community_call, add_location_batch_call) = match matches.wrap_call() {
+        let (new_community_final_call, add_location_batch_final_call) = match matches.wrap_call_arg() {
             CallWrapping::None => {
-                (new_community_call, add_location_batch_call)
+                (new_community_call, add_location_batch_call.collect::<Vec<_>>())
             }
             CallWrapping::Sudo => {
                 if !contains_sudo_pallet(api.metadata()) {
@@ -58,22 +59,34 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
                 }
 
                 let sudo_new_community = sudo_call(api.metadata(), new_community_call);
-                let sudo_add_location_batch = sudo_call(api.metadata(), add_location_batch_call);
+                let sudo_add_location_batch = add_location_batch_call.map(|call| sudo_call(api.metadata(), call)).collect::<Vec<_>>();
                 info!("Printing raw sudo calls for js/apps for cid: {}", cid);
                 print_raw_call("sudo(new_community)", &sudo_new_community);
-                print_raw_call("sudo(utility_batch(add_location))", &sudo_add_location_batch);
 
-                (OpaqueCall::from_tuple(&sudo_new_community), OpaqueCall::from_tuple(&sudo_add_location_batch))
+                for call in sudo_add_location_batch.iter() {
+                    print_raw_call("sudo(utility_batch(add_location))", &call);
+                }
+
+                let opaque_sudo_add_location = sudo_add_location_batch.into_iter().map(|call| OpaqueCall::from_tuple(&call)).collect();
+
+                (OpaqueCall::from_tuple(&sudo_new_community), opaque_sudo_add_location)
             }
             CallWrapping::Collective => {
                 let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
                 info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
                 let propose_new_community = collective_propose_call(api.metadata(), threshold, new_community_call);
-                let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, add_location_batch_call);
+                let propose_add_location_batch = add_location_batch_call
+                    .into_iter()
+                    .map(|call| collective_propose_call(api.metadata(), threshold, call)).collect::<Vec<_>>();
                 print_raw_call("collective_propose(new_community)", &propose_new_community);
-                print_raw_call("collective_propose(utility_batch(add_location))", &propose_add_location_batch);
 
-                (OpaqueCall::from_tuple(&propose_new_community), OpaqueCall::from_tuple(&propose_add_location_batch))
+                for call in propose_add_location_batch.iter() {
+                    print_raw_call("collective_propose(utility_batch(add_location))", &call);
+                }
+
+                let opaque_collective_add_location = propose_add_location_batch.into_iter().map(|call| OpaqueCall::from_tuple(&call)).collect();
+
+                (OpaqueCall::from_tuple(&propose_new_community), opaque_collective_add_location)
             }
         };
 
@@ -88,7 +101,7 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         let tx_payment_cid_arg = matches.tx_payment_cid_arg();
         set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-        send_and_wait_for_in_block(&api, xt(&api, new_community_call).await, matches.tx_payment_cid_arg()).await;
+        send_and_wait_for_in_block(&api, xt(&api, new_community_final_call).await, matches.tx_payment_cid_arg()).await;
         println!("{cid}");
 
         if api.get_current_phase(None).await.unwrap() != CeremonyPhaseType::Registering {
@@ -96,7 +109,10 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
             error!("Aborting without registering additional locations");
             std::process::exit(exit_code::WRONG_PHASE);
         }
-        send_and_wait_for_in_block(&api, xt(&api, add_location_batch_call).await, tx_payment_cid_arg).await;
+
+        for call in add_location_batch_final_call {
+            send_and_wait_for_in_block(&api, xt(&api, call).await, tx_payment_cid_arg).await;
+        }
         Ok(())
     })
         .into()
@@ -216,4 +232,22 @@ pub fn list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
         Ok(())
     })
         .into()
+}
+
+fn create_add_location_batches(
+    metadata: &Metadata,
+    locations: Vec<Location>,
+    cid: CommunityIdentifier,
+    batch_size: u32,
+) -> Vec<Vec<AddLocationCall>>
+{
+    info!("Creating add location batches of size: {:?}", batch_size);
+
+    locations.into_iter()
+        .skip(1) // Skip the first location
+        .map(|l| add_location_call(metadata, cid, l))
+        .chunks(batch_size as usize)
+        .into_iter()
+        .map(|chunk| chunk.collect())
+        .collect() // Collect all batches into a Vec of Vecs
 }

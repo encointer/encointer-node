@@ -226,7 +226,8 @@ fn main() {
 		            )
 		            .signer_arg("account with necessary privileges")
 						.dryrun_flag()
-						.wrap_call()
+						.wrap_call_arg()
+						.batch_size_arg()
 		        })
 		        .runner(commands::encointer_communities::new_community),
 		)
