@@ -1,19 +1,19 @@
 use crate::{
-    cli_args::EncointerArgsExtractor,
-    community_spec::{
-        add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
-        CommunitySpec,
-    },
-    exit_code,
-    utils::{
-        batch_call, collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
-        keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
-        OpaqueCall,
-    },
+	cli_args::EncointerArgsExtractor,
+	community_spec::{
+		add_location_call, new_community_call, read_community_spec_from_file, AddLocationCall,
+		CommunitySpec,
+	},
+	exit_code,
+	utils::{
+		batch_call, collective_propose_call, contains_sudo_pallet, get_chain_api, get_councillors,
+		keys::get_pair_from_str, print_raw_call, send_and_wait_for_in_block, sudo_call, xt,
+		OpaqueCall,
+	},
 };
 use clap::ArgMatches;
 use encointer_api_client_extension::{
-    set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
+	set_api_extrisic_params_builder, CommunitiesApi, ParentchainExtrinsicSigner, SchedulerApi,
 };
 use encointer_primitives::communities::{CommunityIdentifier, Location};
 
@@ -28,8 +28,8 @@ use sp_keyring::AccountKeyring;
 use substrate_api_client::ac_node_api::Metadata;
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(async {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
         // -----setup
         let spec_file = matches.value_of("specfile").unwrap();
         let spec = read_community_spec_from_file(spec_file);
@@ -121,8 +121,8 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         .into()
 }
 pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(async {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
         // -----setup
         let spec_file = matches.value_of("specfile").unwrap();
         let spec = read_community_spec_from_file(spec_file);
@@ -184,8 +184,8 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         .into()
 }
 pub fn list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(async {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
         let api = get_chain_api(matches).await;
         let maybe_at = matches.at_block_arg();
         if maybe_at.is_some() {
@@ -214,44 +214,44 @@ pub fn list_communities(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
         .into()
 }
 pub fn list_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(async {
-        let api = get_chain_api(matches).await;
-        let maybe_at = matches.at_block_arg();
-        let cid = api
-            .verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
-            .await;
-        println!("listing locations for cid {cid}");
-        let loc = api.get_locations(cid).await.unwrap();
-        for l in loc.iter() {
-            println!(
-                "lat: {} lon: {} (raw lat: {} lon: {})",
-                l.lat,
-                l.lon,
-                i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
-                i128::decode(&mut l.lon.encode().as_slice()).unwrap()
-            );
-        }
-        Ok(())
-    })
-        .into()
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let api = get_chain_api(matches).await;
+		let maybe_at = matches.at_block_arg();
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), maybe_at)
+			.await;
+		println!("listing locations for cid {cid}");
+		let loc = api.get_locations(cid).await.unwrap();
+		for l in loc.iter() {
+			println!(
+				"lat: {} lon: {} (raw lat: {} lon: {})",
+				l.lat,
+				l.lon,
+				i128::decode(&mut l.lat.encode().as_slice()).unwrap(),
+				i128::decode(&mut l.lon.encode().as_slice()).unwrap()
+			);
+		}
+		Ok(())
+	})
+	.into()
 }
 
 fn create_add_location_batches(
-    metadata: &Metadata,
-    locations: Vec<Location>,
-    cid: CommunityIdentifier,
-    batch_size: u32,
+	metadata: &Metadata,
+	locations: Vec<Location>,
+	cid: CommunityIdentifier,
+	batch_size: u32,
 ) -> Vec<BatchCall<AddLocationCall>> {
-    info!("Creating add location batches of size: {:?}", batch_size);
+	info!("Creating add location batches of size: {:?}", batch_size);
 
-    locations
-        .into_iter()
-        .skip(1) // Skip the first location
-        .map(|l| add_location_call(metadata, cid, l))
-        .chunks(batch_size as usize)
-        .into_iter()
-        .map(|chunk| chunk.collect())
-        .map(|b| batch_call(metadata, b))
-        .collect() // Collect all batches into a Vec of BatchCall
+	locations
+		.into_iter()
+		.skip(1) // Skip the first location
+		.map(|l| add_location_call(metadata, cid, l))
+		.chunks(batch_size as usize)
+		.into_iter()
+		.map(|chunk| chunk.collect())
+		.map(|b| batch_call(metadata, b))
+		.collect() // Collect all batches into a Vec of BatchCall
 }
