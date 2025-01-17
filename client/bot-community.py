@@ -48,7 +48,7 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 @click.group()
 @click.option('--client', default='../target/release/encointer-client-notee',
               help='Client binary to communicate with the chain.')
-@click.option('--port', default='9944', help='ws-port of the chain.')
+@click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')
 @click.option('-l', '--ipfs_local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-f', '--faucet_url', default='http://localhost:5000/api',
