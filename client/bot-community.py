@@ -54,6 +54,7 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 @click.option('-f', '--faucet_url', default='http://localhost:5000/api',
               help='url for the faucet (only needed for test/benchmark cmd)')
 @click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
+# interestingly, the error can be misleading, it can be: 1. TX would exhaust block limits, 2. invalid collective propose weight
 @click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 7 (maybe a bit more))')
 @click.option('-n', '--number-of-locations', default=100, help='number of locations to generate for the bot-community')
 @click.pass_context
