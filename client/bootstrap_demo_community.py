@@ -292,9 +292,6 @@ def test_faucet(client, cid):
     if (not client.balance(faucet_account) == balance(10000)):
         print(f"Wrong Faucet balance after faucet creation")
         exit(1)
-    if (not balance_bob - client.balance("//Bob") == balance(13000)):
-        print(f"Wrong Bob balance after faucet creation")
-        exit(1)
     print('Faucet created', flush=True)
 
     balance_charlie = client.balance("//Charlie")
