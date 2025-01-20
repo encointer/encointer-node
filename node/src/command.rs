@@ -1,20 +1,3 @@
-// This file is part of Substrate.
-
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 use crate::{
 	benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder},
 	chain_spec,
@@ -45,7 +28,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"CARGO_PKG_HOMEPAGE".into()
+		env!("CARGO_PKG_HOMEPAGE").into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -131,7 +114,7 @@ pub fn run() -> sc_cli::Result<()> {
 								"Runtime benchmarking wasn't enabled when building the node. \
 							You can enable it with `--features runtime-benchmarks`."
 									.into(),
-							)
+							);
 						}
 
 						cmd.run_with_spec::<sp_runtime::traits::HashingFor<Block>, ()>(Some(
@@ -187,8 +170,6 @@ pub fn run() -> sc_cli::Result<()> {
 				}
 			})
 		},
-		Some(Subcommand::TryRuntime) =>
-			Err("TryRuntime is deprecated. use standalone cli instead".into()),
 		Some(Subcommand::ChainInfo(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run::<Block>(&config))

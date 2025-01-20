@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use encointer_node_notee_runtime::{
-	opaque::Block, AccountId, AssetBalance, AssetId, Balance, BlockNumber, Index, Moment,
+	opaque::Block, AccountId, AssetBalance, AssetId, Balance, BlockNumber, Moment, Nonce,
 };
 use jsonrpsee::RpcModule;
 use sc_transaction_pool_api::TransactionPool;
@@ -42,7 +42,7 @@ where
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId, Moment>,
@@ -95,7 +95,7 @@ where
 				.merge(CeremoniesRpc::new(client, storage, offchain_indexing_enabled).into_rpc())?;
 		},
 		None => log::warn!(
-			"Offchain caching disabled, due to lack of offchain storage support in backend. \n 
+			"Offchain caching disabled, due to lack of offchain storage support in backend. \n
 			Will not initialize custom RPCs for 'CommunitiesApi' and 'CeremoniesApi'"
 		),
 	};
