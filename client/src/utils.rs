@@ -242,10 +242,9 @@ pub mod keys {
 	pub fn get_accountid_from_str(account: &str) -> AccountId {
 		debug!("getting AccountId from -{}-", account);
 		match &account[..2] {
-			"//" => {
+			"//" =>
 				AccountPublic::from(sr25519::Pair::from_string(account, None).unwrap().public())
-					.into_account()
-			},
+					.into_account(),
 			_ => AccountPublic::from(sr25519::Public::from_ss58check(account).unwrap())
 				.into_account(),
 		}

@@ -427,18 +427,16 @@ async fn get_relevant_electorate(
 			u32::try_from(proposal_lifetime.as_millis().div_ceil(cycle_duration as u128)).unwrap();
 		let relevant_cindexes = (proposal_start_cindex
 			.saturating_sub(reputation_lifetime)
-			.saturating_add(proposal_lifetime_cycles)
-			..=proposal_start_cindex.saturating_sub(2u32))
+			.saturating_add(proposal_lifetime_cycles)..=
+			proposal_start_cindex.saturating_sub(2u32))
 			.collect::<Vec<CeremonyIndexType>>();
 		let mut count: ReputationCountType = 0;
 		for c in relevant_cindexes {
 			count += match scope {
-				ProposalAccessPolicy::Community(cid) => {
-					api.get_reputation_count((cid, c), maybe_at).await.unwrap_or(0)
-				},
-				ProposalAccessPolicy::Global => {
-					api.get_global_reputation_count(c, maybe_at).await.unwrap_or(0)
-				},
+				ProposalAccessPolicy::Community(cid) =>
+					api.get_reputation_count((cid, c), maybe_at).await.unwrap_or(0),
+				ProposalAccessPolicy::Global =>
+					api.get_global_reputation_count(c, maybe_at).await.unwrap_or(0),
 			};
 		}
 		return count;
