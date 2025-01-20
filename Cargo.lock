@@ -1972,7 +1972,7 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 
 [[package]]
 name = "encointer-api-client-extension"
-version = "13.3.2"
+version = "14.4.0"
 dependencies = [
  "ac-keystore",
  "async-trait",
@@ -2060,7 +2060,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-client-notee"
-version = "1.14.5"
+version = "1.16.0"
 dependencies = [
  "ac-keystore",
  "array-bytes",
@@ -2112,7 +2112,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "1.14.5"
+version = "1.16.0"
 dependencies = [
  "clap 4.5.16",
  "encointer-balances-tx-payment-rpc",
@@ -2172,7 +2172,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "1.14.361"
+version = "1.16.370"
 dependencies = [
  "encointer-balances-tx-payment",
  "encointer-balances-tx-payment-rpc-runtime-api",
