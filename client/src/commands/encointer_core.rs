@@ -303,12 +303,12 @@ async fn listen(matches: &ArgMatches<'_>) {
 		if matches.is_present("events") &&
 			count >= value_t!(matches.value_of("events"), u32).unwrap()
 		{
-			return
+			return;
 		};
 		if matches.is_present("blocks") &&
 			blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
 		{
-			return
+			return;
 		};
 		let event_results = subscription.next_events::<RuntimeEvent, Hash>().await.unwrap();
 		blocks += 1;

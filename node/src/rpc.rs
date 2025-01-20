@@ -8,15 +8,13 @@
 use std::sync::Arc;
 
 use encointer_node_notee_runtime::{
-	opaque::Block, AccountId, AssetBalance, AssetId, Balance, BlockNumber, Index, Moment,
+	opaque::Block, AccountId, AssetBalance, AssetId, Balance, BlockNumber, Moment, Nonce,
 };
 use jsonrpsee::RpcModule;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-
-pub use sc_rpc_api::DenyUnsafe;
 
 /// Full client dependencies.
 ///
@@ -30,8 +28,6 @@ pub struct FullDeps<C, P, Backend> {
 	pub backend: Arc<Backend>,
 	/// whether offchain-indexing is enabled
 	pub offchain_indexing_enabled: bool,
-	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
 }
 
 /// Instantiate all full RPC extensions.
@@ -42,7 +38,7 @@ where
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: BlockBuilder<Block>,
 	C::Api: pallet_encointer_ceremonies_rpc_runtime_api::CeremoniesApi<Block, AccountId, Moment>,
@@ -69,9 +65,9 @@ where
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut module = RpcModule::new(());
-	let FullDeps { client, pool, backend, offchain_indexing_enabled, deny_unsafe } = deps;
+	let FullDeps { client, pool, backend, offchain_indexing_enabled } = deps;
 
-	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(System::new(client.clone(), pool).into_rpc())?;
 
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	module.merge(BalancesTxPaymentRpc::new(client.clone()).into_rpc())?;
@@ -95,7 +91,7 @@ where
 				.merge(CeremoniesRpc::new(client, storage, offchain_indexing_enabled).into_rpc())?;
 		},
 		None => log::warn!(
-			"Offchain caching disabled, due to lack of offchain storage support in backend. \n 
+			"Offchain caching disabled, due to lack of offchain storage support in backend. \n
 			Will not initialize custom RPCs for 'CommunitiesApi' and 'CeremoniesApi'"
 		),
 	};
