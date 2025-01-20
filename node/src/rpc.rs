@@ -16,8 +16,6 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 
-pub use sc_rpc_api::DenyUnsafe;
-
 /// Full client dependencies.
 ///
 /// Note: `backend` and `offchain_indexing_enabled` are encointer customizations.
@@ -30,8 +28,6 @@ pub struct FullDeps<C, P, Backend> {
 	pub backend: Arc<Backend>,
 	/// whether offchain-indexing is enabled
 	pub offchain_indexing_enabled: bool,
-	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
 }
 
 /// Instantiate all full RPC extensions.
@@ -69,9 +65,9 @@ where
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut module = RpcModule::new(());
-	let FullDeps { client, pool, backend, offchain_indexing_enabled, deny_unsafe } = deps;
+	let FullDeps { client, pool, backend, offchain_indexing_enabled } = deps;
 
-	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(System::new(client.clone(), pool).into_rpc())?;
 
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 	module.merge(BalancesTxPaymentRpc::new(client.clone()).into_rpc())?;

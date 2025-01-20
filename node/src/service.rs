@@ -215,13 +215,12 @@ pub fn new_full<
 		let offchain_indexing_enabled = config.offchain_worker.indexing_enabled;
 
 		// `backend` and offchain_indexing_enabled` are encointer customizations.
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |_| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
 				backend: backend.clone(),
 				offchain_indexing_enabled,
-				deny_unsafe,
 			};
 
 			crate::rpc::create_full(deps).map_err(Into::into)
