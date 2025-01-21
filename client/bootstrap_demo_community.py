@@ -288,6 +288,7 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print("################ Testing the EncointerFaucet....")
     client.set_faucet_reserve_amount("//Alice", balance(3000))
     client.await_block(blocks_to_wait)
+    faucet_account = "5CRaq3MpDT1j1d7xoaG3LDwqgC5AoTzRtGptSHm2yFrWoVid"
 
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
@@ -316,7 +317,6 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     balance_bob = client.balance("//Bob")
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(1000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
-    faucet_account = "5CRaq3MpDT1j1d7xoaG3LDwqgC5AoTzRtGptSHm2yFrWoVid"
 
     print(client.balance("//Bob"), flush=True)
     print(balance_bob, flush=True)
