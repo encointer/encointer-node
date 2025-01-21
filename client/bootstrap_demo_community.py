@@ -85,14 +85,13 @@ def create_community(client, spec_file_path, ipfs_local, signer, wrap_call="none
     return cid
 
 
-def register_participants_and_perform_meetup(client, cid, accounts):
+def register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait):
     print(client.list_communities())
     client.go_to_phase(CeremonyPhase.Registering)
 
     print(f'📝 Registering Participants for cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
-    blocks_to_wait = 3
     print(f"⌛ Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
@@ -102,6 +101,7 @@ def register_participants_and_perform_meetup(client, cid, accounts):
     print('Listing meetups')
     print(client.list_meetups(cid))
     client.next_phase()
+    client.await_block(blocks_to_wait)
 
     print(f'Performing meetups for cid {cid}')
     perform_meetup(client, cid, accounts)
@@ -112,12 +112,11 @@ def register_participants_and_perform_meetup(client, cid, accounts):
     print(client.list_attestees(cid))
 
 
-def faucet(client, cid, accounts):
+def faucet(client, cid, accounts, blocks_to_wait):
     # charlie has no genesis funds
     print('✨ native (Alice)Faucet is dripping...')
     client.faucet(accounts, is_faucet=True)
 
-    blocks_to_wait = 3
     print(f"⌛  Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
@@ -136,7 +135,6 @@ def fee_payment_transfers(client, cid):
 def claim_rewards(client, cid, account, meetup_index=None, all=False, pay_fees_in_cc=False):
     print("🏆 Claiming rewards")
     client.claim_reward(account, cid, meetup_index=meetup_index, all=all, pay_fees_in_cc=pay_fees_in_cc)
-    client.await_block(3)
 
 
 def next_phase(client):
@@ -144,16 +142,17 @@ def next_phase(client):
     print(f"🕑 New phase is {client.get_phase()}. ceremony index is {client.get_cindex()}")
 
 
-def test_reputation_caching(client, cid):
+def test_reputation_caching(client, cid, blocks_to_wait):
     print('################## Testing reputation caching...')
-    register_participants_and_perform_meetup(client, cid, accounts)
+    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
     next_phase(client)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     # query reputation to set the cache in the same phase as claiming rewards
     # so we would have a valid cache value, but the cache should be invalidated
     # anyways because of the dirty bit
     client.reputation(account1)
     claim_rewards(client, cid, account1)
+    client.await_block(blocks_to_wait)
 
     # check if the reputation cache was updated
     rep = client.reputation(account1)
@@ -168,7 +167,6 @@ def test_reputation_caching(client, cid):
     print(f'📝 Registering Participants for Cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
 
-    blocks_to_wait = 3
     print(f"⌛ Waiting for {blocks_to_wait} blocks, such that xt's are processed...")
     client.await_block(blocks_to_wait)
 
@@ -182,11 +180,11 @@ def test_reputation_caching(client, cid):
     next_phase(client)
     next_phase(client)
     next_phase(client)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     # check if reputation cache gets updated after phase change
     print(client.purge_community_ceremony(cid, 1, 5))
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     next_phase(client)
     rep = client.reputation(account1)
@@ -197,34 +195,34 @@ def test_reputation_caching(client, cid):
 
     next_phase(client)
     next_phase(client)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     # registering
 
 
-def test_unregister_and_upgrade_registration(client, cid):
+def test_unregister_and_upgrade_registration(client, cid, blocks_to_wait):
     print('################## Testing unregister and upgrade registration...')
     newbie = client.create_accounts(1)[0]
-    faucet(client, cid, [newbie])
+    faucet(client, cid, [newbie], blocks_to_wait)
 
-    register_participants_and_perform_meetup(client, cid, accounts + [newbie])
+    register_participants_and_perform_meetup(client, cid, accounts + [newbie], blocks_to_wait)
     next_phase(client)
     # registering phase
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     client.register_participant(newbie, cid)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     print(client.list_participants(cid))
     # before claiming, no rep. therefore still newbie
     check_participant_count(client, cid, "Newbie", 1)
 
     claim_rewards(client, cid, account1, pay_fees_in_cc=True)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     eligible_cindex = client.get_cindex() - 1
     print(f"🔎 checking newbie reputation for cindex {eligible_cindex}")
     check_reputation(client, cid, newbie, eligible_cindex, "VerifiedUnlinked")
     client.upgrade_registration(newbie, cid)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     check_participant_count(client, cid, "Newbie", 0)
     check_participant_count(client, cid, "Reputable", 1)
@@ -232,44 +230,44 @@ def test_unregister_and_upgrade_registration(client, cid):
     check_reputation(client, cid, newbie, eligible_cindex, f"VerifiedLinked({eligible_cindex + 1})")
 
     client.unregister_participant(newbie, cid, cindex=eligible_cindex)
-    client.await_block(3)
+    client.await_block(blocks_to_wait)
     check_participant_count(client, cid, "Reputable", 0)
 
     check_reputation(client, cid, newbie, eligible_cindex, "VerifiedUnlinked")
 
 
-def test_endorsements_by_reputables(client, cid):
+def test_endorsements_by_reputables(client, cid, blocks_to_wait):
     print('################## Testing endorsements by reputables...')
     newbies = client.create_accounts(7)
-    faucet(client, cid, newbies)
+    faucet(client, cid, newbies, blocks_to_wait)
 
-    register_participants_and_perform_meetup(client, cid, accounts + newbies[:1])
+    register_participants_and_perform_meetup(client, cid, accounts + newbies[:1], blocks_to_wait)
     next_phase(client)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     claim_rewards(client, cid, account1, pay_fees_in_cc=True)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     # newbies[0] is now reputable
     check_participant_count(client, cid, "Endorsee", 0)
 
     # endorsement works before registration
     client.endorse_newcomers(cid, newbies[0], [newbies[1]])
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     client.register_participant(newbies[1], cid)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     check_participant_count(client, cid, "Endorsee", 1)
 
     # endorsement works after registration
     for i in range(2, 6):
         client.register_participant(newbies[i], cid)
-        client.await_block(1)
+        client.await_block(blocks_to_wait)
         client.endorse_newcomers(cid, newbies[0], [newbies[i]])
-        client.await_block(1)
+        client.await_block(blocks_to_wait)
 
         check_participant_count(client, cid, "Endorsee", i)
 
     # all tickets used, should fail
     print(client.endorse_newcomers(cid, newbies[0], [newbies[6]]))
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     # endorsee count is still 5
     check_participant_count(client, cid, "Endorsee", 5)
 
@@ -278,13 +276,13 @@ def balance(x):
     return x * 10 ** 12
 
 
-def test_faucet(client, cid):
+def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print("################ Testing the EncointerFaucet....")
     client.set_faucet_reserve_amount("//Alice", balance(3000))
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     balance_bob = client.balance("//Bob")
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(1000), [cid], cid=cid, pay_fees_in_cc=True)
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     faucet_account = "5CRaq3MpDT1j1d7xoaG3LDwqgC5AoTzRtGptSHm2yFrWoVid"
     print(client.balance("//Bob"), flush=True)
     print(balance_bob, flush=True)
@@ -298,37 +296,41 @@ def test_faucet(client, cid):
     eligible_cindex = client.get_cindex() - 1
     print(f"Charlie uses participation at cindex: {eligible_cindex} to drip faucet and pays fees in CC")
     client.drip_faucet("//Charlie", faucet_account, eligible_cindex, cid=cid, pay_fees_in_cc=True)
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     if (not client.balance("//Charlie") == balance_charlie + balance(1000)):
         print(f"Drip failed")
         exit(1)
     print('Faucet dripped', flush=True)
 
-    balance_bob = client.balance("//Bob")
-    client.dissolve_faucet("//Alice", faucet_account, "//Eve")
-    client.await_block(2)
 
-    if (not client.balance("//Eve") == balance(9000)):
-        print(f"Dissolve failed")
-        exit(1)
+    # The parachain uses root instead of council for this, which we don't support yet.
+    if not is_parachain:
+        balance_bob = client.balance("//Bob")
+        client.dissolve_faucet("//Alice", faucet_account, "//Eve")
+        client.await_block(2)
 
-    if (not client.balance("//Bob") == balance_bob + balance(3000)):
-        print(f"Dissolve failed")
-        exit(1)
+        if (not client.balance("//Eve") == balance(9000)):
+            print(f"Dissolve failed")
+            exit(1)
 
-    print('Faucet dissolved', flush=True)
+        if (not client.balance("//Bob") == balance_bob + balance(3000)):
+            print(f"Dissolve failed")
+            exit(1)
+
+        print('Faucet dissolved', flush=True)
+
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     if (not client.balance(faucet_account) == balance(10000)):
         print(f"Faucet creation failed")
         exit(1)
     print('Faucet created', flush=True)
     client.drip_faucet("//Charlie", faucet_account, eligible_cindex, cid=cid, pay_fees_in_cc=True)
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     print('Faucet dripped', flush=True)
     balance_bob = client.balance("//Bob")
     client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
-    client.await_block(2)
+    client.await_block(blocks_to_wait)
     if (not client.balance(faucet_account) == 0):
         print(f"Faucet closing failed with wrong faucet balance")
         exit(1)
@@ -339,30 +341,32 @@ def test_faucet(client, cid):
     print('Faucet closed', flush=True)
 
 
-def test_democracy(client, cid):
+def test_democracy(client, cid, blocks_to_wait):
     print("################ Testing democracy ...")
     next_phase(client)
     next_phase(client)
     next_phase(client)
+    client.await_block(blocks_to_wait)
     # phase is 9, registering
     print(client.purge_community_ceremony(cid, 1, 8))
-    register_participants_and_perform_meetup(client, cid, accounts)
+    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
     eligible_cindex = client.get_cindex()
 
     # registering of cindex 10
     next_phase(client)
+    client.await_block(blocks_to_wait)
 
     claim_rewards(client, cid, "//Alice", pay_fees_in_cc=False)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     next_phase(client)
     next_phase(client)
     next_phase(client)
+    client.await_block(blocks_to_wait)
     # cindex is now 11
 
-    client.await_block(1)
     client.submit_set_inactivity_timeout_proposal("//Alice", 8)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     proposals = client.list_proposals()
     print(proposals)
     if ('id: 1' not in proposals):
@@ -379,7 +383,7 @@ def test_democracy(client, cid):
     client.vote("//Alice", 1, "aye", [[cid, eligible_cindex]])
     client.vote("//Bob", 1, "aye", [[cid, eligible_cindex]])
     client.vote("//Charlie", 1, "aye", [[cid, eligible_cindex]])
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     proposals = client.list_proposals()
     print("--proposals")
     print(proposals)
@@ -388,7 +392,7 @@ def test_democracy(client, cid):
     sleep(60 * 5 + 1)
     print("calling update_proposal_state")
     client.update_proposal_state("//Alice", 1)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
     proposals = client.list_proposals()
     print("--proposals")
     print(proposals)
@@ -410,26 +414,32 @@ def test_democracy(client, cid):
 @click.option('-t', '--test', is_flag=True, help='if set, run integration tests.')
 @click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
 @click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 15)')
-def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batch_size):
+@click.option('--is-parachain', is_flag=True, help='If the connecting chain is a parachain')
+def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batch_size, is_parachain):
+    print(f"Chain is-parchain: {is_parachain}")
+
     client = Client(rust_client=client, node_url=url, port=port)
     cid = create_community(client, spec_file, ipfs_local, signer, wrap_call=wrap_call, batch_size=batch_size)
+    blocks_to_wait = 5 if is_parachain else 3
+
 
     newbie = client.create_accounts(1)[0]
-    faucet(client, cid, [account3, newbie])
+    faucet(client, cid, [account3, newbie], blocks_to_wait)
 
-    register_participants_and_perform_meetup(client, cid, accounts)
+    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
 
     balance = client.balance(account1)
 
     print("Claiming early rewards")
-    claim_rewards(client, cid, account1)
+    claim_rewards(client, cid, account1, blocks_to_wait)
+    client.await_block(blocks_to_wait)
 
     if (not balance == client.balance(account1)):
         print("claim_reward fees were not refunded if paid in native currency")
         exit(1)
 
     next_phase(client)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
 
     if (not test):
         print(f"Community {cid} successfully bootstrapped")
@@ -449,27 +459,30 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
         print("no reputation gained")
         exit(1)
 
-    register_participants_and_perform_meetup(client, cid, accounts)
+    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
     next_phase(client)
-    client.await_block(1)
+    client.await_block(blocks_to_wait)
+
     claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    client.await_block(blocks_to_wait)
+
     balance1 = client.balance(account1, cid=cid)
     balance2 = client.balance(account2, cid=cid)
     if (not balance1 == balance2):
         print("claim_reward fees were not refunded if paid in cc")
         exit(1)
 
-    test_faucet(client, cid)
+    test_faucet(client, cid, blocks_to_wait, is_parachain)
 
     fee_payment_transfers(client, cid)
 
-    test_reputation_caching(client, cid)
+    test_reputation_caching(client, cid, blocks_to_wait)
 
-    test_unregister_and_upgrade_registration(client, cid)
+    test_unregister_and_upgrade_registration(client, cid, blocks_to_wait)
 
-    test_endorsements_by_reputables(client, cid)
+    test_endorsements_by_reputables(client, cid, blocks_to_wait)
 
-    test_democracy(client, cid)
+    test_democracy(client, cid, blocks_to_wait)
 
     print("tests passed")
 
