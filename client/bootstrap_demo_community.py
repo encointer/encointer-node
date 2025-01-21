@@ -289,6 +289,30 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     client.set_faucet_reserve_amount("//Alice", balance(3000))
     client.await_block(blocks_to_wait)
 
+    client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
+    client.await_block(blocks_to_wait)
+    if (not client.balance(faucet_account) == balance(10000)):
+        print(f"TestFaucet creation failed")
+        exit(1)
+    print('Faucet created', flush=True)
+    client.drip_faucet("//Charlie", faucet_account, eligible_cindex, cid=cid, pay_fees_in_cc=True)
+    client.await_block(blocks_to_wait)
+    print('Faucet dripped', flush=True)
+    balance_bob = client.balance("//Bob")
+    client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
+    client.await_block(blocks_to_wait)
+    if (not client.balance(faucet_account) == 0):
+        print(f"Faucet closing failed with wrong faucet balance")
+        exit(1)
+
+    if (not client.balance("//Bob") == balance_bob + balance(3000)):
+        print(f"Faucet closing failed with wrong bob balance")
+        exit(1)
+    print('Faucet closed', flush=True)
+
+
+    # Create a second faucet and test that dissolving works
+
     balance_bob = client.balance("//Bob")
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(1000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
@@ -316,8 +340,8 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     # The parachain uses root instead of council for this, which we don't support yet.
     # So we can't create a second faucet either.
     if is_parachain:
-        print("Skip testing dissolving faucet and creating a second one as the script does not "
-              "support dissolving the faucet yet.")
+        print("Skip testing dissolving faucet as the script does not "
+              "support dissolving the faucet yet in the parachain case")
         return
 
     balance_bob = client.balance("//Bob")
@@ -333,27 +357,6 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
         exit(1)
 
     print('Faucet dissolved', flush=True)
-
-    client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
-    client.await_block(blocks_to_wait)
-    if (not client.balance(faucet_account) == balance(10000)):
-        print(f"TestFaucet creation failed")
-        exit(1)
-    print('Faucet created', flush=True)
-    client.drip_faucet("//Charlie", faucet_account, eligible_cindex, cid=cid, pay_fees_in_cc=True)
-    client.await_block(blocks_to_wait)
-    print('Faucet dripped', flush=True)
-    balance_bob = client.balance("//Bob")
-    client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
-    client.await_block(blocks_to_wait)
-    if (not client.balance(faucet_account) == 0):
-        print(f"Faucet closing failed with wrong faucet balance")
-        exit(1)
-
-    if (not client.balance("//Bob") == balance_bob + balance(3000)):
-        print(f"Faucet closing failed with wrong bob balance")
-        exit(1)
-    print('Faucet closed', flush=True)
 
 
 def test_democracy(client, cid, blocks_to_wait):
