@@ -97,6 +97,7 @@ def register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wa
 
     print(client.list_participants(cid))
     client.next_phase()
+    client.await_block(blocks_to_wait)
 
     print('Listing meetups')
     print(client.list_meetups(cid))
@@ -180,7 +181,9 @@ def test_reputation_caching(client, cid, blocks_to_wait):
         exit(1)
 
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
     client.await_block(blocks_to_wait)
 
@@ -189,6 +192,7 @@ def test_reputation_caching(client, cid, blocks_to_wait):
     client.await_block(blocks_to_wait)
 
     next_phase(client)
+    client.await_block(blocks_to_wait)
     rep = client.reputation(account1)
     # after phase change cache will be updated
     if not len(rep) == 0:
@@ -196,6 +200,7 @@ def test_reputation_caching(client, cid, blocks_to_wait):
         exit(1)
 
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
     client.await_block(blocks_to_wait)
     # registering
@@ -351,7 +356,9 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
 def test_democracy(client, cid, blocks_to_wait):
     print("################ Testing democracy ...")
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
     client.await_block(blocks_to_wait)
     # phase is 9, registering
@@ -367,7 +374,9 @@ def test_democracy(client, cid, blocks_to_wait):
     client.await_block(blocks_to_wait)
 
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
+    client.await_block(blocks_to_wait)
     next_phase(client)
     client.await_block(blocks_to_wait)
     # cindex is now 11
