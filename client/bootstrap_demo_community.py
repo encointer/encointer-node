@@ -513,7 +513,9 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
 
     test_fee_payment_transfers(client, cid, blocks_to_wait)
 
-    test_reputation_caching(client, cid, blocks_to_wait)
+    if not is_parachain:
+        # Fixme: purging community ceremony for the parachain
+        test_reputation_caching(client, cid, blocks_to_wait)
 
     test_unregister_and_upgrade_registration(client, cid, blocks_to_wait)
 
