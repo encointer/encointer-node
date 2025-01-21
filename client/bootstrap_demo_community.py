@@ -294,7 +294,7 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(9000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
     if (not client.balance(faucet_account) == balance(10000)):
-        print(f"TestFaucet creation failed")
+        print(f"TestFaucet creation failed: Faucet does not have the expected funds")
         exit(1)
     print('Faucet created', flush=True)
 
@@ -306,17 +306,18 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print(f'Bobs balance before closing the faucet: {balance_bob}')
     client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
-    balance_bob_after_closing = client.balance(faucet_account)
+    balance_bob_after_closing = client.balance(balance_bob)
     print(f'Bobs balance after closing the faucet: {balance_bob_after_closing}')
 
     if (not client.balance(faucet_account) == 0):
-        print(f"Faucet closing failed with wrong faucet balance")
+        print(f"Faucet closing failed: Faucet is not empty")
         exit(1)
 
     # Ensure Bobs balance increased due to refund of the deposit
-    # Todo: Check with exact value
+    # Todo: Check with exact value the same way as below, but the parachain has a different reserve deposit
+    # so we just check that bob received something.
     if (balance_bob_after_closing >= balance_bob):
-        print(f"Faucet closing failed with wrong bob balance")
+        print(f"Faucet closing failed: Bob did not receive the reserve deposit")
         exit(1)
     print('Faucet closed', flush=True)
 
@@ -324,13 +325,18 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     # Create a second faucet and test that dissolving works
 
     balance_bob = client.balance("//Bob")
+    print(f'Bobs balance before creating the 2nd faucet: {balance_bob}')
     client.create_faucet("//Bob", "TestFaucet", balance(10000), balance(1000), [cid], cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
 
-    print(client.balance("//Bob"), flush=True)
-    print(balance_bob, flush=True)
-    print(client.balance(faucet_account), flush=True)
-    if (not client.balance(faucet_account) == balance(10000)):
+    # Should be balance_before - faucet_deposit
+    balance_bob_after_creating = client.balance("//Bob")
+    print(f'Bobs balance after creating the 2nd faucet: {balance_bob_after_creating}')
+
+    balance_faucet = client.balance(faucet_account)
+    print(f'Faucet balance: {balance_faucet}')
+    print(balance_faucet, flush=True)
+    if (not balance_faucet == balance(10000)):
         print(f"Wrong Faucet balance after faucet creation")
         exit(1)
     print('Faucet created', flush=True)
@@ -339,8 +345,9 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print(f"Charlie uses participation at cindex: {eligible_cindex} to drip faucet and pays fees in CC")
     client.drip_faucet("//Charlie", faucet_account, eligible_cindex, cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
+
     if (not client.balance("//Charlie") == balance_charlie + balance(1000)):
-        print(f"Drip failed")
+        print(f"Drip failed: Charlie did not receive the drip amount")
         exit(1)
     print('Faucet dripped', flush=True)
 
@@ -348,7 +355,7 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     # The parachain uses root instead of council for this, which we don't support yet.
     # So we can't create a second faucet either.
     if is_parachain:
-        print("Skip testing dissolving faucet as the script does not "
+        print("Skip testing dissolving faucet, as the script does not "
               "support dissolving the faucet yet in the parachain case")
         return
 
@@ -357,11 +364,11 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     client.await_block(2)
 
     if (not client.balance("//Eve") == balance(9000)):
-        print(f"Dissolve failed")
+        print(f"Dissolve failed: Eve did not receive the remaining funds")
         exit(1)
 
     if (not client.balance("//Bob") == balance_bob + balance(3000)):
-        print(f"Dissolve failed")
+        print(f"Dissolve failed: Bob did not receive the deposit refund")
         exit(1)
 
     print('Faucet dissolved', flush=True)
