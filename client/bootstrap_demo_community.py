@@ -121,12 +121,14 @@ def faucet(client, cid, accounts, blocks_to_wait):
     client.await_block(blocks_to_wait)
 
 
-def fee_payment_transfers(client, cid):
+def test_fee_payment_transfers(client, cid, blocks_to_wait):
     print(f'🔄 Transferring 0.5CC from //Alice to //Eve')
     client.transfer(cid, '//Alice', '//Eve', '0.5', pay_fees_in_cc=False)
 
     print(f'🔄 Transferring all CC from //Eve to //Ferdie')
     client.transfer_all(cid, '//Eve', '//Ferdie', pay_fees_in_cc=True)
+
+    client.await_block(blocks_to_wait)
     if client.balance('//Eve', cid=cid) > 0 or client.balance('//Ferdie', cid=cid) == 0:
         print("transfer_all failed")
         exit(1)
@@ -479,7 +481,7 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
 
     test_faucet(client, cid, blocks_to_wait, is_parachain)
 
-    fee_payment_transfers(client, cid)
+    test_fee_payment_transfers(client, cid, blocks_to_wait)
 
     test_reputation_caching(client, cid, blocks_to_wait)
 
