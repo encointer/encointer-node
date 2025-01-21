@@ -452,7 +452,7 @@ def test_democracy(client, cid, blocks_to_wait):
 @click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
 @click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 15)')
 @click.option('--is-parachain', is_flag=True, help='If the connecting chain is a parachain')
-@click.option('--waiting-blocks', default=3, help='Waiting time between steps')
+@click.option('--waiting-blocks', default=3, help='Waiting time between extrinsics')
 def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batch_size, is_parachain, waiting_blocks):
     print(f"Chain is-parchain: {is_parachain}")
 
