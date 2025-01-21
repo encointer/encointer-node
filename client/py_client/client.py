@@ -114,14 +114,15 @@ class Client:
         return [self.new_account() for _ in range(0, amount)]
 
     def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False, pay_fees_in_cc=False):
-        print(f"connecting to faucet: {faucet_url}")
         if is_faucet:
+            print(f"we are the faucet")
             self.await_block(1)
             ret = self.run_cli_command(
                 ['faucet'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
             print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret)
         else:
+            print(f"connecting to faucet: {faucet_url}")
             payload = {'accounts': accounts}
             try:
                 requests.get(faucet_url, params=payload, timeout=20)
