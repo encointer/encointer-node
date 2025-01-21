@@ -316,7 +316,7 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     # Ensure Bobs balance increased due to refund of the deposit
     # Todo: Check with exact value the same way as below, but the parachain has a different reserve deposit
     # so we just check that bob received something.
-    if (balance_bob_after_closing >= balance_bob):
+    if (balance_bob_after_closing <= balance_bob):
         print(f"Faucet closing failed: Bob did not receive the reserve deposit")
         exit(1)
     print('Faucet closed', flush=True)
