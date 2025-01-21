@@ -522,7 +522,11 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
 
     test_endorsements_by_reputables(client, cid, blocks_to_wait)
 
-    test_democracy(client, cid, blocks_to_wait)
+    if not is_parachain:
+        # Fixme: democracy params are runtime constants.
+        # Hence, we can't test it with the parachain runtimes currently.
+        test_democracy(client, cid, blocks_to_wait)
+
 
     print("tests passed")
 
