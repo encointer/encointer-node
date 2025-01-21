@@ -87,7 +87,7 @@ class Client:
         ret = self.run_cli_command(["get-cindex"])
         return int(ret.stdout.strip().decode("utf-8"))
 
-    def go_to_phase(self, phase):
+    def go_to_phase(self, phase, blocks_to_wait):
         print("⏱ Advancing to phase: " + str(phase))
         while True:
             p = CeremonyPhase[self.get_phase()]
@@ -97,6 +97,8 @@ class Client:
             else:
                 print(f"⏱ Phase is: {p}. Need to advance")
                 self.next_phase()
+                print(f"⏱ called next phase, waiting for {blocks_to_wait}")
+            self.await_block(blocks_to_wait)
 
     def list_accounts(self):
         ret = self.run_cli_command(["list-accounts"])
