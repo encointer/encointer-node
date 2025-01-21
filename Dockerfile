@@ -18,7 +18,7 @@ RUN mv /usr/share/ca* /tmp && \
 WORKDIR /
 
 COPY scripts/docker/entryscript.sh /
-COPY ./target/release/encointer-client-notee /
+COPY encointer-client-notee /
 
 #COPY ./scripts/healthcheck9933.sh /usr/local/bin
 
