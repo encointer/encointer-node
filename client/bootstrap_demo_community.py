@@ -306,7 +306,7 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print(f'Bobs balance before closing the faucet: {balance_bob}')
     client.close_faucet("//Bob", faucet_account, cid=cid, pay_fees_in_cc=True)
     client.await_block(blocks_to_wait)
-    balance_bob_after_closing = client.balance(balance_bob)
+    balance_bob_after_closing = client.balance("//Bob")
     print(f'Bobs balance after closing the faucet: {balance_bob_after_closing}')
 
     if (not client.balance(faucet_account) == 0):
