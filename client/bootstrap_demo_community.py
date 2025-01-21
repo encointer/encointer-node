@@ -452,12 +452,13 @@ def test_democracy(client, cid, blocks_to_wait):
 @click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
 @click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 15)')
 @click.option('--is-parachain', is_flag=True, help='If the connecting chain is a parachain')
-def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batch_size, is_parachain):
+@click.option('--waiting-blocks', default=3, help='Waiting time between steps')
+def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batch_size, is_parachain, waiting_blocks):
     print(f"Chain is-parchain: {is_parachain}")
 
     client = Client(rust_client=client, node_url=url, port=port)
     cid = create_community(client, spec_file, ipfs_local, signer, wrap_call=wrap_call, batch_size=batch_size)
-    blocks_to_wait = 5 if is_parachain else 3
+    blocks_to_wait = waiting_blocks
 
 
     newbie = client.create_accounts(1)[0]
