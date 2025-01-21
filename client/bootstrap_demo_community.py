@@ -283,6 +283,54 @@ def test_endorsements_by_reputables(client, cid, blocks_to_wait):
 def balance(x):
     return x * 10 ** 12
 
+def test_first_ceremony_with_early_claim(client, cid, blocks_to_wait):
+    faucet(client, cid, [account3], blocks_to_wait)
+
+    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
+
+    balance = client.balance(account1)
+
+    print("Claiming early rewards")
+    claim_rewards(client, cid, account1)
+    client.await_block(blocks_to_wait)
+
+    if (not balance == client.balance(account1)):
+        print("claim_reward fees were not refunded if paid in native currency")
+        exit(1)
+
+    next_phase(client)
+    client.await_block(blocks_to_wait)
+
+    print(f'Balances for new community with cid: {cid}.')
+    bal = [client.balance(a, cid=cid) for a in accounts]
+    [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
+
+    if not round(bal[0]) > 0:
+        print("Did not receive ceremony rewards")
+        exit(1)
+
+    rep = client.reputation(account1)
+    print(rep)
+    if not len(rep) > 0:
+        print("no reputation gained")
+        exit(1)
+
+    print(f"Community {cid} successfully bootstrapped")
+
+def test_second_ceremony_with_cc_payment_and_regular_claim(client, cid, blocks_to_wait):
+    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
+    next_phase(client)
+    client.await_block(blocks_to_wait)
+
+    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
+    client.await_block(blocks_to_wait)
+
+    balance1 = client.balance(account1, cid=cid)
+    balance2 = client.balance(account2, cid=cid)
+    if (not balance1 == balance2):
+        print("claim_reward fees were not refunded if paid in cc")
+        exit(1)
+
 
 def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print("################ Testing the EncointerFaucet....")
@@ -460,55 +508,12 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
     cid = create_community(client, spec_file, ipfs_local, signer, wrap_call=wrap_call, batch_size=batch_size)
     blocks_to_wait = waiting_blocks
 
-
-    newbie = client.create_accounts(1)[0]
-    faucet(client, cid, [account3, newbie], blocks_to_wait)
-
-    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
-
-    balance = client.balance(account1)
-
-    print("Claiming early rewards")
-    claim_rewards(client, cid, account1)
-    client.await_block(blocks_to_wait)
-
-    if (not balance == client.balance(account1)):
-        print("claim_reward fees were not refunded if paid in native currency")
-        exit(1)
-
-    next_phase(client)
-    client.await_block(blocks_to_wait)
+    test_first_ceremony_with_early_claim(client, cid, blocks_to_wait)
 
     if (not test):
-        print(f"Community {cid} successfully bootstrapped")
         return (0)
 
-    print(f'Balances for new community with cid: {cid}.')
-    bal = [client.balance(a, cid=cid) for a in accounts]
-    [print(f'Account balance for {ab[0]} is {ab[1]}.') for ab in list(zip(accounts, bal))]
-
-    if not round(bal[0]) > 0:
-        print("balance is wrong")
-        exit(1)
-
-    rep = client.reputation(account1)
-    print(rep)
-    if not len(rep) > 0:
-        print("no reputation gained")
-        exit(1)
-
-    register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
-    next_phase(client)
-    client.await_block(blocks_to_wait)
-
-    claim_rewards(client, cid, account1, pay_fees_in_cc=True)
-    client.await_block(blocks_to_wait)
-
-    balance1 = client.balance(account1, cid=cid)
-    balance2 = client.balance(account2, cid=cid)
-    if (not balance1 == balance2):
-        print("claim_reward fees were not refunded if paid in cc")
-        exit(1)
+    test_second_ceremony_with_cc_payment_and_regular_claim(client, cid, blocks_to_wait)
 
     test_faucet(client, cid, blocks_to_wait, is_parachain)
 
