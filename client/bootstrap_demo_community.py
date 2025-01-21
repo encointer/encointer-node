@@ -496,7 +496,7 @@ def test_democracy(client, cid, blocks_to_wait):
 @click.option('-l', '--ipfs-local', is_flag=True, help='if set, local ipfs node is used.')
 @click.option('-s', '--spec-file', default=f'{TEST_DATA_DIR}{TEST_LOCATIONS_MEDITERRANEAN}',
               help='Specify community spec-file to be registered.')
-@click.option('-t', '--test', is_flag=True, help='if set, run integration tests.')
+@click.option('-t', '--test', default="none", help='Define if/which integration tests should be run')
 @click.option('-w', '--wrap-call', default="none", help='wrap the call, values: none|sudo|collective')
 @click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 15)')
 @click.option('--is-parachain', is_flag=True, help='If the connecting chain is a parachain')
@@ -510,28 +510,26 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
 
     test_first_ceremony_with_early_claim(client, cid, blocks_to_wait)
 
-    if (not test):
-        return (0)
-
-    test_second_ceremony_with_cc_payment_and_regular_claim(client, cid, blocks_to_wait)
-
-    test_faucet(client, cid, blocks_to_wait, is_parachain)
-
-    test_fee_payment_transfers(client, cid, blocks_to_wait)
-
-    if not is_parachain:
-        # Fixme: purging community ceremony for the parachain
-        test_reputation_caching(client, cid, blocks_to_wait)
-
-    test_unregister_and_upgrade_registration(client, cid, blocks_to_wait)
-
-    test_endorsements_by_reputables(client, cid, blocks_to_wait)
-
-    if not is_parachain:
-        # Fixme: democracy params are runtime constants.
-        # Hence, we can't test it with the parachain runtimes currently.
-        test_democracy(client, cid, blocks_to_wait)
-
+    match test:
+        case "none":
+            return 0
+        case "cc-fee-payment":
+            test_second_ceremony_with_cc_payment_and_regular_claim(client, cid, blocks_to_wait)
+            test_fee_payment_transfers(client, cid, blocks_to_wait)
+        case "faucet":
+            test_faucet(client, cid, blocks_to_wait, is_parachain)
+        case "reputation-caching":
+            # Fixme: fails for parachain as purging community ceremony requires root
+            test_reputation_caching(client, cid, blocks_to_wait)
+        case "unregister-and-upgrade-registration":
+            test_unregister_and_upgrade_registration(client, cid, blocks_to_wait)
+        case "endorsement":
+            test_endorsements_by_reputables(client, cid, blocks_to_wait)
+        case "democracy":
+            # Fixme: democracy params are runtime constants, and therefore we can't test it with the parachain.
+            test_democracy(client, cid, blocks_to_wait)
+        case _:
+            return "Invalid value for test"
 
     print("tests passed")
 

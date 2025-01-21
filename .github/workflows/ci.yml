@@ -241,7 +241,16 @@ jobs:
     needs: build
     strategy:
       matrix:
-        test: [ test_bootstrap_demo_community.sh, test_bot_community.sh, test_register_business.sh ]
+        test: [
+          test_bootstrap_demo_community.sh cc-fee-payment,
+          test_bootstrap_demo_community.sh faucet,
+          test_bootstrap_demo_community.sh reputation-caching,
+          test_bootstrap_demo_community.sh unregister-and-upgrade-registration,
+          test_bootstrap_demo_community.sh endorsement,
+          test_bootstrap_demo_community.sh democracy,
+          test_bot_community.sh,
+          test_register_business.sh
+        ]
     steps:
       - uses: actions/checkout@v3
 
@@ -300,7 +309,12 @@ jobs:
       fail-fast: false
       matrix:
         test:
-          - bootstrap_demo_community.py --signer //Bob --test
+          - bootstrap_demo_community.py --signer //Bob --test cc-fee-payment
+          - bootstrap_demo_community.py --signer //Bob --test faucet
+          - bootstrap_demo_community.py --signer //Bob --test reputation-caching
+          - bootstrap_demo_community.py --signer //Bob --test unregister-and-upgrade-registration
+          - bootstrap_demo_community.py --signer //Bob --test endorsement
+          - bootstrap_demo_community.py --signer //Bob --test democracy
           - bot-community-test -f http://host.docker.internal:5000/api
           # Todo: #386
           # - test-register-businesses -f http://host.docker.internal:5000/api
