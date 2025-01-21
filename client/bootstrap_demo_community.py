@@ -431,7 +431,7 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
     balance = client.balance(account1)
 
     print("Claiming early rewards")
-    claim_rewards(client, cid, account1, blocks_to_wait)
+    claim_rewards(client, cid, account1)
     client.await_block(blocks_to_wait)
 
     if (not balance == client.balance(account1)):
