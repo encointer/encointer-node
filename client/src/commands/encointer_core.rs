@@ -323,13 +323,16 @@ async fn listen(matches: &ArgMatches<'_>) {
 	}
 }
 
-pub fn print_events(events: Vec<substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>>, encointer_event_count: &mut u32) {
+pub fn print_events(
+	events: Vec<substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>>,
+	encointer_event_count: &mut u32,
+) {
 	for evr in events {
 		debug!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
 		match &evr.event {
 			RuntimeEvent::EncointerCeremonies(ee) => {
 				info!(">>>>>>>>>> ceremony event: {:?}", ee);
-                *encointer_event_count += 1;
+				*encointer_event_count += 1;
 				match &ee {
 					pallet_encointer_ceremonies::Event::ParticipantRegistered(
 						cid,
@@ -345,8 +348,8 @@ pub fn print_events(events: Vec<substrate_api_client::ac_node_api::EventRecord<R
 			},
 			RuntimeEvent::EncointerScheduler(ee) => {
 				info!(">>>>>>>>>> scheduler event: {:?}", ee);
-                *encointer_event_count += 1;
-                match &ee {
+				*encointer_event_count += 1;
+				match &ee {
 					pallet_encointer_scheduler::Event::PhaseChangedTo(phase) => {
 						println!("Phase changed to: {phase:?}");
 					},
@@ -357,8 +360,8 @@ pub fn print_events(events: Vec<substrate_api_client::ac_node_api::EventRecord<R
 			},
 			RuntimeEvent::EncointerCommunities(ee) => {
 				info!(">>>>>>>>>> community event: {:?}", ee);
-                *encointer_event_count += 1;
-                match &ee {
+				*encointer_event_count += 1;
+				match &ee {
 					pallet_encointer_communities::Event::CommunityRegistered(cid) => {
 						println!("Community registered: cid: {cid:?}");
 					},
@@ -375,12 +378,12 @@ pub fn print_events(events: Vec<substrate_api_client::ac_node_api::EventRecord<R
 				}
 			},
 			RuntimeEvent::EncointerBalances(ee) => {
-                *encointer_event_count += 1;
-                println!(">>>>>>>>>> encointer balances event: {ee:?}");
+				*encointer_event_count += 1;
+				println!(">>>>>>>>>> encointer balances event: {ee:?}");
 			},
 			RuntimeEvent::EncointerBazaar(ee) => {
-                *encointer_event_count += 1;
-                println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
+				*encointer_event_count += 1;
+				println!(">>>>>>>>>> encointer bazaar event: {ee:?}");
 			},
 			RuntimeEvent::System(ee) => match ee {
 				frame_system::Event::ExtrinsicFailed { dispatch_error: _, dispatch_info: _ } => {
