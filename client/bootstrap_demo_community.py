@@ -87,7 +87,7 @@ def create_community(client, spec_file_path, ipfs_local, signer, wrap_call="none
 
 def register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait):
     print(client.list_communities())
-    client.go_to_phase(CeremonyPhase.Registering)
+    client.go_to_phase(CeremonyPhase.Registering, blocks_to_wait)
 
     print(f'📝 Registering Participants for cid: {cid}')
     [client.register_participant(b, cid) for b in accounts]
