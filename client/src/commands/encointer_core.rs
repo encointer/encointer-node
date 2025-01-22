@@ -295,28 +295,35 @@ pub fn apply_demurrage(
 
 async fn listen(matches: &ArgMatches<'_>) {
 	let api = get_chain_api(matches).await;
-	debug!("Subscribing to events");
+
+	let block_count = value_t!(matches, "blocks", u32).ok();
+	let event_count = value_t!(matches, "events", u32).ok();
+
+	wait_for_blocks_or_events(&api, block_count, event_count).await;
+}
+
+pub async fn wait_for_blocks_or_events(
+	api: &Api,
+	target_block_count: Option<u32>,
+	target_event_count: Option<u32>,
+) {
 	let mut subscription = api.subscribe_events().await.unwrap();
-	let mut count = 0u32;
-	let mut blocks = 0u32;
+	let mut event_count = 0u32;
+	let mut block_count = 0u32;
 	loop {
-		if matches.is_present("events") &&
-			count >= value_t!(matches.value_of("events"), u32).unwrap()
-		{
+		if target_event_count.is_some() && event_count >= target_event_count.unwrap() {
 			return;
 		};
-		if matches.is_present("blocks") &&
-			blocks > value_t!(matches.value_of("blocks"), u32).unwrap()
-		{
+		if target_block_count.is_some() && block_count > target_block_count.unwrap() {
 			return;
 		};
 
 		let event_results = subscription.next_events::<RuntimeEvent, Hash>().await.unwrap();
-		blocks += 1;
+		block_count += 1;
 
 		match event_results {
 			Ok(events) => {
-				print_events(events, &mut count);
+				print_events(events, &mut event_count);
 			},
 			Err(_) => error!("couldn't decode event record list"),
 		}
@@ -340,8 +347,8 @@ pub fn print_events(
 						accountid,
 					) => {
 						println!(
-                                "Participant registered as {participant_type:?}, for cid: {cid:?}, account: {accountid}, "
-                            );
+                            "Participant registered as {participant_type:?}, for cid: {cid:?}, account: {accountid}, "
+                        );
 					},
 					_ => println!("Unsupported EncointerCommunities event"),
 				}
