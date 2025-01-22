@@ -146,7 +146,9 @@ def next_phase(client):
     print(f"🕑 New phase is {client.get_phase()}. ceremony index is {client.get_cindex()}")
 
 
+
 def test_reputation_caching(client, cid, blocks_to_wait):
+    """ This test assumes that one successful ceremony has been run before. """
     print('################## Testing reputation caching...')
     register_participants_and_perform_meetup(client, cid, accounts, blocks_to_wait)
     next_phase(client)
@@ -340,6 +342,9 @@ def test_second_ceremony_with_cc_payment_and_regular_claim(client, cid, blocks_t
 
 
 def test_faucet(client, cid, blocks_to_wait, is_parachain):
+    """ First we create a faucet that is closed afterward, and
+        then we create another one that is dissolved.
+    """
     print("################ Testing the EncointerFaucet....")
     client.set_faucet_reserve_amount("//Alice", balance(3000))
     client.await_block(blocks_to_wait)
@@ -408,7 +413,6 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
 
 
     # The parachain uses root instead of council for this, which we don't support yet.
-    # So we can't create a second faucet either.
     if is_parachain:
         print("Skip testing dissolving faucet, as the script does not "
               "support dissolving the faucet yet in the parachain case")
