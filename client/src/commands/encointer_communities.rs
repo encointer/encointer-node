@@ -17,7 +17,7 @@ use encointer_api_client_extension::{
 };
 use encointer_primitives::communities::{CommunityIdentifier, Location};
 
-use crate::utils::{BatchCall, CallWrapping};
+use crate::utils::{send_and_wait_for_finalized, BatchCall, CallWrapping};
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use itertools::Itertools;
 use log::{error, info, warn};
@@ -104,7 +104,7 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         let tx_payment_cid_arg = matches.tx_payment_cid_arg();
         set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-        send_and_wait_for_in_block(&api, xt(&api, new_community_final_call).await, matches.tx_payment_cid_arg()).await;
+        send_and_wait_for_finalized(&api, xt(&api, new_community_final_call).await, matches.tx_payment_cid_arg()).await;
         println!("{cid}");
 
         if api.get_current_phase(None).await.unwrap() != CeremonyPhaseType::Registering {
@@ -114,7 +114,7 @@ pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
         }
 
         for call in add_location_batch_final_call {
-            send_and_wait_for_in_block(&api, xt(&api, call).await, tx_payment_cid_arg).await;
+            send_and_wait_for_finalized(&api, xt(&api, call).await, tx_payment_cid_arg).await;
         }
         Ok(())
     })

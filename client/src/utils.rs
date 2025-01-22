@@ -110,6 +110,17 @@ pub async fn send_and_wait_for_in_block<C: Encode>(
 	Some(report.extrinsic_hash)
 }
 
+pub async fn send_and_wait_for_finalized<C: Encode>(
+	api: &Api,
+	xt: EncointerXt<C>,
+	tx_payment_cid: Option<&str>,
+) -> Option<H256> {
+	ensure_payment(api, &xt.encode().into(), tx_payment_cid).await;
+	let report = api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).await.unwrap();
+	info!("[+] Transaction got finalized in Block: {:?}\n", report.block_hash.unwrap());
+	Some(report.extrinsic_hash)
+}
+
 /// Prints the raw call to be supplied with js/apps.
 pub fn print_raw_call<Call: Encode>(name: &str, call: &Call) {
 	info!("{}: 0x{}", name, hex::encode(call.encode()));
