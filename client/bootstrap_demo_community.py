@@ -515,6 +515,8 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
     cid = create_community(client, spec_file, ipfs_local, signer, wrap_call=wrap_call, batch_size=batch_size)
     blocks_to_wait = waiting_blocks
 
+    # Strategy: run the first ceremony to ensure that some CC have been minted,
+    # and then do the individual tests.
     test_first_ceremony_with_early_claim(client, cid, blocks_to_wait)
 
     match test:
