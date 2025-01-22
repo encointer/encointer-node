@@ -57,8 +57,9 @@ NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
 # interestingly, the error can be misleading, it can be: 1. TX would exhaust block limits, 2. invalid collective propose weight
 @click.option('-b', '--batch-size', default=100, help='batch size of the addLocation call (parachain is limited to 7 (maybe a bit more))')
 @click.option('-n', '--number-of-locations', default=100, help='number of locations to generate for the bot-community')
+@click.option('--waiting-blocks', default=1, help='Waiting time between steps')
 @click.pass_context
-def cli(ctx, client, port, ipfs_local, url, faucet_url, wrap_call, batch_size, number_of_locations):
+def cli(ctx, client, port, ipfs_local, url, faucet_url, wrap_call, batch_size, number_of_locations, waiting_blocks):
     ctx.ensure_object(dict)
     cl = set_local_or_remote_chain(client, port, url)
     ctx.obj['client'] = cl
@@ -70,6 +71,7 @@ def cli(ctx, client, port, ipfs_local, url, faucet_url, wrap_call, batch_size, n
     ctx.obj['batch_size'] = batch_size
     ctx.obj['number_of_locations'] = number_of_locations
     ctx.obj['max_population'] = number_of_locations * 10
+    ctx.obj['waiting_blocks'] = waiting_blocks
 
 
 @cli.command()
@@ -80,6 +82,7 @@ def init(ctx):
     wrap_call = ctx['wrap_call']
     batch_size = ctx['batch_size']
     number_of_locations = ctx['number_of_locations']
+    waiting_blocks = ctx['waiting_blocks']
     purge_keystore_prompt()
 
     root_dir = os.path.realpath(ASSETS_PATH)
@@ -90,7 +93,7 @@ def init(ctx):
         print("add image to ipfs failed")
     print('initializing community')
     b = init_bootstrappers(client, faucet_url)
-    client.await_block()
+    client.await_block(waiting_blocks)
     specfile = random_community_spec(b, ipfs_cid, number_of_locations)
     print(f'generated community spec: {specfile} first bootstrapper {b[0]}')
 
@@ -99,12 +102,12 @@ def init(ctx):
         if phase == 'Registering':
             break
         print(f"waiting for ceremony phase Registering. now is {phase}")
-        client.await_block()
+        client.await_block(waiting_blocks)
 
     cid = client.new_community(specfile, signer='//Alice', wrap_call=wrap_call, batch_size=batch_size)
     print(f'created community with cid: {cid}')
     write_cid(cid)
-    client.await_block()
+    client.await_block(waiting_blocks)
     print(client.list_communities())
 
 
@@ -123,6 +126,7 @@ def _execute_current_phase(ctx, client: Client, faucet_url: str):
     client = client
     cid = read_cid()
     max_population = ctx["max_population"]
+    waiting_blocks = ctx["waiting_blocks"]
     phase = client.get_phase()
     cindex = client.get_cindex()
     print(f'🕑 phase is {phase} and ceremony index is {cindex}')
@@ -132,19 +136,19 @@ def _execute_current_phase(ctx, client: Client, faucet_url: str):
         print("🏆 all participants claim their potential reward")
         for account in accounts:
             client.claim_reward(account, cid)
-        client.await_block(3)
+        client.await_block(waiting_blocks)
 
         update_proposal_states(client, accounts[0])
 
         total_supply = write_current_stats(client, accounts, cid)
         if total_supply > 0:
-            init_new_community_members(client, cid, len(accounts), faucet_url=faucet_url, max_population=max_population)
+            init_new_community_members(client, cid, len(accounts), faucet_url=faucet_url, max_population=max_population, waiting_blocks=waiting_blocks)
 
         # updated account list with new community members
         accounts = client.list_accounts()
 
-        register_participants(client, accounts, cid, faucet_url=faucet_url)
-        client.await_block()
+        register_participants(client, accounts, cid, faucet_url=faucet_url, waiting_blocks=waiting_blocks)
+        client.await_block(waiting_blocks)
 
     if phase == "Assigning":
         meetups = client.list_meetups(cid)
@@ -155,11 +159,11 @@ def _execute_current_phase(ctx, client: Client, faucet_url: str):
     if phase == 'Attesting':
         meetups = client.list_meetups(cid)
         update_proposal_states(client, accounts[0])
-        vote_on_proposals(client, cid, accounts)
+        vote_on_proposals(client, cid, accounts, waiting_blocks)
         print(f'🫂 Performing {len(meetups)} meetups')
         for meetup in meetups:
             perform_meetup(client, meetup, cid)
-        client.await_block()
+        client.await_block(waiting_blocks)
     return phase
 
 
@@ -168,12 +172,13 @@ def _execute_current_phase(ctx, client: Client, faucet_url: str):
 def benchmark(ctx):
     py_client = ctx['client']
     faucet_url = ctx['faucet_url']
+    waiting_blocks = ctx['waiting_blocks']
     print('will grow population forever')
     while True:
         phase = _execute_current_phase(ctx, py_client, faucet_url=faucet_url)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
-            py_client.await_block()
+            py_client.await_block(waiting_blocks)
 
 
 @cli.command()
@@ -181,19 +186,19 @@ def benchmark(ctx):
 def test(ctx):
     py_client = ctx['client']
     faucet_url = ctx['faucet_url']
+    waiting_blocks = ctx['waiting_blocks']
     print('will grow population for fixed number of ceremonies')
     for i in range(3 * 2 + 1):
         phase = _execute_current_phase(ctx, py_client, faucet_url=faucet_url)
         while phase == py_client.get_phase():
             print("awaiting next phase...")
-            py_client.await_block()
+            py_client.await_block(waiting_blocks)
 
 
 def init_bootstrappers(client: Client, faucet_url: str):
     bootstrappers = client.create_accounts(10)
     print('created bootstrappers: ' + ' '.join(bootstrappers))
     client.faucet(bootstrappers, faucet_url=faucet_url)
-    client.await_block()
     return bootstrappers
 
 
@@ -281,7 +286,8 @@ def init_new_community_members(
         cid: str,
         current_community_size: int,
         faucet_url: str,
-        max_population: int
+        max_population: int,
+        waiting_blocks: int
 ):
     """ Initializes new community members based on the `current_community_size` and the amount of endorsements we can
         perform.
@@ -298,7 +304,7 @@ def init_new_community_members(
     if len(endorsees) > 0:
         print(f'Awaiting endorsement process \n')
         # We don't need to wait here, but if there are any errors the logs mix with the fauceting, which is confusing.
-        client.await_block()
+        client.await_block(waiting_blocks)
         print(f'Added endorsees to community: {len(endorsees)}')
 
     newbies = client.create_accounts(get_newbie_amount(current_community_size + len(endorsees), max_population))
@@ -308,14 +314,14 @@ def init_new_community_members(
     new_members = newbies + endorsees
 
     client.faucet(new_members, faucet_url=faucet_url)
-    client.await_block()
+    client.await_block(waiting_blocks)
 
     print(f'Fauceted new community members {len(new_members)}')
 
     return new_members
 
 
-def register_participants(client: Client, accounts, cid, faucet_url: str):
+def register_participants(client: Client, accounts, cid, faucet_url: str, waiting_blocks):
     print(f'registering {len(accounts)} participants')
     need_refunding = []
     for p in accounts:
@@ -331,7 +337,7 @@ def register_participants(client: Client, accounts, cid, faucet_url: str):
         print(f'the following accounts are out of funds and will be refunded {need_refunding}')
         client.faucet(need_refunding, faucet_url=faucet_url)
 
-        client.await_block()
+        client.await_block(waiting_blocks)
 
         for p in need_refunding:
             try:
@@ -355,7 +361,7 @@ def submit_democracy_proposals(client: Client, cid: str, proposer: str):
     client.submit_update_nominal_income_proposal(proposer, 1.1, cid)
 
 
-def vote_on_proposals(client: Client, cid: str, voters: list):
+def vote_on_proposals(client: Client, cid: str, voters: list, waiting_blocks: int):
     proposals = client.get_proposals()
     for proposal in proposals:
         print(
@@ -384,7 +390,7 @@ def vote_on_proposals(client: Client, cid: str, voters: list):
                     client.vote(voter, proposal.id, vote, reputations)
             except:
                 print(f"voting failed")
-        client.await_block()
+        client.await_block(waiting_blocks)
 
 
 def update_proposal_states(client: Client, who: str):

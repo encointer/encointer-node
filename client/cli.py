@@ -32,7 +32,7 @@ def register_alice_bob_charlie_and_go_to_attesting(ctx, cid: str):
 
     _register_alice_bob_charlie(client, cid)
 
-    print(client.go_to_phase(CeremonyPhase.Attesting))
+    print(client.go_to_phase(CeremonyPhase.Attesting, 0))
 
 
 @cli.command()
@@ -45,7 +45,7 @@ def register_alice_bob_charlie_and_go_to_assigning(ctx, cid: str):
 
     _register_alice_bob_charlie(client, cid)
 
-    print(client.go_to_phase(CeremonyPhase.Assigning))
+    print(client.go_to_phase(CeremonyPhase.Assigning, 0))
 
 
 @cli.command()
@@ -86,7 +86,7 @@ def register_gina_harry_ian(ctx, cid: str, should_faucet: bool):
 
 def register(accounts, client: Client, cid: str, should_faucet=False):
     print(client.list_communities())
-    print(client.go_to_phase(CeremonyPhase.Registering))
+    print(client.go_to_phase(CeremonyPhase.Registering, 0))
 
     if should_faucet:
         client.faucet(accounts, is_faucet=True)
@@ -108,7 +108,7 @@ def registering_phase(ctx):
     if CeremonyPhase[client.get_phase()] == CeremonyPhase.Registering:
         client.next_phase()
 
-    print(client.go_to_phase(CeremonyPhase.Registering))
+    print(client.go_to_phase(CeremonyPhase.Registering, 0))
 
 
 @cli.command()

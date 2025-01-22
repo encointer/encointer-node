@@ -87,7 +87,7 @@ class Client:
         ret = self.run_cli_command(["get-cindex"])
         return int(ret.stdout.strip().decode("utf-8"))
 
-    def go_to_phase(self, phase):
+    def go_to_phase(self, phase, blocks_to_wait):
         print("⏱ Advancing to phase: " + str(phase))
         while True:
             p = CeremonyPhase[self.get_phase()]
@@ -97,6 +97,8 @@ class Client:
             else:
                 print(f"⏱ Phase is: {p}. Need to advance")
                 self.next_phase()
+                print(f"⏱ called next phase, waiting for {blocks_to_wait}")
+            self.await_block(blocks_to_wait)
 
     def list_accounts(self):
         ret = self.run_cli_command(["list-accounts"])
@@ -114,14 +116,15 @@ class Client:
         return [self.new_account() for _ in range(0, amount)]
 
     def faucet(self, accounts, faucet_url='http://localhost:5000/api', is_faucet=False, pay_fees_in_cc=False):
-        print(f"connecting to faucet: {faucet_url}")
         if is_faucet:
+            print(f"we are the faucet")
             self.await_block(1)
             ret = self.run_cli_command(
                 ['faucet'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
             print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret)
         else:
+            print(f"connecting to faucet: {faucet_url}")
             payload = {'accounts': accounts}
             try:
                 requests.get(faucet_url, params=payload, timeout=20)
@@ -269,22 +272,22 @@ class Client:
         ret = self.run_cli_command(["purge-community-ceremony", str(from_cindex), str(to_cindex)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
-    def create_faucet(self, account, facuet_name, amount, drip_amount, whitelist, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["create-faucet", account, facuet_name, str(amount), str(drip_amount)] + whitelist,
+    def create_faucet(self, account, faucet_name, amount, drip_amount, whitelist, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["create-faucet", account, faucet_name, str(amount), str(drip_amount)] + whitelist,
                                    cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
-    def drip_faucet(self, account, facuet_account, cindex, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["drip-faucet", account, facuet_account, str(cindex)], cid, pay_fees_in_cc)
+    def drip_faucet(self, account, faucet_account, cindex, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["drip-faucet", account, faucet_account, str(cindex)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
-    def dissolve_faucet(self, account, facuet_account, beneficiary, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["dissolve-faucet", "--signer", account, facuet_account, beneficiary], cid,
+    def dissolve_faucet(self, account, faucet_account, beneficiary, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["dissolve-faucet", "--signer", account, faucet_account, beneficiary], cid,
                                    pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
-    def close_faucet(self, account, facuet_account, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["close-faucet", account, facuet_account], cid, pay_fees_in_cc)
+    def close_faucet(self, account, faucet_account, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["close-faucet", account, faucet_account], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def set_faucet_reserve_amount(self, account, amount, cid=None, pay_fees_in_cc=False):
