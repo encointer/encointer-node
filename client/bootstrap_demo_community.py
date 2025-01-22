@@ -160,12 +160,18 @@ def test_reputation_caching(client, cid, blocks_to_wait):
 
     # check if the reputation cache was updated
     rep = client.reputation(account1)
-    print(rep)
-    if ('1', 'sqm1v79dF6b', 'VerifiedLinked(2)') not in rep or (
-            '2', 'sqm1v79dF6b', 'VerifiedLinked(3)') not in rep or (
-            '3', 'sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
-        print("wrong reputation")
+    cindex = client.get_cindex()
+
+    print(f'Reputations of account1: {rep}')
+
+    if (f'{cindex -2}', 'sqm1v79dF6b', f'VerifiedLinked({cindex-1})') not in rep:
+        print('Error: Last reputation has not been linked.')
         exit(1)
+
+    if (f'{cindex-1}', 'sqm1v79dF6b', 'VerifiedUnlinked') not in rep:
+        print('Error: Did not receive reputation.')
+        exit(1)
+
 
     # test if reputation cache is invalidated after registration
     print(f'📝 Registering Participants for Cid: {cid}')
@@ -175,10 +181,10 @@ def test_reputation_caching(client, cid, blocks_to_wait):
     client.await_block(blocks_to_wait)
 
     rep = client.reputation(account1)
-    print(rep)
+    print(f'Reputations of account1: {rep}')
     # after the registration the second reputation should now be linked
-    if ('3', 'sqm1v79dF6b', 'VerifiedLinked(4)') not in rep:
-        print("reputation not linked")
+    if (f'{cindex-1}', 'sqm1v79dF6b', f'VerifiedLinked({cindex})') not in rep:
+        print("Error: new reputation has not been linked")
         exit(1)
 
     next_phase(client)
@@ -189,7 +195,8 @@ def test_reputation_caching(client, cid, blocks_to_wait):
     client.await_block(blocks_to_wait)
 
     # check if reputation cache gets updated after phase change
-    print(client.purge_community_ceremony(cid, 1, 5))
+    cindex = client.get_cindex()
+    print(client.purge_community_ceremony(cid, 1, cindex))
     client.await_block(blocks_to_wait)
 
     next_phase(client)
@@ -197,7 +204,7 @@ def test_reputation_caching(client, cid, blocks_to_wait):
     rep = client.reputation(account1)
     # after phase change cache will be updated
     if not len(rep) == 0:
-        print("reputation was not cleared")
+        print(f"Error: reputation was not cleared, should be 0, is {len(rep)}")
         exit(1)
 
     next_phase(client)
