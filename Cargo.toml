@@ -10,6 +10,11 @@ members = [
 [profile.release]
 panic = 'unwind'
 
+[profile.production]
+codegen-units = 1
+inherits = "release"
+lto = true
+
 [workspace.dependencies]
 async-trait = "0.1.68"
 clap = { version = "4.5.1", features = ["derive"] }

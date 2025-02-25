@@ -109,6 +109,7 @@ jobs:
           image: paritytech/srtool
           chain: ${{ matrix.runtime }}
           runtime_dir: runtime
+          profile: "production"
 
       - name: Store ${{ matrix.runtime }} srtool digest to disk
         run: |
