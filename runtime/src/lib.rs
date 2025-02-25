@@ -931,14 +931,14 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (Vec<frame_benchmarking::BenchmarkList>,Vec<frame_support::traits::StorageInfo>) {
+		fn benchmark_metadata(extra: bool) -> (Vec<BenchmarkList>,Vec<StorageInfo>) {
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 			let storage_info = AllPalletsWithSystem::storage_info();
 			(list, storage_info)
 		}
 
-		fn dispatch_benchmark(config: frame_benchmarking::BenchmarkConfig) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, String> {
+		fn dispatch_benchmark(config: frame_benchmarking::BenchmarkConfig) -> Result<Vec<BenchmarkBatch>, String> {
 			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
