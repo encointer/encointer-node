@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 
-use alloc::{borrow::Cow, string::String, vec, vec::Vec};
+use alloc::{borrow::Cow, vec, vec::Vec};
 use frame_support::{
 	derive_impl,
 	genesis_builder_helper::{build_state, get_preset},
@@ -937,7 +937,7 @@ impl_runtime_apis! {
 			(list, storage_info)
 		}
 
-		fn dispatch_benchmark(config: frame_benchmarking::BenchmarkConfig) -> Result<Vec<BenchmarkBatch>, String> {
+		fn dispatch_benchmark(config: frame_benchmarking::BenchmarkConfig) -> Result<Vec<BenchmarkBatch>, alloc::string::String> {
 			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
