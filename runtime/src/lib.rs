@@ -673,7 +673,6 @@ mod benches {
 	impl frame_system_benchmarking::Config for Runtime {
 		fn setup_set_code_requirements(_code: &Vec<u8>) -> Result<(), BenchmarkError> {
 			unimplemented!("fixme: runtime benchmarks are not really implemented in general");
-			Ok(())
 		}
 
 		fn verify_set_code() {}
