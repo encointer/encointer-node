@@ -6,6 +6,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+extern crate alloc;
+
+use alloc::{borrow::Cow, vec, vec::Vec};
 use frame_support::{
 	derive_impl,
 	genesis_builder_helper::{build_state, get_preset},
@@ -20,12 +23,11 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, ConstU32, OpaqueMetadata};
 use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys,
+	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, RuntimeDebug,
 };
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -134,14 +136,14 @@ pub mod opaque {
 //   https://docs.substrate.io/v3/runtime/upgrades#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("encointer-node-notee"),
-	impl_name: create_runtime_str!("encointer-node-notee"),
+	spec_name: Cow::Borrowed("encointer-node-notee"),
+	impl_name: Cow::Borrowed("encointer-node-notee"),
 	authoring_version: 0,
 	spec_version: 370,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
-	state_version: 0,
+	system_version: 0,
 };
 
 /// This determines the average expected block time that we are targeting.
@@ -349,6 +351,7 @@ impl pallet_balances::Config for Runtime {
 	type FreezeIdentifier = ();
 	type MaxFreezes = ConstU32<0>;
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -363,6 +366,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type LengthToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -457,6 +461,27 @@ impl pallet_encointer_bazaar::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_bazaar::WeightInfo<Runtime>;
 }
 
+pub struct AssetTxBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl
+	pallet_asset_tx_payment::BenchmarkHelperTrait<
+		AccountId,
+		CommunityIdentifier,
+		CommunityIdentifier,
+	> for AssetTxBenchmarkHelper
+{
+	fn create_asset_id_parameter(_id: u32) -> (CommunityIdentifier, CommunityIdentifier) {
+		Default::default()
+	}
+
+	fn setup_balances_and_pool(asset_id: CommunityIdentifier, account: AccountId) {
+		use frame_support::traits::fungible::Mutate;
+		Balances::set_balance(&account, encointer_balances_tx_payment::ONE_KSM);
+		EncointerBalances::issue(asset_id, &account, BalanceType::from_num(100u32)).unwrap();
+	}
+}
+
 impl pallet_asset_tx_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Fungibles = pallet_encointer_balances::Pallet<Runtime>;
@@ -464,6 +489,9 @@ impl pallet_asset_tx_payment::Config for Runtime {
 		encointer_balances_tx_payment::BalanceToCommunityBalance<Runtime>,
 		encointer_balances_tx_payment::BurnCredit,
 	>;
+	type WeightInfo = ();
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = AssetTxBenchmarkHelper;
 }
 
 parameter_types! {
@@ -506,6 +534,7 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter = NoConversion;
 	type PayoutPeriod = PayoutSpendPeriod;
+	type BlockNumberProvider = System;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
@@ -593,7 +622,7 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
+pub type TxExtension = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -605,9 +634,9 @@ pub type SignedExtra = (
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
 /// The payload being signed in transactions.
-pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
 
 /// storage migrations to be applied upon runtime upgrade
 pub type Migrations = (pallet_encointer_democracy::migrations::v1::MigrateV0toV1purging<Runtime>,);
@@ -624,8 +653,9 @@ pub type Executive = frame_executive::Executive<
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
+	use super::*;
+
 	frame_benchmarking::define_benchmarks!(
-		[frame_benchmarking, BaselineBench::<Runtime>]
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
@@ -639,7 +669,22 @@ mod benches {
 		[pallet_encointer_scheduler, EncointerScheduler]
 		[pallet_encointer_treasuries, EncointerTreasuries]
 	);
+
+	impl frame_system_benchmarking::Config for Runtime {
+		fn setup_set_code_requirements(_code: &Vec<u8>) -> Result<(), BenchmarkError> {
+			unimplemented!("fixme #397: runtime benchmarks are not really implemented in general");
+		}
+
+		fn verify_set_code() {}
+	}
+
+	pub use frame_benchmarking::{BenchmarkBatch, BenchmarkError, BenchmarkList, Benchmarking};
+	pub use frame_support::traits::{StorageInfoTrait, TrackedStorageKey, WhitelistedStorageKeys};
+	pub use frame_system_benchmarking::Pallet as SystemBench;
 }
+
+#[cfg(feature = "runtime-benchmarks")]
+use benches::*;
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -665,7 +710,7 @@ impl_runtime_apis! {
 				Runtime::metadata_at_version(version)
 		}
 
-		fn metadata_versions() -> sp_std::vec::Vec<u32> {
+		fn metadata_versions() -> Vec<u32> {
 			Runtime::metadata_versions()
 		}
 	}
@@ -885,54 +930,18 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
-		fn benchmark_metadata(extra: bool) -> (
-			Vec<frame_benchmarking::BenchmarkList>,
-			Vec<frame_support::traits::StorageInfo>,
-		) {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkList};
-			use frame_support::traits::StorageInfoTrait;
-			use frame_system_benchmarking::Pallet as SystemBench;
-			use baseline::Pallet as BaselineBench;
-
+		fn benchmark_metadata(extra: bool) -> (Vec<BenchmarkList>,Vec<StorageInfo>) {
 			let mut list = Vec::<BenchmarkList>::new();
-
 			list_benchmarks!(list, extra);
-
 			let storage_info = AllPalletsWithSystem::storage_info();
-
 			(list, storage_info)
 		}
 
-		fn dispatch_benchmark(
-			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch};
-			use sp_storage::TrackedStorageKey;
-
-			use frame_system_benchmarking::Pallet as SystemBench;
-			use baseline::Pallet as BaselineBench;
-
-			impl frame_system_benchmarking::Config for Runtime {}
-			impl baseline::Config for Runtime {}
-
-			let whitelist: Vec<TrackedStorageKey> = vec![
-				// Block Number
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
-				// Total Issuance
-				hex_literal::hex!("c2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").to_vec().into(),
-				// Execution Phase
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").to_vec().into(),
-				// Event Count
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").to_vec().into(),
-				// System Events
-				hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").to_vec().into(),
-			];
-
+		fn dispatch_benchmark(config: frame_benchmarking::BenchmarkConfig) -> Result<Vec<BenchmarkBatch>, alloc::string::String> {
+			let whitelist: Vec<TrackedStorageKey> = AllPalletsWithSystem::whitelisted_storage_keys();
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
-
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}
 	}
