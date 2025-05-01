@@ -16,7 +16,7 @@ use encointer_primitives::faucet::{Faucet, FaucetNameType, FromStr, WhiteListTyp
 use log::{error, info};
 use parity_scale_codec::{Decode, Encode};
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring as AccountKeyring;
 use substrate_api_client::{
 	ac_compose_macros::{compose_call, compose_extrinsic},
 	GetAccountInformation, GetStorage, SubmitAndWatch, XtStatus,

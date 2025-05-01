@@ -10,7 +10,7 @@ use encointer_api_client_extension::{
 use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash};
 use log::{debug, info};
 use parity_scale_codec::{Compact, Encode};
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring as AccountKeyring;
 use substrate_api_client::{
 	ac_compose_macros::{compose_call, compose_extrinsic_offline},
 	extrinsic::BalancesExtrinsics,
