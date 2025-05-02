@@ -27,7 +27,7 @@ use log::{debug, error, info};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring as AccountKeyring;
 use sp_runtime::MultiSignature;
 use std::collections::HashMap;
 use substrate_api_client::{

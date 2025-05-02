@@ -24,7 +24,7 @@ use log::{error, info, warn};
 use parity_scale_codec::{Decode, Encode};
 use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring as AccountKeyring;
 use substrate_api_client::ac_node_api::Metadata;
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {

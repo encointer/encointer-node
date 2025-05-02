@@ -15,7 +15,7 @@ use encointer_node_notee_runtime::Moment;
 
 use log::{debug, info};
 
-use sp_keyring::AccountKeyring;
+use sp_keyring::Sr25519Keyring as AccountKeyring;
 use substrate_api_client::ac_compose_macros::compose_call;
 
 pub fn get_phase(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
