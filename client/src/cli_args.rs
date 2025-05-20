@@ -1,7 +1,8 @@
 use crate::utils::CallWrapping;
 use clap::{App, Arg, ArgMatches};
-use encointer_primitives::{balances::BalanceType, reputation_commitments::PurposeIdType};
-use encointer_primitives::communities::GeoHash;
+use encointer_primitives::{
+	balances::BalanceType, communities::GeoHash, reputation_commitments::PurposeIdType,
+};
 use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
@@ -546,10 +547,9 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	fn cid_arg(&self) -> Option<&str> {
 		self.value_of(CID_ARG)
 	}
-	
+
 	fn geohash_arg(&self) -> Option<GeoHash> {
-		self.value_of(GEOHASH_ARG)
-			.map(|v| GeoHash::try_from(v).unwrap())
+		self.value_of(GEOHASH_ARG).map(|v| GeoHash::try_from(v).unwrap())
 	}
 
 	fn location_index_arg(&self) -> Option<u32> {

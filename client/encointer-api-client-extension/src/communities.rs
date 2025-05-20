@@ -2,10 +2,9 @@ use crate::{Api, Result};
 use encointer_node_notee_runtime::Hash;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
-	communities::{CidName, CommunityIdentifier, CommunityMetadata, Location},
+	communities::{CidName, CommunityIdentifier, CommunityMetadata, GeoHash, Location},
 };
 use std::str::FromStr;
-use encointer_primitives::communities::GeoHash;
 use substrate_api_client::{ac_compose_macros::rpc_params, rpc::Request, GetStorage};
 
 #[maybe_async::maybe_async(?Send)]

@@ -17,7 +17,10 @@ use encointer_api_client_extension::{
 };
 use encointer_primitives::communities::{CommunityIdentifier, Location};
 
-use crate::utils::{send_and_wait_for_finalized, BatchCall, CallWrapping};
+use crate::{
+	community_spec::remove_location_call,
+	utils::{send_and_wait_for_finalized, BatchCall, CallWrapping},
+};
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use itertools::Itertools;
 use log::{error, info, warn};
@@ -26,7 +29,6 @@ use sp_application_crypto::Ss58Codec;
 use sp_core::Pair;
 use sp_keyring::Sr25519Keyring as AccountKeyring;
 use substrate_api_client::ac_node_api::Metadata;
-use crate::community_spec::remove_location_call;
 
 pub fn new_community(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
@@ -187,8 +189,8 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 }
 
 pub fn remove_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(async {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
         // -----setup
 
         let mut api = get_chain_api(matches).await;

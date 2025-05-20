@@ -196,7 +196,6 @@ pub fn add_location_call(
 	compose_call!(metadata, "EncointerCommunities", "add_location", cid, loc).unwrap()
 }
 
-
 /// Create an `add_location` call to be used in an extrinsic.
 pub fn remove_location_call(
 	metadata: &Metadata,
