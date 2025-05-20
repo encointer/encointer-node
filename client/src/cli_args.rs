@@ -1,6 +1,7 @@
 use crate::utils::CallWrapping;
 use clap::{App, Arg, ArgMatches};
 use encointer_primitives::{balances::BalanceType, reputation_commitments::PurposeIdType};
+use encointer_primitives::communities::GeoHash;
 use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
@@ -9,6 +10,8 @@ const FAUCET_BENEFICIARY_ARG: &str = "faucet-beneficiary";
 const SEED_ARG: &str = "seed";
 const SIGNER_ARG: &str = "signer";
 const CID_ARG: &str = "cid";
+const GEOHASH_ARG: &str = "geohash";
+const LOCATION_INDEX_ARG: &str = "location_index";
 const ATTESTEES_ARG: &str = "attestees";
 const WHITELIST_ARG: &str = "whitelist";
 const CEREMONY_INDEX_ARG: &str = "ceremony-index";
@@ -47,6 +50,8 @@ pub trait EncointerArgs<'b> {
 	fn seed_arg(self) -> Self;
 	fn signer_arg(self, help: &'b str) -> Self;
 	fn optional_cid_arg(self) -> Self;
+	fn geohash_arg(self) -> Self;
+	fn location_index_arg(self) -> Self;
 	fn attestees_arg(self) -> Self;
 	fn whitelist_arg(self) -> Self;
 	fn ceremony_index_arg(self) -> Self;
@@ -88,6 +93,8 @@ pub trait EncointerArgsExtractor {
 	fn seed_arg(&self) -> Option<&str>;
 	fn signer_arg(&self) -> Option<&str>;
 	fn cid_arg(&self) -> Option<&str>;
+	fn geohash_arg(&self) -> Option<GeoHash>;
+	fn location_index_arg(&self) -> Option<u32>;
 	fn attestees_arg(&self) -> Option<Vec<&str>>;
 	fn whitelist_arg(&self) -> Option<Vec<&str>>;
 	fn ceremony_index_arg(&self) -> Option<i32>;
@@ -184,6 +191,30 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.takes_value(true)
 				.value_name("STRING")
 				.help("community identifier, base58 encoded"),
+		)
+	}
+
+	fn geohash_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(GEOHASH_ARG)
+				.short("g")
+				.long("geohash")
+				.global(true)
+				.takes_value(true)
+				.value_name("STRING")
+				.help("geoshash"),
+		)
+	}
+
+	fn location_index_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(LOCATION_INDEX_ARG)
+				.short("l")
+				.long("location_index")
+				.global(true)
+				.takes_value(true)
+				.value_name("Index")
+				.help("location index to be removed"),
 		)
 	}
 
@@ -514,6 +545,15 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn cid_arg(&self) -> Option<&str> {
 		self.value_of(CID_ARG)
+	}
+	
+	fn geohash_arg(&self) -> Option<GeoHash> {
+		self.value_of(GEOHASH_ARG)
+			.map(|v| GeoHash::try_from(v).unwrap())
+	}
+
+	fn location_index_arg(&self) -> Option<u32> {
+		self.value_of(LOCATION_INDEX_ARG).map(|v| v.parse().unwrap())
 	}
 
 	fn attestees_arg(&self) -> Option<Vec<&str>> {

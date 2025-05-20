@@ -185,6 +185,7 @@ pub fn new_community_call<T: CommunitySpec>(spec: &T, metadata: &Metadata) -> Ne
 }
 
 pub type AddLocationCall = ([u8; 2], CommunityIdentifier, Location);
+pub type RemoveLocationCall = ([u8; 2], CommunityIdentifier, Location);
 
 /// Create an `add_location` call to be used in an extrinsic.
 pub fn add_location_call(
@@ -193,6 +194,16 @@ pub fn add_location_call(
 	loc: Location,
 ) -> AddLocationCall {
 	compose_call!(metadata, "EncointerCommunities", "add_location", cid, loc).unwrap()
+}
+
+
+/// Create an `add_location` call to be used in an extrinsic.
+pub fn remove_location_call(
+	metadata: &Metadata,
+	cid: CommunityIdentifier,
+	loc: Location,
+) -> RemoveLocationCall {
+	compose_call!(metadata, "EncointerCommunities", "remove_location", cid, loc).unwrap()
 }
 
 pub fn demurrage_per_block_from_halving_blocks(halving_blocks: u64) -> Demurrage {
