@@ -17,7 +17,10 @@ use encointer_api_client_extension::{
 };
 use encointer_primitives::communities::{CommunityIdentifier, Location};
 
-use crate::utils::{send_and_wait_for_finalized, BatchCall, CallWrapping};
+use crate::{
+	community_spec::remove_location_call,
+	utils::{send_and_wait_for_finalized, BatchCall, CallWrapping},
+};
 use encointer_primitives::scheduler::CeremonyPhaseType;
 use itertools::Itertools;
 use log::{error, info, warn};
@@ -180,6 +183,66 @@ pub fn add_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
             send_and_wait_for_in_block(&api, xt(&api, add_location_maybe_batch_call).await, tx_payment_cid_arg).await;
         }
         Ok(())
+
+    })
+        .into()
+}
+
+pub fn remove_locations(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+        // -----setup
+
+        let mut api = get_chain_api(matches).await;
+        if !matches.dryrun_flag() {
+            let signer = matches.signer_arg()
+                .map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+            info!("signer ss58 is {}", signer.public().to_ss58check());
+            let signer = ParentchainExtrinsicSigner::new(signer);
+            api.set_signer(signer);
+        }
+
+        let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+
+        let cid = api.verify_cid(matches.cid_arg().unwrap(), None).await;
+        let geohash = matches.geohash_arg().expect("need geohash");
+        let location_index = matches.location_index_arg().expect("need location");
+        let locations = api.get_locations_by_geohash(cid, geohash, None).await.unwrap();
+
+        let mut remove_location_call =
+            OpaqueCall::from_tuple(
+            &remove_location_call(api.metadata(), cid, locations[location_index as usize])
+        );
+
+        if matches.signer_arg().is_none() {
+            // return calls as `OpaqueCall`s to get the same return type in both branches
+            remove_location_call = if contains_sudo_pallet(api.metadata()) {
+                let sudo_add_location_batch = sudo_call(api.metadata(), remove_location_call);
+                info!("Printing raw sudo calls for js/apps for cid: {}", cid);
+                print_raw_call("sudo(remove_location)", &sudo_add_location_batch);
+                OpaqueCall::from_tuple(&sudo_add_location_batch)
+            } else {
+                let threshold = (get_councillors(&api).await.unwrap().len() / 2 + 1) as u32;
+                info!("Printing raw collective propose calls with threshold {} for js/apps for cid: {}", threshold, cid);
+                let propose_add_location_batch = collective_propose_call(api.metadata(), threshold, remove_location_call);
+                print_raw_call("collective_propose(remove_location)", &propose_add_location_batch);
+                OpaqueCall::from_tuple(&propose_add_location_batch)
+            };
+        }
+
+        if matches.dryrun_flag() {
+            println!("0x{}", hex::encode(remove_location_call.encode()));
+        } else {
+            // ---- send xt's to chain
+            if api.get_current_phase(None).await.unwrap() != CeremonyPhaseType::Registering {
+                error!("Wrong ceremony phase for registering new locations for {}", cid);
+                error!("Aborting without registering additional locations");
+                std::process::exit(exit_code::WRONG_PHASE);
+            }
+            send_and_wait_for_in_block(&api, xt(&api, remove_location_call).await, tx_payment_cid_arg).await;
+        }
+        Ok(())
+
     })
         .into()
 }
