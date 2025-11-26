@@ -10,14 +10,19 @@
       "rules": "loCoFlex"
     },
     "bootstrappers": [
-      "HTvN9bSsAeWCpLNojCXwARNn4EznM6jMk96uwyDttsqMM2S",
-      "F84knPZ9DJFFDb6Kw7cWduprZhfLQsyJzWrSAVuYfGiWFQC",
-      "Czw16WsyX322MaJhUDab5QzTuHbJK2AdTW3zgp2neqt8k9d",
-      "EhcZu7emtX2qTQHb1thFJTdrw45eXidSFZP9YPxvUC6YUTU",
-      "JKS7Kcwox9FugRuQXmfKHs5uSSRfNanG2Qh9UaLiWAkv1Pf"
+      "5GxJhqFaEodaTAWw32PV3D4NdTxkygHYuNJMXHhGR6fLcJm7",
+      "5EcT6U3gWrHKVZmeZEJZcgYphyRRXk4nrcg73WDx4s4DktyJ",
+      "5HopT1H5Bb8LA2cTdpxcRLW5krABrhmboeZwkpJPEhxGAxQX",
+      "5DqtShBuSza4op7oANJUhazwvT9ft5RLbu9Bzd4Y4MiSdStb",
+      "5DndvqGzFwDw7oEBvo8iTjNJZV9WyrDUfU7mzG7wJEwKitsb",
+      "5G3qN4SxsHYeTKJsxV8ax99mVR2Zmnx7LEB9fpV5d9Tmf8FK",
+      "5GqLBz9d9CPu8EUpvetJskUbg8ZjcZWAyUH8g7vMmbcWp7Uo",
+      "5DPN3YFEoZGikRutXuy7yAmYbFja5K94S6YsYxHNwCec1eFY",
+      "5HNWV3JHWEywxPgNve7pJVvahPqYKCZsTjV2ZhpM3oWGMvxF",
+      "5EjsVGy76QdcSnGqmrC1uJaeMzo5nByxDRF3WY98EmXdUTpB"
     ],
-    "demurrage_halving_blocks": 10512000,
-    "ceremony_income": 10000
+    "demurrage_halving_blocks": 7884000,
+    "ceremony_income": 100
   },
   "features": [
     {
@@ -25,8 +30,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          7.682565,
-          11.079905
+          7.651182,
+          11.150318
         ]
       },
       "properties": {}

@@ -225,6 +225,9 @@ fn main() {
 		                    .help("enhanced geojson file that specifies a community"),
 		            )
 		            .signer_arg("account with necessary privileges")
+						.dryrun_flag()
+						.wrap_call_arg()
+						.batch_size_arg()
 		        })
 		        .runner(commands::encointer_communities::new_community),
 		)
@@ -243,6 +246,19 @@ fn main() {
 		                )
 		        })
 		        .runner(commands::encointer_communities::add_locations),
+		)
+		.add_cmd(
+			Command::new("remove-location")
+				.description("Remove a location a for a community. Check polkadot-js/apps to find the geohash")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("account with necessary privileges")
+						.dryrun_flag()
+						.optional_cid_arg()
+						.geohash_arg()
+						.location_index_arg()
+				})
+				.runner(commands::encointer_communities::remove_locations),
 		)
 		.add_cmd(
 		    Command::new("list-communities")

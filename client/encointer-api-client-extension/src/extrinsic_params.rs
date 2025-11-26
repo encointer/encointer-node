@@ -1,9 +1,9 @@
 use crate::{Api, CommunitiesApi, ExtrinsicAddress};
-use encointer_node_notee_runtime::{Hash, Index, Signature};
+use encointer_node_notee_runtime::{Hash, Nonce, Signature};
 use encointer_primitives::communities::CommunityIdentifier;
 use parity_scale_codec::{Decode, Encode};
 use substrate_api_client::ac_primitives::{
-	GenericAdditionalParams, GenericExtrinsicParams, GenericSignedExtra, UncheckedExtrinsicV4,
+	GenericAdditionalParams, GenericExtrinsicParams, GenericTxExtension, UncheckedExtrinsic,
 };
 
 /// A struct representing the signed extra and additional parameters required
@@ -14,11 +14,11 @@ pub type CommunityCurrencyTipExtrinsicParams<T> = GenericExtrinsicParams<T, Comm
 pub type CommunityCurrencyTipExtrinsicParamsBuilder =
 	GenericAdditionalParams<CommunityCurrencyTip, Hash>;
 
-pub type EncointerXt<Call> = UncheckedExtrinsicV4<
+pub type EncointerXt<Call> = UncheckedExtrinsic<
 	ExtrinsicAddress,
 	Call,
 	Signature,
-	GenericSignedExtra<CommunityCurrencyTip, Index>,
+	GenericTxExtension<CommunityCurrencyTip, Nonce>,
 >;
 
 /// A tip payment made in the form of a specific asset.

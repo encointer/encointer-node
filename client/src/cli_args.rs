@@ -1,5 +1,8 @@
+use crate::utils::CallWrapping;
 use clap::{App, Arg, ArgMatches};
-use encointer_primitives::{balances::BalanceType, reputation_commitments::PurposeIdType};
+use encointer_primitives::{
+	balances::BalanceType, communities::GeoHash, reputation_commitments::PurposeIdType,
+};
 use sp_core::{bytes, H256 as Hash};
 
 const ACCOUNT_ARG: &str = "accountid";
@@ -8,6 +11,8 @@ const FAUCET_BENEFICIARY_ARG: &str = "faucet-beneficiary";
 const SEED_ARG: &str = "seed";
 const SIGNER_ARG: &str = "signer";
 const CID_ARG: &str = "cid";
+const GEOHASH_ARG: &str = "geohash";
+const LOCATION_INDEX_ARG: &str = "location_index";
 const ATTESTEES_ARG: &str = "attestees";
 const WHITELIST_ARG: &str = "whitelist";
 const CEREMONY_INDEX_ARG: &str = "ceremony-index";
@@ -36,6 +41,8 @@ const INACTIVITY_TIMEOUT_ARG: &str = "inactivity-timeout";
 const NOMINAL_INCOME_ARG: &str = "nominal-income";
 const DEMURRAGE_HALVING_BLOCKS_ARG: &str = "demurage-halving-blocks";
 const PURPOSE_ID_ARG: &str = "purpose-id";
+const WRAP_CALL_ARG: &str = "wrap-call";
+const BATCH_SIZE_ARG: &str = "batch-size";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -44,6 +51,8 @@ pub trait EncointerArgs<'b> {
 	fn seed_arg(self) -> Self;
 	fn signer_arg(self, help: &'b str) -> Self;
 	fn optional_cid_arg(self) -> Self;
+	fn geohash_arg(self) -> Self;
+	fn location_index_arg(self) -> Self;
 	fn attestees_arg(self) -> Self;
 	fn whitelist_arg(self) -> Self;
 	fn ceremony_index_arg(self) -> Self;
@@ -74,6 +83,8 @@ pub trait EncointerArgs<'b> {
 	fn nominal_income_arg(self) -> Self;
 	fn demurrage_halving_blocks_arg(self) -> Self;
 	fn purpose_id_arg(self) -> Self;
+	fn wrap_call_arg(self) -> Self;
+	fn batch_size_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -83,6 +94,8 @@ pub trait EncointerArgsExtractor {
 	fn seed_arg(&self) -> Option<&str>;
 	fn signer_arg(&self) -> Option<&str>;
 	fn cid_arg(&self) -> Option<&str>;
+	fn geohash_arg(&self) -> Option<GeoHash>;
+	fn location_index_arg(&self) -> Option<u32>;
 	fn attestees_arg(&self) -> Option<Vec<&str>>;
 	fn whitelist_arg(&self) -> Option<Vec<&str>>;
 	fn ceremony_index_arg(&self) -> Option<i32>;
@@ -112,6 +125,8 @@ pub trait EncointerArgsExtractor {
 	fn nominal_income_arg(&self) -> Option<BalanceType>;
 	fn demurrage_halving_blocks_arg(&self) -> Option<u64>;
 	fn purpose_id_arg(&self) -> Option<PurposeIdType>;
+	fn wrap_call_arg(&self) -> CallWrapping;
+	fn batch_size_arg(&self) -> u32;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -177,6 +192,30 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.takes_value(true)
 				.value_name("STRING")
 				.help("community identifier, base58 encoded"),
+		)
+	}
+
+	fn geohash_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(GEOHASH_ARG)
+				.short("g")
+				.long("geohash")
+				.global(true)
+				.takes_value(true)
+				.value_name("STRING")
+				.help("geoshash"),
+		)
+	}
+
+	fn location_index_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(LOCATION_INDEX_ARG)
+				.short("l")
+				.long("location_index")
+				.global(true)
+				.takes_value(true)
+				.value_name("Index")
+				.help("location index to be removed"),
 		)
 	}
 
@@ -456,6 +495,32 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("reputation commitment purpose id"),
 		)
 	}
+
+	fn wrap_call_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(WRAP_CALL_ARG)
+				.short("w")
+				.long("wrap-call")
+				.takes_value(true)
+				.required(false)
+				.default_value("none")
+				.value_name("none|sudo|collective")
+				.help("If the transaction should be wrapped with a sudo/collective call or not."),
+		)
+	}
+
+	fn batch_size_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(BATCH_SIZE_ARG)
+				.short("b")
+				.long("batch-size")
+				.takes_value(true)
+				.required(false)
+				.default_value("100")
+				.value_name("u32")
+				.help("Maximum batch size"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -481,6 +546,14 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn cid_arg(&self) -> Option<&str> {
 		self.value_of(CID_ARG)
+	}
+
+	fn geohash_arg(&self) -> Option<GeoHash> {
+		self.value_of(GEOHASH_ARG).map(|v| GeoHash::try_from(v).unwrap())
+	}
+
+	fn location_index_arg(&self) -> Option<u32> {
+		self.value_of(LOCATION_INDEX_ARG).map(|v| v.parse().unwrap())
 	}
 
 	fn attestees_arg(&self) -> Option<Vec<&str>> {
@@ -582,5 +655,15 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 	}
 	fn purpose_id_arg(&self) -> Option<PurposeIdType> {
 		self.value_of(PURPOSE_ID_ARG).map(|v| v.parse().unwrap())
+	}
+
+	fn wrap_call_arg(&self) -> CallWrapping {
+		self.value_of(WRAP_CALL_ARG)
+			.map(|v| v.parse().unwrap())
+			.unwrap_or(CallWrapping::None)
+	}
+
+	fn batch_size_arg(&self) -> u32 {
+		self.value_of(BATCH_SIZE_ARG).map(|v| v.parse().unwrap()).unwrap_or(100)
 	}
 }

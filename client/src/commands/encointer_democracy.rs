@@ -47,7 +47,7 @@ pub fn submit_set_inactivity_timeout_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance>::SetInactivityTimeout(inactivity_timeout)
+			ProposalAction::<AccountId, Balance, Moment>::SetInactivityTimeout(inactivity_timeout)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -78,7 +78,7 @@ pub fn submit_update_nominal_income_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance>::UpdateNominalIncome(cid, new_income)
+			ProposalAction::<AccountId, Balance, Moment>::UpdateNominalIncome(cid, new_income)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -111,7 +111,10 @@ pub fn submit_update_demurrage_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance>::UpdateDemurrage(cid, new_demurrage_per_block)
+			ProposalAction::<AccountId, Balance, Moment>::UpdateDemurrage(
+				cid,
+				new_demurrage_per_block
+			)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -142,7 +145,7 @@ pub fn submit_petition(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance>::Petition(maybecid, demand.clone())
+			ProposalAction::<AccountId, Balance, Moment>::Petition(maybecid, demand.clone())
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -180,7 +183,7 @@ pub fn submit_spend_native_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance>::SpendNative(maybecid, to.clone(), amount)
+			ProposalAction::<AccountId, Balance, Moment>::SpendNative(maybecid, to.clone(), amount)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -436,7 +439,7 @@ async fn get_relevant_electorate(
 					api.get_global_reputation_count(c, maybe_at).await.unwrap_or(0),
 			};
 		}
-		return count
+		return count;
 	} else {
 		panic!("couldn't fetch some values")
 	}
