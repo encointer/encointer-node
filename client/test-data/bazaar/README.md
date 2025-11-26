@@ -62,8 +62,8 @@ connect your local node to Encointer's public gateway:
 
 ```
 ipfs swarm connect /ip4/129.212.213.82/tcp/4001/p2p/12D3KooWCtS4Li5YJhjj2fWWKxgqZi7t6FReuVtrN9MRQtLrg7Tj
-# pin assets/photos recursively: 
-curl -u <USER>:<PWD> -s -X POST "https://ipfs2-api.encointer.org/api/v0/pin/add?recursive=true&arg=QmasSnnY6w6tMYYFzC5xaHa9GrhmeZ99aGx3eXD2rqpz8b"
+# pin assets recursively: 
+curl -u <USER>:<PWD> -s -X POST "https://ipfs2-api.encointer.org/api/v0/pin/add?recursive=true&arg=QmUxPhjtx7NxByaD6UwFzz46oeubShmL9mNMqAuM72mQTq"
 # pin biz metadata
 curl -u <USER>:<PWD> -s -X POST "https://ipfs2-api.encointer.org/api/v0/pin/add?recursive=true&arg=Qmb3mRYRK6nwf3MXULPRHAQHAfkGs38UJ7voXLPN9gngqa"
 ```
@@ -71,7 +71,7 @@ curl -u <USER>:<PWD> -s -X POST "https://ipfs2-api.encointer.org/api/v0/pin/add?
 or pin on any other ipfs node you have access to:
 
 ```
-ipfs pin add -r QmasSnnY6w6tMYYFzC5xaHa9GrhmeZ99aGx3eXD2rqpz8b
+ipfs pin add -r QmUxPhjtx7NxByaD6UwFzz46oeubShmL9mNMqAuM72mQTq
 ipfs pin add -r Qmb3mRYRK6nwf3MXULPRHAQHAfkGs38UJ7voXLPN9gngqa
 ```
   
