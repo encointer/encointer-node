@@ -71,10 +71,9 @@ pub use encointer_primitives::{
 	scheduler::CeremonyPhaseType,
 };
 use frame_support::traits::{
-	tokens::{ConversionFromAssetBalance, PayFromAccount},
+	tokens::{ConversionFromAssetBalance, PayFromAccount, PaymentStatus},
 	ConstBool,
 };
-use frame_support::traits::tokens::PaymentStatus;
 use frame_system::{EnsureRoot, EnsureSigned};
 use sp_runtime::traits::IdentityLookup;
 
@@ -595,7 +594,12 @@ impl pallet_encointer_treasuries::Transfer for NoPayments {
 	type Id = ();
 	type Error = String;
 
-	fn transfer(_: &Self::Payer, _: &Self::Beneficiary, _: Self::AssetKind, _: Self::Balance) -> Result<Self::Id, Self::Error> {
+	fn transfer(
+		_: &Self::Payer,
+		_: &Self::Beneficiary,
+		_: Self::AssetKind,
+		_: Self::Balance,
+	) -> Result<Self::Id, Self::Error> {
 		Err("No payment allowed in this runtime config".into())
 	}
 

@@ -2,11 +2,11 @@ use crate::cli_args::EncointerArgsExtractor;
 
 use crate::{
 	community_spec::demurrage_per_block_from_halving_blocks,
+	types::XcmLocation,
 	utils::{
 		ensure_payment, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
 	},
-	types::XcmLocation,
 };
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
@@ -19,10 +19,7 @@ use encointer_primitives::{
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
 	common::{FromStr, PalletString},
 	communities::CommunityIdentifier,
-	democracy::{
-		ProposalAccessPolicy, ProposalIdType, ProposalState,
-		ReputationVec, Vote,
-	},
+	democracy::{ProposalAccessPolicy, ProposalIdType, ProposalState, ReputationVec, Vote},
 };
 use log::{debug, error};
 use parity_scale_codec::{Decode, Encode};
@@ -32,8 +29,10 @@ use substrate_api_client::{
 };
 
 // Some type aliases
-pub type Proposal = encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
-pub type ProposalAction = encointer_primitives::democracy::ProposalAction<AccountId, Balance, Moment, XcmLocation>;
+pub type Proposal =
+	encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
+pub type ProposalAction =
+	encointer_primitives::democracy::ProposalAction<AccountId, Balance, Moment, XcmLocation>;
 
 pub fn submit_set_inactivity_timeout_proposal(
 	_args: &str,
@@ -116,10 +115,7 @@ pub fn submit_update_demurrage_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::UpdateDemurrage(
-				cid,
-				new_demurrage_per_block
-			)
+			ProposalAction::UpdateDemurrage(cid, new_demurrage_per_block)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
