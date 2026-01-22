@@ -22,6 +22,7 @@
 mod cli_args;
 mod commands;
 mod community_spec;
+mod types;
 mod utils;
 
 use clap::{AppSettings, Arg};

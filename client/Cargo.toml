@@ -47,3 +47,4 @@ sp-keyring = { workspace = true }
 sp-keystore = { workspace = true, features = ["std"] }
 sp-rpc = { workspace = true }
 sp-runtime = { workspace = true, features = ["std"] }
+xcm = { workspace = true, features = ["std"] }

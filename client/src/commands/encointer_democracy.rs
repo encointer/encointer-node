@@ -6,6 +6,7 @@ use crate::{
 		ensure_payment, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
 	},
+	types::XcmLocation,
 };
 use chrono::{prelude::*, Utc};
 use clap::ArgMatches;
@@ -19,7 +20,7 @@ use encointer_primitives::{
 	common::{FromStr, PalletString},
 	communities::CommunityIdentifier,
 	democracy::{
-		Proposal, ProposalAccessPolicy, ProposalAction, ProposalIdType, ProposalState,
+		ProposalAccessPolicy, ProposalIdType, ProposalState,
 		ReputationVec, Vote,
 	},
 };
@@ -29,6 +30,14 @@ use sp_core::{sr25519 as sr25519_core, ConstU32};
 use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetStorage, SubmitAndWatch, XtStatus,
 };
+
+// * All proposal variants that don't have anything to do with assets will decode fine on either chain.
+// * We only get an issue if we want to decode the `SpendAsset` and `IssueSwapAssetOption` with the wrong type.
+//
+// We currently just assume that the solochain will never have any asset proposals. To properly handle this, we
+// need to add a flag to the CLI to configure which type to use, i.e., `--is-para`.
+pub type Proposal = encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
+pub type ProposalAction = encointer_primitives::democracy::ProposalAction<AccountId, Balance, Moment, XcmLocation>;
 
 pub fn submit_set_inactivity_timeout_proposal(
 	_args: &str,
@@ -47,7 +56,7 @@ pub fn submit_set_inactivity_timeout_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::SetInactivityTimeout(inactivity_timeout)
+			ProposalAction::SetInactivityTimeout(inactivity_timeout)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -78,7 +87,7 @@ pub fn submit_update_nominal_income_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::UpdateNominalIncome(cid, new_income)
+			ProposalAction::UpdateNominalIncome(cid, new_income)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -111,7 +120,7 @@ pub fn submit_update_demurrage_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::UpdateDemurrage(
+			ProposalAction::UpdateDemurrage(
 				cid,
 				new_demurrage_per_block
 			)
@@ -145,7 +154,7 @@ pub fn submit_petition(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::Petition(maybecid, demand.clone())
+			ProposalAction::Petition(maybecid, demand.clone())
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -183,7 +192,7 @@ pub fn submit_spend_native_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::SpendNative(maybecid, to.clone(), amount)
+			ProposalAction::SpendNative(maybecid, to.clone(), amount)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -212,7 +221,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
 		let min_turnout_permill = api.get_min_turnout().await.unwrap();
 		println!("📜 Number of proposals: {}, global config: proposal lifetime: {:?}, confirmation period: {:?}, min turnout: {:.3}%", storage_keys.len(), proposal_lifetime, confirmation_period, min_turnout_permill as f64 / 10f64);
-		let mut proposals: Vec<(ProposalIdType, Proposal<Moment, AccountId, Balance>)> = Vec::new();
+		let mut proposals: Vec<(ProposalIdType, Proposal)> = Vec::new();
 		for storage_key in storage_keys.iter() {
 			debug!("storage_key: 0x{}", hex::encode(storage_key));
 			let key_postfix = storage_key.as_ref();
@@ -220,7 +229,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
 			debug!("proposalid: {:?}", proposal_id);
-			let proposal: Proposal<Moment, AccountId, Balance> =
+			let proposal: Proposal =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 			if !matches.all_flag() && proposal.state.has_failed() {
 				continue

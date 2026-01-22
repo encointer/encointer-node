@@ -123,6 +123,7 @@ sp-timestamp = { version = "40.0.0", default-features = false }
 sp-transaction-pool = { version = "40.0.0", default-features = false }
 sp-version = { version = "43.0.0", default-features = false, features = ["serde"] }
 substrate-frame-rpc-system = { version = "49.0.0", default-features = false }
+xcm = { version = "21.0.0", default-features = false, package = "staging-xcm" }
 
 substrate-wasm-builder = "31.0.0"
 substrate-build-script-utils = "11.0.0"
