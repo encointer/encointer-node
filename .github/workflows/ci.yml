@@ -19,7 +19,7 @@ env:
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
@@ -29,8 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
         # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
         # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -59,8 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
         # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
         # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -134,8 +134,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
         # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
         # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -173,8 +173,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
       # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
       # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659

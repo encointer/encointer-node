@@ -8,14 +8,8 @@ inline_table_expand = false
 
 [[rule]]
 include = ["**/Cargo.toml"]
-keys = ["dependencies", "target", "patch"]
-
-[rule.formatting]
-reorder_keys = true
-
-[[rule]]
-include = ["**/Cargo.toml"]
-keys = ["features"]
+keys = ["dependencies", "target", "patch", "features"]
 
 [rule.formatting]
 array_auto_expand = true
+reorder_keys = true
