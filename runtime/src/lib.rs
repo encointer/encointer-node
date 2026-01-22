@@ -597,7 +597,7 @@ impl pallet_encointer_treasuries::Transfer for NoAssetPayments {
 	type Beneficiary = AccountId;
 	type AssetKind = VersionedLocatableAsset;
 	type Id = ();
-	type Error = String;
+	type Error = alloc::string::String;
 
 	fn transfer(
 		_: &Self::Payer,
