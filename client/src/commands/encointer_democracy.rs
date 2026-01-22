@@ -30,6 +30,8 @@ use substrate_api_client::{
 // Some type aliases
 pub use encointer_node_notee_runtime::VersionedLocatableAsset as XcmLocation;
 
+// We have configured the runtime such that the ProposalTypes are the same for the solonode
+// and the parachain.
 pub type Proposal =
 	encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
 pub type ProposalAction =
