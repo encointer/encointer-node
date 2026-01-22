@@ -2880,7 +2880,6 @@ dependencies = [
  "sp-keystore",
  "sp-rpc",
  "sp-runtime",
- "staging-xcm",
  "substrate-api-client",
  "tokio",
 ]

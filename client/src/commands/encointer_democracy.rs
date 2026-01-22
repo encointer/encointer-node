@@ -29,6 +29,8 @@ use substrate_api_client::{
 };
 
 // Some type aliases
+pub use encointer_node_notee_runtime::VersionedLocatableAsset as XcmLocation;
+
 pub type Proposal =
 	encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
 pub type ProposalAction =
