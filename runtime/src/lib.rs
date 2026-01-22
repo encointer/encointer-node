@@ -74,6 +74,7 @@ use frame_support::traits::{
 	tokens::{ConversionFromAssetBalance, PayFromAccount},
 	ConstBool,
 };
+use frame_support::traits::tokens::PaymentStatus;
 use frame_system::{EnsureRoot, EnsureSigned};
 use sp_runtime::traits::IdentityLookup;
 
@@ -290,6 +291,8 @@ impl frame_system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
@@ -576,7 +579,28 @@ impl pallet_encointer_treasuries::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type PalletId = TreasuriesPalletId;
+	type AssetKind = ();
+	type Paymaster = NoPayments;
 	type WeightInfo = weights::pallet_encointer_treasuries::WeightInfo<Runtime>;
+}
+
+pub struct NoPayments;
+
+impl pallet_encointer_treasuries::Transfer for NoPayments {
+	type Balance = Balance;
+	type Payer = AccountId;
+	type Beneficiary = AccountId;
+	type AssetKind = ();
+	type Id = ();
+	type Error = String;
+
+	fn transfer(_: &Self::Payer, _: &Self::Beneficiary, _: Self::AssetKind, _: Self::Balance) -> Result<Self::Id, Self::Error> {
+		Err("No payment allowed in this runtime config".into())
+	}
+
+	fn check_payment(_: Self::Id) -> PaymentStatus {
+		PaymentStatus::Failure
+	}
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -642,7 +666,7 @@ pub type UncheckedExtrinsic =
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
 
 /// storage migrations to be applied upon runtime upgrade
-pub type Migrations = (pallet_encointer_democracy::migrations::v1::MigrateV0toV1purging<Runtime>,);
+pub type Migrations = ();
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -651,7 +675,6 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -695,7 +718,7 @@ impl_runtime_apis! {
 			VERSION
 		}
 
-		fn execute_block(block: Block) {
+		fn execute_block(block: <Block as BlockT>::LazyBlock) {
 			Executive::execute_block(block);
 		}
 
@@ -732,7 +755,7 @@ impl_runtime_apis! {
 		}
 
 		fn check_inherents(
-			block: Block,
+			block: <Block as BlockT>::LazyBlock,
 			data: sp_inherents::InherentData,
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
