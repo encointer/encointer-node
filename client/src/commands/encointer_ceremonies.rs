@@ -917,8 +917,7 @@ async fn get_attendees_for_community_ceremony(
 		match api
 			.get_storage_by_key(storage_key.clone(), maybe_at)
 			.await
-			// todo: back to simple unwarp()  https://github.com/encointer/encointer-node/issues/364
-			.unwrap_or(Some(Reputation::VerifiedLinked(0)))
+			.unwrap()
 			.unwrap()
 		{
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked(_) => {
