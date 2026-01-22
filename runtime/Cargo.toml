@@ -64,6 +64,7 @@ sp-staking = { workspace = true }
 sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
+xcm = { workspace = true }
 
 frame-try-runtime = { workspace = true, optional = true }
 
@@ -81,6 +82,37 @@ substrate-wasm-builder = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
+runtime-benchmarks = [
+    "encointer-balances-tx-payment/runtime-benchmarks",
+    "encointer-primitives/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
+    "frame-system-benchmarking/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+    "hex-literal",
+    "pallet-asset-tx-payment/runtime-benchmarks",
+    "pallet-balances/runtime-benchmarks",
+    "pallet-encointer-balances/runtime-benchmarks",
+    "pallet-encointer-bazaar/runtime-benchmarks",
+    "pallet-encointer-ceremonies/runtime-benchmarks",
+    "pallet-encointer-communities/runtime-benchmarks",
+    "pallet-encointer-democracy/runtime-benchmarks",
+    "pallet-encointer-faucet/runtime-benchmarks",
+    "pallet-encointer-reputation-commitments/runtime-benchmarks",
+    "pallet-encointer-scheduler/runtime-benchmarks",
+    "pallet-encointer-treasuries/runtime-benchmarks",
+    "pallet-grandpa/runtime-benchmarks",
+    "pallet-proxy/runtime-benchmarks",
+    "pallet-scheduler/runtime-benchmarks",
+    "pallet-sudo/runtime-benchmarks",
+    "pallet-timestamp/runtime-benchmarks",
+    "pallet-treasury/runtime-benchmarks",
+    "pallet-utility/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
+    "sp-staking/runtime-benchmarks",
+    "pallet-transaction-payment/runtime-benchmarks",
+    "xcm/runtime-benchmarks",
+]
 std = [
     "encointer-balances-tx-payment-rpc-runtime-api/std",
     "encointer-balances-tx-payment/std",
@@ -139,36 +171,8 @@ std = [
     "sp-transaction-pool/std",
     "sp-version/std",
     "substrate-wasm-builder",
+    "xcm/std",
     "serde?/std",
-]
-runtime-benchmarks = [
-    "encointer-balances-tx-payment/runtime-benchmarks",
-    "encointer-primitives/runtime-benchmarks",
-    "frame-benchmarking/runtime-benchmarks",
-    "frame-support/runtime-benchmarks",
-    "frame-system-benchmarking/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
-    "hex-literal",
-    "pallet-asset-tx-payment/runtime-benchmarks",
-    "pallet-balances/runtime-benchmarks",
-    "pallet-encointer-balances/runtime-benchmarks",
-    "pallet-encointer-bazaar/runtime-benchmarks",
-    "pallet-encointer-ceremonies/runtime-benchmarks",
-    "pallet-encointer-communities/runtime-benchmarks",
-    "pallet-encointer-democracy/runtime-benchmarks",
-    "pallet-encointer-faucet/runtime-benchmarks",
-    "pallet-encointer-reputation-commitments/runtime-benchmarks",
-    "pallet-encointer-scheduler/runtime-benchmarks",
-    "pallet-encointer-treasuries/runtime-benchmarks",
-    "pallet-grandpa/runtime-benchmarks",
-    "pallet-proxy/runtime-benchmarks",
-    "pallet-scheduler/runtime-benchmarks",
-    "pallet-sudo/runtime-benchmarks",
-    "pallet-timestamp/runtime-benchmarks",
-    "pallet-treasury/runtime-benchmarks",
-    "pallet-utility/runtime-benchmarks",
-    "sp-runtime/runtime-benchmarks",
-    "sp-staking/runtime-benchmarks",
 ]
 
 try-runtime = [

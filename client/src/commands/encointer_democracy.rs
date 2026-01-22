@@ -31,11 +31,7 @@ use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetStorage, SubmitAndWatch, XtStatus,
 };
 
-// * All proposal variants that don't have anything to do with assets will decode fine on either chain.
-// * We only get an issue if we want to decode the `SpendAsset` and `IssueSwapAssetOption` with the wrong type.
-//
-// We currently just assume that the solochain will never have any asset proposals. To properly handle this, we
-// need to add a flag to the CLI to configure which type to use, i.e., `--is-para`.
+// Some type aliases
 pub type Proposal = encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
 pub type ProposalAction = encointer_primitives::democracy::ProposalAction<AccountId, Balance, Moment, XcmLocation>;
 

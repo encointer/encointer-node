@@ -579,7 +579,8 @@ impl pallet_encointer_treasuries::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type PalletId = TreasuriesPalletId;
-	type AssetKind = ();
+	// Make our live easier by using the same type as in the parachain
+	type AssetKind = xcm::latest::Location;
 	type Paymaster = NoPayments;
 	type WeightInfo = weights::pallet_encointer_treasuries::WeightInfo<Runtime>;
 }
@@ -590,7 +591,7 @@ impl pallet_encointer_treasuries::Transfer for NoPayments {
 	type Balance = Balance;
 	type Payer = AccountId;
 	type Beneficiary = AccountId;
-	type AssetKind = ();
+	type AssetKind = xcm::latest::Location;
 	type Id = ();
 	type Error = String;
 

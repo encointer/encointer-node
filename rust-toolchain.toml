@@ -2,12 +2,12 @@
 channel = "1.88.0"
 profile = "default" # include rustfmt, clippy
 components = [
-    "cargo",
-    "clippy",
-    "rust-analyzer",
-    "rust-src",
-    "rust-std",
-    "rustc",
-    "rustfmt",
+  "cargo",
+  "clippy",
+  "rust-analyzer",
+  "rust-src",
+  "rust-std",
+  "rustc",
+  "rustfmt",
 ]
 targets = ["wasm32-unknown-unknown"]

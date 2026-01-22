@@ -3019,6 +3019,7 @@ dependencies = [
  "sp-storage",
  "sp-transaction-pool",
  "sp-version",
+ "staging-xcm",
  "substrate-wasm-builder",
 ]
 
