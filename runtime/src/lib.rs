@@ -623,7 +623,10 @@ impl pallet_encointer_treasuries::Transfer for NoPayments {
 	fn ensure_concluded(_: Self::Id) {}
 }
 
+#[cfg(feature = "runtime-benchmarks")]
 pub struct MockAssetArguments;
+
+#[cfg(feature = "runtime-benchmarks")]
 impl pallet_encointer_treasuries::benchmarking::ArgumentsFactory<VersionedLocatableAsset>
 	for MockAssetArguments
 {

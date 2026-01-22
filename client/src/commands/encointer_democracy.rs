@@ -2,7 +2,6 @@ use crate::cli_args::EncointerArgsExtractor;
 
 use crate::{
 	community_spec::demurrage_per_block_from_halving_blocks,
-	types::XcmLocation,
 	utils::{
 		ensure_payment, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
