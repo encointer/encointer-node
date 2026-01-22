@@ -581,15 +581,17 @@ impl pallet_encointer_treasuries::Config for Runtime {
 	type PalletId = TreasuriesPalletId;
 	// Make our live easier by using the same type as in the parachain
 	type AssetKind = VersionedLocatableAsset;
-	type Paymaster = NoPayments;
+	type Paymaster = NoAssetPayments;
 	type WeightInfo = weights::pallet_encointer_treasuries::WeightInfo<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = MockAssetArguments;
 }
 
-pub struct NoPayments;
+/// Type that fails when we try to pay out a non-native asset as a result of a `SpendAsset` or
+/// a swap of an `AssetOption`, as we only support this on the parachain.
+pub struct NoAssetPayments;
 
-impl pallet_encointer_treasuries::Transfer for NoPayments {
+impl pallet_encointer_treasuries::Transfer for NoAssetPayments {
 	type Balance = Balance;
 	type Payer = AccountId;
 	type Beneficiary = AccountId;
@@ -603,7 +605,7 @@ impl pallet_encointer_treasuries::Transfer for NoPayments {
 		_: Self::AssetKind,
 		_: Self::Balance,
 	) -> Result<Self::Id, Self::Error> {
-		Err("No payment allowed in this runtime config".into())
+		Err("No asset payment allowed in this runtime config".into())
 	}
 
 	fn check_payment(_: Self::Id) -> PaymentStatus {
