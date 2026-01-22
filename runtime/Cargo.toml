@@ -51,6 +51,7 @@ pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
+polkadot-runtime-common = { workspace = true }
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-consensus-aura = { workspace = true }
@@ -112,6 +113,7 @@ runtime-benchmarks = [
     "sp-staking/runtime-benchmarks",
     "pallet-transaction-payment/runtime-benchmarks",
     "xcm/runtime-benchmarks",
+    "polkadot-runtime-common/runtime-benchmarks",
 ]
 std = [
     "encointer-balances-tx-payment-rpc-runtime-api/std",
@@ -173,6 +175,7 @@ std = [
     "substrate-wasm-builder",
     "xcm/std",
     "serde?/std",
+    "polkadot-runtime-common/std",
 ]
 
 try-runtime = [
@@ -204,6 +207,7 @@ try-runtime = [
     "pallet-treasury/try-runtime",
     "pallet-utility/try-runtime",
     "sp-runtime/try-runtime",
+    "polkadot-runtime-common/try-runtime",
 ]
 
 # Enable metadata hash generation at compile time for the `CheckMetadataHash` extension.

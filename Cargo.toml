@@ -82,6 +82,7 @@ pallet-transaction-payment-rpc = { version = "48.0.0" }
 pallet-transaction-payment-rpc-runtime-api = { version = "45.0.0", default-features = false }
 pallet-treasury = { version = "44.0.0", default-features = false }
 pallet-utility = { version = "45.0.0", default-features = false }
+polkadot-runtime-common = { version = "24.0.0", default-features = false }
 sc-basic-authorship = { version = "0.53.0" }
 sc-chain-spec = "48.0.0"
 sc-cli = { version = "0.57.0" }

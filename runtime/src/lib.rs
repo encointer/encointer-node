@@ -75,6 +75,7 @@ use frame_support::traits::{
 	ConstBool,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
+pub use polkadot_runtime_common::impls::VersionedLocatableAsset;
 use sp_runtime::traits::IdentityLookup;
 
 mod weights;
@@ -579,9 +580,11 @@ impl pallet_encointer_treasuries::Config for Runtime {
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type PalletId = TreasuriesPalletId;
 	// Make our live easier by using the same type as in the parachain
-	type AssetKind = xcm::latest::Location;
+	type AssetKind = VersionedLocatableAsset;
 	type Paymaster = NoPayments;
 	type WeightInfo = weights::pallet_encointer_treasuries::WeightInfo<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = MockAssetArguments;
 }
 
 pub struct NoPayments;
@@ -590,7 +593,7 @@ impl pallet_encointer_treasuries::Transfer for NoPayments {
 	type Balance = Balance;
 	type Payer = AccountId;
 	type Beneficiary = AccountId;
-	type AssetKind = xcm::latest::Location;
+	type AssetKind = VersionedLocatableAsset;
 	type Id = ();
 	type Error = String;
 
@@ -605,6 +608,29 @@ impl pallet_encointer_treasuries::Transfer for NoPayments {
 
 	fn check_payment(_: Self::Id) -> PaymentStatus {
 		PaymentStatus::Failure
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn ensure_successful(
+		_: &Self::Payer,
+		_: &Self::Beneficiary,
+		_: Self::AssetKind,
+		_: Self::Balance,
+	) {
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn ensure_concluded(_: Self::Id) {}
+}
+
+pub struct MockAssetArguments;
+impl pallet_encointer_treasuries::benchmarking::ArgumentsFactory<VersionedLocatableAsset>
+	for MockAssetArguments
+{
+	fn create_asset_kind(_: u32) -> VersionedLocatableAsset {
+		// Just a dummy to make it compile
+		use xcm::latest::{AssetId as A, Location as L};
+		(L::here(), A(L::here())).into()
 	}
 }
 
@@ -988,7 +1014,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(
-			block: Block,
+			block: <Block as BlockT>::LazyBlock,
 			state_root_check: bool,
 			signature_check: bool,
 			select: frame_try_runtime::TryStateSelect
