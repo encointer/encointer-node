@@ -1,8 +1,6 @@
 //! IPFS upload command with sr25519 gateway authentication
 
-use crate::cli_args::EncointerArgsExtractor;
-use crate::exit_code;
-use crate::utils::keys::get_accountid_from_str;
+use crate::{cli_args::EncointerArgsExtractor, exit_code, utils::keys::get_accountid_from_str};
 use clap::ArgMatches;
 use reqwest::multipart;
 use serde::{Deserialize, Serialize};

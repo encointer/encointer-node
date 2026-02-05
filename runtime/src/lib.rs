@@ -215,9 +215,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::NonTransfer => matches!(c, RuntimeCall::EncointerBazaar(..)),
 			ProxyType::BazaarEdit => matches!(
 				c,
-				RuntimeCall::EncointerBazaar(EncointerBazaarCall::create_offering { .. })
-					| RuntimeCall::EncointerBazaar(EncointerBazaarCall::update_offering { .. })
-					| RuntimeCall::EncointerBazaar(EncointerBazaarCall::delete_offering { .. })
+				RuntimeCall::EncointerBazaar(EncointerBazaarCall::create_offering { .. }) |
+					RuntimeCall::EncointerBazaar(EncointerBazaarCall::update_offering { .. }) |
+					RuntimeCall::EncointerBazaar(EncointerBazaarCall::delete_offering { .. })
 			),
 		}
 	}

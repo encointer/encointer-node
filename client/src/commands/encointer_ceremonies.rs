@@ -250,9 +250,8 @@ pub fn list_attestees(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					.get_participant_attestation_index((cid, cindex), &accountid, maybe_at)
 					.await
 				{
-					Some(windex) => {
-						participants_windex.insert(windex as AttestationIndexType, accountid)
-					},
+					Some(windex) =>
+						participants_windex.insert(windex as AttestationIndexType, accountid),
 					_ => continue,
 				};
 			}
@@ -387,8 +386,8 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 			.await;
 
 		let current_phase = api.get_current_phase(None).await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
+		if !(current_phase == CeremonyPhaseType::Registering ||
+			current_phase == CeremonyPhaseType::Attesting)
 		{
 			error!("wrong ceremony phase for registering participant");
 			std::process::exit(exit_code::WRONG_PHASE);
@@ -400,9 +399,8 @@ pub fn upgrade_registration(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let rep = get_reputation(&api, &accountid, cid, reputation_cindex, None).await;
 		info!("{} has reputation {:?}", accountid, rep);
 		let proof = match rep {
-			Reputation::VerifiedUnlinked => {
-				prove_attendance(accountid, cid, reputation_cindex, arg_who)
-			},
+			Reputation::VerifiedUnlinked =>
+				prove_attendance(accountid, cid, reputation_cindex, arg_who),
 			_ => {
 				error!("No valid reputation in last ceremony.");
 				std::process::exit(exit_code::INVALID_REPUTATION);
@@ -447,17 +445,15 @@ pub fn register_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let proof = match rep {
 			Reputation::Unverified => None,
 			Reputation::UnverifiedReputable => None, // this should never be the case during Registering!
-			Reputation::VerifiedUnlinked => {
-				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
-			},
-			Reputation::VerifiedLinked(_) => {
-				Some(prove_attendance(accountid, cid, cindex - 1, arg_who))
-			},
+			Reputation::VerifiedUnlinked =>
+				Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
+			Reputation::VerifiedLinked(_) =>
+				Some(prove_attendance(accountid, cid, cindex - 1, arg_who)),
 		};
 		debug!("proof: {:x?}", proof.encode());
 		let current_phase = api.get_current_phase(None).await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
+		if !(current_phase == CeremonyPhaseType::Registering ||
+			current_phase == CeremonyPhaseType::Attesting)
 		{
 			error!("wrong ceremony phase for registering participant");
 			std::process::exit(exit_code::WRONG_PHASE);
@@ -505,8 +501,8 @@ pub fn unregister_participant(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		};
 
 		let current_phase = api.get_current_phase(None).await.unwrap();
-		if !(current_phase == CeremonyPhaseType::Registering
-			|| current_phase == CeremonyPhaseType::Attesting)
+		if !(current_phase == CeremonyPhaseType::Registering ||
+			current_phase == CeremonyPhaseType::Attesting)
 		{
 			error!("wrong ceremony phase for unregistering");
 			std::process::exit(exit_code::WRONG_PHASE);
@@ -1030,17 +1026,16 @@ async fn get_bootstrappers_with_remaining_newbie_tickets(
 
 	// prepare closure to make below call more readable.
 	let ticket_query = |bs| async move {
-		let remaining_tickets = total_newbie_tickets
-			- api
-				.get_storage_double_map(
-					"EncointerCeremonies",
-					"BurnedBootstrapperNewbieTickets",
-					cid,
-					bs,
-					None,
-				)
-				.await?
-				.unwrap_or(0u8);
+		let remaining_tickets = total_newbie_tickets -
+			api.get_storage_double_map(
+				"EncointerCeremonies",
+				"BurnedBootstrapperNewbieTickets",
+				cid,
+				bs,
+				None,
+			)
+			.await?
+			.unwrap_or(0u8);
 
 		Ok::<_, ApiClientError>(remaining_tickets)
 	};
