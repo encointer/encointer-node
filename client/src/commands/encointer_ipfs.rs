@@ -1,24 +1,15 @@
 //! IPFS upload command with sr25519 gateway authentication
 
-use crate::{cli_args::EncointerArgsExtractor, exit_code, utils::keys::get_accountid_from_str};
+use crate::{
+	cli_args::EncointerArgsExtractor,
+	exit_code,
+	utils::keys::{get_accountid_from_str, get_pair_from_str},
+};
 use clap::ArgMatches;
 use reqwest::multipart;
 use serde::{Deserialize, Serialize};
-use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use sp_core::Pair;
 use std::path::Path;
-
-fn get_pair_from_suri(account: &str) -> sr25519_core::Pair {
-	match &account[..2] {
-		"//" => sr25519_core::Pair::from_string(account, None).unwrap(),
-		"0x" => sr25519_core::Pair::from_string_with_seed(account, None).unwrap().0,
-		_ => {
-			if sr25519_core::Public::from_ss58check(account).is_err() {
-				return sr25519_core::Pair::from_string_with_seed(account, None).unwrap().0;
-			}
-			panic!("keystore lookup not supported for ipfs-upload, use suri or dev account")
-		},
-	}
-}
 
 #[derive(Serialize)]
 struct ChallengeRequest {
@@ -74,7 +65,7 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let cid = matches.cid_arg().expect("--cid required");
 	let file_path = matches.file_path_arg().expect("file path required");
 
-	let pair = get_pair_from_suri(signer_str);
+	let pair = get_pair_from_str(signer_str);
 	let address = format!("{}", get_accountid_from_str(signer_str));
 	let client = reqwest::Client::new();
 
@@ -106,7 +97,7 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 
 	// Sign message
 	let sig = pair.sign(challenge.message.as_bytes());
-	let signature = format!("0x{}", hex::encode(sig.0));
+	let signature = format!("0x{}", hex::encode(<_ as AsRef<[u8]>>::as_ref(&sig)));
 
 	// Verify and get JWT
 	let verify_resp = client
