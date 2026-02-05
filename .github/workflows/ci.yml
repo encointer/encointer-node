@@ -276,6 +276,7 @@ jobs:
           git clone --depth 1 https://github.com/encointer/encointer-ipfs-gateway.git /tmp/ipfs-gateway
           cd /tmp/ipfs-gateway
           npm ci
+          npm run build
 
       - name: Start IPFS gateway
         if: contains(matrix.test, 'ipfs-upload')
