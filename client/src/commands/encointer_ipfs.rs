@@ -97,11 +97,14 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 		std::process::exit(exit_code::RPC_ERROR);
 	}
 
-	let challenge: ChallengeResponse = challenge_resp.json().await.map_err(|e| {
-		eprintln!("Failed to parse challenge response: {}", e);
-		std::process::exit(exit_code::RPC_ERROR);
-	})
-	.unwrap();
+	let challenge: ChallengeResponse = challenge_resp
+		.json()
+		.await
+		.map_err(|e| {
+			eprintln!("Failed to parse challenge response: {}", e);
+			std::process::exit(exit_code::RPC_ERROR);
+		})
+		.unwrap();
 
 	// Sign message
 	let sig = pair.sign(challenge.message.as_bytes());
@@ -135,18 +138,22 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 		std::process::exit(exit_code::RPC_ERROR);
 	}
 
-	let token: VerifyResponse = verify_resp.json().await.map_err(|e| {
-		eprintln!("Failed to parse verify response: {}", e);
-		std::process::exit(exit_code::RPC_ERROR);
-	})
-	.unwrap();
+	let token: VerifyResponse = verify_resp
+		.json()
+		.await
+		.map_err(|e| {
+			eprintln!("Failed to parse verify response: {}", e);
+			std::process::exit(exit_code::RPC_ERROR);
+		})
+		.unwrap();
 
 	// Upload file
-	let file_bytes = std::fs::read(file_path).map_err(|e| {
-		eprintln!("Failed to read file: {}", e);
-		std::process::exit(1);
-	})
-	.unwrap();
+	let file_bytes = std::fs::read(file_path)
+		.map_err(|e| {
+			eprintln!("Failed to read file: {}", e);
+			std::process::exit(1);
+		})
+		.unwrap();
 
 	let filename = Path::new(file_path).file_name().unwrap().to_str().unwrap();
 	let form = multipart::Form::new()
@@ -169,11 +176,14 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 		std::process::exit(exit_code::RPC_ERROR);
 	}
 
-	let result: UploadResponse = upload_resp.json().await.map_err(|e| {
-		eprintln!("Failed to parse upload response: {}", e);
-		std::process::exit(exit_code::RPC_ERROR);
-	})
-	.unwrap();
+	let result: UploadResponse = upload_resp
+		.json()
+		.await
+		.map_err(|e| {
+			eprintln!("Failed to parse upload response: {}", e);
+			std::process::exit(exit_code::RPC_ERROR);
+		})
+		.unwrap();
 
 	println!("{}", result.hash);
 	Ok(())

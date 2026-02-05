@@ -314,16 +314,19 @@ impl CeremoniesApi for Api {
 		// Finally get the meetup index
 
 		match registration.registration_type {
-			RegistrationType::Bootstrapper =>
-				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables)),
+			RegistrationType::Bootstrapper => {
+				Ok(meetup_index_fn(registration.index - 1, assignments.bootstrappers_reputables))
+			},
 			RegistrationType::Reputable => Ok(meetup_index_fn(
 				registration.index - 1 + bootstrapper_count().await?,
 				assignments.bootstrappers_reputables,
 			)),
-			RegistrationType::Endorsee =>
-				Ok(meetup_index_fn(registration.index - 1, assignments.endorsees)),
-			RegistrationType::Newbie =>
-				Ok(meetup_index_fn(registration.index - 1, assignments.newbies)),
+			RegistrationType::Endorsee => {
+				Ok(meetup_index_fn(registration.index - 1, assignments.endorsees))
+			},
+			RegistrationType::Newbie => {
+				Ok(meetup_index_fn(registration.index - 1, assignments.newbies))
+			},
 		}
 	}
 

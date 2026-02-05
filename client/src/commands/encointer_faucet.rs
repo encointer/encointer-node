@@ -66,10 +66,10 @@ pub fn create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
 		match result {
-			Ok(report) =>
+			Ok(report) => {
 				for event in report.events.unwrap().iter() {
-					if event.pallet_name() == "EncointerFaucet" &&
-						event.variant_name() == "FaucetCreated"
+					if event.pallet_name() == "EncointerFaucet"
+						&& event.variant_name() == "FaucetCreated"
 					{
 						println!(
 							"{}",
@@ -78,7 +78,8 @@ pub fn create_faucet(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::
 								.to_ss58check()
 						);
 					}
-				},
+				}
+			},
 			Err(e) => {
 				println!("[+] Couldn't execute the extrinsic due to {:?}\n", e);
 			},
