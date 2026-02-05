@@ -206,6 +206,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         test: [
           test_bootstrap_demo_community.sh cc-fee-payment,
@@ -295,7 +296,7 @@ jobs:
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
         env:
-          IPFS_GATEWAY_URL: http://127.0.0.1:5050
+          IPFS_GATEWAY_URL: ${{ contains(matrix.test, 'ipfs-upload') && 'http://127.0.0.1:5050' || '' }}
         run: source ./init_env.sh && ./${{ matrix.test }}
 
   integration-test-docker:
