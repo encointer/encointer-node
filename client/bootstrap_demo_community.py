@@ -433,6 +433,43 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print('Faucet dissolved', flush=True)
 
 
+def test_ipfs_upload(client, cid, blocks_to_wait):
+    """Test IPFS upload: CC holders succeed, non-holders get 403."""
+    import tempfile
+    gateway_url = os.environ.get('IPFS_GATEWAY_URL', 'http://localhost:5050')
+
+    # Create test file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        f.write('{"test": "data"}')
+        test_file = f.name
+
+    # Test 1: //Alice (CC holder) should succeed
+    print("Testing //Alice (CC holder)...")
+    success, output, code = client.ipfs_upload('//Alice', test_file, cid, gateway_url)
+    if not success:
+        print(f"ERROR: //Alice upload failed: {output}")
+        os.remove(test_file)
+        exit(1)
+    ipfs_cid = output.strip().split('\n')[-1]
+    print(f"//Alice upload succeeded: {ipfs_cid}")
+
+    # Test 2: //Dave (no CC) should fail
+    print("Testing //Dave (non-CC holder)...")
+    success, output, code = client.ipfs_upload('//Dave', test_file, cid, gateway_url)
+    if success:
+        print("ERROR: //Dave should have been rejected")
+        os.remove(test_file)
+        exit(1)
+    if code != 61:  # 61 = NOT_CC_HOLDER exit code
+        print(f"ERROR: Expected exit code 61, got {code}")
+        os.remove(test_file)
+        exit(1)
+    print("//Dave correctly rejected")
+
+    os.remove(test_file)
+    print("IPFS upload test passed!")
+
+
 def test_democracy(client, cid, blocks_to_wait):
     print("################ Testing democracy ...")
     next_phase(client)
@@ -541,6 +578,8 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
         case "democracy":
             # Fixme: democracy params are runtime constants, and therefore we can't test it with the parachain.
             test_democracy(client, cid, blocks_to_wait)
+        case "ipfs-upload":
+            test_ipfs_upload(client, cid, blocks_to_wait)
         case _:
             return "Invalid value for test"
 

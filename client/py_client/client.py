@@ -320,3 +320,13 @@ class Client:
 
     def get_proposals(self):
         return parse_proposals(self.list_proposals())
+
+    def ipfs_upload(self, signer, file_path, cid, gateway_url=None):
+        """Upload file to IPFS via authenticated gateway.
+        Returns (success: bool, output: str, exit_code: int)
+        """
+        cmd = ["ipfs-upload", "--signer", signer, file_path]
+        if gateway_url:
+            cmd = ["--gateway", gateway_url] + cmd
+        ret = self.run_cli_command(cmd, cid=cid)
+        return (ret.returncode == 0, ret.stdout.decode("utf-8").strip(), ret.returncode)
