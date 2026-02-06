@@ -266,11 +266,6 @@ jobs:
           cd client
           python faucet.py &
 
-      - name: start phase accelerator service
-        run: |
-          cd client
-          python phase.py --idle-blocks 3 &
-
       - name: Clone and build IPFS gateway
         if: contains(matrix.test, 'ipfs-upload')
         run: |
@@ -292,6 +287,11 @@ jobs:
             curl -s http://127.0.0.1:5050/health && break
             sleep 1
           done
+
+      - name: start phase accelerator service
+        run: |
+          cd client
+          python phase.py --idle-blocks 3 &
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
