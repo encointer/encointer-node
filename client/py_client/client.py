@@ -325,8 +325,9 @@ class Client:
         """Upload file to IPFS via authenticated gateway.
         Returns (success: bool, output: str, exit_code: int)
         """
-        cmd = ["ipfs-upload", "--signer", signer, file_path]
+        cmd = ["ipfs-upload", "--signer", signer]
         if gateway_url:
-            cmd = ["--gateway", gateway_url] + cmd
+            cmd += ["--gateway", gateway_url]
+        cmd += [file_path]
         ret = self.run_cli_command(cmd, cid=cid)
         return (ret.returncode == 0, ret.stdout.decode("utf-8").strip(), ret.returncode)
