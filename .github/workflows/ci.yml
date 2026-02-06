@@ -282,6 +282,7 @@ jobs:
           CHAIN_RPC_URL=ws://127.0.0.1:9944 \
           IPFS_API_URL=http://127.0.0.1:5001 \
           MIN_CC_BALANCE=0.000001 \
+          LOG_LEVEL=debug \
           npm start &
           for i in {1..30}; do
             curl -s http://127.0.0.1:5050/health && break
