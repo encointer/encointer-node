@@ -453,18 +453,34 @@ def test_ipfs_upload(client, cid, blocks_to_wait):
     ipfs_cid = output.strip().split('\n')[-1]
     print(f"//Alice upload succeeded: {ipfs_cid}")
 
-    # Test 2: //Dave (no CC) should fail
-    print("Testing //Dave (non-CC holder)...")
-    success, output, code = client.ipfs_upload('//Dave', test_file, cid, gateway_url)
+    # Verify uploaded content via ipfs cat
+    import subprocess
+    ret = subprocess.run(['ipfs', 'cat', ipfs_cid], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if ret.returncode != 0:
+        print(f"ERROR: ipfs cat {ipfs_cid} failed: {ret.stderr.decode('utf-8').strip()}")
+        os.remove(test_file)
+        exit(1)
+    fetched = ret.stdout.decode('utf-8')
+    with open(test_file) as f:
+        expected = f.read()
+    if fetched != expected:
+        print(f"ERROR: content mismatch. Expected: {expected!r}, got: {fetched!r}")
+        os.remove(test_file)
+        exit(1)
+    print(f"Verified: ipfs cat {ipfs_cid} matches uploaded content")
+
+    # Test 2: //Zoe (no genesis balance) should fail
+    print("Testing //Zoe (account does not exist on chain)...")
+    success, output, code = client.ipfs_upload('//Zoe', test_file, cid, gateway_url)
     if success:
-        print("ERROR: //Dave should have been rejected")
+        print("ERROR: //Zoe should have been rejected")
         os.remove(test_file)
         exit(1)
     if code != 61:  # 61 = NOT_CC_HOLDER exit code
         print(f"ERROR: Expected exit code 61, got {code}")
         os.remove(test_file)
         exit(1)
-    print("//Dave correctly rejected")
+    print("//Zoe correctly rejected")
 
     os.remove(test_file)
     print("IPFS upload test passed!")
