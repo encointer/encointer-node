@@ -295,9 +295,11 @@ jobs:
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
-        env:
-          IPFS_GATEWAY_URL: ${{ contains(matrix.test, 'ipfs-upload') && 'http://127.0.0.1:5050' || '' }}
-        run: source ./init_env.sh && ./${{ matrix.test }}
+        run: |
+          if [[ "${{ matrix.test }}" == *"ipfs-upload"* ]]; then
+            export IPFS_GATEWAY_URL=http://127.0.0.1:5050
+          fi
+          source ./init_env.sh && ./${{ matrix.test }}
 
   integration-test-docker:
     name: ${{ matrix.test }}
