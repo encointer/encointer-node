@@ -246,12 +246,6 @@ jobs:
       - name: install py dependencies
         run: ./scripts/install_python_deps.sh
 
-      - name: Set up Node.js
-        if: contains(matrix.test, 'ipfs-upload')
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Set up ipfs
         uses: ibnesayeed/setup-ipfs@master
         with:
@@ -266,23 +260,15 @@ jobs:
           cd client
           python faucet.py &
 
-      - name: Clone and build IPFS gateway
-        if: contains(matrix.test, 'ipfs-upload')
-        run: |
-          git clone --depth 1 https://github.com/encointer/encointer-ipfs-gateway.git /tmp/ipfs-gateway
-          cd /tmp/ipfs-gateway
-          npm ci
-          npm run build
-
       - name: Start IPFS gateway
         if: contains(matrix.test, 'ipfs-upload')
         run: |
-          cd /tmp/ipfs-gateway
-          JWT_SECRET=ci-test-secret-do-not-use-in-prod \
-          CHAIN_RPC_URL=ws://127.0.0.1:9944 \
-          IPFS_API_URL=http://127.0.0.1:5001 \
-          LOG_LEVEL=debug \
-          npm start > /tmp/ipfs-gateway.log 2>&1 &
+          docker run -d --name ipfs-gateway --network host \
+            -e JWT_SECRET=ci-test-secret-do-not-use-in-prod \
+            -e CHAIN_RPC_URL=ws://127.0.0.1:9944 \
+            -e IPFS_API_URL=http://127.0.0.1:5001 \
+            -e LOG_LEVEL=debug \
+            encointer/ipfs-gateway:latest
           for i in {1..30}; do
             curl -s http://127.0.0.1:5050/health && break
             sleep 1
@@ -303,7 +289,7 @@ jobs:
 
       - name: Print IPFS gateway logs
         if: always() && contains(matrix.test, 'ipfs-upload')
-        run: cat /tmp/ipfs-gateway.log || true
+        run: docker logs ipfs-gateway || true
 
   integration-test-docker:
     name: ${{ matrix.test }}
