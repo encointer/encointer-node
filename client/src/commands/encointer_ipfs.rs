@@ -12,9 +12,9 @@ use sp_core::Pair;
 use std::path::Path;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ChallengeRequest {
 	address: String,
-	#[serde(rename = "communityId")]
 	community_id: String,
 }
 
@@ -26,9 +26,9 @@ struct ChallengeResponse {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct VerifyRequest {
 	address: String,
-	#[serde(rename = "communityId")]
 	community_id: String,
 	signature: String,
 	nonce: String,
@@ -43,14 +43,12 @@ struct VerifyResponse {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
 struct UploadResponse {
-	#[serde(rename = "Hash")]
 	hash: String,
 	#[allow(dead_code)]
-	#[serde(rename = "Name")]
 	name: String,
 	#[allow(dead_code)]
-	#[serde(rename = "Size")]
 	size: String,
 }
 
