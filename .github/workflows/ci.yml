@@ -250,7 +250,7 @@ jobs:
         if: contains(matrix.test, 'ipfs-upload')
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Set up ipfs
         uses: ibnesayeed/setup-ipfs@master
