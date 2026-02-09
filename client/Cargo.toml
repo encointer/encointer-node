@@ -30,6 +30,7 @@ encointer-primitives = { workspace = true, features = ["std"] }
 pallet-encointer-balances = { workspace = true, features = ["std"] }
 pallet-encointer-ceremonies = { workspace = true, features = ["std"] }
 pallet-encointer-communities = { workspace = true, features = ["std"] }
+pallet-encointer-offline-payment = { workspace = true, features = ["std"] }
 pallet-encointer-scheduler = { workspace = true, features = ["std"] }
 
 # scs deps
@@ -43,6 +44,7 @@ itertools = "0.10.5"
 pallet-transaction-payment = { workspace = true, features = ["std"] }
 sp-application-crypto = { workspace = true, features = ["std"] }
 sp-core = { workspace = true, features = ["std"] }
+sp-io = { workspace = true, features = ["std"] }
 sp-keyring = { workspace = true }
 sp-keystore = { workspace = true, features = ["std"] }
 sp-rpc = { workspace = true }

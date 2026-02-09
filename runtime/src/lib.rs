@@ -559,6 +559,16 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MaxProofSize: u32 = 256;
+}
+
+impl pallet_encointer_offline_payment::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
+	type MaxProofSize = MaxProofSize;
+}
+
+parameter_types! {
 	pub const ConfirmationPeriod: Moment = 5 * 60 * 1000; // [ms]
 	pub const ProposalLifetime: Moment = 20 * 60 * 1000; // [ms]
 }
@@ -670,6 +680,7 @@ construct_runtime!(
 		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 66,
 		EncointerDemocracy: pallet_encointer_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 67,
 		EncointerTreasuries: pallet_encointer_treasuries::{Pallet, Call, Storage, Event<T>} = 68,
+		EncointerOfflinePayment: pallet_encointer_offline_payment::{Pallet, Call, Storage, Event<T>} = 69,
 
 	}
 );

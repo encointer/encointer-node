@@ -215,7 +215,8 @@ jobs:
           test_bootstrap_demo_community.sh endorsement,
           test_bootstrap_demo_community.sh democracy,
           test_bot_community.sh,
-          test_register_business.sh
+          test_register_business.sh,
+          test_offline_payment.sh
         ]
     steps:
       - uses: actions/checkout@v3

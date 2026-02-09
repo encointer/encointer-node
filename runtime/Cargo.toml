@@ -33,6 +33,7 @@ pallet-encointer-reputation-commitments = { workspace = true }
 pallet-encointer-scheduler = { workspace = true }
 pallet-encointer-treasuries = { workspace = true }
 pallet-encointer-treasuries-rpc-runtime-api = { workspace = true }
+pallet-encointer-offline-payment = { workspace = true }
 
 # substrate deps
 frame-executive = { workspace = true }
@@ -99,6 +100,7 @@ runtime-benchmarks = [
     "pallet-encointer-communities/runtime-benchmarks",
     "pallet-encointer-democracy/runtime-benchmarks",
     "pallet-encointer-faucet/runtime-benchmarks",
+    "pallet-encointer-offline-payment/runtime-benchmarks",
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
     "pallet-encointer-treasuries/runtime-benchmarks",
@@ -141,6 +143,7 @@ std = [
     "pallet-encointer-communities/std",
     "pallet-encointer-democracy/std",
     "pallet-encointer-faucet/std",
+    "pallet-encointer-offline-payment/std",
     "pallet-encointer-reputation-commitments/std",
     "pallet-encointer-scheduler/std",
     "pallet-encointer-treasuries-rpc-runtime-api/std",
@@ -194,6 +197,7 @@ try-runtime = [
     "pallet-encointer-communities/try-runtime",
     "pallet-encointer-democracy/try-runtime",
     "pallet-encointer-faucet/try-runtime",
+    "pallet-encointer-offline-payment/try-runtime",
     "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
     "pallet-encointer-treasuries/try-runtime",

@@ -720,6 +720,104 @@ fn main() {
 				.description("get treasury address for a community")
 				.runner(commands::encointer_treasuries::get_treasury_account),
 		)
+		.add_cmd(
+			Command::new("register-offline-identity")
+				.description("Register an offline payment identity (ZK commitment) for an account")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+				})
+				.runner(commands::encointer_offline_payment::register_offline_identity),
+		)
+		.add_cmd(
+			Command::new("get-offline-identity")
+				.description("Get the offline payment identity (commitment) for an account")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_offline_payment::get_offline_identity),
+		)
+		.add_cmd(
+			Command::new("generate-offline-payment")
+				.description("Generate an offline payment proof (outputs JSON)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("sender account (--signer)")
+						.arg(
+							Arg::with_name("to")
+								.long("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("recipient's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("amount")
+								.long("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("FLOAT")
+								.help("amount to transfer"),
+						)
+						.optional_cid_arg()
+				})
+				.runner(commands::encointer_offline_payment::generate_offline_payment),
+		)
+		.add_cmd(
+			Command::new("submit-offline-payment")
+				.description("Submit an offline payment proof for settlement")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("account to sign the transaction")
+						.arg(
+							Arg::with_name("proof-file")
+								.long("proof-file")
+								.takes_value(true)
+								.value_name("PATH")
+								.help("path to JSON file containing proof (alternative to inline args)"),
+						)
+						.arg(
+							Arg::with_name("proof")
+								.long("proof")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded proof"),
+						)
+						.arg(
+							Arg::with_name("sender")
+								.long("sender")
+								.takes_value(true)
+								.value_name("SS58")
+								.help("sender's AccountId"),
+						)
+						.arg(
+							Arg::with_name("recipient")
+								.long("recipient")
+								.takes_value(true)
+								.value_name("SS58")
+								.help("recipient's AccountId"),
+						)
+						.arg(
+							Arg::with_name("amount")
+								.long("amount")
+								.takes_value(true)
+								.value_name("FLOAT")
+								.help("transfer amount"),
+						)
+						.arg(
+							Arg::with_name("nullifier")
+								.long("nullifier")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded nullifier"),
+						)
+						.optional_cid_arg()
+						.tx_payment_cid_arg()
+				})
+				.runner(commands::encointer_offline_payment::submit_offline_payment),
+		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {
 			println!("No subcommand matched");
