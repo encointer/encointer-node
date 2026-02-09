@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Testing offline payment functionality"
+echo "Testing offline payment functionality (ZK PoC)"
 
 CLI=$CLIENT_BIN
 
@@ -18,18 +18,14 @@ cd "$CLIENT_DIR"
 CID=$($CLI new-community test-data/leu.json --signer //Alice | tail -1)
 echo "Created community: $CID"
 
-echo "=== Step 4: Issue community currency to Alice ==="
-# Use sudo to issue currency directly (for testing)
-# The node should be started with --dev which has Alice as sudo
-
-echo "=== Step 5: Register offline identities ==="
+echo "=== Step 4: Register offline identities ==="
 $CLI register-offline-identity //Alice --cid $CID
 echo "Registered offline identity for Alice"
 
 $CLI register-offline-identity //Bob --cid $CID
 echo "Registered offline identity for Bob"
 
-echo "=== Step 6: Verify offline identities ==="
+echo "=== Step 5: Verify offline identities ==="
 ALICE_COMMITMENT=$($CLI get-offline-identity //Alice | grep "Commitment:" | awk '{print $2}')
 echo "Alice commitment: $ALICE_COMMITMENT"
 
@@ -41,26 +37,43 @@ if [ -z "$ALICE_COMMITMENT" ] || [ -z "$BOB_COMMITMENT" ]; then
     exit 1
 fi
 
-echo "=== Step 7: Generate offline payment proof ==="
-# Note: For a full integration test, we'd need to issue balance to Alice first
-# For now, this tests the proof generation mechanism
+echo "=== Step 6: Generate offline payment data ==="
+# Note: This generates the public inputs for ZK proof generation
+# In a full implementation, this would include a Groth16 proof
 $CLI generate-offline-payment --signer //Alice --to //Bob --amount 1.0 --cid $CID > /tmp/payment.json
-echo "Generated payment proof:"
+echo "Generated payment data:"
 cat /tmp/payment.json
 
-# Verify the proof file was created and has expected fields
-if ! grep -q "proof" /tmp/payment.json; then
-    echo "ERROR: Payment proof missing 'proof' field"
+# Verify the output has expected fields
+if ! grep -q "commitment" /tmp/payment.json; then
+    echo "ERROR: Payment data missing 'commitment' field"
     exit 1
 fi
 
 if ! grep -q "nullifier" /tmp/payment.json; then
-    echo "ERROR: Payment proof missing 'nullifier' field"
+    echo "ERROR: Payment data missing 'nullifier' field"
+    exit 1
+fi
+
+if ! grep -q "sender" /tmp/payment.json; then
+    echo "ERROR: Payment data missing 'sender' field"
+    exit 1
+fi
+
+if ! grep -q "recipient" /tmp/payment.json; then
+    echo "ERROR: Payment data missing 'recipient' field"
     exit 1
 fi
 
 echo ""
 echo "=== Offline payment tests PASSED ==="
 echo ""
-echo "Note: Full payment settlement requires community currency balance."
-echo "The proof generation and identity registration have been verified."
+echo "Summary:"
+echo "  - Offline identity registration: PASSED"
+echo "  - Offline identity retrieval: PASSED"
+echo "  - Payment data generation: PASSED"
+echo ""
+echo "Note: Full payment settlement requires:"
+echo "  1. A verification key to be set via sudo"
+echo "  2. A valid Groth16 proof (not included in PoC)"
+echo "  3. Community currency balance for the sender"

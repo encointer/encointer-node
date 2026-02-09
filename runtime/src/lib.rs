@@ -560,12 +560,14 @@ impl pallet_encointer_faucet::Config for Runtime {
 
 parameter_types! {
 	pub const MaxProofSize: u32 = 256;
+	pub const MaxVkSize: u32 = 2048;
 }
 
 impl pallet_encointer_offline_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type MaxProofSize = MaxProofSize;
+	type MaxVkSize = MaxVkSize;
 }
 
 parameter_types! {
