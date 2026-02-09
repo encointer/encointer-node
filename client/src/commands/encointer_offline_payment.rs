@@ -69,8 +69,8 @@ pub fn register_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Resul
 				println!("Offline identity registered successfully");
 				println!("Commitment: 0x{}", hex::encode(commitment));
 				for event in report.events.unwrap().iter() {
-					if event.pallet_name() == "EncointerOfflinePayment"
-						&& event.variant_name() == "OfflineIdentityRegistered"
+					if event.pallet_name() == "EncointerOfflinePayment" &&
+						event.variant_name() == "OfflineIdentityRegistered"
 					{
 						println!("Event: OfflineIdentityRegistered");
 					}
@@ -96,7 +96,12 @@ pub fn get_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let maybe_at = matches.at_block_arg();
 
 		let commitment: Option<[u8; 32]> = api
-			.get_storage_map("EncointerOfflinePayment", "OfflineIdentities", account.clone(), maybe_at)
+			.get_storage_map(
+				"EncointerOfflinePayment",
+				"OfflineIdentities",
+				account.clone(),
+				maybe_at,
+			)
 			.await
 			.unwrap();
 
@@ -201,47 +206,47 @@ pub fn submit_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
 
 		// Parse proof file or inline arguments
-		let (proof_bytes, sender, recipient, amount, cid, nullifier) =
-			if let Some(proof_file) = matches.value_of("proof-file") {
-				let content = std::fs::read_to_string(proof_file).expect("Failed to read proof file");
-				let json: serde_json::Value =
-					serde_json::from_str(&content).expect("Invalid JSON in proof file");
+		let (proof_bytes, sender, recipient, amount, cid, nullifier) = if let Some(proof_file) =
+			matches.value_of("proof-file")
+		{
+			let content = std::fs::read_to_string(proof_file).expect("Failed to read proof file");
+			let json: serde_json::Value =
+				serde_json::from_str(&content).expect("Invalid JSON in proof file");
 
-				let proof_bytes =
-					hex::decode(json["proof"].as_str().unwrap()).expect("Invalid proof hex");
+			let proof_bytes =
+				hex::decode(json["proof"].as_str().unwrap()).expect("Invalid proof hex");
 
-				let sender = get_accountid_from_str(json["sender"].as_str().unwrap());
-				let recipient = get_accountid_from_str(json["recipient"].as_str().unwrap());
-				let amount =
-					BalanceType::from_num(json["amount"].as_str().unwrap().parse::<f64>().unwrap());
-				let cid_str = json["cid"].as_str().unwrap();
-				let cid = api.verify_cid(cid_str, None).await;
-				let nullifier_bytes =
-					hex::decode(json["nullifier"].as_str().unwrap()).expect("Invalid nullifier hex");
-				let mut nullifier = [0u8; 32];
-				nullifier.copy_from_slice(&nullifier_bytes);
+			let sender = get_accountid_from_str(json["sender"].as_str().unwrap());
+			let recipient = get_accountid_from_str(json["recipient"].as_str().unwrap());
+			let amount =
+				BalanceType::from_num(json["amount"].as_str().unwrap().parse::<f64>().unwrap());
+			let cid_str = json["cid"].as_str().unwrap();
+			let cid = api.verify_cid(cid_str, None).await;
+			let nullifier_bytes =
+				hex::decode(json["nullifier"].as_str().unwrap()).expect("Invalid nullifier hex");
+			let mut nullifier = [0u8; 32];
+			nullifier.copy_from_slice(&nullifier_bytes);
 
-				(proof_bytes, sender, recipient, amount, cid, nullifier)
-			} else {
-				// Parse inline arguments
-				let proof_hex = matches.value_of("proof").expect("proof required");
-				let proof_bytes = hex::decode(proof_hex).expect("Invalid proof hex");
+			(proof_bytes, sender, recipient, amount, cid, nullifier)
+		} else {
+			// Parse inline arguments
+			let proof_hex = matches.value_of("proof").expect("proof required");
+			let proof_bytes = hex::decode(proof_hex).expect("Invalid proof hex");
 
-				let sender = get_accountid_from_str(matches.value_of("sender").unwrap());
-				let recipient = get_accountid_from_str(matches.value_of("recipient").unwrap());
-				let amount = BalanceType::from_num(
-					matches.value_of("amount").unwrap().parse::<f64>().unwrap(),
-				);
-				let cid = api
-					.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-					.await;
-				let nullifier_bytes =
-					hex::decode(matches.value_of("nullifier").unwrap()).expect("Invalid nullifier hex");
-				let mut nullifier = [0u8; 32];
-				nullifier.copy_from_slice(&nullifier_bytes);
+			let sender = get_accountid_from_str(matches.value_of("sender").unwrap());
+			let recipient = get_accountid_from_str(matches.value_of("recipient").unwrap());
+			let amount =
+				BalanceType::from_num(matches.value_of("amount").unwrap().parse::<f64>().unwrap());
+			let cid = api
+				.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+				.await;
+			let nullifier_bytes =
+				hex::decode(matches.value_of("nullifier").unwrap()).expect("Invalid nullifier hex");
+			let mut nullifier = [0u8; 32];
+			nullifier.copy_from_slice(&nullifier_bytes);
 
-				(proof_bytes, sender, recipient, amount, cid, nullifier)
-			};
+			(proof_bytes, sender, recipient, amount, cid, nullifier)
+		};
 
 		info!(
 			"Submitting offline payment: {} -> {}, amount: {}, cid: {}",
