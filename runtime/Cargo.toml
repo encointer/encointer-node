@@ -29,11 +29,11 @@ pallet-encointer-communities = { workspace = true }
 pallet-encointer-communities-rpc-runtime-api = { workspace = true }
 pallet-encointer-democracy = { workspace = true }
 pallet-encointer-faucet = { workspace = true }
+pallet-encointer-offline-payment = { workspace = true }
 pallet-encointer-reputation-commitments = { workspace = true }
 pallet-encointer-scheduler = { workspace = true }
 pallet-encointer-treasuries = { workspace = true }
 pallet-encointer-treasuries-rpc-runtime-api = { workspace = true }
-pallet-encointer-offline-payment = { workspace = true }
 
 # substrate deps
 frame-executive = { workspace = true }
