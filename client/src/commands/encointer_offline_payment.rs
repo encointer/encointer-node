@@ -1,8 +1,9 @@
 use crate::{
 	cli_args::EncointerArgsExtractor,
 	utils::{
-		get_chain_api,
+		contains_sudo_pallet, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
+		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
 use clap::ArgMatches;
@@ -12,33 +13,23 @@ use encointer_api_client_extension::{
 use encointer_primitives::balances::BalanceType;
 use frame_support::BoundedVec;
 use log::info;
-use pallet_encointer_offline_payment::derive_zk_secret;
+use pallet_encointer_offline_payment::{
+	circuit::{compute_commitment, poseidon_config},
+	derive_zk_secret,
+	prover::{
+		bytes32_to_field, field_to_bytes32, generate_proof, proof_to_bytes, TrustedSetup,
+		TEST_SETUP_SEED,
+	},
+};
+use parity_scale_codec::Encode;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
-use sp_io::hashing::blake2_256;
+use sp_keyring::Sr25519Keyring as AccountKeyring;
 use substrate_api_client::{
-	ac_compose_macros::compose_extrinsic, GetStorage, SubmitAndWatch, XtStatus,
+	ac_compose_macros::{compose_call, compose_extrinsic},
+	GetStorage, SubmitAndWatch, XtStatus,
 };
 
-/// Compute commitment from zk_secret using Blake2 (placeholder for Poseidon)
-/// In production, this should use Poseidon hash for ZK circuit compatibility
-fn compute_commitment(zk_secret: &[u8; 32]) -> [u8; 32] {
-	let mut input = Vec::with_capacity(32 + 28);
-	input.extend_from_slice(zk_secret);
-	input.extend_from_slice(b"encointer-offline-commitment");
-	blake2_256(&input)
-}
-
-/// Compute nullifier from zk_secret and nonce using Blake2 (placeholder for Poseidon)
-/// In production, this should use Poseidon hash for ZK circuit compatibility
-fn compute_nullifier(zk_secret: &[u8; 32], nonce: &[u8; 32]) -> [u8; 32] {
-	let mut input = Vec::with_capacity(64 + 27);
-	input.extend_from_slice(zk_secret);
-	input.extend_from_slice(nonce);
-	input.extend_from_slice(b"encointer-offline-nullifier");
-	blake2_256(&input)
-}
-
-/// Register offline identity for an account
+/// Register offline identity for an account using Poseidon commitment
 pub fn register_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -49,8 +40,13 @@ pub fn register_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Resul
 
 		// Derive zk_secret from the account's seed
 		let seed_bytes = who.to_raw_vec();
-		let zk_secret = derive_zk_secret(&seed_bytes);
-		let commitment = compute_commitment(&zk_secret);
+		let zk_secret_bytes = derive_zk_secret(&seed_bytes);
+		let zk_secret = bytes32_to_field(&zk_secret_bytes);
+
+		// Compute Poseidon commitment
+		let poseidon = poseidon_config();
+		let commitment_field = compute_commitment(&poseidon, &zk_secret);
+		let commitment = field_to_bytes32(&commitment_field);
 
 		info!("Registering offline identity for {}", who.public().to_ss58check());
 		info!("Commitment: 0x{}", hex::encode(commitment));
@@ -119,9 +115,7 @@ pub fn get_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 	.into()
 }
 
-/// Generate offline payment data (outputs JSON)
-/// Note: In production, this would generate a real Groth16 proof.
-/// For the PoC, it outputs the public inputs that would be used for proof generation.
+/// Generate an offline payment with real Groth16 ZK proof
 pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -130,8 +124,8 @@ pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result
 		let from = matches.signer_arg().map(get_pair_from_str).unwrap();
 		let to = get_accountid_from_str(matches.value_of("to").unwrap());
 		let amount_str = matches.value_of("amount").unwrap();
-		// Validate amount is parseable
-		let _: f64 = amount_str.parse().expect("Invalid amount");
+		let amount_f64: f64 = amount_str.parse().expect("Invalid amount");
+		let amount = BalanceType::from_num(amount_f64);
 
 		let cid = api
 			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
@@ -139,33 +133,55 @@ pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result
 
 		// Derive zk_secret from sender's seed
 		let seed_bytes = from.to_raw_vec();
-		let zk_secret = derive_zk_secret(&seed_bytes);
-		let commitment = compute_commitment(&zk_secret);
+		let zk_secret_bytes = derive_zk_secret(&seed_bytes);
+		let zk_secret = bytes32_to_field(&zk_secret_bytes);
 
-		// Generate random nonce
-		let nonce: [u8; 32] = blake2_256(&[
-			&seed_bytes[..],
-			&std::time::SystemTime::now()
-				.duration_since(std::time::UNIX_EPOCH)
-				.unwrap()
-				.as_nanos()
-				.to_le_bytes()[..],
-		]
-		.concat());
+		// Generate random nonce using timestamp
+		let timestamp = std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.unwrap()
+			.as_nanos();
+		let nonce = bytes32_to_field(&sp_io::hashing::blake2_256(&timestamp.to_le_bytes()));
 
-		let nullifier = compute_nullifier(&zk_secret, &nonce);
+		// Compute public inputs
+		let recipient_hash_bytes = pallet_encointer_offline_payment::hash_recipient(&to.encode());
+		let cid_hash_bytes = pallet_encointer_offline_payment::hash_cid(&cid);
+		let amount_bytes = pallet_encointer_offline_payment::balance_to_bytes(amount);
+
+		let recipient_hash = bytes32_to_field(&recipient_hash_bytes);
+		let cid_hash = bytes32_to_field(&cid_hash_bytes);
+		let amount_field = bytes32_to_field(&amount_bytes);
+
+		// Get the test proving key
+		// In production, this would be loaded from a file or generated once
+		let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+
+		// Generate the ZK proof
+		eprintln!("Generating ZK proof...");
+		let (proof, public_inputs) = generate_proof(
+			&setup.proving_key,
+			zk_secret,
+			nonce,
+			recipient_hash,
+			amount_field,
+			cid_hash,
+		)
+		.expect("Proof generation failed");
+
+		let proof_bytes = proof_to_bytes(&proof);
+		let commitment = field_to_bytes32(&public_inputs[0]);
+		let nullifier = field_to_bytes32(&public_inputs[4]);
 		let sender = get_accountid_from_str(&from.public().to_ss58check());
 
-		// For real ZK: would generate Groth16 proof here
-		// For PoC: output the data needed for proof generation
+		// Output as JSON
 		let output = serde_json::json!({
+			"proof": hex::encode(&proof_bytes),
 			"commitment": hex::encode(commitment),
 			"sender": sender.to_ss58check(),
 			"recipient": to.to_ss58check(),
 			"amount": amount_str,
 			"cid": cid.to_string(),
 			"nullifier": hex::encode(nullifier),
-			"note": "This is a PoC. Real implementation would include a Groth16 proof."
 		});
 
 		println!("{}", serde_json::to_string_pretty(&output).unwrap());
@@ -176,7 +192,6 @@ pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result
 }
 
 /// Submit an offline payment proof for settlement
-/// The proof must be a valid Groth16 proof generated for the offline payment circuit
 pub fn submit_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -240,7 +255,6 @@ pub fn submit_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		// Create the Groth16ProofBytes structure
-		// MaxProofSize is 256 in the runtime
 		let bounded_proof: BoundedVec<u8, frame_support::traits::ConstU32<256>> =
 			BoundedVec::try_from(proof_bytes).expect("Proof exceeds max size");
 
@@ -293,22 +307,70 @@ pub fn submit_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 	.into()
 }
 
-/// Set the Groth16 verification key (requires sudo/root origin)
-/// Note: This must be called via polkadot.js or another tool that supports sudo calls.
-/// The CLI outputs the hex-encoded call data for use with sudo.
+/// Set the Groth16 verification key via sudo (requires --signer to be sudo key)
 pub fn set_verification_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let vk_hex = matches.value_of("vk").expect("verification key required");
-	let vk_bytes = hex::decode(vk_hex).expect("Invalid verification key hex");
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		// Use Alice as default signer (sudo in dev mode)
+		let signer = matches.signer_arg().map_or_else(
+			|| AccountKeyring::Alice.pair(),
+			|signer| get_pair_from_str(signer).into(),
+		);
 
-	println!("Verification key size: {} bytes", vk_bytes.len());
-	println!("Verification key (hex): {}", vk_hex);
-	println!();
-	println!("To set the verification key, use polkadot.js apps:");
-	println!("1. Go to Developer -> Extrinsics");
-	println!("2. Select 'sudo' -> 'sudo(call)'");
-	println!("3. Select 'encointerOfflinePayment' -> 'setVerificationKey(vk)'");
-	println!("4. Paste the hex verification key (without 0x prefix)");
-	println!("5. Submit the transaction");
+		let mut api = get_chain_api(matches).await;
+		let signer = ParentchainExtrinsicSigner::new(signer);
+		api.set_signer(signer);
+
+		// Generate the test VK if no VK provided
+		let vk_bytes = if let Some(hex) = matches.value_of("vk") {
+			hex::decode(hex).expect("Invalid verification key hex")
+		} else {
+			eprintln!("Generating test verification key with seed 0x{:X}...", TEST_SETUP_SEED);
+			let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+			setup.verifying_key_bytes()
+		};
+
+		info!("Setting verification key ({} bytes)", vk_bytes.len());
+
+		// Create the inner call
+		let set_vk_call = compose_call!(
+			api.metadata(),
+			"EncointerOfflinePayment",
+			"set_verification_key",
+			vk_bytes.clone()
+		)
+		.unwrap();
+
+		// Wrap in sudo call
+		let call = if contains_sudo_pallet(api.metadata()) {
+			let sudo_call = sudo_call(api.metadata(), set_vk_call);
+			info!("Submitting sudo(set_verification_key)");
+			print_raw_call("sudo(set_verification_key)", &sudo_call);
+			OpaqueCall::from_tuple(&sudo_call)
+		} else {
+			eprintln!("ERROR: Sudo pallet not found. Cannot set verification key.");
+			return Ok(());
+		};
+
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		send_and_wait_for_in_block(&api, xt(&api, call).await, tx_payment_cid_arg).await;
+
+		println!("Verification key set successfully!");
+		println!("VK size: {} bytes", vk_bytes.len());
+		Ok(())
+	})
+	.into()
+}
+
+/// Generate and output the test verification key
+pub fn generate_test_vk(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	eprintln!("Generating test verification key with seed {}...", TEST_SETUP_SEED);
+	let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+	let vk_bytes = setup.verifying_key_bytes();
+
+	println!("{}", hex::encode(&vk_bytes));
 
 	Ok(())
 }

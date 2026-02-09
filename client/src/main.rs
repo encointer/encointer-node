@@ -818,6 +818,28 @@ fn main() {
 				})
 				.runner(commands::encointer_offline_payment::submit_offline_payment),
 		)
+		.add_cmd(
+			Command::new("set-offline-payment-vk")
+				.description("Set the Groth16 verification key for offline payments (requires sudo)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("sudo account (defaults to //Alice)")
+						.arg(
+							Arg::with_name("vk")
+								.long("vk")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded verification key (omit to use test key)"),
+						)
+						.tx_payment_cid_arg()
+				})
+				.runner(commands::encointer_offline_payment::set_verification_key),
+		)
+		.add_cmd(
+			Command::new("generate-test-vk")
+				.description("Generate and print the test verification key (hex)")
+				.runner(commands::encointer_offline_payment::generate_test_vk),
+		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {
 			println!("No subcommand matched");
