@@ -18,7 +18,7 @@ CLIENT_DIR="${CLIENT_DIR:-$CLIENT_DIR_DEFAULT}"
 echo "=== Step 1: Bootstrap a demo community ==="
 echo "This will create a community and run a ceremony so Alice has CC balance"
 cd "$CLIENT_DIR"
-python3 bootstrap_demo_community.py --client "$CLI_BIN" -u ws://127.0.0.1 -p 9944 --signer //Alice --test none
+python3 bootstrap_demo_community.py --client "$CLI_BIN" -u ws://127.0.0.1 -p 9944 -l --signer //Alice --test none
 echo ""
 
 echo "=== Step 2: Get community ID ==="
