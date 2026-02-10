@@ -38,6 +38,7 @@ mod exit_code {
 	pub const FEE_PAYMENT_FAILED: i32 = 51;
 	pub const INVALID_REPUTATION: i32 = 52;
 	pub const RPC_ERROR: i32 = 60;
+	pub const NOT_CC_HOLDER: i32 = 61;
 	pub const NO_CID_SPECIFIED: i32 = 70;
 }
 
@@ -522,6 +523,18 @@ fn main() {
 		                .account_arg()
 		        })
 		        .runner(commands::encointer_bazaar::list_business_offerings),
+		)
+		.add_cmd(
+		    Command::new("ipfs-upload")
+		        .description("Upload file to IPFS via authenticated gateway (requires CC holder)")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("account to authenticate (must be CC holder)")
+		                .optional_cid_arg()
+		                .gateway_url_arg()
+		                .file_path_arg()
+		        })
+		        .runner(commands::encointer_ipfs::ipfs_upload),
 		)
 		.add_cmd(
 		    Command::new("create-faucet")
