@@ -72,7 +72,7 @@ class Client:
         fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
         ipfs_cid_part = ["--ipfs-cid", ipfs_cid] if ipfs_cid else []
         command = self.cli + cid_part + fee_part + command + ipfs_cid_part
-        ret = subprocess.run(command, stdout=subprocess.PIPE, **kwargs)
+        ret = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):
@@ -320,3 +320,19 @@ class Client:
 
     def get_proposals(self):
         return parse_proposals(self.list_proposals())
+
+    def ipfs_upload(self, signer, file_path, cid, gateway_url=None):
+        """Upload file to IPFS via authenticated gateway.
+        Returns (success: bool, output: str, exit_code: int)
+        """
+        cmd = ["ipfs-upload", "--signer", signer]
+        if gateway_url:
+            cmd += ["--gateway", gateway_url]
+        cmd += [file_path]
+        ret = self.run_cli_command(cmd, cid=cid)
+        output = ret.stdout.decode("utf-8").strip()
+        if ret.stderr:
+            stderr_text = ret.stderr.decode("utf-8").strip()
+            if stderr_text:
+                output = f"{output}\n{stderr_text}".strip()
+        return (ret.returncode == 0, output, ret.returncode)

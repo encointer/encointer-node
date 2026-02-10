@@ -433,6 +433,59 @@ def test_faucet(client, cid, blocks_to_wait, is_parachain):
     print('Faucet dissolved', flush=True)
 
 
+def test_ipfs_upload(client, cid, blocks_to_wait):
+    """Test IPFS upload: CC holders succeed, non-holders get 403."""
+    import tempfile
+    gateway_url = os.environ.get('IPFS_GATEWAY_URL', 'http://localhost:5050')
+
+    # Create test file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        f.write('{"test": "data"}')
+        test_file = f.name
+
+    # Test 1: //Alice (CC holder) should succeed
+    print("Testing //Alice (CC holder)...")
+    success, output, code = client.ipfs_upload('//Alice', test_file, cid, gateway_url)
+    if not success:
+        print(f"ERROR: //Alice upload failed: {output}")
+        os.remove(test_file)
+        exit(1)
+    ipfs_cid = output.strip().split('\n')[-1]
+    print(f"//Alice upload succeeded: {ipfs_cid}")
+
+    # Verify uploaded content via ipfs cat
+    import subprocess
+    ret = subprocess.run(['ipfs', 'cat', ipfs_cid], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if ret.returncode != 0:
+        print(f"ERROR: ipfs cat {ipfs_cid} failed: {ret.stderr.decode('utf-8').strip()}")
+        os.remove(test_file)
+        exit(1)
+    fetched = ret.stdout.decode('utf-8')
+    with open(test_file) as f:
+        expected = f.read()
+    if fetched != expected:
+        print(f"ERROR: content mismatch. Expected: {expected!r}, got: {fetched!r}")
+        os.remove(test_file)
+        exit(1)
+    print(f"Verified: ipfs cat {ipfs_cid} matches uploaded content")
+
+    # Test 2: //Zoe (no genesis balance) should fail
+    print("Testing //Zoe (account does not exist on chain)...")
+    success, output, code = client.ipfs_upload('//Zoe', test_file, cid, gateway_url)
+    if success:
+        print("ERROR: //Zoe should have been rejected")
+        os.remove(test_file)
+        exit(1)
+    if code != 61:  # 61 = NOT_CC_HOLDER exit code
+        print(f"ERROR: Expected exit code 61, got {code}")
+        os.remove(test_file)
+        exit(1)
+    print("//Zoe correctly rejected")
+
+    os.remove(test_file)
+    print("IPFS upload test passed!")
+
+
 def test_democracy(client, cid, blocks_to_wait):
     print("################ Testing democracy ...")
     next_phase(client)
@@ -541,6 +594,8 @@ def main(ipfs_local, client, signer, url, port, spec_file, test, wrap_call, batc
         case "democracy":
             # Fixme: democracy params are runtime constants, and therefore we can't test it with the parachain.
             test_democracy(client, cid, blocks_to_wait)
+        case "ipfs-upload":
+            test_ipfs_upload(client, cid, blocks_to_wait)
         case _:
             return "Invalid value for test"
 

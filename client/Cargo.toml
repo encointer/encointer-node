@@ -17,8 +17,10 @@ geojson = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["std"] }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 # local deps
 encointer-api-client-extension = { path = "./encointer-api-client-extension" }

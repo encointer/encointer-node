@@ -206,6 +206,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         test: [
           test_bootstrap_demo_community.sh cc-fee-payment,
@@ -214,6 +215,7 @@ jobs:
           test_bootstrap_demo_community.sh unregister-and-upgrade-registration,
           test_bootstrap_demo_community.sh endorsement,
           test_bootstrap_demo_community.sh democracy,
+          test_bootstrap_demo_community.sh ipfs-upload,
           test_bot_community.sh,
           test_register_business.sh
         ]
@@ -258,6 +260,20 @@ jobs:
           cd client
           python faucet.py &
 
+      - name: Start IPFS gateway
+        if: contains(matrix.test, 'ipfs-upload')
+        run: |
+          docker run -d --name ipfs-gateway --network host \
+            -e JWT_SECRET=ci-test-secret-do-not-use-in-prod \
+            -e CHAIN_RPC_URL=ws://127.0.0.1:9944 \
+            -e IPFS_API_URL=http://127.0.0.1:5001 \
+            -e LOG_LEVEL=debug \
+            encointer/ipfs-gateway:latest
+          for i in {1..30}; do
+            curl -s http://127.0.0.1:5050/health && break
+            sleep 1
+          done
+
       - name: start phase accelerator service
         run: |
           cd client
@@ -265,7 +281,15 @@ jobs:
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
-        run: source ./init_env.sh && ./${{ matrix.test }}
+        run: |
+          if [[ "${{ matrix.test }}" == *"ipfs-upload"* ]]; then
+            export IPFS_GATEWAY_URL=http://127.0.0.1:5050
+          fi
+          source ./init_env.sh && ./${{ matrix.test }}
+
+      - name: Print IPFS gateway logs
+        if: always() && contains(matrix.test, 'ipfs-upload')
+        run: docker logs ipfs-gateway || true
 
   integration-test-docker:
     name: ${{ matrix.test }}

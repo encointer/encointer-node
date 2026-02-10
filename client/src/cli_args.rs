@@ -43,6 +43,8 @@ const DEMURRAGE_HALVING_BLOCKS_ARG: &str = "demurage-halving-blocks";
 const PURPOSE_ID_ARG: &str = "purpose-id";
 const WRAP_CALL_ARG: &str = "wrap-call";
 const BATCH_SIZE_ARG: &str = "batch-size";
+const GATEWAY_URL_ARG: &str = "gateway";
+const FILE_PATH_ARG: &str = "file-path";
 
 pub trait EncointerArgs<'b> {
 	fn account_arg(self) -> Self;
@@ -85,6 +87,8 @@ pub trait EncointerArgs<'b> {
 	fn purpose_id_arg(self) -> Self;
 	fn wrap_call_arg(self) -> Self;
 	fn batch_size_arg(self) -> Self;
+	fn gateway_url_arg(self) -> Self;
+	fn file_path_arg(self) -> Self;
 }
 
 pub trait EncointerArgsExtractor {
@@ -127,6 +131,8 @@ pub trait EncointerArgsExtractor {
 	fn purpose_id_arg(&self) -> Option<PurposeIdType>;
 	fn wrap_call_arg(&self) -> CallWrapping;
 	fn batch_size_arg(&self) -> u32;
+	fn gateway_url_arg(&self) -> Option<&str>;
+	fn file_path_arg(&self) -> Option<&str>;
 }
 
 impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
@@ -521,6 +527,28 @@ impl<'a, 'b> EncointerArgs<'b> for App<'a, 'b> {
 				.help("Maximum batch size"),
 		)
 	}
+
+	fn gateway_url_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(GATEWAY_URL_ARG)
+				.long("gateway")
+				.takes_value(true)
+				.required(false)
+				.default_value("http://localhost:5050")
+				.value_name("URL")
+				.help("IPFS auth gateway URL"),
+		)
+	}
+
+	fn file_path_arg(self) -> Self {
+		self.arg(
+			Arg::with_name(FILE_PATH_ARG)
+				.takes_value(true)
+				.required(true)
+				.value_name("PATH")
+				.help("Path to file to upload"),
+		)
+	}
 }
 
 impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
@@ -665,5 +693,13 @@ impl<'a> EncointerArgsExtractor for ArgMatches<'a> {
 
 	fn batch_size_arg(&self) -> u32 {
 		self.value_of(BATCH_SIZE_ARG).map(|v| v.parse().unwrap()).unwrap_or(100)
+	}
+
+	fn gateway_url_arg(&self) -> Option<&str> {
+		self.value_of(GATEWAY_URL_ARG)
+	}
+
+	fn file_path_arg(&self) -> Option<&str> {
+		self.value_of(FILE_PATH_ARG)
 	}
 }
