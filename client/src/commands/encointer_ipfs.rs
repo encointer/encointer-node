@@ -1,14 +1,10 @@
 //! IPFS upload command with sr25519 gateway authentication
 
-use crate::{
-	cli_args::EncointerArgsExtractor,
-	exit_code,
-	utils::keys::{get_accountid_from_str, get_pair_from_str},
-};
+use crate::{cli_args::EncointerArgsExtractor, exit_code, utils::keys::get_pair_from_str};
 use clap::ArgMatches;
 use reqwest::multipart;
 use serde::{Deserialize, Serialize};
-use sp_core::Pair;
+use sp_core::{crypto::Ss58Codec, Pair};
 use std::path::Path;
 
 #[derive(Serialize)]
@@ -64,7 +60,7 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let file_path = matches.file_path_arg().expect("file path required");
 
 	let pair = get_pair_from_str(signer_str);
-	let address = format!("{}", get_accountid_from_str(signer_str));
+	let address = format!("{}", pair.public().to_ss58check());
 	let client = reqwest::Client::new();
 
 	// Request challenge
