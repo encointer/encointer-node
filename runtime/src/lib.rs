@@ -565,7 +565,7 @@ parameter_types! {
 
 impl pallet_encointer_offline_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_encointer_offline_payment::WeightInfo<Runtime>;
 	type MaxProofSize = MaxProofSize;
 	type MaxVkSize = MaxVkSize;
 }
@@ -740,6 +740,7 @@ mod benches {
 		[pallet_encointer_communities, EncointerCommunities]
 		[pallet_encointer_democracy, EncointerDemocracy]
 		[pallet_encointer_faucet, EncointerFaucet]
+		[pallet_encointer_offline_payment, EncointerOfflinePayment]
 		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
 		[pallet_encointer_scheduler, EncointerScheduler]
 		[pallet_encointer_treasuries, EncointerTreasuries]
