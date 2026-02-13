@@ -566,6 +566,7 @@ parameter_types! {
 impl pallet_encointer_offline_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_encointer_offline_payment::WeightInfo<Runtime>;
+	type Currency = Balances;
 	type MaxProofSize = MaxProofSize;
 	type MaxVkSize = MaxVkSize;
 }

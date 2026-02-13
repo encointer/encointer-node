@@ -150,11 +150,16 @@ pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result
 
 		// Compute public inputs
 		let recipient_hash_bytes = pallet_encointer_offline_payment::hash_recipient(&to.encode());
-		let cid_hash_bytes = pallet_encointer_offline_payment::hash_cid(&cid);
+		let asset_hash_bytes = pallet_encointer_offline_payment::hash_cid(&cid);
 		let amount_bytes = pallet_encointer_offline_payment::balance_to_bytes(amount);
 
+		// Chain-bind the asset hash with genesis hash for cross-chain replay protection
+		let genesis_hash = api.genesis_hash();
+		let chain_asset_hash_bytes =
+			sp_io::hashing::blake2_256(&[&asset_hash_bytes[..], genesis_hash.as_ref()].concat());
+
 		let recipient_hash = bytes32_to_field(&recipient_hash_bytes);
-		let cid_hash = bytes32_to_field(&cid_hash_bytes);
+		let chain_asset_hash = bytes32_to_field(&chain_asset_hash_bytes);
 		let amount_field = bytes32_to_field(&amount_bytes);
 
 		// Get the test proving key
@@ -169,7 +174,7 @@ pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result
 			nonce,
 			recipient_hash,
 			amount_field,
-			cid_hash,
+			chain_asset_hash,
 		)
 		.expect("Proof generation failed");
 

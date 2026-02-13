@@ -41,6 +41,13 @@ impl<T: frame_system::Config> pallet_encointer_offline_payment::WeightInfo for W
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 
+	fn submit_native_offline_payment() -> Weight {
+		// Same ZK proof verification cost as CC variant
+		Weight::from_parts(500_000_000, 0)
+			.saturating_add(T::DbWeight::get().reads(4))
+			.saturating_add(T::DbWeight::get().writes(2))
+	}
+
 	fn set_verification_key() -> Weight {
 		Weight::from_parts(100_000_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1))
