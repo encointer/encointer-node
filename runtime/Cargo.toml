@@ -7,7 +7,7 @@ name = "encointer-node-notee-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "1.16.370"
+version = "1.21.380"
 
 [dependencies]
 log = { workspace = true }
@@ -29,6 +29,7 @@ pallet-encointer-communities = { workspace = true }
 pallet-encointer-communities-rpc-runtime-api = { workspace = true }
 pallet-encointer-democracy = { workspace = true }
 pallet-encointer-faucet = { workspace = true }
+pallet-encointer-offline-payment = { workspace = true }
 pallet-encointer-reputation-commitments = { workspace = true }
 pallet-encointer-scheduler = { workspace = true }
 pallet-encointer-treasuries = { workspace = true }
@@ -99,6 +100,7 @@ runtime-benchmarks = [
     "pallet-encointer-communities/runtime-benchmarks",
     "pallet-encointer-democracy/runtime-benchmarks",
     "pallet-encointer-faucet/runtime-benchmarks",
+    "pallet-encointer-offline-payment/runtime-benchmarks",
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
     "pallet-encointer-treasuries/runtime-benchmarks",
@@ -141,6 +143,7 @@ std = [
     "pallet-encointer-communities/std",
     "pallet-encointer-democracy/std",
     "pallet-encointer-faucet/std",
+    "pallet-encointer-offline-payment/std",
     "pallet-encointer-reputation-commitments/std",
     "pallet-encointer-scheduler/std",
     "pallet-encointer-treasuries-rpc-runtime-api/std",
@@ -194,6 +197,7 @@ try-runtime = [
     "pallet-encointer-communities/try-runtime",
     "pallet-encointer-democracy/try-runtime",
     "pallet-encointer-faucet/try-runtime",
+    "pallet-encointer-offline-payment/try-runtime",
     "pallet-encointer-reputation-commitments/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
     "pallet-encointer-treasuries/try-runtime",

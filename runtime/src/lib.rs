@@ -140,7 +140,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: Cow::Borrowed("encointer-node-notee"),
 	impl_name: Cow::Borrowed("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 370,
+	spec_version: 380,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -559,6 +559,19 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MaxProofSize: u32 = 256;
+	pub const MaxVkSize: u32 = 2048;
+}
+
+impl pallet_encointer_offline_payment::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_encointer_offline_payment::WeightInfo<Runtime>;
+	type Currency = Balances;
+	type MaxProofSize = MaxProofSize;
+	type MaxVkSize = MaxVkSize;
+}
+
+parameter_types! {
 	pub const ConfirmationPeriod: Moment = 5 * 60 * 1000; // [ms]
 	pub const ProposalLifetime: Moment = 20 * 60 * 1000; // [ms]
 }
@@ -670,6 +683,7 @@ construct_runtime!(
 		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 66,
 		EncointerDemocracy: pallet_encointer_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 67,
 		EncointerTreasuries: pallet_encointer_treasuries::{Pallet, Call, Storage, Event<T>} = 68,
+		EncointerOfflinePayment: pallet_encointer_offline_payment::{Pallet, Call, Storage, Event<T>} = 69,
 
 	}
 );
@@ -727,6 +741,7 @@ mod benches {
 		[pallet_encointer_communities, EncointerCommunities]
 		[pallet_encointer_democracy, EncointerDemocracy]
 		[pallet_encointer_faucet, EncointerFaucet]
+		[pallet_encointer_offline_payment, EncointerOfflinePayment]
 		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
 		[pallet_encointer_scheduler, EncointerScheduler]
 		[pallet_encointer_treasuries, EncointerTreasuries]

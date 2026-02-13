@@ -217,7 +217,8 @@ jobs:
           test_bootstrap_demo_community.sh democracy,
           test_bootstrap_demo_community.sh ipfs-upload,
           test_bot_community.sh,
-          test_register_business.sh
+          test_register_business.sh,
+          test_offline_payment.sh
         ]
     steps:
       - uses: actions/checkout@v3
