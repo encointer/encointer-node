@@ -31,6 +31,7 @@ pallet-encointer-democracy = { workspace = true }
 pallet-encointer-faucet = { workspace = true }
 pallet-encointer-offline-payment = { workspace = true }
 pallet-encointer-reputation-commitments = { workspace = true }
+pallet-encointer-reputation-rings = { workspace = true }
 pallet-encointer-scheduler = { workspace = true }
 pallet-encointer-treasuries = { workspace = true }
 pallet-encointer-treasuries-rpc-runtime-api = { workspace = true }
@@ -102,6 +103,7 @@ runtime-benchmarks = [
     "pallet-encointer-faucet/runtime-benchmarks",
     "pallet-encointer-offline-payment/runtime-benchmarks",
     "pallet-encointer-reputation-commitments/runtime-benchmarks",
+    "pallet-encointer-reputation-rings/runtime-benchmarks",
     "pallet-encointer-scheduler/runtime-benchmarks",
     "pallet-encointer-treasuries/runtime-benchmarks",
     "pallet-grandpa/runtime-benchmarks",
@@ -145,6 +147,7 @@ std = [
     "pallet-encointer-faucet/std",
     "pallet-encointer-offline-payment/std",
     "pallet-encointer-reputation-commitments/std",
+    "pallet-encointer-reputation-rings/std",
     "pallet-encointer-scheduler/std",
     "pallet-encointer-treasuries-rpc-runtime-api/std",
     "pallet-encointer-treasuries/std",
@@ -199,6 +202,7 @@ try-runtime = [
     "pallet-encointer-faucet/try-runtime",
     "pallet-encointer-offline-payment/try-runtime",
     "pallet-encointer-reputation-commitments/try-runtime",
+    "pallet-encointer-reputation-rings/try-runtime",
     "pallet-encointer-scheduler/try-runtime",
     "pallet-encointer-treasuries/try-runtime",
     "pallet-grandpa/try-runtime",

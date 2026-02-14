@@ -218,7 +218,8 @@ jobs:
           test_bootstrap_demo_community.sh ipfs-upload,
           test_bot_community.sh,
           test_register_business.sh,
-          test_offline_payment.sh
+          test_offline_payment.sh,
+          test_reputation_rings.sh
         ]
     steps:
       - uses: actions/checkout@v3
@@ -333,11 +334,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to Dockerhub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+#      - name: Login to Dockerhub
+#        uses: docker/login-action@v2
+#        with:
+#          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+#          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Cache Docker layers
         uses: actions/cache@v3

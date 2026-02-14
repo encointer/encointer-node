@@ -621,6 +621,66 @@ fn main() {
 				.runner(commands::encointer_reputation_commitments::list_purposes)
 		)
 		.add_cmd(
+			Command::new("register-bandersnatch-key")
+				.description("Register a Bandersnatch public key for reputation rings")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("key")
+								.long("key")
+								.takes_value(true)
+								.required(true)
+								.value_name("HEX")
+								.help("hex-encoded 32-byte Bandersnatch public key"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::register_bandersnatch_key),
+		)
+		.add_cmd(
+			Command::new("initiate-rings")
+				.description("Initiate ring computation for a community at a ceremony index")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index for which to compute rings"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::initiate_rings),
+		)
+		.add_cmd(
+			Command::new("continue-ring-computation")
+				.description("Continue the pending ring computation (one step)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+				})
+				.runner(commands::encointer_reputation_rings::continue_ring_computation),
+		)
+		.add_cmd(
+			Command::new("get-rings")
+				.description("Query ring members for a community and ceremony index")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.at_block_arg()
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index to query rings for"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::get_rings),
+		)
+		.add_cmd(
 			Command::new("submit-set-inactivity-timeout-proposal")
 				.description("Submit set inactivity timeout proposal")
 				.options(|app| {
