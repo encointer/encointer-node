@@ -11,4 +11,5 @@ pub mod pallet_encointer_reputation_commitments;
 pub mod pallet_encointer_scheduler;
 
 pub mod pallet_encointer_offline_payment;
+pub mod pallet_encointer_reputation_rings;
 pub mod pallet_encointer_treasuries;
