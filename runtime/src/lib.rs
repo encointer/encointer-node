@@ -578,7 +578,7 @@ parameter_types! {
 
 impl pallet_encointer_reputation_rings::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_encointer_reputation_rings::WeightInfo<Runtime>;
 	type MaxRingSize = MaxRingSize;
 	type ChunkSize = RingChunkSize;
 }

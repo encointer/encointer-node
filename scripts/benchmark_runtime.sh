@@ -42,7 +42,8 @@ pallets=(
 # "pallet_encointer_faucet"
 # "pallet_encointer_reputation_commitments"
 # "pallet_encointer_democracy"
-pallet_encointer-offline-payment
+# "pallet_encointer_offline_payment"
+pallet_encointer_reputation_rings
 )
 
 for pallet in ${pallets[*]}; do
