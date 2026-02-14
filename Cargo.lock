@@ -2989,7 +2989,7 @@ dependencies = [
 [[package]]
 name = "encointer-meetup-validation"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "encointer-primitives",
  "parity-scale-codec",
@@ -3090,6 +3090,7 @@ dependencies = [
  "pallet-encointer-faucet",
  "pallet-encointer-offline-payment",
  "pallet-encointer-reputation-commitments",
+ "pallet-encointer-reputation-ring",
  "pallet-encointer-scheduler",
  "pallet-encointer-treasuries",
  "pallet-encointer-treasuries-rpc-runtime-api",
@@ -3148,7 +3149,7 @@ dependencies = [
 [[package]]
 name = "encointer-rpc"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "jsonrpsee 0.24.10",
  "jsonrpsee-core 0.24.10",
@@ -3271,7 +3272,7 @@ checksum = "e48c92028aaa870e83d51c64e5d4e0b6981b360c522198c23959f219a4e1b15b"
 [[package]]
 name = "ep-core"
 version = "21.0.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "array-bytes 6.2.3",
  "impl-serde",
@@ -7365,7 +7366,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-offline-payment"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "ark-bn254",
  "ark-crypto-primitives",
@@ -7415,9 +7416,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-encointer-reputation-ring"
+version = "0.1.0"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
+dependencies = [
+ "encointer-primitives",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-encointer-ceremonies",
+ "pallet-encointer-communities",
+ "pallet-encointer-scheduler",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-encointer-scheduler"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -7435,7 +7457,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-treasuries"
 version = "21.7.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -7457,7 +7479,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-treasuries-rpc"
 version = "21.3.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -7479,7 +7501,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-treasuries-rpc-runtime-api"
 version = "21.3.0"
-source = "git+https://github.com/encointer/pallets?branch=master#7441e467caf36515d11968d405750271420ccdd8"
+source = "git+https://github.com/encointer/pallets?branch=master#a90e4dca7cd1e1918eb512f5c9b76b834fa9b9f5"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -8854,7 +8876,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.14.0",
  "log",
  "multimap",
@@ -8874,7 +8896,7 @@ version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "343d3bd7056eda839b03204e68deff7d1b13aba7af2b2fd16890697274262ee7"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.14.0",
  "log",
  "multimap",

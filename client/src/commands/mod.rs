@@ -7,6 +7,7 @@ pub mod encointer_faucet;
 pub mod encointer_ipfs;
 pub mod encointer_offline_payment;
 pub mod encointer_reputation_commitments;
+pub mod encointer_reputation_ring;
 pub mod encointer_scheduler;
 pub mod encointer_treasuries;
 pub mod frame;
