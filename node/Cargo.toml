@@ -11,7 +11,7 @@ repository = "https://github.com/encointer/encointer-node"
 #   * Align major and minor version with polkadot-sdk major.minor.
 #   * Bump patch version for new releases, and make it the release tag.
 #   * The client should follow this version.
-version = "1.21.0"
+version = "1.21.1"
 
 [[bin]]
 name = "encointer-node-notee"

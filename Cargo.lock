@@ -2968,7 +2968,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-client-notee"
-version = "1.21.0"
+version = "1.21.1"
 dependencies = [
  "ac-keystore",
  "array-bytes 6.2.3",
@@ -3023,7 +3023,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee"
-version = "1.21.0"
+version = "1.21.1"
 dependencies = [
  "clap 4.5.58",
  "encointer-balances-tx-payment-rpc",
@@ -3083,7 +3083,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-notee-runtime"
-version = "1.21.380"
+version = "1.21.390"
 dependencies = [
  "encointer-balances-tx-payment",
  "encointer-balances-tx-payment-rpc-runtime-api",

@@ -140,7 +140,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: Cow::Borrowed("encointer-node-notee"),
 	impl_name: Cow::Borrowed("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 380,
+	spec_version: 390,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
