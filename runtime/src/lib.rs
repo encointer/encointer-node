@@ -572,11 +572,11 @@ impl pallet_encointer_offline_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxRingSize: u32 = 2048;
+	pub const MaxRingSize: u32 = 255;
 	pub const RingChunkSize: u32 = 100;
 }
 
-impl pallet_encointer_reputation_ring::Config for Runtime {
+impl pallet_encointer_reputation_rings::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type MaxRingSize = MaxRingSize;
@@ -696,7 +696,7 @@ construct_runtime!(
 		EncointerDemocracy: pallet_encointer_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 67,
 		EncointerTreasuries: pallet_encointer_treasuries::{Pallet, Call, Storage, Event<T>} = 68,
 		EncointerOfflinePayment: pallet_encointer_offline_payment::{Pallet, Call, Storage, Event<T>} = 69,
-		EncointerReputationRing: pallet_encointer_reputation_ring::{Pallet, Call, Storage, Event<T>} = 70,
+		EncointerReputationRings: pallet_encointer_reputation_rings::{Pallet, Call, Storage, Event<T>} = 70,
 
 	}
 );
@@ -756,7 +756,7 @@ mod benches {
 		[pallet_encointer_faucet, EncointerFaucet]
 		[pallet_encointer_offline_payment, EncointerOfflinePayment]
 		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
-		[pallet_encointer_reputation_ring, EncointerReputationRing]
+		[pallet_encointer_reputation_rings, EncointerReputationRings]
 		[pallet_encointer_scheduler, EncointerScheduler]
 		[pallet_encointer_treasuries, EncointerTreasuries]
 	);

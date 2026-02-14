@@ -219,7 +219,7 @@ jobs:
           test_bot_community.sh,
           test_register_business.sh,
           test_offline_payment.sh,
-          test_reputation_ring.sh
+          test_reputation_rings.sh
         ]
     steps:
       - uses: actions/checkout@v3

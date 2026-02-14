@@ -5,7 +5,7 @@ use crate::{
 use clap::ArgMatches;
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
-	ReputationRingApi,
+	ReputationRingsApi,
 };
 use log::info;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
@@ -32,7 +32,7 @@ pub fn register_bandersnatch_key(_args: &str, matches: &ArgMatches<'_>) -> Resul
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerReputationRing", "register_bandersnatch_key", key)
+			compose_extrinsic!(api, "EncointerReputationRings", "register_bandersnatch_key", key)
 				.unwrap();
 
 		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
@@ -75,7 +75,7 @@ pub fn initiate_rings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 
 		let xt: EncointerXt<_> = compose_extrinsic!(
 			api,
-			"EncointerReputationRing",
+			"EncointerReputationRings",
 			"initiate_rings",
 			cid,
 			ceremony_index
@@ -111,7 +111,7 @@ pub fn continue_ring_computation(_args: &str, matches: &ArgMatches<'_>) -> Resul
 		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
 		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerReputationRing", "continue_ring_computation")
+			compose_extrinsic!(api, "EncointerReputationRings", "continue_ring_computation")
 				.unwrap();
 
 		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
@@ -147,14 +147,44 @@ pub fn get_rings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Erro
 		println!("Rings for community {} at ceremony index {}:", cid, ceremony_index);
 
 		for level in 1..=5u8 {
-			match api.get_ring_members(cid, ceremony_index, level, maybe_at).await {
-				Ok(Some(members)) => {
-					println!("  Level {}/5: {} members", level, members.len());
-					for key in members.iter() {
-						println!("    0x{}", hex::encode(key));
+			match api.get_sub_ring_count(cid, ceremony_index, level, maybe_at).await {
+				Ok(count) if count > 0 => {
+					let mut total_members = 0u32;
+					for sub_idx in 0..count {
+						match api
+							.get_ring_members(cid, ceremony_index, level, sub_idx, maybe_at)
+							.await
+						{
+							Ok(Some(members)) => {
+								total_members += members.len() as u32;
+								if count > 1 {
+									println!(
+										"  Level {}/5 sub-ring {}/{}: {} members",
+										level,
+										sub_idx + 1,
+										count,
+										members.len()
+									);
+								}
+								for key in members.iter() {
+									println!("    0x{}", hex::encode(key));
+								}
+							},
+							Ok(None) => {},
+							Err(e) => {
+								println!(
+									"  Level {}/5 sub-ring {}: error: {:?}",
+									level, sub_idx, e
+								);
+							},
+						}
 					}
+					println!(
+						"  Level {}/5: {} members ({} sub-rings)",
+						level, total_members, count
+					);
 				},
-				Ok(None) => {
+				Ok(_) => {
 					println!("  Level {}/5: no ring", level);
 				},
 				Err(e) => {

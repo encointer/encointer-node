@@ -635,7 +635,7 @@ fn main() {
 								.help("hex-encoded 32-byte Bandersnatch public key"),
 						)
 				})
-				.runner(commands::encointer_reputation_ring::register_bandersnatch_key),
+				.runner(commands::encointer_reputation_rings::register_bandersnatch_key),
 		)
 		.add_cmd(
 			Command::new("initiate-rings")
@@ -652,7 +652,7 @@ fn main() {
 								.help("ceremony index for which to compute rings"),
 						)
 				})
-				.runner(commands::encointer_reputation_ring::initiate_rings),
+				.runner(commands::encointer_reputation_rings::initiate_rings),
 		)
 		.add_cmd(
 			Command::new("continue-ring-computation")
@@ -661,7 +661,7 @@ fn main() {
 					app.setting(AppSettings::ColoredHelp)
 						.account_arg()
 				})
-				.runner(commands::encointer_reputation_ring::continue_ring_computation),
+				.runner(commands::encointer_reputation_rings::continue_ring_computation),
 		)
 		.add_cmd(
 			Command::new("get-rings")
@@ -678,7 +678,7 @@ fn main() {
 								.help("ceremony index to query rings for"),
 						)
 				})
-				.runner(commands::encointer_reputation_ring::get_rings),
+				.runner(commands::encointer_reputation_rings::get_rings),
 		)
 		.add_cmd(
 			Command::new("submit-set-inactivity-timeout-proposal")

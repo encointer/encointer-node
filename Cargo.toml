@@ -56,7 +56,7 @@ pallet-encointer-treasuries = { default-features = false, version = "~21.7.0" }
 pallet-encointer-treasuries-rpc = { version = "~21.3.0" }
 pallet-encointer-treasuries-rpc-runtime-api = { default-features = false, version = "~21.3.0" }
 pallet-encointer-offline-payment = { git = "https://github.com/encointer/pallets", branch = "master", default-features = false }
-pallet-encointer-reputation-ring = { git = "https://github.com/encointer/pallets", branch = "master", default-features = false }
+pallet-encointer-reputation-rings = { git = "https://github.com/encointer/pallets", branch = "master", default-features = false }
 
 
 # substrate deps
@@ -172,12 +172,12 @@ ac-keystore = { version = "1.21.0" }
 #pallet-encointer-reputation-commitments = { path = "../encointer-pallets/reputation-commitments" }
 #pallet-encointer-scheduler = { path = "../encointer-pallets/scheduler" }
 #pallet-encointer-offline-payment = { path = "../encointer-pallets/offline-payment" }
-#pallet-encointer-reputation-ring = { path = "../encointer-pallets/reputation-ring" }
+#pallet-encointer-reputation-rings = { path = "../encointer-pallets/reputation-rings" }
 #pallet-encointer-treasuries = { path = "../encointer-pallets/treasuries" }
 #pallet-encointer-treasuries-rpc = { path = "../encointer-pallets/treasuries/rpc" }
 #pallet-encointer-treasuries-rpc-runtime-api = { path = "../encointer-pallets/treasuries/rpc/runtime-api" }
 
-# Git patches for master branch
+# Git patches for feat/reputation-rings branch (includes all master pallets + reputation-rings)
 encointer-balances-tx-payment = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
@@ -197,7 +197,7 @@ pallet-encointer-democracy = { git = "https://github.com/encointer/pallets", bra
 pallet-encointer-faucet = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-offline-payment = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-reputation-commitments = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-reputation-ring = { git = "https://github.com/encointer/pallets", branch = "master" }
+pallet-encointer-reputation-rings = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-treasuries = { git = "https://github.com/encointer/pallets", branch = "master" }
 pallet-encointer-treasuries-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
@@ -222,7 +222,7 @@ pallet-encointer-treasuries-rpc-runtime-api = { git = "https://github.com/encoin
 #pallet-encointer-democracy = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
 #pallet-encointer-faucet = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
 #pallet-encointer-reputation-commitments = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-reputation-ring = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
+#pallet-encointer-reputation-rings = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
 #pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
 #pallet-encointer-treasuries = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
 #pallet-encointer-treasuries-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }

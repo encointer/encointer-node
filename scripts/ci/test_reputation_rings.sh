@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "=============================================="
-echo "  Reputation Ring E2E Test"
+echo "  Reputation Rings E2E Test"
 echo "  Bandersnatch key registration & ring computation"
 echo "=============================================="
 echo ""
@@ -105,7 +105,7 @@ done
 
 echo ""
 echo "=============================================="
-echo "  Reputation Ring E2E Test PASSED"
+echo "  Reputation Rings E2E Test PASSED"
 echo "=============================================="
 echo ""
 echo "Summary:"
