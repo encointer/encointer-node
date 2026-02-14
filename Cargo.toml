@@ -177,7 +177,7 @@ ac-keystore = { version = "1.21.0" }
 #pallet-encointer-treasuries-rpc = { path = "../encointer-pallets/treasuries/rpc" }
 #pallet-encointer-treasuries-rpc-runtime-api = { path = "../encointer-pallets/treasuries/rpc/runtime-api" }
 
-# Git patches for feat/reputation-rings branch (includes all master pallets + reputation-rings)
+# Git patches for master branch
 encointer-balances-tx-payment = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
