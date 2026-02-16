@@ -13,11 +13,11 @@ use encointer_api_client_extension::{
 use encointer_primitives::balances::BalanceType;
 use frame_support::BoundedVec;
 use log::info;
-use pallet_encointer_offline_payment::ceremony::{
-	ceremony_contribute, ceremony_init, serialize_delta_g2, serialize_pk, serialize_vk,
-	verify_ceremony_pk, verify_contribution, ContributionReceipt,
-};
 use pallet_encointer_offline_payment::{
+	ceremony::{
+		ceremony_contribute, ceremony_init, serialize_delta_g2, serialize_pk, serialize_vk,
+		verify_ceremony_pk, verify_contribution, ContributionReceipt,
+	},
 	circuit::{compute_commitment, poseidon_config},
 	derive_zk_secret,
 	prover::{
@@ -591,12 +591,7 @@ pub fn cmd_ceremony_init(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 		.expect("write transcript");
 
 	println!("Ceremony initialized.");
-	println!(
-		"  PK: {} ({} bytes, blake2: 0x{})",
-		pk_path,
-		pk_bytes.len(),
-		hex::encode(pk_hash)
-	);
+	println!("  PK: {} ({} bytes, blake2: 0x{})", pk_path, pk_bytes.len(), hex::encode(pk_hash));
 	println!("  Transcript: {}", transcript_path);
 	println!();
 	println!("Next: distribute {} and {} to the first participant.", pk_path, transcript_path);
@@ -648,22 +643,26 @@ pub fn cmd_ceremony_contribute(_args: &str, matches: &ArgMatches<'_>) -> Result<
 	let old_delta_hash = hex::encode(sp_io::hashing::blake2_256(&receipt_bytes[32..96]));
 	let new_delta_hash = hex::encode(sp_io::hashing::blake2_256(&receipt_bytes[96..160]));
 
-	transcript["contributions"]
-		.as_array_mut()
-		.expect("contributions array")
-		.push(serde_json::json!({
+	transcript["contributions"].as_array_mut().expect("contributions array").push(
+		serde_json::json!({
 			"participant": participant,
 			"receipt": receipt_hex,
 			"old_delta_g2_hash": format!("0x{}", old_delta_hash),
 			"new_delta_g2_hash": format!("0x{}", new_delta_hash),
-		}));
+		}),
+	);
 
 	std::fs::write(transcript_path, serde_json::to_string_pretty(&transcript).unwrap())
 		.expect("write transcript");
 
 	let pk_hash = sp_io::hashing::blake2_256(&new_pk_bytes);
 	println!("Contribution by '{}' applied successfully.", participant);
-	println!("  PK: {} ({} bytes, blake2: 0x{})", pk_path, new_pk_bytes.len(), hex::encode(pk_hash));
+	println!(
+		"  PK: {} ({} bytes, blake2: 0x{})",
+		pk_path,
+		new_pk_bytes.len(),
+		hex::encode(pk_hash)
+	);
 
 	Ok(())
 }
@@ -693,14 +692,17 @@ pub fn cmd_ceremony_verify(_args: &str, matches: &ArgMatches<'_>) -> Result<(), 
 		let participant = entry["participant"].as_str().unwrap_or("unknown");
 		let receipt_hex = entry["receipt"].as_str().expect("receipt field");
 		let receipt_bytes = hex::decode(receipt_hex).expect("decode receipt hex");
-		let receipt =
-			ContributionReceipt::from_bytes(&receipt_bytes).expect("deserialize receipt");
+		let receipt = ContributionReceipt::from_bytes(&receipt_bytes).expect("deserialize receipt");
 
 		// Chain check: previous new_delta_g2 == this old_delta_g2
 		// Receipt layout: d_g1 (32B) | old_delta_g2 (64B) | new_delta_g2 (64B)
 		if let Some(ref prev) = prev_new_delta_bytes {
 			if *prev != receipt_bytes[32..96] {
-				println!("  #{} {}: FAIL (chain break — old_delta_g2 mismatch)", i + 1, participant);
+				println!(
+					"  #{} {}: FAIL (chain break — old_delta_g2 mismatch)",
+					i + 1,
+					participant
+				);
 				all_pass = false;
 				continue;
 			}
