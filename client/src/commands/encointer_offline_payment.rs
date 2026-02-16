@@ -13,6 +13,10 @@ use encointer_api_client_extension::{
 use encointer_primitives::balances::BalanceType;
 use frame_support::BoundedVec;
 use log::info;
+use pallet_encointer_offline_payment::ceremony::{
+	ceremony_contribute, ceremony_init, serialize_delta_g2, serialize_pk, serialize_vk,
+	verify_ceremony_pk, verify_contribution, ContributionReceipt,
+};
 use pallet_encointer_offline_payment::{
 	circuit::{compute_commitment, poseidon_config},
 	derive_zk_secret,
@@ -556,6 +560,227 @@ pub fn inspect_setup_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 		println!("Type:   UNKNOWN — could not deserialize as PK or VK");
 		std::process::exit(1);
 	}
+
+	Ok(())
+}
+
+// ---------------------------------------------------------------------------
+//  Multiparty trusted setup ceremony commands
+// ---------------------------------------------------------------------------
+
+/// Initialize a ceremony — generates the initial CRS and an empty transcript.
+pub fn cmd_ceremony_init(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let pk_path = matches.value_of("pk-out").unwrap_or("ceremony_pk.bin");
+	let transcript_path = matches.value_of("transcript").unwrap_or("ceremony_transcript.json");
+
+	eprintln!("Generating initial CRS with OS randomness...");
+	let pk = ceremony_init();
+
+	let pk_bytes = serialize_pk(&pk);
+	std::fs::write(pk_path, &pk_bytes).expect("write PK file");
+
+	let pk_hash = sp_io::hashing::blake2_256(&pk_bytes);
+	let delta_bytes = serialize_delta_g2(&pk);
+	let delta_hash = hex::encode(sp_io::hashing::blake2_256(&delta_bytes));
+
+	let transcript = serde_json::json!({
+		"contributions": [],
+		"initial_delta_g2_hash": format!("0x{}", delta_hash),
+	});
+	std::fs::write(transcript_path, serde_json::to_string_pretty(&transcript).unwrap())
+		.expect("write transcript");
+
+	println!("Ceremony initialized.");
+	println!(
+		"  PK: {} ({} bytes, blake2: 0x{})",
+		pk_path,
+		pk_bytes.len(),
+		hex::encode(pk_hash)
+	);
+	println!("  Transcript: {}", transcript_path);
+	println!();
+	println!("Next: distribute {} and {} to the first participant.", pk_path, transcript_path);
+
+	Ok(())
+}
+
+/// Apply one contribution to the ceremony proving key.
+pub fn cmd_ceremony_contribute(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let pk_path = matches.value_of("pk").unwrap_or("ceremony_pk.bin");
+	let transcript_path = matches.value_of("transcript").unwrap_or("ceremony_transcript.json");
+	let participant = matches.value_of("participant").expect("--participant is required");
+
+	eprintln!("Loading ceremony PK from {}...", pk_path);
+	let pk_bytes = std::fs::read(pk_path).expect("read PK");
+	let pk = TrustedSetup::proving_key_from_bytes(&pk_bytes)
+		.expect("Failed to deserialize PK — file may be corrupt");
+
+	eprintln!("Applying contribution for '{}'...", participant);
+	let (pk_new, receipt) = ceremony_contribute(pk);
+
+	// Self-verify
+	if !verify_contribution(&receipt) {
+		eprintln!("ERROR: Self-verification of receipt FAILED (should not happen)");
+		std::process::exit(1);
+	}
+	eprintln!("Receipt pairing check: PASS");
+
+	eprintln!("Functional test (generate + verify proof)...");
+	if !verify_ceremony_pk(&pk_new) {
+		eprintln!("ERROR: Functional test FAILED after contribution");
+		std::process::exit(1);
+	}
+	eprintln!("Functional test: PASS");
+
+	// Serialize updated PK
+	let new_pk_bytes = serialize_pk(&pk_new);
+	std::fs::write(pk_path, &new_pk_bytes).expect("write PK");
+
+	// Update transcript
+	let transcript_str = std::fs::read_to_string(transcript_path).expect("read transcript");
+	let mut transcript: serde_json::Value =
+		serde_json::from_str(&transcript_str).expect("parse transcript");
+
+	let receipt_hex = hex::encode(receipt.to_bytes());
+	let receipt_bytes = receipt.to_bytes();
+	// Receipt layout: d_g1 (32B) | old_delta_g2 (64B) | new_delta_g2 (64B)
+	// old_delta_g2 starts at offset 32, new_delta_g2 starts at offset 96
+	let old_delta_hash = hex::encode(sp_io::hashing::blake2_256(&receipt_bytes[32..96]));
+	let new_delta_hash = hex::encode(sp_io::hashing::blake2_256(&receipt_bytes[96..160]));
+
+	transcript["contributions"]
+		.as_array_mut()
+		.expect("contributions array")
+		.push(serde_json::json!({
+			"participant": participant,
+			"receipt": receipt_hex,
+			"old_delta_g2_hash": format!("0x{}", old_delta_hash),
+			"new_delta_g2_hash": format!("0x{}", new_delta_hash),
+		}));
+
+	std::fs::write(transcript_path, serde_json::to_string_pretty(&transcript).unwrap())
+		.expect("write transcript");
+
+	let pk_hash = sp_io::hashing::blake2_256(&new_pk_bytes);
+	println!("Contribution by '{}' applied successfully.", participant);
+	println!("  PK: {} ({} bytes, blake2: 0x{})", pk_path, new_pk_bytes.len(), hex::encode(pk_hash));
+
+	Ok(())
+}
+
+/// Verify all contributions in a ceremony transcript.
+pub fn cmd_ceremony_verify(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let pk_path = matches.value_of("pk").unwrap_or("ceremony_pk.bin");
+	let transcript_path = matches.value_of("transcript").unwrap_or("ceremony_transcript.json");
+
+	let transcript_str = std::fs::read_to_string(transcript_path).expect("read transcript");
+	let transcript: serde_json::Value =
+		serde_json::from_str(&transcript_str).expect("parse transcript");
+
+	let contributions = transcript["contributions"].as_array().expect("contributions array");
+	if contributions.is_empty() {
+		println!("No contributions in transcript.");
+		return Ok(());
+	}
+
+	println!("Verifying {} contribution(s)...", contributions.len());
+
+	let mut all_pass = true;
+	// Track the previous receipt's new_delta_g2 bytes for chain checks
+	let mut prev_new_delta_bytes: Option<Vec<u8>> = None;
+
+	for (i, entry) in contributions.iter().enumerate() {
+		let participant = entry["participant"].as_str().unwrap_or("unknown");
+		let receipt_hex = entry["receipt"].as_str().expect("receipt field");
+		let receipt_bytes = hex::decode(receipt_hex).expect("decode receipt hex");
+		let receipt =
+			ContributionReceipt::from_bytes(&receipt_bytes).expect("deserialize receipt");
+
+		// Chain check: previous new_delta_g2 == this old_delta_g2
+		// Receipt layout: d_g1 (32B) | old_delta_g2 (64B) | new_delta_g2 (64B)
+		if let Some(ref prev) = prev_new_delta_bytes {
+			if *prev != receipt_bytes[32..96] {
+				println!("  #{} {}: FAIL (chain break — old_delta_g2 mismatch)", i + 1, participant);
+				all_pass = false;
+				continue;
+			}
+		}
+
+		let pairing_ok = verify_contribution(&receipt);
+		let status = if pairing_ok { "PASS" } else { "FAIL" };
+		println!("  #{} {}: {}", i + 1, participant, status);
+		if !pairing_ok {
+			all_pass = false;
+		}
+
+		prev_new_delta_bytes = Some(receipt_bytes[96..160].to_vec());
+	}
+
+	// Functional test on final PK
+	eprintln!("Loading final PK for functional test...");
+	let pk_bytes = std::fs::read(pk_path).expect("read PK");
+	let pk = TrustedSetup::proving_key_from_bytes(&pk_bytes).expect("deserialize PK");
+
+	let functional_ok = verify_ceremony_pk(&pk);
+	println!("  Functional test: {}", if functional_ok { "PASS" } else { "FAIL" });
+	if !functional_ok {
+		all_pass = false;
+	}
+
+	println!();
+	if all_pass {
+		println!("PASS: All {} contribution(s) verified.", contributions.len());
+	} else {
+		println!("FAIL: One or more verifications failed.");
+		std::process::exit(1);
+	}
+
+	Ok(())
+}
+
+/// Finalize a ceremony — extract PK and VK files from the ceremony state.
+pub fn cmd_ceremony_finalize(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let pk_in = matches.value_of("pk").unwrap_or("ceremony_pk.bin");
+	let pk_out = matches.value_of("pk-out").unwrap_or("proving_key.bin");
+	let vk_out = matches.value_of("vk-out").unwrap_or("verifying_key.bin");
+
+	eprintln!("Loading ceremony PK from {}...", pk_in);
+	let pk_bytes = std::fs::read(pk_in).expect("read PK");
+	let pk = TrustedSetup::proving_key_from_bytes(&pk_bytes).expect("deserialize PK");
+
+	let final_pk_bytes = serialize_pk(&pk);
+	std::fs::write(pk_out, &final_pk_bytes).expect("write PK");
+
+	let vk_bytes = serialize_vk(&pk);
+	std::fs::write(vk_out, &vk_bytes).expect("write VK");
+
+	let pk_hash = sp_io::hashing::blake2_256(&final_pk_bytes);
+	let vk_hash = sp_io::hashing::blake2_256(&vk_bytes);
+
+	println!("Ceremony finalized.");
+	println!(
+		"  Proving key:   {} ({} bytes, blake2: 0x{})",
+		pk_out,
+		final_pk_bytes.len(),
+		hex::encode(pk_hash)
+	);
+	println!(
+		"  Verifying key: {} ({} bytes, blake2: 0x{})",
+		vk_out,
+		vk_bytes.len(),
+		hex::encode(vk_hash)
+	);
+	println!();
+	println!("Next steps:");
+	println!(
+		"  1. Verify:       encointer-client-notee verify-trusted-setup --pk {} --vk {}",
+		pk_out, vk_out
+	);
+	println!(
+		"  2. Set on-chain: encointer-client-notee set-offline-payment-vk --vk-file {} --signer //Alice",
+		vk_out
+	);
+	println!("  3. Distribute {} to wallet apps", pk_out);
 
 	Ok(())
 }

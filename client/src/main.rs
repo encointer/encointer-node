@@ -1005,6 +1005,118 @@ fn main() {
 				.runner(commands::encointer_offline_payment::verify_trusted_setup),
 		)
 		.add_cmd(
+			Command::new("ceremony-init")
+				.description("Initialize a multiparty trusted setup ceremony (generates initial CRS)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk-out")
+								.long("pk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("output path for the ceremony proving key"),
+						)
+						.arg(
+							Arg::with_name("transcript")
+								.long("transcript")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_transcript.json")
+								.help("output path for the ceremony transcript"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_init),
+		)
+		.add_cmd(
+			Command::new("ceremony-contribute")
+				.description("Apply one participant's contribution to a ceremony")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("path to the ceremony proving key (read + overwrite)"),
+						)
+						.arg(
+							Arg::with_name("transcript")
+								.long("transcript")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_transcript.json")
+								.help("path to the ceremony transcript (read + append)"),
+						)
+						.arg(
+							Arg::with_name("participant")
+								.long("participant")
+								.takes_value(true)
+								.required(true)
+								.value_name("NAME")
+								.help("name of the participant (recorded in transcript)"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_contribute),
+		)
+		.add_cmd(
+			Command::new("ceremony-verify")
+				.description("Verify all contributions in a ceremony transcript")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("path to the final ceremony proving key"),
+						)
+						.arg(
+							Arg::with_name("transcript")
+								.long("transcript")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_transcript.json")
+								.help("path to the ceremony transcript"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_verify),
+		)
+		.add_cmd(
+			Command::new("ceremony-finalize")
+				.description("Finalize a ceremony — extract proving key and verifying key files")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("path to the ceremony proving key (input)"),
+						)
+						.arg(
+							Arg::with_name("pk-out")
+								.long("pk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("proving_key.bin")
+								.help("output path for the final proving key"),
+						)
+						.arg(
+							Arg::with_name("vk-out")
+								.long("vk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("verifying_key.bin")
+								.help("output path for the verifying key"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_finalize),
+		)
+		.add_cmd(
 			Command::new("inspect-setup-key")
 				.description("Inspect a proving key or verifying key file (shows size, hash, type)")
 				.options(|app| {
