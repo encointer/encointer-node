@@ -2906,7 +2906,7 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -2922,7 +2922,7 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment-rpc"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-balances-tx-payment-rpc-runtime-api",
  "encointer-primitives",
@@ -2946,7 +2946,7 @@ dependencies = [
 [[package]]
 name = "encointer-balances-tx-payment-rpc-runtime-api"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -2959,7 +2959,7 @@ dependencies = [
 [[package]]
 name = "encointer-ceremonies-assignment"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "sp-runtime",
@@ -3015,7 +3015,7 @@ dependencies = [
 [[package]]
 name = "encointer-meetup-validation"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "parity-scale-codec",
@@ -3155,7 +3155,7 @@ dependencies = [
 [[package]]
 name = "encointer-offline-payment-core"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "ark-bn254",
  "ark-crypto-primitives",
@@ -3172,7 +3172,7 @@ dependencies = [
 [[package]]
 name = "encointer-primitives"
 version = "21.5.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "bs58",
  "crc",
@@ -3192,7 +3192,7 @@ dependencies = [
 [[package]]
 name = "encointer-rpc"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "jsonrpsee 0.24.10",
  "jsonrpsee-core 0.24.10",
@@ -3315,7 +3315,7 @@ checksum = "e48c92028aaa870e83d51c64e5d4e0b6981b360c522198c23959f219a4e1b15b"
 [[package]]
 name = "ep-core"
 version = "21.0.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "array-bytes 6.2.3",
  "impl-serde",
@@ -7200,7 +7200,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-balances"
 version = "21.2.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -7219,7 +7219,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -7236,7 +7236,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -7256,7 +7256,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-bazaar-rpc-runtime-api"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -7268,7 +7268,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-ceremonies-assignment",
  "encointer-meetup-validation",
@@ -7293,7 +7293,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies-rpc"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -7313,7 +7313,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-ceremonies-rpc-runtime-api"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
@@ -7325,7 +7325,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -7344,7 +7344,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -7365,7 +7365,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-communities-rpc-runtime-api"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "parity-scale-codec",
@@ -7376,7 +7376,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-democracy"
 version = "21.6.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -7401,7 +7401,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-faucet"
 version = "21.2.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -7421,7 +7421,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-offline-payment"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "ark-bn254",
  "ark-crypto-primitives",
@@ -7452,7 +7452,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-reputation-commitments"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -7474,7 +7474,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-reputation-rings"
 version = "0.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -7495,7 +7495,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-scheduler"
 version = "21.1.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-benchmarking",
@@ -7513,7 +7513,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-treasuries"
 version = "21.7.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "approx",
  "encointer-primitives",
@@ -7535,7 +7535,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-treasuries-rpc"
 version = "21.3.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "encointer-rpc",
@@ -7557,7 +7557,7 @@ dependencies = [
 [[package]]
 name = "pallet-encointer-treasuries-rpc-runtime-api"
 version = "21.3.0"
-source = "git+https://github.com/encointer/pallets?branch=master#c6a326fd9284c4326ddc6f023e6644874d6e55a3"
+source = "git+https://github.com/encointer/pallets?branch=ab-claude%2Ftrusted-setup-tools#1c02fb4dd72fe882f237385303265be00e9ed73f"
 dependencies = [
  "encointer-primitives",
  "frame-support",
