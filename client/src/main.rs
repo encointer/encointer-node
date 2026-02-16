@@ -834,6 +834,13 @@ fn main() {
 								.value_name("FLOAT")
 								.help("amount to transfer"),
 						)
+						.arg(
+							Arg::with_name("pk-file")
+								.long("pk-file")
+								.takes_value(true)
+								.value_name("PATH")
+								.help("path to proving key file (omit for test key)"),
+						)
 						.optional_cid_arg()
 				})
 				.runner(commands::encointer_offline_payment::generate_offline_payment),
@@ -898,11 +905,18 @@ fn main() {
 					app.setting(AppSettings::ColoredHelp)
 						.signer_arg("sudo account (defaults to //Alice)")
 						.arg(
+							Arg::with_name("vk-file")
+								.long("vk-file")
+								.takes_value(true)
+								.value_name("PATH")
+								.help("path to verifying key file (from generate-trusted-setup)"),
+						)
+						.arg(
 							Arg::with_name("vk")
 								.long("vk")
 								.takes_value(true)
 								.value_name("HEX")
-								.help("hex-encoded verification key (omit to use test key)"),
+								.help("hex-encoded verification key (alternative to --vk-file)"),
 						)
 						.tx_payment_cid_arg()
 				})
@@ -912,6 +926,99 @@ fn main() {
 			Command::new("generate-test-vk")
 				.description("Generate and print the test verification key (hex)")
 				.runner(commands::encointer_offline_payment::generate_test_vk),
+		)
+		.add_cmd(
+			Command::new("generate-trusted-setup")
+				.description(concat!(
+					"Generate proving key + verifying key for offline payments.\n\n",
+					"TRUSTED SETUP CEREMONY — PROCESS OVERVIEW\n",
+					"==========================================\n\n",
+					"The offline payment system uses Groth16 zero-knowledge proofs.\n",
+					"A one-time trusted setup must be performed before the system can be used.\n",
+					"The setup produces two keys:\n\n",
+					"  Proving Key (PK)   — used by wallets to generate payment proofs (~50-100 KB)\n",
+					"  Verifying Key (VK) — stored on-chain to verify proofs (~400-600 bytes)\n\n",
+					"STEPS:\n\n",
+					"  1. GENERATE: A trusted individual runs this command on a secure, air-gapped\n",
+					"     machine. The OS CSPRNG provides randomness. The machine should be wiped\n",
+					"     after key generation to destroy the toxic waste (internal randomness).\n\n",
+					"     $ encointer-client-notee generate-trusted-setup \\\n",
+					"         --pk-out proving_key.bin --vk-out verifying_key.bin\n\n",
+					"  2. VERIFY: Independently verify that PK and VK are consistent:\n\n",
+					"     $ encointer-client-notee verify-trusted-setup \\\n",
+					"         --pk proving_key.bin --vk verifying_key.bin\n\n",
+					"  3. SET ON-CHAIN: Submit the VK via governance (or sudo in dev):\n\n",
+					"     $ encointer-client-notee set-offline-payment-vk \\\n",
+					"         --vk-file verifying_key.bin --signer //Alice\n\n",
+					"  4. DISTRIBUTE PK: Bundle proving_key.bin in the wallet app. All wallet\n",
+					"     users need the PK to generate proofs. The PK is NOT secret.\n\n",
+					"  5. DESTROY TOXIC WASTE: Securely wipe the machine used for generation.\n",
+					"     If the internal randomness is recovered, proofs can be forged.\n\n",
+					"SECURITY MODEL:\n",
+					"  This is a single-party trusted setup. The generator must be trusted.\n",
+					"  For higher security, consider a multi-party computation (MPC) ceremony\n",
+					"  where multiple independent parties contribute randomness."
+				))
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk-out")
+								.long("pk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("proving_key.bin")
+								.help("output path for the proving key"),
+						)
+						.arg(
+							Arg::with_name("vk-out")
+								.long("vk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("verifying_key.bin")
+								.help("output path for the verifying key"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::generate_trusted_setup),
+		)
+		.add_cmd(
+			Command::new("verify-trusted-setup")
+				.description("Verify that a proving key and verifying key are consistent")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.required(true)
+								.value_name("PATH")
+								.help("path to the proving key file"),
+						)
+						.arg(
+							Arg::with_name("vk")
+								.long("vk")
+								.takes_value(true)
+								.required(true)
+								.value_name("PATH")
+								.help("path to the verifying key file"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::verify_trusted_setup),
+		)
+		.add_cmd(
+			Command::new("inspect-setup-key")
+				.description("Inspect a proving key or verifying key file (shows size, hash, type)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("file")
+								.long("file")
+								.takes_value(true)
+								.required(true)
+								.value_name("PATH")
+								.help("path to the key file to inspect"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::inspect_setup_key),
 		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {

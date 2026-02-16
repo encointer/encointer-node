@@ -17,8 +17,8 @@ use pallet_encointer_offline_payment::{
 	circuit::{compute_commitment, poseidon_config},
 	derive_zk_secret,
 	prover::{
-		bytes32_to_field, field_to_bytes32, generate_proof, proof_to_bytes, TrustedSetup,
-		TEST_SETUP_SEED,
+		bytes32_to_field, field_to_bytes32, generate_proof, proof_to_bytes, verify_proof,
+		TrustedSetup, TEST_SETUP_SEED,
 	},
 };
 use parity_scale_codec::Encode;
@@ -162,14 +162,28 @@ pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result
 		let chain_asset_hash = bytes32_to_field(&chain_asset_hash_bytes);
 		let amount_field = bytes32_to_field(&amount_bytes);
 
-		// Get the test proving key
-		// In production, this would be loaded from a file or generated once
-		let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+		// Load proving key from file, or fall back to test key
+		let pk_loaded;
+		let pk_ref = if let Some(pk_path) = matches.value_of("pk-file") {
+			let bytes = std::fs::read(pk_path).expect("Failed to read proving key file");
+			pk_loaded = TrustedSetup::proving_key_from_bytes(&bytes)
+				.expect("Failed to deserialize proving key — is it a valid PK file?");
+			eprintln!("Loaded proving key from {} ({} bytes)", pk_path, bytes.len());
+			&pk_loaded
+		} else {
+			eprintln!(
+				"WARNING: Using test proving key (seed 0x{:X}). NOT for production!",
+				TEST_SETUP_SEED
+			);
+			let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+			pk_loaded = setup.proving_key;
+			&pk_loaded
+		};
 
 		// Generate the ZK proof
 		eprintln!("Generating ZK proof...");
 		let (proof, public_inputs) = generate_proof(
-			&setup.proving_key,
+			pk_ref,
 			zk_secret,
 			nonce,
 			recipient_hash,
@@ -331,11 +345,20 @@ pub fn set_verification_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		let signer = ParentchainExtrinsicSigner::new(signer);
 		api.set_signer(signer);
 
-		// Generate the test VK if no VK provided
-		let vk_bytes = if let Some(hex) = matches.value_of("vk") {
-			hex::decode(hex).expect("Invalid verification key hex")
+		// Load VK from file, hex string, or generate test key
+		let vk_bytes = if let Some(file_path) = matches.value_of("vk-file") {
+			let bytes = std::fs::read(file_path).expect("Failed to read VK file");
+			TrustedSetup::verifying_key_from_bytes(&bytes)
+				.expect("Failed to deserialize VK from file — is it a valid verifying key?");
+			eprintln!("Loaded verification key from {} ({} bytes)", file_path, bytes.len());
+			bytes
+		} else if let Some(hex_str) = matches.value_of("vk") {
+			hex::decode(hex_str).expect("Invalid verification key hex")
 		} else {
-			eprintln!("Generating test verification key with seed 0x{:X}...", TEST_SETUP_SEED);
+			eprintln!(
+				"WARNING: Using test verification key (seed 0x{:X}). NOT for production!",
+				TEST_SETUP_SEED
+			);
 			let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
 			setup.verifying_key_bytes()
 		};
@@ -381,6 +404,158 @@ pub fn generate_test_vk(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), cl
 	let vk_bytes = setup.verifying_key_bytes();
 
 	println!("{}", hex::encode(&vk_bytes));
+
+	Ok(())
+}
+
+/// Generate a trusted setup (proving key + verifying key) for offline payments.
+///
+/// Uses OS-level cryptographic randomness. The resulting keys are non-reproducible.
+/// Both files must be saved securely — the proving key is distributed to wallets,
+/// the verifying key is set on-chain.
+pub fn generate_trusted_setup(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let pk_path = matches.value_of("pk-out").unwrap_or("proving_key.bin");
+	let vk_path = matches.value_of("vk-out").unwrap_or("verifying_key.bin");
+
+	eprintln!("Generating trusted setup with OS randomness...");
+	eprintln!("This may take a few seconds.");
+
+	let setup = {
+		use ark_bn254::{Bn254, Fr};
+		use ark_groth16::Groth16;
+		use ark_snark::SNARK;
+		use ark_std::rand::rngs::OsRng;
+		use pallet_encointer_offline_payment::circuit::{
+			poseidon_config as cfg, OfflinePaymentCircuit,
+		};
+
+		let circuit = OfflinePaymentCircuit::new(
+			cfg(),
+			Fr::from(1u64),
+			Fr::from(1u64),
+			Fr::from(1u64),
+			Fr::from(1u64),
+			Fr::from(1u64),
+		);
+		let (pk, vk) =
+			Groth16::<Bn254>::circuit_specific_setup(circuit, &mut OsRng).expect("Setup failed");
+		TrustedSetup { proving_key: pk, verifying_key: vk }
+	};
+
+	let pk_bytes = setup.proving_key_bytes();
+	let vk_bytes = setup.verifying_key_bytes();
+
+	std::fs::write(pk_path, &pk_bytes).expect("Failed to write proving key file");
+	std::fs::write(vk_path, &vk_bytes).expect("Failed to write verifying key file");
+
+	let pk_hash = sp_io::hashing::blake2_256(&pk_bytes);
+	let vk_hash = sp_io::hashing::blake2_256(&vk_bytes);
+
+	println!("Trusted setup generated successfully.");
+	println!();
+	println!(
+		"  Proving key:    {} ({} bytes, blake2: 0x{})",
+		pk_path,
+		pk_bytes.len(),
+		hex::encode(pk_hash)
+	);
+	println!(
+		"  Verifying key:  {} ({} bytes, blake2: 0x{})",
+		vk_path,
+		vk_bytes.len(),
+		hex::encode(vk_hash)
+	);
+	println!();
+	println!("Next steps:");
+	println!(
+		"  1. Verify:      encointer-client-notee verify-trusted-setup --pk {} --vk {}",
+		pk_path, vk_path
+	);
+	println!("  2. Set on-chain: encointer-client-notee set-offline-payment-vk --vk-file {} --signer //Alice", vk_path);
+	println!("  3. Distribute {} to wallet apps (bundle as asset)", pk_path);
+
+	Ok(())
+}
+
+/// Verify that a proving key and verifying key are consistent.
+///
+/// Generates a test proof with the PK, then verifies it with the VK.
+/// If verification succeeds, the keys match and are ready for use.
+pub fn verify_trusted_setup(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let pk_path = matches.value_of("pk").expect("--pk is required");
+	let vk_path = matches.value_of("vk").expect("--vk is required");
+
+	eprintln!("Loading keys...");
+
+	let pk_bytes = std::fs::read(pk_path).expect("Failed to read proving key file");
+	let vk_bytes = std::fs::read(vk_path).expect("Failed to read verifying key file");
+
+	let pk_hash = sp_io::hashing::blake2_256(&pk_bytes);
+	let vk_hash = sp_io::hashing::blake2_256(&vk_bytes);
+
+	println!("Proving key:   {} bytes, blake2: 0x{}", pk_bytes.len(), hex::encode(pk_hash));
+	println!("Verifying key: {} bytes, blake2: 0x{}", vk_bytes.len(), hex::encode(vk_hash));
+
+	let pk = TrustedSetup::proving_key_from_bytes(&pk_bytes)
+		.expect("Failed to deserialize proving key — file may be corrupt");
+
+	let vk = TrustedSetup::verifying_key_from_bytes(&vk_bytes)
+		.expect("Failed to deserialize verifying key — file may be corrupt");
+
+	eprintln!("Generating test proof...");
+
+	// Use dummy values for a test proof
+	let zk_secret = bytes32_to_field(&[1u8; 32]);
+	let nonce = bytes32_to_field(&[2u8; 32]);
+	let recipient_hash = bytes32_to_field(&[3u8; 32]);
+	let amount = bytes32_to_field(&[4u8; 32]);
+	let asset_hash = bytes32_to_field(&[5u8; 32]);
+
+	let (proof, public_inputs) =
+		generate_proof(&pk, zk_secret, nonce, recipient_hash, amount, asset_hash)
+			.expect("Proof generation failed — proving key may be invalid");
+
+	eprintln!("Verifying proof...");
+
+	if verify_proof(&vk, &proof, &public_inputs) {
+		println!();
+		println!("PASS: Proving key and verifying key are consistent.");
+		println!("      The verifying key is ready to be set on-chain.");
+	} else {
+		println!();
+		println!("FAIL: Proof generated with PK does not verify with VK.");
+		println!("      These keys do NOT belong to the same trusted setup.");
+		std::process::exit(1);
+	}
+
+	Ok(())
+}
+
+/// Inspect a proving key or verifying key file.
+///
+/// Shows metadata: file size, blake2 hash, and validates deserialization.
+pub fn inspect_setup_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+	let path = matches.value_of("file").expect("--file is required");
+
+	let bytes = std::fs::read(path).expect("Failed to read file");
+	let hash = sp_io::hashing::blake2_256(&bytes);
+
+	println!("File:   {}", path);
+	println!("Size:   {} bytes", bytes.len());
+	println!("Blake2: 0x{}", hex::encode(hash));
+
+	// Try PK first — a PK embeds a VK, so the VK deserializer would falsely
+	// succeed on PK files by reading just the first ~424 bytes.
+	if let Some(_pk) = TrustedSetup::proving_key_from_bytes(&bytes) {
+		println!("Type:   Proving Key (valid)");
+	} else if let Some(_vk) = TrustedSetup::verifying_key_from_bytes(&bytes) {
+		println!("Type:   Verifying Key (valid)");
+		println!();
+		println!("Hex:    {}", hex::encode(&bytes));
+	} else {
+		println!("Type:   UNKNOWN — could not deserialize as PK or VK");
+		std::process::exit(1);
+	}
 
 	Ok(())
 }
