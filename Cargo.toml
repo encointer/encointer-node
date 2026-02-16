@@ -135,6 +135,11 @@ substrate-build-script-utils = "11.0.0"
 substrate-api-client = { version = "1.21.0", features = ["jsonrpsee-client"] }
 ac-keystore = { version = "1.21.0" }
 
+ark-bn254 = { version = "0.4.0", default-features = false, features = ["curve"] }
+ark-groth16 = { version = "0.4.0", default-features = false }
+ark-snark = { version = "0.4.0", default-features = false }
+ark-std = { version = "0.4.0", default-features = false }
+
 [patch.crates-io]
 ## api client
 # patch needed because release 0.18 isn't depending on sdk 1.14
@@ -177,7 +182,7 @@ ac-keystore = { version = "1.21.0" }
 #pallet-encointer-treasuries-rpc = { path = "../encointer-pallets/treasuries/rpc" }
 #pallet-encointer-treasuries-rpc-runtime-api = { path = "../encointer-pallets/treasuries/rpc/runtime-api" }
 
-# Git patches for master branch
+# Git patches for master branch (testing no_std fix)
 encointer-balances-tx-payment = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
 encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
