@@ -572,6 +572,7 @@ impl pallet_encointer_offline_payment::Config for Runtime {
 	type Currency = Balances;
 	type MaxProofSize = MaxProofSize;
 	type MaxVkSize = MaxVkSize;
+	type TrustedSetupOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
