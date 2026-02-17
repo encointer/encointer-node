@@ -41,19 +41,14 @@ if [ "$COMPLETED_CINDEX" -lt 1 ]; then
     exit 1
 fi
 
-echo "=== Step 3: Register Bandersnatch keys ==="
-# Generate deterministic 32-byte keys for testing
-ALICE_KEY="0101010101010101010101010101010101010101010101010101010101010101"
-BOB_KEY="0202020202020202020202020202020202020202020202020202020202020202"
-CHARLIE_KEY="0303030303030303030303030303030303030303030303030303030303030303"
-
-$CLI register-bandersnatch-key //Alice --key $ALICE_KEY
+echo "=== Step 3: Register Bandersnatch keys (auto-derived) ==="
+$CLI register-bandersnatch-key //Alice
 echo "Registered Bandersnatch key for Alice"
 
-$CLI register-bandersnatch-key //Bob --key $BOB_KEY
+$CLI register-bandersnatch-key //Bob
 echo "Registered Bandersnatch key for Bob"
 
-$CLI register-bandersnatch-key //Charlie --key $CHARLIE_KEY
+$CLI register-bandersnatch-key //Charlie
 echo "Registered Bandersnatch key for Charlie"
 
 echo "=== Step 4: Initiate ring computation ==="
@@ -103,13 +98,33 @@ for level in 2 3 4 5; do
     PREV_COUNT=$COUNT
 done
 
+echo "=== Step 8: Ring-VRF Proof of Personhood ==="
+PROVE_OUTPUT=$($CLI prove-personhood //Alice --cid $CID \
+    --ceremony-index $COMPLETED_CINDEX --level 1 --sub-ring 0)
+echo "$PROVE_OUTPUT"
+SIGNATURE=$(echo "$PROVE_OUTPUT" | grep "^signature:" | awk '{print $2}')
+[ -n "$SIGNATURE" ] || { echo "ERROR: prove-personhood failed"; exit 1; }
+
+echo "=== Step 9: Verify ring-VRF proof ==="
+VERIFY_OUTPUT=$($CLI verify-personhood --cid $CID \
+    --ceremony-index $COMPLETED_CINDEX --level 1 --sub-ring 0 \
+    --signature $SIGNATURE)
+echo "$VERIFY_OUTPUT"
+echo "$VERIFY_OUTPUT" | grep -q "VALID" || { echo "ERROR: verify failed"; exit 1; }
+
+echo "=== Step 10: Wrong context must fail ==="
+$CLI verify-personhood --cid $CID --ceremony-index 999 \
+    --level 1 --sub-ring 0 --signature $SIGNATURE 2>&1 && {
+    echo "ERROR: should have failed"; exit 1; } || true
+
 echo ""
 echo "=============================================="
 echo "  Reputation Rings E2E Test PASSED"
 echo "=============================================="
 echo ""
 echo "Summary:"
-echo "  - Bandersnatch key registration for 3 accounts"
+echo "  - Bandersnatch key registration for 3 accounts (auto-derived)"
 echo "  - Ring computation initiated and completed"
 echo "  - 5 ring levels queried and verified"
 echo "  - Ring nesting property confirmed"
+echo "  - Ring-VRF prove and verify"

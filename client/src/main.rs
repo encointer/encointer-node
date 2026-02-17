@@ -630,9 +630,8 @@ fn main() {
 							Arg::with_name("key")
 								.long("key")
 								.takes_value(true)
-								.required(true)
 								.value_name("HEX")
-								.help("hex-encoded 32-byte Bandersnatch public key"),
+								.help("hex-encoded 32-byte Bandersnatch public key (auto-derived from account if omitted)"),
 						)
 				})
 				.runner(commands::encointer_reputation_rings::register_bandersnatch_key),
@@ -679,6 +678,79 @@ fn main() {
 						)
 				})
 				.runner(commands::encointer_reputation_rings::get_rings),
+		)
+		.add_cmd(
+			Command::new("prove-personhood")
+				.description("Produce a ring-VRF proof of personhood")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index of the ring"),
+						)
+						.arg(
+							Arg::with_name("level")
+								.long("level")
+								.takes_value(true)
+								.default_value("1")
+								.value_name("U8")
+								.help("attendance level (1-5)"),
+						)
+						.arg(
+							Arg::with_name("sub-ring")
+								.long("sub-ring")
+								.takes_value(true)
+								.default_value("0")
+								.value_name("U32")
+								.help("sub-ring index"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::prove_personhood),
+		)
+		.add_cmd(
+			Command::new("verify-personhood")
+				.description("Verify a ring-VRF proof of personhood")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("signature")
+								.long("signature")
+								.takes_value(true)
+								.required(true)
+								.value_name("HEX")
+								.help("hex-encoded ring-VRF signature"),
+						)
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index of the ring"),
+						)
+						.arg(
+							Arg::with_name("level")
+								.long("level")
+								.takes_value(true)
+								.default_value("1")
+								.value_name("U8")
+								.help("attendance level (1-5)"),
+						)
+						.arg(
+							Arg::with_name("sub-ring")
+								.long("sub-ring")
+								.takes_value(true)
+								.default_value("0")
+								.value_name("U32")
+								.help("sub-ring index"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::verify_personhood),
 		)
 		.add_cmd(
 			Command::new("submit-set-inactivity-timeout-proposal")
