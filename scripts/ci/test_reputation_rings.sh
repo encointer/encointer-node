@@ -57,9 +57,13 @@ echo "=== Step 4: Advance to Assigning phase (triggers auto ring computation) ==
 # which queues ring computation for completed ceremony (cindex-1 = 1).
 # Participants got reputation from ceremony 1 (bootstrap), and we just
 # registered their Bandersnatch keys, so on_idle will build rings.
-$CLI next-phase //Alice
+$CLI next-phase --signer //Alice
 PHASE=$($CLI get-phase)
 echo "Phase after advance: $PHASE"
+if [ "$PHASE" != "Assigning" ]; then
+    echo "ERROR: Expected Assigning phase, got $PHASE"
+    exit 1
+fi
 
 # Wait for on_idle to process ring computation across several blocks.
 # Ring computation needs ~11 steps (6 collection + 5 building).
