@@ -9,7 +9,9 @@ use encointer_api_client_extension::{
 };
 use log::info;
 use parity_scale_codec::{Decode, Encode};
-use sp_core::{bandersnatch as bandersnatch_core, crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
+use sp_core::{
+	bandersnatch as bandersnatch_core, crypto::Ss58Codec, sr25519 as sr25519_core, Pair,
+};
 use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
 /// Maximum ring size matching runtime `MaxRingSize`.
@@ -240,8 +242,11 @@ pub fn prove_personhood(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cla
 			.parse()
 			.expect("ceremony-index must be a u32");
 		let level: u8 = matches.value_of("level").unwrap_or("1").parse().expect("level must be u8");
-		let sub_ring: u32 =
-			matches.value_of("sub-ring").unwrap_or("0").parse().expect("sub-ring must be u32");
+		let sub_ring: u32 = matches
+			.value_of("sub-ring")
+			.unwrap_or("0")
+			.parse()
+			.expect("sub-ring must be u32");
 
 		// Fetch ring members
 		let members = api
@@ -302,8 +307,11 @@ pub fn verify_personhood(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 			.parse()
 			.expect("ceremony-index must be a u32");
 		let level: u8 = matches.value_of("level").unwrap_or("1").parse().expect("level must be u8");
-		let sub_ring: u32 =
-			matches.value_of("sub-ring").unwrap_or("0").parse().expect("sub-ring must be u32");
+		let sub_ring: u32 = matches
+			.value_of("sub-ring")
+			.unwrap_or("0")
+			.parse()
+			.expect("sub-ring must be u32");
 
 		// Fetch ring members
 		let members = api
