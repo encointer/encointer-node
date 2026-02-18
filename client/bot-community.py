@@ -188,6 +188,7 @@ def simulate(ctx, ceremonies, assert_invariants):
                 time.sleep(3)
                 phase = client.get_phase()
         chain_cindex[0] = client.get_cindex()
+        log.cindex = chain_cindex[0]
 
     infinite = ceremonies == 0
     target = ceremonies if not infinite else float('inf')

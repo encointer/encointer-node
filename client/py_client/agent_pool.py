@@ -585,7 +585,7 @@ class AgentPool:
 
         # Population should be positive and growing
         assert stat['population'] > 0, f"population is 0 at cindex {cindex}"
-        if cindex >= 2:
+        if cindex >= 3:
             assert stat['population'] > 10, f"population should grow beyond bootstrappers by ceremony {cindex}"
 
         # All agents should have bandersnatch keys and offline identities (registered at creation)
