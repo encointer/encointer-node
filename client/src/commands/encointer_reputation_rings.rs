@@ -65,7 +65,7 @@ pub fn register_bandersnatch_key(_args: &str, matches: &ArgMatches<'_>) -> Resul
 			compose_extrinsic!(api, "EncointerReputationRings", "register_bandersnatch_key", key)
 				.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await;
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
 		match result {
 			Ok(_report) => {
@@ -112,7 +112,7 @@ pub fn initiate_rings(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		)
 		.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await;
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
 		match result {
 			Ok(_report) => {
@@ -144,7 +144,7 @@ pub fn continue_ring_computation(_args: &str, matches: &ArgMatches<'_>) -> Resul
 			compose_extrinsic!(api, "EncointerReputationRings", "continue_ring_computation")
 				.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await;
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
 		match result {
 			Ok(_report) => {

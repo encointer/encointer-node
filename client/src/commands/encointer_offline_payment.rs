@@ -66,19 +66,17 @@ pub fn register_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Resul
 		)
 		.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await;
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
 		match result {
 			Ok(report) => {
 				println!("Offline identity registered successfully");
 				println!("Commitment: 0x{}", hex::encode(commitment));
-				if let Some(events) = report.events {
-					for event in events.iter() {
-						if event.pallet_name() == "EncointerOfflinePayment" &&
-							event.variant_name() == "OfflineIdentityRegistered"
-						{
-							println!("Event: OfflineIdentityRegistered");
-						}
+				for event in report.events.unwrap().iter() {
+					if event.pallet_name() == "EncointerOfflinePayment" &&
+						event.variant_name() == "OfflineIdentityRegistered"
+					{
+						println!("Event: OfflineIdentityRegistered");
 					}
 				}
 			},
@@ -308,23 +306,21 @@ pub fn submit_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 		)
 		.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::Ready).await;
+		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
 		match result {
 			Ok(report) => {
 				println!("Offline payment submitted successfully");
-				if let Some(events) = report.events {
-					for event in events.iter() {
-						if event.pallet_name() == "EncointerOfflinePayment" {
-							match event.variant_name() {
-								"OfflinePaymentSettled" => {
-									println!("Payment settled!");
-									println!("Sender: {}", sender.to_ss58check());
-									println!("Recipient: {}", recipient.to_ss58check());
-									println!("Amount: {}", amount);
-								},
-								name => println!("Event: {}", name),
-							}
+				for event in report.events.unwrap().iter() {
+					if event.pallet_name() == "EncointerOfflinePayment" {
+						match event.variant_name() {
+							"OfflinePaymentSettled" => {
+								println!("Payment settled!");
+								println!("Sender: {}", sender.to_ss58check());
+								println!("Recipient: {}", recipient.to_ss58check());
+								println!("Amount: {}", amount);
+							},
+							name => println!("Event: {}", name),
 						}
 					}
 				}
