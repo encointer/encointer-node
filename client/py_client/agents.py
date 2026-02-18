@@ -35,7 +35,6 @@ class Agent:
         if self.role == AgentRole.NEWBIE:
             self.role = AgentRole.REPUTABLE
 
-    def prove_personhood(self):
-        """Stub: ring-VRF personhood proof not yet available in pallet."""
-        print(f"  ring-VRF not yet available for {self.account[:8]}...")
-        return None
+    @property
+    def has_bandersnatch(self):
+        return self.bandersnatch_key is not None

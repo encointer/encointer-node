@@ -2,9 +2,11 @@ from py_client.base import ensure_clean_exit
 
 
 class _ReputationRingsMixin:
-    def register_bandersnatch_key(self, account, key, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["register-bandersnatch-key", account, "--key", key],
-                                   pay_fees_in_cc=pay_fees_in_cc)
+    def register_bandersnatch_key(self, account, key=None, pay_fees_in_cc=False):
+        args = ["register-bandersnatch-key", account]
+        if key is not None:
+            args += ["--key", key]
+        ret = self.run_cli_command(args, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
@@ -22,3 +24,29 @@ class _ReputationRingsMixin:
     def get_rings(self, cid, ceremony_index):
         ret = self.run_cli_command(["get-rings", "--ceremony-index", str(ceremony_index)], cid=cid)
         return ret.stdout.decode("utf-8").strip()
+
+    def prove_personhood(self, account, cid, ceremony_index, level=1, sub_ring=0):
+        ret = self.run_cli_command([
+            "prove-personhood", account,
+            "--ceremony-index", str(ceremony_index),
+            "--level", str(level),
+            "--sub-ring", str(sub_ring),
+        ], cid=cid)
+        ensure_clean_exit(ret)
+        output = ret.stdout.decode("utf-8").strip()
+        # Parse signature from output line "signature: 0x..."
+        for line in output.split("\n"):
+            if line.startswith("signature:"):
+                return line.split(maxsplit=1)[1].strip(), output
+        raise RuntimeError(f"prove-personhood did not return a signature: {output}")
+
+    def verify_personhood(self, signature, cid, ceremony_index, level=1, sub_ring=0):
+        ret = self.run_cli_command([
+            "verify-personhood",
+            "--signature", signature,
+            "--ceremony-index", str(ceremony_index),
+            "--level", str(level),
+            "--sub-ring", str(sub_ring),
+        ], cid=cid)
+        output = ret.stdout.decode("utf-8").strip()
+        return "VALID" in output, output

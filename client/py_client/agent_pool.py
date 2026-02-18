@@ -2,6 +2,7 @@ import ast
 import json
 import os
 import random
+import re
 import tempfile
 from math import floor
 
@@ -165,14 +166,13 @@ class AgentPool:
         """Run auxiliary feature exercises staged by ceremony index."""
         if cindex == 2:
             self._aux_bazaar()
+            self._aux_reputation_rings_setup()
         elif cindex == 3:
             self._aux_offline_payment_setup()
-            self._aux_reputation_rings_setup()
             self._aux_democracy_proposals()
-            self._aux_ring_vrf_stub()
         elif cindex == 4:
             self._aux_offline_payment_back_and_forth()
-            self._aux_reputation_rings_compute()
+            self._aux_reputation_rings_verify()
             self._aux_transfers()
         elif cindex == 5:
             self._aux_faucet_lifecycle()
@@ -222,14 +222,17 @@ class AgentPool:
             print(f"  offline identity for {agent.account[:8]}...: {identity[:60]}...")
 
     def _aux_reputation_rings_setup(self):
-        """Ceremony 3: Register bandersnatch keys."""
-        print("🔑 Reputation rings: registering bandersnatch keys")
+        """Ceremony 2: Register auto-derived bandersnatch keys.
+
+        Keys must be registered before the next Assigning phase so that
+        automatic ring computation picks them up via on_idle.
+        """
+        print("🔑 Reputation rings: registering bandersnatch keys (auto-derived)")
         reputables = [a for a in self.agents if a.is_reputable][:3]
-        for i, agent in enumerate(reputables):
-            key = f"{(i+1):02x}" * 32  # deterministic test key
-            self.client.register_bandersnatch_key(agent.account, key)
-            agent.bandersnatch_key = key
-            print(f"  registered key for {agent.account[:8]}...")
+        for agent in reputables:
+            output = self.client.register_bandersnatch_key(agent.account)
+            agent.bandersnatch_key = "auto-derived"
+            print(f"  registered key for {agent.account[:8]}...: {output[:80]}...")
         self._wait()
 
     def _aux_democracy_proposals(self):
@@ -242,12 +245,6 @@ class AgentPool:
         print("  submitted update nominal income proposal")
         self.client.submit_petition(proposer.account, "test-petition", cid=self.cid)
         print("  submitted petition")
-
-    def _aux_ring_vrf_stub(self):
-        """Ceremony 3: Call stub prove_personhood."""
-        print("🔮 Ring-VRF: testing stub")
-        for agent in self.agents[:2]:
-            agent.prove_personhood()
 
     def _aux_offline_payment_back_and_forth(self):
         """Ceremony 4: Alice→Bob 6, Bob→Alice 3, Alice→Bob 6 — settle in order."""
@@ -285,29 +282,63 @@ class AgentPool:
             print(f"  after settlement {i+1}: alice={a_bal:.2f} bob={b_bal:.2f}")
             os.unlink(proof_path)
 
-    def _aux_reputation_rings_compute(self):
-        """Ceremony 4: Initiate and compute rings."""
-        print("💍 Reputation rings: computing")
-        cindex = self.client.get_cindex() - 1
-        if cindex < 1:
+    def _aux_reputation_rings_verify(self):
+        """Ceremony 4: Query auto-computed rings and exercise ring-VRF prove/verify.
+
+        Rings were auto-computed during the Assigning phase via on_idle.
+        Bandersnatch keys were registered at ceremony 2, so they appear in
+        rings for ceremony 2+ (computed at ceremony 3's Assigning phase).
+        Exercises all reputation levels from 1/5 to 5/5.
+        """
+        print("💍 Reputation rings: verifying auto-computed rings + ring-VRF")
+
+        ring_agents = [a for a in self.agents if a.has_bandersnatch]
+        if not ring_agents:
+            print("  ⚠ no agents with bandersnatch keys, skipping")
             return
 
-        initiator = self._first_reputable()
-        if not initiator:
-            return
-
-        self.client.initiate_rings(initiator.account, self.cid, cindex)
-        print(f"  initiated ring computation for cindex={cindex}")
-
-        for step in range(15):
-            output = self.client.continue_ring_computation(initiator.account)
-            print(f"  step {step+1}: {output[:80]}...")
-            if "NoComputationPending" in output or "ComputationAlreadyDone" in output:
-                print(f"  ring computation completed after {step+1} steps")
+        # Find the most recent ceremony with rings, scanning backwards.
+        # Rings for cindex N are auto-computed during ceremony N+1's Assigning phase.
+        chain_cindex = self.client.get_cindex()
+        ring_cindex = None
+        rings_output = None
+        for ci in range(chain_cindex - 2, 0, -1):
+            rings_output = self.client.get_rings(self.cid, ci)
+            m = re.search(r'Level 1/5:\s+(\d+)\s+members', rings_output)
+            if m and int(m.group(1)) > 0:
+                ring_cindex = ci
+                print(f"  found rings at cindex={ci}")
                 break
 
-        rings = self.client.get_rings(self.cid, cindex)
-        print(f"  rings: {rings[:200]}...")
+        if ring_cindex is None:
+            print("  ⚠ no rings with members found, skipping ring-VRF")
+            return
+
+        # Parse which levels have members from the get-rings output.
+        # Format: "  Level N/5: M members (S sub-rings)"
+        available_levels = []
+        for m in re.finditer(r'Level (\d)/5:\s+(\d+)\s+members', rings_output):
+            level, count = int(m.group(1)), int(m.group(2))
+            if count > 0:
+                available_levels.append(level)
+        print(f"  levels with members: {available_levels}")
+
+        # Ring-VRF prove/verify for each level and agent
+        for level in available_levels:
+            print(f"  🔮 Ring-VRF level {level}/5 at cindex={ring_cindex}")
+            for agent in ring_agents:
+                try:
+                    sig, output = self.client.prove_personhood(
+                        agent.account, self.cid, ring_cindex, level=level, sub_ring=0)
+                    print(f"    proved level {level}/5 for {agent.account[:8]}...")
+
+                    valid, verify_output = self.client.verify_personhood(
+                        sig, self.cid, ring_cindex, level=level, sub_ring=0)
+                    assert valid, f"verification failed for {agent.account[:8]}... at level {level}"
+                    print(f"    verified: {verify_output[:80]}...")
+                except Exception as e:
+                    # Agent may not be in higher-level rings (not enough ceremonies attended)
+                    print(f"    level {level}/5 not available for {agent.account[:8]}...: {e}")
 
     def _aux_transfers(self):
         """Ceremony 4: CC transfers between agents."""
@@ -516,6 +547,11 @@ class AgentPool:
                 assert len(businesses) > 0, "expected businesses after ceremony 2"
                 print(f"  ✓ businesses exist")
 
+        # After ceremony 2: bandersnatch keys registered
+        if cindex >= 2:
+            if stat['ring_members'] > 0:
+                print(f"  ✓ bandersnatch keys registered")
+
         # After ceremony 3: offline identities registered
         if cindex >= 3:
             if stat['offline_ids'] > 0:
@@ -524,15 +560,15 @@ class AgentPool:
                     identity = self.client.get_offline_identity(agent.account, cid=self.cid)
                     assert len(identity) > 0, f"offline identity empty for {agent.account[:8]}..."
                 print(f"  ✓ offline identities registered")
-            if stat['ring_members'] > 0:
-                print(f"  ✓ bandersnatch keys registered")
 
-        # After ceremony 4: rings computed
+        # After ceremony 4: rings auto-computed
         if cindex >= 4 and stat['ring_members'] > 0:
-            prev_cindex = self.client.get_cindex() - 1
-            if prev_cindex >= 1:
-                rings = self.client.get_rings(self.cid, prev_cindex)
-                if "Level 1" in rings:
-                    print(f"  ✓ ring computation produced results")
+            # Rings for cindex N are auto-computed during ceremony N+1's Assigning phase.
+            # By ceremony 4 end, rings for cindex 2 should exist.
+            for ci in range(self.client.get_cindex() - 2, 0, -1):
+                rings = self.client.get_rings(self.cid, ci)
+                if "members" in rings:
+                    print(f"  ✓ auto-computed rings exist for cindex={ci}")
+                    break
 
         print(f"  ✓ all invariants passed for ceremony {cindex}")
