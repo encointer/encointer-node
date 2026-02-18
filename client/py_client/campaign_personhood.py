@@ -1,4 +1,5 @@
 import re
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from py_client.campaign import Campaign
@@ -53,8 +54,12 @@ class ProvePersonhoodCampaign(Campaign):
                 available_levels.append(level)
         print(f"  levels with members: {available_levels}")
 
-        for level in available_levels:
-            self._prove_level(cindex, ring_agents, ring_cindex, level)
+        stop_evt, heartbeat_thread = self._start_heartbeat()
+        try:
+            for level in available_levels:
+                self._prove_level(cindex, ring_agents, ring_cindex, level)
+        finally:
+            self._stop_heartbeat(stop_evt, heartbeat_thread)
 
     def _prove_one(self, agent, ring_cindex, level):
         """Prove + verify one agent at one level. Returns (pseudonym, error)."""
@@ -99,6 +104,30 @@ class ProvePersonhoodCampaign(Campaign):
         status = "PASS" if anonymity_ok else "FAIL"
         print(f"  level {level}/5: {proven} proved, {len(pseudonyms)} pseudonyms, anonymity={status}")
         assert anonymity_ok, f"anonymity check failed at level {level}: duplicate pseudonyms"
+
+    def _start_heartbeat(self):
+        """Send periodic CC transfers to prevent phase.py from detecting idle blocks."""
+        stop_evt = threading.Event()
+        reputables = [a for a in self.pool.agents if a.is_reputable]
+        if len(reputables) < 2:
+            return stop_evt, None
+        src, dst = reputables[0].account, reputables[1].account
+
+        def beat():
+            while not stop_evt.wait(10):
+                try:
+                    self.client.transfer(self.cid, src, dst, "0.001")
+                except Exception:
+                    pass
+
+        t = threading.Thread(target=beat, daemon=True)
+        t.start()
+        return stop_evt, t
+
+    def _stop_heartbeat(self, stop_evt, thread):
+        stop_evt.set()
+        if thread is not None:
+            thread.join(timeout=5)
 
     def write_summary(self, cindex):
         if not self._results or self.log is None:

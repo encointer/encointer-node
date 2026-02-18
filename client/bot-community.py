@@ -29,6 +29,7 @@ NOTE: There are a few extrinsic errors, which are (sometimes) ok to be thrown:
 
 """
 import os
+import time
 
 import click
 
@@ -152,16 +153,15 @@ def execute_current_phase(ctx):
               help='Run per-ceremony assertions (CI mode).')
 @click.pass_obj
 def simulate(ctx, ceremonies, assert_invariants):
-    """Run N ceremonies with self-advancing phases. Replaces old test/benchmark commands."""
+    """Run N ceremonies. Phase advancement is handled by phase.py (idle-block detection)."""
     client = ctx['client']
     cid = read_cid()
-    waiting_blocks = ctx['waiting_blocks']
 
     log = SimulationLog('bot-community-log.txt')
     client.log = log
 
     pool = AgentPool(client, cid=cid, faucet_url=ctx['faucet_url'],
-                     max_population=ctx['max_population'], waiting_blocks=waiting_blocks)
+                     max_population=ctx['max_population'], waiting_blocks=ctx['waiting_blocks'])
     pool.load_agents()
 
     campaigns = [
@@ -169,62 +169,62 @@ def simulate(ctx, ceremonies, assert_invariants):
         OfflinePaymentCampaign(pool, log, target_ceremony=ceremonies),
     ]
 
+    t0 = time.monotonic()
+
+    def ts(msg):
+        elapsed = int(time.monotonic() - t0)
+        mm, ss = divmod(elapsed, 60)
+        print(f'[{mm:02d}:{ss:02d}] {msg}')
+
+    def wait_for_phase(target):
+        phase = client.get_phase()
+        if phase != target:
+            ts(f'waiting for {target} (currently {phase})')
+            while phase != target:
+                time.sleep(3)
+                phase = client.get_phase()
+
     infinite = ceremonies == 0
     target = ceremonies if not infinite else float('inf')
     cindex = 0
 
-    print(f'🚀 Starting simulation: {"infinite" if infinite else ceremonies} ceremonies')
+    ts(f'starting simulation: {"infinite" if infinite else ceremonies} ceremonies')
 
     while cindex < target:
         cindex += 1
         log.ceremony(cindex)
-        print(f'\n{"="*60}')
-        print(f'🔄 Ceremony {cindex}')
-        print(f'{"="*60}')
+        ts(f'{"="*60}')
+        ts(f'Ceremony {cindex}')
+        ts(f'{"="*60}')
 
-        # Registering phase
-        phase = client.get_phase()
-        if phase != 'Registering':
-            print(f"⚠ Expected Registering, got {phase}. Advancing...")
-            while client.get_phase() != 'Registering':
-                client.next_phase()
-                client.await_block(waiting_blocks)
-
+        # Registering
+        wait_for_phase('Registering')
         log.phase('Registering')
-        print(f'\n📋 Phase: Registering')
+        ts('Phase: Registering')
         pool.execute_registering()
         for c in campaigns:
             c.on_registering(cindex)
 
-        # Advance to Assigning
-        client.next_phase()
-        client.await_block(waiting_blocks)
-
+        # Assigning (phase.py advances after idle detection)
+        wait_for_phase('Assigning')
         log.phase('Assigning')
-        print(f'\n📋 Phase: Assigning')
+        ts('Phase: Assigning')
         pool.execute_assigning()
         for c in campaigns:
             c.on_assigning(cindex)
 
-        # Advance to Attesting
-        client.next_phase()
-        client.await_block(waiting_blocks)
-
+        # Attesting
+        wait_for_phase('Attesting')
         log.phase('Attesting')
-        print(f'\n📋 Phase: Attesting')
+        ts('Phase: Attesting')
         pool.execute_attesting()
         for c in campaigns:
             c.on_attesting(cindex)
 
-        # Advance back to Registering
-        client.next_phase()
-        client.await_block(waiting_blocks)
-
-        # Run base auxiliary features
+        # Post-ceremony work (still in Attesting; campaigns send heartbeat
+        # extrinsics to prevent phase.py from advancing prematurely)
         log.phase('Base Auxiliary')
         pool.run_base_auxiliary(cindex)
-
-        # Run campaign post-ceremony hooks
         for c in campaigns:
             c.on_post_ceremony(cindex)
 
@@ -235,15 +235,16 @@ def simulate(ctx, ceremonies, assert_invariants):
         if assert_invariants:
             pool.assert_invariants(cindex)
 
-        print(f'\n✅ Ceremony {cindex} complete')
+        ts(f'Ceremony {cindex} complete')
+        # Bot goes idle -> phase.py advances Attesting -> Registering
 
     log.close()
     pool.write_stats()
-    print(f'\n🏁 Simulation complete: {cindex} ceremonies')
-    print(f'📊 Stats written to bot-stats.csv')
+    ts(f'Simulation complete: {cindex} ceremonies')
+    ts('Stats written to bot-stats.csv')
 
     if assert_invariants:
-        print(f'🔬 All assertions passed')
+        ts('All assertions passed')
 
 
 def purge_keystore_prompt():
