@@ -1,5 +1,4 @@
 import re
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from py_client.campaign import Campaign
@@ -13,7 +12,8 @@ class ProvePersonhoodCampaign(Campaign):
     """
 
     MIN_CINDEX = 4
-    MAX_WORKERS = 10
+    MAX_WORKERS = 100
+    MAX_PROVERS = 10
 
     def __init__(self, pool, log=None):
         super().__init__(pool, log)
@@ -23,12 +23,14 @@ class ProvePersonhoodCampaign(Campaign):
         if cindex < self.MIN_CINDEX:
             return
 
-        ring_agents = [a for a in self.pool.agents if a.has_bandersnatch]
-        if not ring_agents:
+        all_ring_agents = [a for a in self.pool.agents if a.has_bandersnatch]
+        if not all_ring_agents:
             print("  Campaign prove_personhood: no agents with bandersnatch keys, skipping")
             return
 
-        print(f"🔮 Campaign prove_personhood: {len(ring_agents)} agents")
+        # Sample a few provers — ring size is determined by total membership, not prover count
+        ring_agents = all_ring_agents[:self.MAX_PROVERS]
+        print(f"🔮 Campaign prove_personhood: {len(ring_agents)}/{len(all_ring_agents)} agents (ring size {len(all_ring_agents)})")
 
         # Find most recent cindex with populated rings
         chain_cindex = self.client.get_cindex()
@@ -54,12 +56,8 @@ class ProvePersonhoodCampaign(Campaign):
                 available_levels.append(level)
         print(f"  levels with members: {available_levels}")
 
-        stop_evt, heartbeat_thread = self._start_heartbeat()
-        try:
-            for level in available_levels:
-                self._prove_level(cindex, ring_agents, ring_cindex, level)
-        finally:
-            self._stop_heartbeat(stop_evt, heartbeat_thread)
+        for level in available_levels:
+            self._prove_level(cindex, ring_agents, ring_cindex, level)
 
     def _prove_one(self, agent, ring_cindex, level):
         """Prove + verify one agent at one level. Returns (pseudonym, error)."""
@@ -104,30 +102,6 @@ class ProvePersonhoodCampaign(Campaign):
         status = "PASS" if anonymity_ok else "FAIL"
         print(f"  level {level}/5: {proven} proved, {len(pseudonyms)} pseudonyms, anonymity={status}")
         assert anonymity_ok, f"anonymity check failed at level {level}: duplicate pseudonyms"
-
-    def _start_heartbeat(self):
-        """Send periodic CC transfers to prevent phase.py from detecting idle blocks."""
-        stop_evt = threading.Event()
-        reputables = [a for a in self.pool.agents if a.is_reputable]
-        if len(reputables) < 2:
-            return stop_evt, None
-        src, dst = reputables[0].account, reputables[1].account
-
-        def beat():
-            while not stop_evt.wait(10):
-                try:
-                    self.client.transfer(self.cid, src, dst, "0.001")
-                except Exception:
-                    pass
-
-        t = threading.Thread(target=beat, daemon=True)
-        t.start()
-        return stop_evt, t
-
-    def _stop_heartbeat(self, stop_evt, thread):
-        stop_evt.set()
-        if thread is not None:
-            thread.join(timeout=5)
 
     def write_summary(self, cindex):
         if not self._results or self.log is None:

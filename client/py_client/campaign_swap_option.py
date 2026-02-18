@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from py_client.campaign import Campaign
 
 
@@ -39,9 +41,7 @@ class SwapOptionCampaign(Campaign):
     def _submit_proposals(self):
         """Fund community treasury and submit swap-native-option proposals."""
         merchants = [a for a in self.pool.agents if a.has_business][:2]
-        if len(merchants) < 2:
-            print("  Campaign swap_option: not enough merchants, skipping")
-            return
+        assert len(merchants) >= 2, "need at least 2 merchants for swap option campaign"
         self._merchants = merchants
 
         # Fund the community treasury with native tokens
@@ -54,7 +54,8 @@ class SwapOptionCampaign(Campaign):
         self.pool._wait()
 
         native_bal = self.client.balance(treasury)
-        print(f"  treasury native balance: {native_bal}")
+        assert native_bal >= self.TREASURY_FUND, f"treasury funding failed: balance {native_bal}"
+        print(f"  ✓ treasury native balance: {native_bal}")
 
         # Each merchant submits a proposal
         proposer = self.pool._first_reputable()
@@ -76,7 +77,9 @@ class SwapOptionCampaign(Campaign):
             p.id for p in proposals
             if 'SwapNativeOption' in p.action and p.state == 'Ongoing'
         ]
-        print(f"  submitted {len(self._proposal_ids)} swap-native-option proposals: {self._proposal_ids}")
+        assert len(self._proposal_ids) == 2, (
+            f"expected 2 swap-native-option proposals, got {len(self._proposal_ids)}")
+        print(f"  ✓ submitted {len(self._proposal_ids)} proposals: {self._proposal_ids}")
 
     def _vote_aye(self):
         """All reputables vote aye on swap-native-option proposals."""
@@ -92,23 +95,31 @@ class SwapOptionCampaign(Campaign):
         print(f"🗳 Campaign swap_option: voting aye on {len(swap_proposals)} proposals")
         voters = [a for a in self.pool.agents if a.is_reputable]
         for proposal in swap_proposals:
-            voted = 0
+            # Build vote tasks, then submit in parallel
+            vote_tasks = []
             for voter in voters:
                 reputations = [[t[1], t[0]] for t in self.client.reputation(voter.account)]
-                if not reputations:
-                    continue
-                try:
-                    self.client.vote(voter.account, proposal.id, 'aye', reputations)
-                    voted += 1
-                except Exception as e:
-                    pass  # some may have already voted via base democracy
+                if reputations:
+                    vote_tasks.append((voter.account, proposal.id, reputations))
+
+            def cast_vote(task):
+                self.client.vote(task[0], task[1], 'aye', task[2])
+
+            voted = 0
+            with ThreadPoolExecutor(max_workers=100) as pool:
+                futures = {pool.submit(cast_vote, task): task for task in vote_tasks}
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                        voted += 1
+                    except Exception:
+                        pass
             print(f"  proposal {proposal.id}: {voted} aye votes cast")
             self.pool._wait()
 
     def _update_and_check(self):
         """Update proposal states and check for approval."""
-        if not self._proposal_ids:
-            return
+        assert self._proposal_ids, "swap option campaign: no proposals to update"
 
         print("📋 Campaign swap_option: updating proposal states")
         updater = self.pool.agents[0].account
@@ -120,11 +131,12 @@ class SwapOptionCampaign(Campaign):
         for p in proposals:
             if p.id in self._proposal_ids:
                 print(f"  proposal {p.id}: state={p.state}, turnout={p.turnout}, approval={p.approval}")
+                assert p.state in ('Approved', 'Confirming', 'Ongoing'), (
+                    f"unexpected state {p.state} for proposal {p.id}")
 
     def _exercise_options(self):
         """After enactment: query swap options and exercise them partially."""
-        if not self._merchants:
-            return
+        assert self._merchants, "swap option campaign: no merchants (submit phase failed?)"
 
         # Final state update to trigger enactment
         print("💱 Campaign swap_option: checking enactment and exercising options")
@@ -139,31 +151,34 @@ class SwapOptionCampaign(Campaign):
         # Check final proposal states
         proposals = self.client.get_proposals()
         enacted = [p for p in proposals if p.id in self._proposal_ids and p.state == 'Enacted']
-        print(f"  enacted proposals: {len(enacted)} / {len(self._proposal_ids)}")
+        assert len(enacted) == len(self._proposal_ids), (
+            f"expected {len(self._proposal_ids)} enacted proposals, got {len(enacted)}")
+        print(f"  ✓ {len(enacted)} / {len(self._proposal_ids)} proposals enacted")
 
+        exercised = 0
         for merchant in self._merchants:
             # Query the swap option
             option_str = self.client.get_swap_native_option(merchant.account, cid=self.cid)
             print(f"  {merchant.account[:8]}... option: {option_str[:120]}")
-
-            if "No swap" in option_str:
-                print(f"    no option found, skipping exercise")
-                continue
+            assert "No swap" not in option_str, (
+                f"no swap option found for {merchant.account[:8]}... after enactment")
 
             # Exercise half the allowance
             exercise_amount = self.NATIVE_ALLOWANCE // 2
             print(f"    exercising {exercise_amount} of {self.NATIVE_ALLOWANCE}")
-            try:
-                result = self.client.swap_native(merchant.account, exercise_amount, cid=self.cid)
-                print(f"    swap result: {result}")
-            except Exception as e:
-                print(f"    swap failed: {e}")
+            result = self.client.swap_native(merchant.account, exercise_amount, cid=self.cid)
+            print(f"    ✓ swap result: {result}")
+            exercised += 1
 
             self.pool._wait()
 
-            # Query remaining option
+            # Query remaining option — should still exist with reduced allowance
             remaining = self.client.get_swap_native_option(merchant.account, cid=self.cid)
-            print(f"    remaining option: {remaining[:120]}")
+            assert "No swap" not in remaining, "option disappeared after partial exercise"
+            print(f"    ✓ remaining option: {remaining[:120]}")
+
+        assert exercised == len(self._merchants), (
+            f"expected {len(self._merchants)} exercises, got {exercised}")
 
     def write_summary(self, cindex):
         if self.log is None:

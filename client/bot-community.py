@@ -173,10 +173,12 @@ def simulate(ctx, ceremonies, assert_invariants):
 
     t0 = time.monotonic()
 
+    chain_cindex = [0]
+
     def ts(msg):
         elapsed = int(time.monotonic() - t0)
         mm, ss = divmod(elapsed, 60)
-        print(f'[{mm:02d}:{ss:02d}] {msg}')
+        print(f'[{mm:02d}:{ss:02d}|{chain_cindex[0]}] {msg}')
 
     def wait_for_phase(target):
         phase = client.get_phase()
@@ -185,6 +187,7 @@ def simulate(ctx, ceremonies, assert_invariants):
             while phase != target:
                 time.sleep(3)
                 phase = client.get_phase()
+        chain_cindex[0] = client.get_cindex()
 
     infinite = ceremonies == 0
     target = ceremonies if not infinite else float('inf')
@@ -201,30 +204,33 @@ def simulate(ctx, ceremonies, assert_invariants):
 
         # Registering
         wait_for_phase('Registering')
+        pool.start_heartbeat()
         log.phase('Registering')
         ts('Phase: Registering')
         pool.execute_registering()
         for c in campaigns:
             c.on_registering(cindex)
+        pool.stop_heartbeat()
 
         # Assigning (phase.py advances after idle detection)
         wait_for_phase('Assigning')
+        pool.start_heartbeat()
         log.phase('Assigning')
         ts('Phase: Assigning')
         pool.execute_assigning()
         for c in campaigns:
             c.on_assigning(cindex)
+        pool.stop_heartbeat()
 
-        # Attesting
+        # Attesting + post-ceremony work
         wait_for_phase('Attesting')
+        pool.start_heartbeat()
         log.phase('Attesting')
         ts('Phase: Attesting')
         pool.execute_attesting()
         for c in campaigns:
             c.on_attesting(cindex)
 
-        # Post-ceremony work (still in Attesting; campaigns send heartbeat
-        # extrinsics to prevent phase.py from advancing prematurely)
         log.phase('Base Auxiliary')
         pool.run_base_auxiliary(cindex)
         for c in campaigns:
@@ -237,6 +243,7 @@ def simulate(ctx, ceremonies, assert_invariants):
         if assert_invariants:
             pool.assert_invariants(cindex)
 
+        pool.stop_heartbeat()
         ts(f'Ceremony {cindex} complete')
         # Bot goes idle -> phase.py advances Attesting -> Registering
 

@@ -1,10 +1,15 @@
 import ast
 import random
 import re
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from math import floor
 
 from py_client.agents import Agent, AgentRole
 from py_client.client import Client, ExtrinsicFeePaymentImpossible, ParticipantAlreadyLinked
+
+
+MAX_WORKERS = 100
 
 
 NUMBER_OF_ENDORSEMENTS_PER_REGISTRATION = 10
@@ -22,6 +27,8 @@ class AgentPool:
         self.agents: list[Agent] = []
         self.stats: list[dict] = []
         self._faucet_account = None  # set during faucet lifecycle test
+        self._heartbeat_stop = None
+        self._heartbeat_thread = None
 
     def _wait(self, blocks=None):
         self.client.await_block(blocks or self.waiting_blocks)
@@ -29,19 +36,26 @@ class AgentPool:
     # ── Bootstrap ──────────────────────────────────────────────────────
 
     def load_agents(self):
-        """Load agents from existing keystore accounts."""
+        """Load agents from existing keystore accounts (keys already registered on-chain)."""
         accounts = self.client.list_accounts()
         for acc in accounts:
             if not any(a.account == acc for a in self.agents):
-                self.agents.append(Agent(account=acc, role=AgentRole.BOOTSTRAPPER))
+                agent = Agent(account=acc, role=AgentRole.BOOTSTRAPPER)
+                agent.bandersnatch_key = "auto-derived"
+                agent.has_offline_identity = True
+                self.agents.append(agent)
 
     def bootstrap(self, count: int):
-        """Create initial bootstrapper accounts and fund them."""
+        """Create initial bootstrapper accounts, fund them, and register bandersnatch keys."""
         accounts = self.client.create_accounts(count)
         print(f'created bootstrappers: {" ".join(accounts)}')
         self.client.faucet(accounts, faucet_url=self.faucet_url)
+        agents = []
         for acc in accounts:
-            self.agents.append(Agent(account=acc, role=AgentRole.BOOTSTRAPPER))
+            agent = Agent(account=acc, role=AgentRole.BOOTSTRAPPER)
+            agents.append(agent)
+            self.agents.append(agent)
+        self._register_keys_and_identities(agents)
         return accounts
 
     # ── Growth ─────────────────────────────────────────────────────────
@@ -79,10 +93,18 @@ class AgentPool:
             self._wait()
             print(f'Fauceted new community members {len(new_members)}')
 
+        new_agents = []
         for acc in endorsees:
-            self.agents.append(Agent(account=acc, role=AgentRole.NEWBIE, endorsed=True))
+            agent = Agent(account=acc, role=AgentRole.NEWBIE, endorsed=True)
+            new_agents.append(agent)
+            self.agents.append(agent)
         for acc in newbies:
-            self.agents.append(Agent(account=acc, role=AgentRole.NEWBIE))
+            agent = Agent(account=acc, role=AgentRole.NEWBIE)
+            new_agents.append(agent)
+            self.agents.append(agent)
+
+        if new_agents:
+            self._register_keys_and_identities(new_agents)
 
     def _endorse_new_accounts(self, bootstrappers_and_tickets, endorsee_count):
         endorsers = []
@@ -112,13 +134,60 @@ class AgentPool:
 
         return endorsees
 
+    # ── Heartbeat ─────────────────────────────────────────────────────
+
+    def start_heartbeat(self):
+        """Send periodic CC transfers to prevent phase.py idle-block detection."""
+        if self._heartbeat_thread is not None:
+            return  # already running
+        reputables = [a for a in self.agents if a.is_reputable]
+        if len(reputables) < 2:
+            return
+        src, dst = reputables[0].account, reputables[1].account
+        stop_evt = threading.Event()
+
+        def beat():
+            while not stop_evt.wait(4):
+                try:
+                    self.client.transfer(self.cid, src, dst, "0.001")
+                except Exception:
+                    pass
+
+        t = threading.Thread(target=beat, daemon=True)
+        t.start()
+        self._heartbeat_stop = stop_evt
+        self._heartbeat_thread = t
+
+    def stop_heartbeat(self):
+        """Stop the heartbeat thread."""
+        if self._heartbeat_stop is not None:
+            self._heartbeat_stop.set()
+        if self._heartbeat_thread is not None:
+            self._heartbeat_thread.join(timeout=5)
+        self._heartbeat_stop = None
+        self._heartbeat_thread = None
+
+    # ── Parallel helpers ───────────────────────────────────────────────
+
+    def _run_parallel(self, fn, items, max_workers=MAX_WORKERS):
+        """Execute fn(item) concurrently. Returns count of successes."""
+        succeeded = 0
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {pool.submit(fn, item): item for item in items}
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                    succeeded += 1
+                except Exception:
+                    pass
+        return succeeded
+
     # ── Phase execution ────────────────────────────────────────────────
 
     def execute_registering(self):
         """Claim rewards, grow population, register keys/identities, register all."""
         print("🏆 all participants claim their potential reward")
-        for agent in self.agents:
-            self.client.claim_reward(agent.account, self.cid)
+        self._run_parallel(lambda a: self.client.claim_reward(a.account, self.cid), self.agents)
         self._wait()
 
         self._update_proposal_states()
@@ -126,8 +195,6 @@ class AgentPool:
         total_supply = self._write_current_stats()
         if total_supply > 0:
             self.grow()
-
-        self._register_keys_and_identities()
 
         self._register_all()
         self._wait()
@@ -148,8 +215,16 @@ class AgentPool:
         self._update_proposal_states()
         self._vote_on_proposals()
         print(f'🫂 Performing {len(meetups)} meetups')
+
+        # Flatten all attestation tasks and run in parallel
+        attest_tasks = []
         for meetup in meetups:
-            self._perform_meetup(meetup)
+            for i in range(len(meetup)):
+                attest_tasks.append((meetup[i], meetup[:i] + meetup[i + 1:]))
+        self._run_parallel(
+            lambda task: self.client.attest_attendees(task[0], self.cid, task[1]),
+            attest_tasks
+        )
         self._wait()
 
         # Track ceremony attendance for agents in meetups
@@ -189,29 +264,25 @@ class AgentPool:
         offerings = self.client.list_offerings(self.cid)
         print(f"  offerings: {offerings}")
 
-    def _register_keys_and_identities(self):
-        """Register bandersnatch keys and offline identities for all eligible agents."""
-        keys_registered = 0
-        ids_registered = 0
-        for agent in self.agents:
-            if not agent.has_bandersnatch:
-                try:
-                    secret = self.client.export_secret(agent.account)
-                    self.client.register_bandersnatch_key(secret)
-                    agent.bandersnatch_key = "auto-derived"
-                    keys_registered += 1
-                except Exception:
-                    pass
-            if agent.is_reputable and not agent.has_offline_identity:
-                try:
-                    self.client.register_offline_identity(agent.account, cid=self.cid)
-                    agent.has_offline_identity = True
-                    ids_registered += 1
-                except Exception:
-                    pass
-        if keys_registered or ids_registered:
+    def _register_keys_and_identities(self, agents):
+        """Register bandersnatch keys and offline identities for agents."""
+        need_keys = [a for a in agents if not a.has_bandersnatch]
+        need_ids = [a for a in agents if not a.has_offline_identity]
+
+        def reg_key(agent):
+            secret = self.client.export_secret(agent.account)
+            self.client.register_bandersnatch_key(secret)
+            agent.bandersnatch_key = "auto-derived"
+
+        def reg_id(agent):
+            self.client.register_offline_identity(agent.account, cid=self.cid)
+            agent.has_offline_identity = True
+
+        keys = self._run_parallel(reg_key, need_keys)
+        ids = self._run_parallel(reg_id, need_ids)
+        if keys or ids:
             self._wait()
-        print(f"🔑 Registered {keys_registered} bandersnatch keys, {ids_registered} offline identities")
+        print(f"🔑 Registered {keys} bandersnatch keys, {ids} offline identities")
 
     def run_base_auxiliary(self, cindex):
         """Run base auxiliary feature exercises staged by ceremony index."""
@@ -234,19 +305,20 @@ class AgentPool:
         """Ceremony 4: CC transfers between agents."""
         print("💰 Transfers between agents")
         reputables = [a for a in self.agents if a.is_reputable]
-        if len(reputables) < 2:
-            return
+        assert len(reputables) >= 2, "need at least 2 reputables for transfer test"
         src, dst = reputables[0], reputables[1]
+        bal_before = self.client.balance(dst.account, cid=self.cid)
         self.client.transfer(self.cid, src.account, dst.account, "0.1")
         self._wait()
-        print(f"  transferred 0.1 from {src.account[:8]}... to {dst.account[:8]}...")
+        bal_after = self.client.balance(dst.account, cid=self.cid)
+        assert bal_after > bal_before, f"transfer failed: dst balance {bal_before} -> {bal_after}"
+        print(f"  ✓ transferred 0.1 from {src.account[:8]}... to {dst.account[:8]}...")
 
     def _aux_faucet_lifecycle(self):
         """Ceremony 5: Create, drip, close faucet."""
         print("🚰 Faucet lifecycle")
         creator = self._first_reputable()
-        if not creator:
-            return
+        assert creator, "need at least one reputable for faucet lifecycle"
         cindex = self.client.get_cindex()
         whitelist = [self.cid]
         output = self.client.create_faucet(creator.account, "test-faucet", 1000, 10, whitelist)
@@ -254,35 +326,33 @@ class AgentPool:
         self._wait()
 
         faucets = self.client.list_faucets(verbose=True)
-        print(f"  faucets: {faucets[:200]}...")
+        assert len(faucets) > 0, "expected at least one faucet after creation"
+        print(f"  ✓ faucets exist: {faucets[:200]}...")
 
         # drip to another agent
         drip_target = self.agents[-1] if len(self.agents) > 1 else self.agents[0]
-        try:
-            self.client.drip_faucet(drip_target.account, creator.account, cindex, cid=self.cid)
-            print(f"  dripped to {drip_target.account[:8]}...")
-        except Exception as e:
-            print(f"  drip failed (expected in some scenarios): {e}")
+        self.client.drip_faucet(drip_target.account, creator.account, cindex, cid=self.cid)
+        print(f"  ✓ dripped to {drip_target.account[:8]}...")
 
-        try:
-            self.client.close_faucet(creator.account, creator.account)
-            print("  closed faucet")
-        except Exception as e:
-            print(f"  close faucet failed (expected if not empty): {e}")
+        self.client.close_faucet(creator.account, creator.account)
+        print("  ✓ closed faucet")
 
     def _aux_treasury(self):
         """Ceremony 5: Query treasury."""
         print("🏛 Treasury")
         treasury = self.client.get_treasury(cid=self.cid)
-        print(f"  treasury: {treasury}")
+        assert len(treasury) > 0, "treasury account should not be empty"
+        print(f"  ✓ treasury: {treasury}")
 
     def _aux_queries(self):
         """Ceremony 5+: Various read queries."""
         print("🔍 Running read queries")
         issuance = self.client.issuance(self.cid)
-        print(f"  issuance: {issuance}")
+        assert float(issuance.split()[-1]) > 0, f"issuance should be positive, got: {issuance}"
+        print(f"  ✓ issuance: {issuance}")
         reputables = self.client.list_reputables()
-        print(f"  reputables: {reputables[:200]}...")
+        assert len(reputables) > 0, "expected reputables"
+        print(f"  ✓ reputables: {reputables[:200]}...")
         commitments = self.client.list_commitments()
         print(f"  commitments: {commitments[:200]}...")
         purposes = self.client.list_purposes()
@@ -292,13 +362,17 @@ class AgentPool:
         """Ceremony 6: Advanced democracy proposals and voting."""
         print("🗳 Advanced democracy")
         proposer = self._first_reputable()
-        if not proposer:
-            return
+        assert proposer, "need at least one reputable for democracy"
+        proposals_before = len(self.client.get_proposals())
         self.client.submit_update_demurrage_proposal(proposer.account, 1000000, cid=self.cid)
         print("  submitted demurrage proposal")
         self.client.submit_spend_native_proposal(proposer.account, self.agents[-1].account, 100)
         print("  submitted spend native proposal")
         self._wait()
+        proposals_after = self.client.get_proposals()
+        assert len(proposals_after) >= proposals_before + 2, (
+            f"expected 2 new proposals, had {proposals_before}, now {len(proposals_after)}")
+        print(f"  ✓ {len(proposals_after) - proposals_before} new proposals submitted")
         self._vote_on_proposals()
         self._update_proposal_states()
         enactment = self.client.list_enactment_queue()
@@ -316,31 +390,27 @@ class AgentPool:
         accounts = self._all_accounts()
         print(f'registering {len(accounts)} participants')
         need_refunding = []
-        for p in accounts:
+        lock = threading.Lock()
+
+        def register(p):
             try:
                 self.client.register_participant(p, self.cid)
             except ExtrinsicFeePaymentImpossible:
-                need_refunding.append(p)
+                with lock:
+                    need_refunding.append(p)
             except ParticipantAlreadyLinked:
                 pass
 
-        if len(need_refunding) > 0:
+        self._run_parallel(register, accounts)
+
+        if need_refunding:
             print(f'the following accounts are out of funds and will be refunded {need_refunding}')
             self.client.faucet(need_refunding, faucet_url=self.faucet_url)
             self._wait()
-            for p in need_refunding:
-                try:
-                    self.client.register_participant(p, self.cid)
-                except ExtrinsicFeePaymentImpossible:
-                    print("refunding failed")
-
-    def _perform_meetup(self, meetup):
-        n = len(meetup)
-        print(f'Performing meetup with {n} participants')
-        for p_index in range(n):
-            attestor = meetup[p_index]
-            attendees = meetup[:p_index] + meetup[p_index + 1:]
-            self.client.attest_attendees(attestor, self.cid, attendees)
+            self._run_parallel(
+                lambda p: self.client.register_participant(p, self.cid),
+                need_refunding
+            )
 
     def _submit_democracy_proposals(self):
         print("submitting new democracy proposals")
@@ -365,18 +435,26 @@ class AgentPool:
                 try:
                     active_voters = self._all_accounts()[0:round(len(self.agents) * target_turnout)]
                     print(f"will attempt to vote with {len(active_voters) - 1} accounts")
-                    is_first_voter_with_rep = True
+
+                    # Pre-compute votes and reputations, then submit in parallel
+                    vote_tasks = []
+                    is_first = True
                     for voter in active_voters:
                         reputations = [[t[1], t[0]] for t in self.client.reputation(voter)]
-                        if len(reputations) == 0:
+                        if not reputations:
                             print(f"no reputations for {voter}. can't vote")
                             continue
-                        if is_first_voter_with_rep:
+                        if is_first:
                             print(f"👉 will not vote with {voter}: mnemonic: {self.client.export_secret(voter)}")
-                            is_first_voter_with_rep = False
+                            is_first = False
                         vote = self.rng.choices(choices, weights)[0]
                         print(f"voting {vote} on proposal {proposal.id} with {voter} and reputations {reputations}")
-                        self.client.vote(voter, proposal.id, vote, reputations)
+                        vote_tasks.append((voter, proposal.id, vote, reputations))
+
+                    self._run_parallel(
+                        lambda t: self.client.vote(t[0], t[1], t[2], t[3]),
+                        vote_tasks
+                    )
                 except Exception:
                     print(f"voting failed")
             self._wait()
@@ -395,7 +473,8 @@ class AgentPool:
 
     def _write_current_stats(self):
         accounts = self._all_accounts()
-        bal = [self.client.balance(a, cid=self.cid) for a in accounts]
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            bal = list(pool.map(lambda a: self.client.balance(a, cid=self.cid), accounts))
         total = sum(bal)
         print(f'****** money supply is {total}')
 
@@ -504,34 +583,57 @@ class AgentPool:
 
         print(f"🔬 Asserting invariants for ceremony {cindex}")
 
-        # Population should be positive
+        # Population should be positive and growing
         assert stat['population'] > 0, f"population is 0 at cindex {cindex}"
-
-        # After ceremony 2: businesses should exist (5 merchants)
         if cindex >= 2:
+            assert stat['population'] > 10, f"population should grow beyond bootstrappers by ceremony {cindex}"
+
+        # All agents should have bandersnatch keys and offline identities (registered at creation)
+        assert stat['ring_members'] == stat['population'], (
+            f"ring_members ({stat['ring_members']}) != population ({stat['population']}) at cindex {cindex}")
+        assert stat['offline_ids'] == stat['population'], (
+            f"offline_ids ({stat['offline_ids']}) != population ({stat['population']}) at cindex {cindex}")
+        print(f"  ✓ {stat['ring_members']} keys, {stat['offline_ids']} offline ids == population")
+
+        # After ceremony 1: total supply should be positive (bootstrappers earned income)
+        if cindex >= 2:
+            assert stat['total_supply'] > 0, f"total supply is 0 at cindex {cindex}"
+            print(f"  ✓ total supply {stat['total_supply']} > 0")
+
+        # After ceremony 2: businesses should exist (5 merchants set up in ceremony 2)
+        if cindex >= 3:
             businesses = self.client.list_businesses(self.cid)
-            if stat['businesses'] > 0:
-                assert len(businesses) > 0, "expected businesses after ceremony 2"
-                print(f"  ✓ {len(businesses)} businesses exist")
+            assert stat['businesses'] >= 5, f"expected >= 5 businesses, got {stat['businesses']}"
+            assert len(businesses) >= 5, f"expected >= 5 on-chain businesses, got {len(businesses)}"
+            print(f"  ✓ {len(businesses)} businesses on-chain")
 
-        # Bandersnatch keys grow every ceremony (registered in execute_registering)
-        if cindex >= 2 and stat['ring_members'] > 0:
-            print(f"  ✓ {stat['ring_members']} bandersnatch keys registered")
-
-        # Offline identities grow every ceremony (registered in execute_registering)
-        if cindex >= 2 and stat['offline_ids'] > 0:
+        # Verify offline identity readable on-chain
+        if cindex >= 3:
             offline_agents = [a for a in self.agents if a.has_offline_identity]
-            for agent in offline_agents[:1]:
-                identity = self.client.get_offline_identity(agent.account, cid=self.cid)
-                assert len(identity) > 0, f"offline identity empty for {agent.account[:8]}..."
-            print(f"  ✓ {stat['offline_ids']} offline identities registered")
+            identity = self.client.get_offline_identity(offline_agents[0].account, cid=self.cid)
+            assert len(identity) > 0, f"offline identity empty for {offline_agents[0].account[:8]}..."
+            print(f"  ✓ offline identity verified on-chain")
 
-        # After ceremony 4: rings auto-computed
-        if cindex >= 4 and stat['ring_members'] > 0:
-            for ci in range(self.client.get_cindex() - 2, 0, -1):
+        # After ceremony 2: rings should exist with members matching population
+        if cindex >= 3:
+            chain_cindex = self.client.get_cindex()
+            found_rings = False
+            for ci in range(chain_cindex - 2, 0, -1):
                 rings = self.client.get_rings(self.cid, ci)
-                if "members" in rings:
-                    print(f"  ✓ auto-computed rings exist for cindex={ci}")
+                m = re.search(r'Level 1/5:\s+(\d+)\s+members', rings)
+                if m and int(m.group(1)) > 0:
+                    members = int(m.group(1))
+                    print(f"  ✓ rings at cindex={ci}: level 1/5 has {members} members")
+                    found_rings = True
                     break
+            assert found_rings, f"no rings with members found by ceremony {cindex}"
+
+        # After ceremony 5: democracy proposals should have been voted on
+        if cindex >= 5:
+            proposals = self.client.get_proposals()
+            assert len(proposals) > 0, "expected democracy proposals by ceremony 5"
+            voted = [p for p in proposals if p.turnout > 0]
+            assert len(voted) > 0, "expected at least one proposal with votes"
+            print(f"  ✓ {len(proposals)} proposals, {len(voted)} with votes")
 
         print(f"  ✓ all invariants passed for ceremony {cindex}")
