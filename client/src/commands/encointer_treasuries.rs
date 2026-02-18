@@ -1,11 +1,10 @@
 use crate::{
-	cli_args::EncointerArgsExtractor,
+	cli::Cli,
 	utils::{
 		ensure_payment, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
 	},
 };
-use clap::ArgMatches;
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, CommunitiesApi, EncointerXt, Moment,
 	ParentchainExtrinsicSigner, TreasuriesApi,
@@ -21,132 +20,97 @@ use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetStorage, SubmitAndWatch, XtStatus,
 };
 
-pub fn get_treasury_account(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
+pub async fn get_treasury_account(cli: &Cli) {
+	let api = get_chain_api(cli).await;
 
-		let maybecid = if let Some(cid) = matches.cid_arg() {
-			Some(api.verify_cid(cid, None).await)
-		} else {
-			None
-		};
-		let treasury = api.get_community_treasury_account_unchecked(maybecid).await.unwrap();
-		println!("{treasury}");
-		Ok(())
-	})
-	.into()
+	let maybecid = if let Some(cid) = cli.cid.as_deref() {
+		Some(api.verify_cid(cid, None).await)
+	} else {
+		None
+	};
+	let treasury = api.get_community_treasury_account_unchecked(maybecid).await.unwrap();
+	println!("{treasury}");
 }
 
-pub fn get_swap_native_option(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid = api
-			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-			.await;
-		let account = get_accountid_from_str(matches.account_arg().unwrap());
-		let maybe_at = matches.at_block_arg();
-		let option: Option<SwapNativeOption<Balance, Moment>> = api
-			.get_storage_double_map(
-				"EncointerTreasuries",
-				"SwapNativeOptions",
-				cid,
-				&account,
-				maybe_at,
-			)
-			.await
-			.unwrap();
-		match option {
-			Some(opt) => print_swap_native_option(&opt),
-			None => println!("No swap native option found for {account} in {cid}"),
-		}
-		Ok(())
-	})
-	.into()
+pub async fn get_swap_native_option(cli: &Cli, account: &str) {
+	let api = get_chain_api(cli).await;
+	let cid = api
+		.verify_cid(cli.cid.as_deref().expect("please supply argument --cid"), None)
+		.await;
+	let account = get_accountid_from_str(account);
+	let maybe_at = cli.at_block();
+	let option: Option<SwapNativeOption<Balance, Moment>> = api
+		.get_storage_double_map(
+			"EncointerTreasuries",
+			"SwapNativeOptions",
+			cid,
+			&account,
+			maybe_at,
+		)
+		.await
+		.unwrap();
+	match option {
+		Some(opt) => print_swap_native_option(&opt),
+		None => println!("No swap native option found for {account} in {cid}"),
+	}
 }
 
-pub fn get_swap_asset_option(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let cid = api
-			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-			.await;
-		let account = get_accountid_from_str(matches.account_arg().unwrap());
-		let maybe_at = matches.at_block_arg();
-		use super::encointer_democracy::XcmLocation;
-		let option: Option<SwapAssetOption<Balance, Moment, XcmLocation>> = api
-			.get_storage_double_map(
-				"EncointerTreasuries",
-				"SwapAssetOptions",
-				cid,
-				&account,
-				maybe_at,
-			)
-			.await
-			.unwrap();
-		match option {
-			Some(opt) => print_swap_asset_option(&opt),
-			None => println!("No swap asset option found for {account} in {cid}"),
-		}
-		Ok(())
-	})
-	.into()
+pub async fn get_swap_asset_option(cli: &Cli, account: &str) {
+	let api = get_chain_api(cli).await;
+	let cid = api
+		.verify_cid(cli.cid.as_deref().expect("please supply argument --cid"), None)
+		.await;
+	let account = get_accountid_from_str(account);
+	let maybe_at = cli.at_block();
+	use super::encointer_democracy::XcmLocation;
+	let option: Option<SwapAssetOption<Balance, Moment, XcmLocation>> = api
+		.get_storage_double_map(
+			"EncointerTreasuries",
+			"SwapAssetOptions",
+			cid,
+			&account,
+			maybe_at,
+		)
+		.await
+		.unwrap();
+	match option {
+		Some(opt) => print_swap_asset_option(&opt),
+		None => println!("No swap asset option found for {account} in {cid}"),
+	}
 }
 
-pub fn swap_native(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-		let cid = api
-			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-			.await;
-		let amount = matches
-			.value_of("amount")
-			.unwrap()
-			.parse::<u128>()
-			.expect("amount can be converted to u128");
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+pub async fn swap_native(cli: &Cli, account: &str, amount: u128) {
+	let who = get_pair_from_str(account);
+	let mut api = get_chain_api(cli).await;
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+	let cid = api
+		.verify_cid(cli.cid.as_deref().expect("please supply argument --cid"), None)
+		.await;
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerTreasuries", "swap_native", cid, amount).unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		println!("Swap native submitted: {amount} from community {cid}");
-		Ok(())
-	})
-	.into()
+	let xt: EncointerXt<_> =
+		compose_extrinsic!(api, "EncointerTreasuries", "swap_native", cid, amount).unwrap();
+	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+	let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+	println!("Swap native submitted: {amount} from community {cid}");
 }
 
-pub fn swap_asset(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
-		let cid = api
-			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-			.await;
-		let amount = matches
-			.value_of("amount")
-			.unwrap()
-			.parse::<u128>()
-			.expect("amount can be converted to u128");
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+pub async fn swap_asset(cli: &Cli, account: &str, amount: u128) {
+	let who = get_pair_from_str(account);
+	let mut api = get_chain_api(cli).await;
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+	let cid = api
+		.verify_cid(cli.cid.as_deref().expect("please supply argument --cid"), None)
+		.await;
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		let xt: EncointerXt<_> =
-			compose_extrinsic!(api, "EncointerTreasuries", "swap_asset", cid, amount).unwrap();
-		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
-		println!("Swap asset submitted: {amount} from community {cid}");
-		Ok(())
-	})
-	.into()
+	let xt: EncointerXt<_> =
+		compose_extrinsic!(api, "EncointerTreasuries", "swap_asset", cid, amount).unwrap();
+	ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+	let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+	println!("Swap asset submitted: {amount} from community {cid}");
 }
 
 fn print_swap_native_option(opt: &SwapNativeOption<Balance, Moment>) {

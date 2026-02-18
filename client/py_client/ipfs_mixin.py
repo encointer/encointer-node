@@ -3,7 +3,7 @@ class _IpfsMixin:
         """Upload file to IPFS via authenticated gateway.
         Returns (success: bool, output: str, exit_code: int)
         """
-        cmd = ["ipfs-upload", "--signer", signer]
+        cmd = ["ipfs", "upload", "--signer", signer]
         if gateway_url:
             cmd += ["--gateway", gateway_url]
         cmd += [file_path]

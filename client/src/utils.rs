@@ -1,8 +1,8 @@
 use crate::{
+	cli::Cli,
 	commands::encointer_core::{get_asset_fee_details, get_community_balance},
 	exit_code, BalanceType,
 };
-use clap::ArgMatches;
 use encointer_api_client_extension::{Api, EncointerXt};
 use encointer_node_notee_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
@@ -20,12 +20,8 @@ use substrate_api_client::{
 	GetAccountInformation, GetBalance, GetTransactionPayment, Result, SubmitAndWatch, XtStatus,
 };
 
-pub async fn get_chain_api(matches: &ArgMatches<'_>) -> Api {
-	let url = format!(
-		"{}:{}",
-		matches.value_of("node-url").unwrap(),
-		matches.value_of("node-port").unwrap()
-	);
+pub async fn get_chain_api(cli: &Cli) -> Api {
+	let url = format!("{}:{}", cli.node_url, cli.node_port);
 	debug!("connecting to {}", url);
 	let client = JsonrpseeClient::new(&url).await.expect("node URL is incorrect");
 	Api::new(client).await.unwrap()

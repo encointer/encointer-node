@@ -1,7 +1,6 @@
 //! IPFS upload command with sr25519 gateway authentication
 
-use crate::{cli_args::EncointerArgsExtractor, exit_code, utils::keys::get_pair_from_str};
-use clap::ArgMatches;
+use crate::{cli::Cli, exit_code, utils::keys::get_pair_from_str};
 use reqwest::multipart;
 use serde::{Deserialize, Serialize};
 use sp_core::{crypto::Ss58Codec, Pair};
@@ -48,16 +47,8 @@ struct UploadResponse {
 	size: String,
 }
 
-pub fn ipfs_upload(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async { do_ipfs_upload(matches).await })
-}
-
-async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let gateway = matches.gateway_url_arg().unwrap_or("http://localhost:5050");
-	let signer_str = matches.signer_arg().expect("--signer required");
-	let cid = matches.cid_arg().expect("--cid required");
-	let file_path = matches.file_path_arg().expect("file path required");
+pub async fn ipfs_upload(cli: &Cli, signer_str: &str, gateway: &str, file_path: &str) {
+	let cid = cli.cid.as_deref().expect("--cid required");
 
 	let pair = get_pair_from_str(signer_str);
 	let address = format!("{}", pair.public().to_ss58check());
@@ -169,5 +160,4 @@ async fn do_ipfs_upload(matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 		.unwrap();
 
 	println!("{}", result.hash);
-	Ok(())
 }

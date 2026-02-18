@@ -8,7 +8,7 @@ class _BalanceMixin:
             self.await_block(1)
             from py_client.base import ensure_clean_exit
             ret = self.run_cli_command(
-                ['faucet'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
+                ['fund'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
             print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret)
         else:
@@ -24,7 +24,7 @@ class _BalanceMixin:
         return float(ret.stdout.strip().decode("utf-8").split(' ')[-1])
 
     def transfer_all(self, cid, source, dest, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["transfer_all", source, dest], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["transfer-all", source, dest], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def transfer(self, cid, source, dest, amount, pay_fees_in_cc=False):

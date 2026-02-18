@@ -1,12 +1,11 @@
 use crate::{
-	cli_args::EncointerArgsExtractor,
+	cli::Cli,
 	utils::{
 		contains_sudo_pallet, get_chain_api,
 		keys::{get_accountid_from_str, get_pair_from_str},
 		print_raw_call, send_and_wait_for_in_block, sudo_call, xt, OpaqueCall,
 	},
 };
-use clap::ArgMatches;
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
 };
@@ -34,382 +33,352 @@ use substrate_api_client::{
 };
 
 /// Register offline identity for an account using Poseidon commitment
-pub fn register_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+pub async fn register_offline_identity(cli: &Cli, account: &str) {
+	let who = get_pair_from_str(account);
 
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+	let mut api = get_chain_api(cli).await;
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
 
-		// Derive zk_secret from the account's seed
-		let seed_bytes = who.to_raw_vec();
-		let zk_secret_bytes = derive_zk_secret(&seed_bytes);
-		let zk_secret = bytes32_to_field(&zk_secret_bytes);
+	// Derive zk_secret from the account's seed
+	let seed_bytes = who.to_raw_vec();
+	let zk_secret_bytes = derive_zk_secret(&seed_bytes);
+	let zk_secret = bytes32_to_field(&zk_secret_bytes);
 
-		// Compute Poseidon commitment
-		let poseidon = poseidon_config();
-		let commitment_field = compute_commitment(&poseidon, &zk_secret);
-		let commitment = field_to_bytes32(&commitment_field);
+	// Compute Poseidon commitment
+	let poseidon = poseidon_config();
+	let commitment_field = compute_commitment(&poseidon, &zk_secret);
+	let commitment = field_to_bytes32(&commitment_field);
 
-		info!("Registering offline identity for {}", who.public().to_ss58check());
-		info!("Commitment: 0x{}", hex::encode(commitment));
+	info!("Registering offline identity for {}", who.public().to_ss58check());
+	info!("Commitment: 0x{}", hex::encode(commitment));
 
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		let xt: EncointerXt<_> = compose_extrinsic!(
-			api,
-			"EncointerOfflinePayment",
-			"register_offline_identity",
-			commitment
-		)
-		.unwrap();
+	let xt: EncointerXt<_> =
+		compose_extrinsic!(api, "EncointerOfflinePayment", "register_offline_identity", commitment)
+			.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+	let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
-		match result {
-			Ok(report) => {
-				println!("Offline identity registered successfully");
-				println!("Commitment: 0x{}", hex::encode(commitment));
-				for event in report.events.unwrap().iter() {
-					if event.pallet_name() == "EncointerOfflinePayment" &&
-						event.variant_name() == "OfflineIdentityRegistered"
-					{
-						println!("Event: OfflineIdentityRegistered");
-					}
+	match result {
+		Ok(report) => {
+			println!("Offline identity registered successfully");
+			println!("Commitment: 0x{}", hex::encode(commitment));
+			for event in report.events.unwrap().iter() {
+				if event.pallet_name() == "EncointerOfflinePayment" &&
+					event.variant_name() == "OfflineIdentityRegistered"
+				{
+					println!("Event: OfflineIdentityRegistered");
 				}
-			},
-			Err(e) => {
-				println!("Failed to register offline identity: {:?}", e);
-			},
-		};
-
-		Ok(())
-	})
-	.into()
+			}
+		},
+		Err(e) => {
+			println!("Failed to register offline identity: {:?}", e);
+		},
+	};
 }
 
 /// Get offline identity for an account
-pub fn get_offline_identity(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let account = get_accountid_from_str(matches.account_arg().unwrap());
+pub async fn get_offline_identity(cli: &Cli, account_str: &str) {
+	let api = get_chain_api(cli).await;
+	let account = get_accountid_from_str(account_str);
 
-		let maybe_at = matches.at_block_arg();
+	let maybe_at = cli.at_block();
 
-		let commitment: Option<[u8; 32]> = api
-			.get_storage_map(
-				"EncointerOfflinePayment",
-				"OfflineIdentities",
-				account.clone(),
-				maybe_at,
-			)
-			.await
-			.unwrap();
+	let commitment: Option<[u8; 32]> = api
+		.get_storage_map("EncointerOfflinePayment", "OfflineIdentities", account.clone(), maybe_at)
+		.await
+		.unwrap();
 
-		match commitment {
-			Some(c) => {
-				println!("Account: {}", account.to_ss58check());
-				println!("Commitment: 0x{}", hex::encode(c));
-			},
-			None => {
-				println!("No offline identity registered for {}", account.to_ss58check());
-			},
-		}
-
-		Ok(())
-	})
-	.into()
+	match commitment {
+		Some(c) => {
+			println!("Account: {}", account.to_ss58check());
+			println!("Commitment: 0x{}", hex::encode(c));
+		},
+		None => {
+			println!("No offline identity registered for {}", account.to_ss58check());
+		},
+	}
 }
 
 /// Generate an offline payment with real Groth16 ZK proof
-pub fn generate_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
+pub async fn generate_offline_payment(
+	cli: &Cli,
+	signer_arg: Option<&str>,
+	to_str: &str,
+	amount_str: &str,
+	pk_file: Option<&str>,
+) {
+	let api = get_chain_api(cli).await;
 
-		let from = matches.signer_arg().map(get_pair_from_str).unwrap();
-		let to = get_accountid_from_str(matches.value_of("to").unwrap());
-		let amount_str = matches.value_of("amount").unwrap();
-		let amount_f64: f64 = amount_str.parse().expect("Invalid amount");
-		let amount = BalanceType::from_num(amount_f64);
+	let from = get_pair_from_str(signer_arg.expect("--signer required"));
+	let to = get_accountid_from_str(to_str);
+	let amount_f64: f64 = amount_str.parse().expect("Invalid amount");
+	let amount = BalanceType::from_num(amount_f64);
 
-		let cid = api
-			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-			.await;
+	let cid = api
+		.verify_cid(cli.cid.as_deref().expect("please supply argument --cid"), None)
+		.await;
 
-		// Derive zk_secret from sender's seed
-		let seed_bytes = from.to_raw_vec();
-		let zk_secret_bytes = derive_zk_secret(&seed_bytes);
-		let zk_secret = bytes32_to_field(&zk_secret_bytes);
+	// Derive zk_secret from sender's seed
+	let seed_bytes = from.to_raw_vec();
+	let zk_secret_bytes = derive_zk_secret(&seed_bytes);
+	let zk_secret = bytes32_to_field(&zk_secret_bytes);
 
-		// Generate random nonce using timestamp
-		let timestamp = std::time::SystemTime::now()
-			.duration_since(std::time::UNIX_EPOCH)
-			.unwrap()
-			.as_nanos();
-		let nonce = bytes32_to_field(&sp_io::hashing::blake2_256(&timestamp.to_le_bytes()));
+	// Generate random nonce using timestamp
+	let timestamp = std::time::SystemTime::now()
+		.duration_since(std::time::UNIX_EPOCH)
+		.unwrap()
+		.as_nanos();
+	let nonce = bytes32_to_field(&sp_io::hashing::blake2_256(&timestamp.to_le_bytes()));
 
-		// Compute public inputs
-		let recipient_hash_bytes = pallet_encointer_offline_payment::hash_recipient(&to.encode());
-		let asset_hash_bytes = pallet_encointer_offline_payment::hash_cid(&cid);
-		let amount_bytes = pallet_encointer_offline_payment::balance_to_bytes(amount);
+	// Compute public inputs
+	let recipient_hash_bytes = pallet_encointer_offline_payment::hash_recipient(&to.encode());
+	let asset_hash_bytes = pallet_encointer_offline_payment::hash_cid(&cid);
+	let amount_bytes = pallet_encointer_offline_payment::balance_to_bytes(amount);
 
-		// Chain-bind the asset hash with genesis hash for cross-chain replay protection
-		let genesis_hash = api.genesis_hash();
-		let chain_asset_hash_bytes =
-			sp_io::hashing::blake2_256(&[&asset_hash_bytes[..], genesis_hash.as_ref()].concat());
+	// Chain-bind the asset hash with genesis hash for cross-chain replay protection
+	let genesis_hash = api.genesis_hash();
+	let chain_asset_hash_bytes =
+		sp_io::hashing::blake2_256(&[&asset_hash_bytes[..], genesis_hash.as_ref()].concat());
 
-		let recipient_hash = bytes32_to_field(&recipient_hash_bytes);
-		let chain_asset_hash = bytes32_to_field(&chain_asset_hash_bytes);
-		let amount_field = bytes32_to_field(&amount_bytes);
+	let recipient_hash = bytes32_to_field(&recipient_hash_bytes);
+	let chain_asset_hash = bytes32_to_field(&chain_asset_hash_bytes);
+	let amount_field = bytes32_to_field(&amount_bytes);
 
-		// Load proving key from file, or fall back to test key
-		let pk_loaded;
-		let pk_ref = if let Some(pk_path) = matches.value_of("pk-file") {
-			let bytes = std::fs::read(pk_path).expect("Failed to read proving key file");
-			pk_loaded = TrustedSetup::proving_key_from_bytes(&bytes)
-				.expect("Failed to deserialize proving key — is it a valid PK file?");
-			eprintln!("Loaded proving key from {} ({} bytes)", pk_path, bytes.len());
-			&pk_loaded
-		} else {
-			eprintln!(
-				"WARNING: Using test proving key (seed 0x{:X}). NOT for production!",
-				TEST_SETUP_SEED
-			);
-			let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
-			pk_loaded = setup.proving_key;
-			&pk_loaded
-		};
+	// Load proving key from file, or fall back to test key
+	let pk_loaded;
+	let pk_ref = if let Some(pk_path) = pk_file {
+		let bytes = std::fs::read(pk_path).expect("Failed to read proving key file");
+		pk_loaded = TrustedSetup::proving_key_from_bytes(&bytes)
+			.expect("Failed to deserialize proving key — is it a valid PK file?");
+		eprintln!("Loaded proving key from {} ({} bytes)", pk_path, bytes.len());
+		&pk_loaded
+	} else {
+		eprintln!(
+			"WARNING: Using test proving key (seed 0x{:X}). NOT for production!",
+			TEST_SETUP_SEED
+		);
+		let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+		pk_loaded = setup.proving_key;
+		&pk_loaded
+	};
 
-		// Generate the ZK proof
-		eprintln!("Generating ZK proof...");
-		let (proof, public_inputs) = generate_proof(
-			pk_ref,
-			zk_secret,
-			nonce,
-			recipient_hash,
-			amount_field,
-			chain_asset_hash,
-		)
-		.expect("Proof generation failed");
+	// Generate the ZK proof
+	eprintln!("Generating ZK proof...");
+	let (proof, public_inputs) =
+		generate_proof(pk_ref, zk_secret, nonce, recipient_hash, amount_field, chain_asset_hash)
+			.expect("Proof generation failed");
 
-		let proof_bytes = proof_to_bytes(&proof);
-		let commitment = field_to_bytes32(&public_inputs[0]);
-		let nullifier = field_to_bytes32(&public_inputs[4]);
-		let sender = get_accountid_from_str(&from.public().to_ss58check());
+	let proof_bytes = proof_to_bytes(&proof);
+	let commitment = field_to_bytes32(&public_inputs[0]);
+	let nullifier = field_to_bytes32(&public_inputs[4]);
+	let sender = get_accountid_from_str(&from.public().to_ss58check());
 
-		// Output as JSON
-		let output = serde_json::json!({
-			"proof": hex::encode(&proof_bytes),
-			"commitment": hex::encode(commitment),
-			"sender": sender.to_ss58check(),
-			"recipient": to.to_ss58check(),
-			"amount": amount_str,
-			"cid": cid.to_string(),
-			"nullifier": hex::encode(nullifier),
-		});
+	// Output as JSON
+	let output = serde_json::json!({
+		"proof": hex::encode(&proof_bytes),
+		"commitment": hex::encode(commitment),
+		"sender": sender.to_ss58check(),
+		"recipient": to.to_ss58check(),
+		"amount": amount_str,
+		"cid": cid.to_string(),
+		"nullifier": hex::encode(nullifier),
+	});
 
-		println!("{}", serde_json::to_string_pretty(&output).unwrap());
-
-		Ok(())
-	})
-	.into()
+	println!("{}", serde_json::to_string_pretty(&output).unwrap());
 }
 
 /// Submit an offline payment proof for settlement
-pub fn submit_offline_payment(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let signer = matches.signer_arg().map(get_pair_from_str).unwrap();
+pub async fn submit_offline_payment(
+	cli: &Cli,
+	signer_arg: Option<&str>,
+	proof_file: Option<&str>,
+	proof_hex: Option<&str>,
+	sender_str: Option<&str>,
+	recipient_str: Option<&str>,
+	amount_str: Option<&str>,
+	nullifier_hex: Option<&str>,
+) {
+	let signer = get_pair_from_str(signer_arg.expect("--signer required"));
 
-		let mut api = get_chain_api(matches).await;
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
+	let mut api = get_chain_api(cli).await;
+	api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
 
-		// Parse proof file or inline arguments
-		let (proof_bytes, sender, recipient, amount, cid, nullifier) = if let Some(proof_file) =
-			matches.value_of("proof-file")
-		{
-			let content = std::fs::read_to_string(proof_file).expect("Failed to read proof file");
-			let json: serde_json::Value =
-				serde_json::from_str(&content).expect("Invalid JSON in proof file");
+	// Parse proof file or inline arguments
+	let (proof_bytes, sender, recipient, amount, cid, nullifier) = if let Some(proof_file) =
+		proof_file
+	{
+		let content = std::fs::read_to_string(proof_file).expect("Failed to read proof file");
+		let json: serde_json::Value =
+			serde_json::from_str(&content).expect("Invalid JSON in proof file");
 
-			let proof_bytes =
-				hex::decode(json["proof"].as_str().unwrap()).expect("Invalid proof hex");
+		let proof_bytes = hex::decode(json["proof"].as_str().unwrap()).expect("Invalid proof hex");
 
-			let sender = get_accountid_from_str(json["sender"].as_str().unwrap());
-			let recipient = get_accountid_from_str(json["recipient"].as_str().unwrap());
-			let amount =
-				BalanceType::from_num(json["amount"].as_str().unwrap().parse::<f64>().unwrap());
-			let cid_str = json["cid"].as_str().unwrap();
-			let cid = api.verify_cid(cid_str, None).await;
-			let nullifier_bytes =
-				hex::decode(json["nullifier"].as_str().unwrap()).expect("Invalid nullifier hex");
-			let mut nullifier = [0u8; 32];
-			nullifier.copy_from_slice(&nullifier_bytes);
+		let sender = get_accountid_from_str(json["sender"].as_str().unwrap());
+		let recipient = get_accountid_from_str(json["recipient"].as_str().unwrap());
+		let amount =
+			BalanceType::from_num(json["amount"].as_str().unwrap().parse::<f64>().unwrap());
+		let cid_str = json["cid"].as_str().unwrap();
+		let cid = api.verify_cid(cid_str, None).await;
+		let nullifier_bytes =
+			hex::decode(json["nullifier"].as_str().unwrap()).expect("Invalid nullifier hex");
+		let mut nullifier = [0u8; 32];
+		nullifier.copy_from_slice(&nullifier_bytes);
 
-			(proof_bytes, sender, recipient, amount, cid, nullifier)
-		} else {
-			// Parse inline arguments
-			let proof_hex = matches.value_of("proof").expect("proof required");
-			let proof_bytes = hex::decode(proof_hex).expect("Invalid proof hex");
+		(proof_bytes, sender, recipient, amount, cid, nullifier)
+	} else {
+		// Parse inline arguments
+		let proof_bytes =
+			hex::decode(proof_hex.expect("proof required")).expect("Invalid proof hex");
 
-			let sender = get_accountid_from_str(matches.value_of("sender").unwrap());
-			let recipient = get_accountid_from_str(matches.value_of("recipient").unwrap());
-			let amount =
-				BalanceType::from_num(matches.value_of("amount").unwrap().parse::<f64>().unwrap());
-			let cid = api
-				.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
-				.await;
-			let nullifier_bytes =
-				hex::decode(matches.value_of("nullifier").unwrap()).expect("Invalid nullifier hex");
-			let mut nullifier = [0u8; 32];
-			nullifier.copy_from_slice(&nullifier_bytes);
+		let sender = get_accountid_from_str(sender_str.expect("sender required"));
+		let recipient = get_accountid_from_str(recipient_str.expect("recipient required"));
+		let amount =
+			BalanceType::from_num(amount_str.expect("amount required").parse::<f64>().unwrap());
+		let cid = api
+			.verify_cid(cli.cid.as_deref().expect("please supply argument --cid"), None)
+			.await;
+		let nullifier_bytes =
+			hex::decode(nullifier_hex.expect("nullifier required")).expect("Invalid nullifier hex");
+		let mut nullifier = [0u8; 32];
+		nullifier.copy_from_slice(&nullifier_bytes);
 
-			(proof_bytes, sender, recipient, amount, cid, nullifier)
-		};
+		(proof_bytes, sender, recipient, amount, cid, nullifier)
+	};
 
-		info!(
-			"Submitting offline payment: {} -> {}, amount: {}, cid: {}",
-			sender.to_ss58check(),
-			recipient.to_ss58check(),
-			amount,
-			cid
-		);
+	info!(
+		"Submitting offline payment: {} -> {}, amount: {}, cid: {}",
+		sender.to_ss58check(),
+		recipient.to_ss58check(),
+		amount,
+		cid
+	);
 
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		// Create the Groth16ProofBytes structure
-		let bounded_proof: BoundedVec<u8, frame_support::traits::ConstU32<256>> =
-			BoundedVec::try_from(proof_bytes).expect("Proof exceeds max size");
+	// Create the Groth16ProofBytes structure
+	let bounded_proof: BoundedVec<u8, frame_support::traits::ConstU32<256>> =
+		BoundedVec::try_from(proof_bytes).expect("Proof exceeds max size");
 
-		#[derive(Clone, parity_scale_codec::Encode)]
-		struct Groth16ProofBytesEncode {
-			proof_bytes: BoundedVec<u8, frame_support::traits::ConstU32<256>>,
-		}
+	#[derive(Clone, parity_scale_codec::Encode)]
+	struct Groth16ProofBytesEncode {
+		proof_bytes: BoundedVec<u8, frame_support::traits::ConstU32<256>>,
+	}
 
-		let proof = Groth16ProofBytesEncode { proof_bytes: bounded_proof };
+	let proof = Groth16ProofBytesEncode { proof_bytes: bounded_proof };
 
-		let xt: EncointerXt<_> = compose_extrinsic!(
-			api,
-			"EncointerOfflinePayment",
-			"submit_offline_payment",
-			proof,
-			sender.clone(),
-			recipient.clone(),
-			amount,
-			cid,
-			nullifier
-		)
-		.unwrap();
+	let xt: EncointerXt<_> = compose_extrinsic!(
+		api,
+		"EncointerOfflinePayment",
+		"submit_offline_payment",
+		proof,
+		sender.clone(),
+		recipient.clone(),
+		amount,
+		cid,
+		nullifier
+	)
+	.unwrap();
 
-		let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+	let result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
 
-		match result {
-			Ok(report) => {
-				println!("Offline payment submitted successfully");
-				for event in report.events.unwrap().iter() {
-					if event.pallet_name() == "EncointerOfflinePayment" {
-						match event.variant_name() {
-							"OfflinePaymentSettled" => {
-								println!("Payment settled!");
-								println!("Sender: {}", sender.to_ss58check());
-								println!("Recipient: {}", recipient.to_ss58check());
-								println!("Amount: {}", amount);
-							},
-							name => println!("Event: {}", name),
-						}
+	match result {
+		Ok(report) => {
+			println!("Offline payment submitted successfully");
+			for event in report.events.unwrap().iter() {
+				if event.pallet_name() == "EncointerOfflinePayment" {
+					match event.variant_name() {
+						"OfflinePaymentSettled" => {
+							println!("Payment settled!");
+							println!("Sender: {}", sender.to_ss58check());
+							println!("Recipient: {}", recipient.to_ss58check());
+							println!("Amount: {}", amount);
+						},
+						name => println!("Event: {}", name),
 					}
 				}
-			},
-			Err(e) => {
-				println!("Failed to submit offline payment: {:?}", e);
-			},
-		};
-
-		Ok(())
-	})
-	.into()
+			}
+		},
+		Err(e) => {
+			println!("Failed to submit offline payment: {:?}", e);
+		},
+	};
 }
 
 /// Set the Groth16 verification key via sudo (requires --signer to be sudo key)
-pub fn set_verification_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		// Use Alice as default signer (sudo in dev mode)
-		let signer = matches.signer_arg().map_or_else(
-			|| AccountKeyring::Alice.pair(),
-			|signer| get_pair_from_str(signer).into(),
+pub async fn set_verification_key(
+	cli: &Cli,
+	signer_arg: Option<&str>,
+	vk_file: Option<&str>,
+	vk_hex: Option<&str>,
+) {
+	// Use Alice as default signer (sudo in dev mode)
+	let signer = signer_arg
+		.map_or_else(|| AccountKeyring::Alice.pair(), |signer| get_pair_from_str(signer).into());
+
+	let mut api = get_chain_api(cli).await;
+	let signer = ParentchainExtrinsicSigner::new(signer);
+	api.set_signer(signer);
+
+	// Load VK from file, hex string, or generate test key
+	let vk_bytes = if let Some(file_path) = vk_file {
+		let bytes = std::fs::read(file_path).expect("Failed to read VK file");
+		TrustedSetup::verifying_key_from_bytes(&bytes)
+			.expect("Failed to deserialize VK from file — is it a valid verifying key?");
+		eprintln!("Loaded verification key from {} ({} bytes)", file_path, bytes.len());
+		bytes
+	} else if let Some(hex_str) = vk_hex {
+		hex::decode(hex_str).expect("Invalid verification key hex")
+	} else {
+		eprintln!(
+			"WARNING: Using test verification key (seed 0x{:X}). NOT for production!",
+			TEST_SETUP_SEED
 		);
+		let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
+		setup.verifying_key_bytes()
+	};
 
-		let mut api = get_chain_api(matches).await;
-		let signer = ParentchainExtrinsicSigner::new(signer);
-		api.set_signer(signer);
+	info!("Setting verification key ({} bytes)", vk_bytes.len());
 
-		// Load VK from file, hex string, or generate test key
-		let vk_bytes = if let Some(file_path) = matches.value_of("vk-file") {
-			let bytes = std::fs::read(file_path).expect("Failed to read VK file");
-			TrustedSetup::verifying_key_from_bytes(&bytes)
-				.expect("Failed to deserialize VK from file — is it a valid verifying key?");
-			eprintln!("Loaded verification key from {} ({} bytes)", file_path, bytes.len());
-			bytes
-		} else if let Some(hex_str) = matches.value_of("vk") {
-			hex::decode(hex_str).expect("Invalid verification key hex")
-		} else {
-			eprintln!(
-				"WARNING: Using test verification key (seed 0x{:X}). NOT for production!",
-				TEST_SETUP_SEED
-			);
-			let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
-			setup.verifying_key_bytes()
-		};
+	// Create the inner call
+	let set_vk_call = compose_call!(
+		api.metadata(),
+		"EncointerOfflinePayment",
+		"set_verification_key",
+		vk_bytes.clone()
+	)
+	.unwrap();
 
-		info!("Setting verification key ({} bytes)", vk_bytes.len());
+	// Wrap in sudo call
+	let call = if contains_sudo_pallet(api.metadata()) {
+		let sudo_call = sudo_call(api.metadata(), set_vk_call);
+		info!("Submitting sudo(set_verification_key)");
+		print_raw_call("sudo(set_verification_key)", &sudo_call);
+		OpaqueCall::from_tuple(&sudo_call)
+	} else {
+		eprintln!("ERROR: Sudo pallet not found. Cannot set verification key.");
+		return;
+	};
 
-		// Create the inner call
-		let set_vk_call = compose_call!(
-			api.metadata(),
-			"EncointerOfflinePayment",
-			"set_verification_key",
-			vk_bytes.clone()
-		)
-		.unwrap();
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-		// Wrap in sudo call
-		let call = if contains_sudo_pallet(api.metadata()) {
-			let sudo_call = sudo_call(api.metadata(), set_vk_call);
-			info!("Submitting sudo(set_verification_key)");
-			print_raw_call("sudo(set_verification_key)", &sudo_call);
-			OpaqueCall::from_tuple(&sudo_call)
-		} else {
-			eprintln!("ERROR: Sudo pallet not found. Cannot set verification key.");
-			return Ok(());
-		};
+	send_and_wait_for_in_block(&api, xt(&api, call).await, tx_payment_cid_arg).await;
 
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-		send_and_wait_for_in_block(&api, xt(&api, call).await, tx_payment_cid_arg).await;
-
-		println!("Verification key set successfully!");
-		println!("VK size: {} bytes", vk_bytes.len());
-		Ok(())
-	})
-	.into()
+	println!("Verification key set successfully!");
+	println!("VK size: {} bytes", vk_bytes.len());
 }
 
 /// Generate and output the test verification key
-pub fn generate_test_vk(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
+pub fn generate_test_vk() {
 	eprintln!("Generating test verification key with seed {}...", TEST_SETUP_SEED);
 	let setup = TrustedSetup::generate_with_seed(TEST_SETUP_SEED);
 	let vk_bytes = setup.verifying_key_bytes();
 
 	println!("{}", hex::encode(&vk_bytes));
-
-	Ok(())
 }
 
 /// Generate a trusted setup (proving key + verifying key) for offline payments.
@@ -417,10 +386,7 @@ pub fn generate_test_vk(_args: &str, _matches: &ArgMatches<'_>) -> Result<(), cl
 /// Uses OS-level cryptographic randomness. The resulting keys are non-reproducible.
 /// Both files must be saved securely — the proving key is distributed to wallets,
 /// the verifying key is set on-chain.
-pub fn generate_trusted_setup(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let pk_path = matches.value_of("pk-out").unwrap_or("proving_key.bin");
-	let vk_path = matches.value_of("vk-out").unwrap_or("verifying_key.bin");
-
+pub fn generate_trusted_setup(pk_path: &str, vk_path: &str) {
 	eprintln!("Generating trusted setup with OS randomness...");
 	eprintln!("This may take a few seconds.");
 
@@ -472,23 +438,18 @@ pub fn generate_trusted_setup(_args: &str, matches: &ArgMatches<'_>) -> Result<(
 	println!();
 	println!("Next steps:");
 	println!(
-		"  1. Verify:      encointer-client-notee verify-trusted-setup --pk {} --vk {}",
+		"  1. Verify:      encointer-client-notee offline-payment verify-trusted-setup --pk {} --vk {}",
 		pk_path, vk_path
 	);
-	println!("  2. Set on-chain: encointer-client-notee set-offline-payment-vk --vk-file {} --signer //Alice", vk_path);
+	println!("  2. Set on-chain: encointer-client-notee offline-payment set-vk --vk-file {} --signer //Alice", vk_path);
 	println!("  3. Distribute {} to wallet apps (bundle as asset)", pk_path);
-
-	Ok(())
 }
 
 /// Verify that a proving key and verifying key are consistent.
 ///
 /// Generates a test proof with the PK, then verifies it with the VK.
 /// If verification succeeds, the keys match and are ready for use.
-pub fn verify_trusted_setup(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let pk_path = matches.value_of("pk").expect("--pk is required");
-	let vk_path = matches.value_of("vk").expect("--vk is required");
-
+pub fn verify_trusted_setup(pk_path: &str, vk_path: &str) {
 	eprintln!("Loading keys...");
 
 	let pk_bytes = std::fs::read(pk_path).expect("Failed to read proving key file");
@@ -531,16 +492,12 @@ pub fn verify_trusted_setup(_args: &str, matches: &ArgMatches<'_>) -> Result<(),
 		println!("      These keys do NOT belong to the same trusted setup.");
 		std::process::exit(1);
 	}
-
-	Ok(())
 }
 
 /// Inspect a proving key or verifying key file.
 ///
 /// Shows metadata: file size, blake2 hash, and validates deserialization.
-pub fn inspect_setup_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let path = matches.value_of("file").expect("--file is required");
-
+pub fn inspect_setup_key(path: &str) {
 	let bytes = std::fs::read(path).expect("Failed to read file");
 	let hash = sp_io::hashing::blake2_256(&bytes);
 
@@ -560,8 +517,6 @@ pub fn inspect_setup_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 		println!("Type:   UNKNOWN — could not deserialize as PK or VK");
 		std::process::exit(1);
 	}
-
-	Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -569,10 +524,7 @@ pub fn inspect_setup_key(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 // ---------------------------------------------------------------------------
 
 /// Initialize a ceremony — generates the initial CRS and an empty transcript.
-pub fn cmd_ceremony_init(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let pk_path = matches.value_of("pk-out").unwrap_or("ceremony_pk.bin");
-	let transcript_path = matches.value_of("transcript").unwrap_or("ceremony_transcript.json");
-
+pub fn cmd_ceremony_init(pk_path: &str, transcript_path: &str) {
 	eprintln!("Generating initial CRS with OS randomness...");
 	let pk = ceremony_init();
 
@@ -595,16 +547,10 @@ pub fn cmd_ceremony_init(_args: &str, matches: &ArgMatches<'_>) -> Result<(), cl
 	println!("  Transcript: {}", transcript_path);
 	println!();
 	println!("Next: distribute {} and {} to the first participant.", pk_path, transcript_path);
-
-	Ok(())
 }
 
 /// Apply one contribution to the ceremony proving key.
-pub fn cmd_ceremony_contribute(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let pk_path = matches.value_of("pk").unwrap_or("ceremony_pk.bin");
-	let transcript_path = matches.value_of("transcript").unwrap_or("ceremony_transcript.json");
-	let participant = matches.value_of("participant").expect("--participant is required");
-
+pub fn cmd_ceremony_contribute(pk_path: &str, transcript_path: &str, participant: &str) {
 	eprintln!("Loading ceremony PK from {}...", pk_path);
 	let pk_bytes = std::fs::read(pk_path).expect("read PK");
 	let pk = TrustedSetup::proving_key_from_bytes(&pk_bytes)
@@ -663,15 +609,10 @@ pub fn cmd_ceremony_contribute(_args: &str, matches: &ArgMatches<'_>) -> Result<
 		new_pk_bytes.len(),
 		hex::encode(pk_hash)
 	);
-
-	Ok(())
 }
 
 /// Verify all contributions in a ceremony transcript.
-pub fn cmd_ceremony_verify(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let pk_path = matches.value_of("pk").unwrap_or("ceremony_pk.bin");
-	let transcript_path = matches.value_of("transcript").unwrap_or("ceremony_transcript.json");
-
+pub fn cmd_ceremony_verify(pk_path: &str, transcript_path: &str) {
 	let transcript_str = std::fs::read_to_string(transcript_path).expect("read transcript");
 	let transcript: serde_json::Value =
 		serde_json::from_str(&transcript_str).expect("parse transcript");
@@ -679,7 +620,7 @@ pub fn cmd_ceremony_verify(_args: &str, matches: &ArgMatches<'_>) -> Result<(), 
 	let contributions = transcript["contributions"].as_array().expect("contributions array");
 	if contributions.is_empty() {
 		println!("No contributions in transcript.");
-		return Ok(());
+		return;
 	}
 
 	println!("Verifying {} contribution(s)...", contributions.len());
@@ -736,16 +677,10 @@ pub fn cmd_ceremony_verify(_args: &str, matches: &ArgMatches<'_>) -> Result<(), 
 		println!("FAIL: One or more verifications failed.");
 		std::process::exit(1);
 	}
-
-	Ok(())
 }
 
 /// Finalize a ceremony — extract PK and VK files from the ceremony state.
-pub fn cmd_ceremony_finalize(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let pk_in = matches.value_of("pk").unwrap_or("ceremony_pk.bin");
-	let pk_out = matches.value_of("pk-out").unwrap_or("proving_key.bin");
-	let vk_out = matches.value_of("vk-out").unwrap_or("verifying_key.bin");
-
+pub fn cmd_ceremony_finalize(pk_in: &str, pk_out: &str, vk_out: &str) {
 	eprintln!("Loading ceremony PK from {}...", pk_in);
 	let pk_bytes = std::fs::read(pk_in).expect("read PK");
 	let pk = TrustedSetup::proving_key_from_bytes(&pk_bytes).expect("deserialize PK");
@@ -775,14 +710,12 @@ pub fn cmd_ceremony_finalize(_args: &str, matches: &ArgMatches<'_>) -> Result<()
 	println!();
 	println!("Next steps:");
 	println!(
-		"  1. Verify:       encointer-client-notee verify-trusted-setup --pk {} --vk {}",
+		"  1. Verify:       encointer-client-notee offline-payment verify-trusted-setup --pk {} --vk {}",
 		pk_out, vk_out
 	);
 	println!(
-		"  2. Set on-chain: encointer-client-notee set-offline-payment-vk --vk-file {} --signer //Alice",
+		"  2. Set on-chain: encointer-client-notee offline-payment set-vk --vk-file {} --signer //Alice",
 		vk_out
 	);
 	println!("  3. Distribute {} to wallet apps", pk_out);
-
-	Ok(())
 }

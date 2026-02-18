@@ -80,15 +80,15 @@ class _BaseClient:
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["next-phase"], pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(["ceremony", "next-phase"], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
 
     def get_phase(self):
-        ret = self.run_cli_command(["get-phase"])
+        ret = self.run_cli_command(["ceremony", "get-phase"])
         return ret.stdout.strip().decode("utf-8")
 
     def get_cindex(self):
-        ret = self.run_cli_command(["get-cindex"])
+        ret = self.run_cli_command(["ceremony", "get-cindex"])
         return int(ret.stdout.strip().decode("utf-8"))
 
     def go_to_phase(self, phase, blocks_to_wait):

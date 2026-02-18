@@ -1,5 +1,5 @@
 use crate::{
-	cli_args::EncointerArgsExtractor,
+	cli::Cli,
 	commands::frame::get_block_number,
 	exit_code,
 	utils::{
@@ -7,7 +7,6 @@ use crate::{
 		keys::{get_accountid_from_str, get_pair_from_str},
 	},
 };
-use clap::{value_t, ArgMatches};
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
 };
@@ -30,164 +29,129 @@ use substrate_api_client::{
 	GetAccountInformation, GetStorage, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 
-pub fn balance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let account = matches.account_arg().unwrap();
-		let maybe_at = matches.at_block_arg();
-		let accountid = get_accountid_from_str(account);
-		match matches.cid_arg() {
-			Some(cid_str) => {
-				let balance = get_community_balance(&api, cid_str, &accountid, maybe_at).await;
-				println! {"{balance:?}"};
-			},
-			None => {
-				if maybe_at.is_some() {
-					panic!("can't apply --at if --cid not set")
-				};
-				if matches.all_flag() {
-					let community_balances = get_all_balances(&api, &accountid).await.unwrap();
-					let bn = get_block_number(&api, maybe_at).await;
-					for b in community_balances.iter() {
-						let dr = get_demurrage_per_block(&api, b.0, maybe_at).await;
-						println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
-					}
+pub async fn balance(cli: &Cli, account: &str, all: bool) {
+	let api = get_chain_api(cli).await;
+	let maybe_at = cli.at_block();
+	let accountid = get_accountid_from_str(account);
+	match cli.cid.as_deref() {
+		Some(cid_str) => {
+			let balance = get_community_balance(&api, cid_str, &accountid, maybe_at).await;
+			println! {"{balance:?}"};
+		},
+		None => {
+			if maybe_at.is_some() {
+				panic!("can't apply --at if --cid not set")
+			};
+			if all {
+				let community_balances = get_all_balances(&api, &accountid).await.unwrap();
+				let bn = get_block_number(&api, maybe_at).await;
+				for b in community_balances.iter() {
+					let dr = get_demurrage_per_block(&api, b.0, maybe_at).await;
+					println!("{}: {}", b.0, apply_demurrage(b.1, bn, dr))
 				}
-				let balance = if let Some(data) = api.get_account_data(&accountid).await.unwrap() {
-					data.free
-				} else {
-					0
-				};
-				println!("{balance}");
-			},
-		};
-		Ok(())
-	})
-	.into()
+			}
+			let balance = if let Some(data) = api.get_account_data(&accountid).await.unwrap() {
+				data.free
+			} else {
+				0
+			};
+			println!("{balance}");
+		},
+	};
 }
-pub fn issuance(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let api = get_chain_api(matches).await;
-		let maybe_at = matches.at_block_arg();
-		let cid_str = matches.cid_arg().expect("please supply argument --cid");
-		let issuance = get_community_issuance(&api, cid_str, maybe_at).await;
-		println! {"{issuance:?}"};
-		Ok(())
-	})
-	.into()
-}
-pub fn transfer(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		let arg_from = matches.value_of("from").unwrap();
-		let arg_to = matches.value_of("to").unwrap();
-		if !matches.dryrun_flag() {
-			let from = get_pair_from_str(arg_from);
-			info!("from ss58 is {}", from.public().to_ss58check());
-			let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
-			api.set_signer(signer);
-		}
-		let to = get_accountid_from_str(arg_to);
-		info!("to ss58 is {}", to.to_ss58check());
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		let tx_hash = match matches.cid_arg() {
-			Some(cid_str) => {
-				let cid = api.verify_cid(cid_str, None).await;
-				let amount = BalanceType::from_str(matches.value_of("amount").unwrap())
-					.expect("amount can be converted to fixpoint");
 
-				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
-
-				let xt: EncointerXt<_> = compose_extrinsic!(
-					api,
-					"EncointerBalances",
-					"transfer",
-					to.clone(),
-					cid,
-					amount
-				)
-				.unwrap();
-				if matches.dryrun_flag() {
-					println!("0x{}", hex::encode(xt.function.encode()));
-					None
-				} else {
-					ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-					Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
-				}
-			},
-			None => {
-				let amount = matches
-					.value_of("amount")
-					.unwrap()
-					.parse::<u128>()
-					.expect("amount can be converted to u128");
-				// todo: use keep_alive instead https://github.com/scs/substrate-api-client/issues/747
-				let xt = api.balance_transfer_allow_death(to.clone().into(), amount).await.unwrap();
-				if matches.dryrun_flag() {
-					println!("0x{}", hex::encode(xt.function.encode()));
-					None
-				} else {
-					ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-					Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
-				}
-			},
-		};
-		if let Some(txh) = tx_hash {
-			info!("[+] Transaction included. Hash: {:?}\n", txh);
-			let result = api.get_account_data(&to).await.unwrap().unwrap();
-			println!("balance for {} is now {}", to, result.free);
-		}
-		Ok(())
-	})
-	.into()
+pub async fn issuance(cli: &Cli) {
+	let api = get_chain_api(cli).await;
+	let maybe_at = cli.at_block();
+	let cid_str = cli.cid.as_deref().expect("please supply argument --cid");
+	let issuance = get_community_issuance(&api, cid_str, maybe_at).await;
+	println! {"{issuance:?}"};
 }
-pub fn transfer_all(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		let mut api = get_chain_api(matches).await;
-		let arg_from = matches.value_of("from").unwrap();
-		let arg_to = matches.value_of("to").unwrap();
+
+pub async fn transfer(cli: &Cli, arg_from: &str, arg_to: &str, amount: &str, dryrun: bool) {
+	let mut api = get_chain_api(cli).await;
+	if !dryrun {
 		let from = get_pair_from_str(arg_from);
-		let to = get_accountid_from_str(arg_to);
 		info!("from ss58 is {}", from.public().to_ss58check());
-		info!("to ss58 is {}", to.to_ss58check());
-
 		let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
 		api.set_signer(signer);
-		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
-		let tx_hash = match matches.cid_arg() {
-			Some(cid_str) => {
-				let cid = api.verify_cid(cid_str, None).await;
-				set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+	}
+	let to = get_accountid_from_str(arg_to);
+	info!("to ss58 is {}", to.to_ss58check());
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	let tx_hash = match cli.cid.as_deref() {
+		Some(cid_str) => {
+			let cid = api.verify_cid(cid_str, None).await;
+			let amount =
+				BalanceType::from_str(amount).expect("amount can be converted to fixpoint");
 
-				let xt: EncointerXt<_> =
-					compose_extrinsic!(api, "EncointerBalances", "transfer_all", to.clone(), cid)
-						.unwrap();
+			set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+			let xt: EncointerXt<_> =
+				compose_extrinsic!(api, "EncointerBalances", "transfer", to.clone(), cid, amount)
+					.unwrap();
+			if dryrun {
+				println!("0x{}", hex::encode(xt.function.encode()));
+				None
+			} else {
 				ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
-				api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
-			},
-			None => {
-				error!("No cid specified");
-				std::process::exit(exit_code::NO_CID_SPECIFIED);
-			},
-		};
-		info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
+				Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
+			}
+		},
+		None => {
+			let amount = amount.parse::<u128>().expect("amount can be converted to u128");
+			// todo: use keep_alive instead https://github.com/scs/substrate-api-client/issues/747
+			let xt = api.balance_transfer_allow_death(to.clone().into(), amount).await.unwrap();
+			if dryrun {
+				println!("0x{}", hex::encode(xt.function.encode()));
+				None
+			} else {
+				ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+				Some(api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap())
+			}
+		},
+	};
+	if let Some(txh) = tx_hash {
+		info!("[+] Transaction included. Hash: {:?}\n", txh);
 		let result = api.get_account_data(&to).await.unwrap().unwrap();
 		println!("balance for {} is now {}", to, result.free);
-		Ok(())
-	})
-	.into()
+	}
 }
-pub fn listen_to_events(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
-	let rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(async {
-		listen(matches).await;
-		Ok(())
-	})
-	.into()
+
+pub async fn transfer_all(cli: &Cli, arg_from: &str, arg_to: &str) {
+	let mut api = get_chain_api(cli).await;
+	let from = get_pair_from_str(arg_from);
+	let to = get_accountid_from_str(arg_to);
+	info!("from ss58 is {}", from.public().to_ss58check());
+	info!("to ss58 is {}", to.to_ss58check());
+
+	let signer = ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from));
+	api.set_signer(signer);
+	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
+	let tx_hash = match cli.cid.as_deref() {
+		Some(cid_str) => {
+			let cid = api.verify_cid(cid_str, None).await;
+			set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+			let xt: EncointerXt<_> =
+				compose_extrinsic!(api, "EncointerBalances", "transfer_all", to.clone(), cid)
+					.unwrap();
+			ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+			api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await.unwrap()
+		},
+		None => {
+			error!("No cid specified");
+			std::process::exit(exit_code::NO_CID_SPECIFIED);
+		},
+	};
+	info!("[+] Transaction included. Hash: {:?}\n", tx_hash);
+	let result = api.get_account_data(&to).await.unwrap().unwrap();
+	println!("balance for {} is now {}", to, result.free);
+}
+
+pub async fn listen(cli: &Cli, event_count: Option<u32>, block_count: Option<u32>) {
+	let api = get_chain_api(cli).await;
+	wait_for_blocks_or_events(&api, block_count, event_count).await;
 }
 
 pub async fn get_community_balance(
@@ -291,15 +255,6 @@ pub fn apply_demurrage(
 	);
 	let exp_result = exp(exponent).unwrap();
 	entry.principal.checked_mul(to_U64F64(exp_result).unwrap()).unwrap()
-}
-
-async fn listen(matches: &ArgMatches<'_>) {
-	let api = get_chain_api(matches).await;
-
-	let block_count = value_t!(matches, "blocks", u32).ok();
-	let event_count = value_t!(matches, "events", u32).ok();
-
-	wait_for_blocks_or_events(&api, block_count, event_count).await;
 }
 
 pub async fn wait_for_blocks_or_events(

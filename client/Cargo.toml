@@ -6,11 +6,9 @@ edition = "2021"
 version = "1.21.1"
 
 [dependencies]
-# todo migrate to clap >=3 https://github.com/encointer/encointer-node/issues/107
 array-bytes = "6.2.2"
 chrono = "0.4.35"
-clap = "2.33"
-clap-nested = "0.4.0"
+clap = { version = "4.5", features = ["derive"] }
 env_logger = { workspace = true }
 futures = { workspace = true }
 geojson = { workspace = true }
