@@ -19,7 +19,7 @@ env:
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
@@ -29,8 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
         # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
         # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -59,8 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
         # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
         # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -134,8 +134,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
         # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
         # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -173,8 +173,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install protoc
-        run: sudo apt-get install protobuf-compiler
+      - name: Install deps
+        run: sudo apt install --assume-yes openssl pkg-config g++ make cmake protobuf-compiler libssl-dev libclang-dev libudev-dev git lz4
 
       # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
       # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
@@ -206,6 +206,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         test: [
           test_bootstrap_demo_community.sh cc-fee-payment,
@@ -214,8 +215,12 @@ jobs:
           test_bootstrap_demo_community.sh unregister-and-upgrade-registration,
           test_bootstrap_demo_community.sh endorsement,
           test_bootstrap_demo_community.sh democracy,
+          test_bootstrap_demo_community.sh ipfs-upload,
           test_bot_community.sh,
-          test_register_business.sh
+          test_register_business.sh,
+          test_offline_payment.sh,
+          test_trusted_setup_ceremony.sh,
+          test_reputation_rings.sh
         ]
     steps:
       - uses: actions/checkout@v3
@@ -258,6 +263,20 @@ jobs:
           cd client
           python faucet.py &
 
+      - name: Start IPFS gateway
+        if: contains(matrix.test, 'ipfs-upload')
+        run: |
+          docker run -d --name ipfs-gateway --network host \
+            -e JWT_SECRET=ci-test-secret-do-not-use-in-prod \
+            -e CHAIN_RPC_URL=ws://127.0.0.1:9944 \
+            -e IPFS_API_URL=http://127.0.0.1:5001 \
+            -e LOG_LEVEL=debug \
+            encointer/ipfs-gateway:latest
+          for i in {1..30}; do
+            curl -s http://127.0.0.1:5050/health && break
+            sleep 1
+          done
+
       - name: start phase accelerator service
         run: |
           cd client
@@ -265,7 +284,15 @@ jobs:
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
-        run: source ./init_env.sh && ./${{ matrix.test }}
+        run: |
+          if [[ "${{ matrix.test }}" == *"ipfs-upload"* ]]; then
+            export IPFS_GATEWAY_URL=http://127.0.0.1:5050
+          fi
+          source ./init_env.sh && ./${{ matrix.test }}
+
+      - name: Print IPFS gateway logs
+        if: always() && contains(matrix.test, 'ipfs-upload')
+        run: docker logs ipfs-gateway || true
 
   integration-test-docker:
     name: ${{ matrix.test }}
@@ -308,11 +335,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to Dockerhub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+#      - name: Login to Dockerhub
+#        uses: docker/login-action@v2
+#        with:
+#          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+#          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -451,15 +478,15 @@ jobs:
           echo "Found version: >$runtime_ver<"
           echo "runtime_ver={$runtime_ver}" >> $GITHUB_OUTPUT
 
-      - name: Upload compact ${{ matrix.runtime }} wasm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.asset_upload_url }}
-          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
-          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
-          asset_content_type: application/wasm
+      #      - name: Upload compact ${{ matrix.runtime }} wasm
+      #        uses: actions/upload-release-asset@v1
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #        with:
+      #          upload_url: ${{ needs.release.outputs.asset_upload_url }}
+      #          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
+      #          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
+      #          asset_content_type: application/wasm
 
       - name: Upload compressed ${{ matrix.runtime }} wasm
         uses: actions/upload-release-asset@v1

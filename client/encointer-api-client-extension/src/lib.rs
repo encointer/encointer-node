@@ -22,6 +22,7 @@ pub use communities::*;
 pub use democracy::*;
 pub use extrinsic_params::*;
 pub use reputation_commitments::*;
+pub use reputation_rings::*;
 pub use scheduler::*;
 pub use treasuries::*;
 
@@ -31,5 +32,6 @@ mod communities;
 mod democracy;
 mod extrinsic_params;
 mod reputation_commitments;
+mod reputation_rings;
 mod scheduler;
 mod treasuries;

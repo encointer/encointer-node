@@ -71,10 +71,11 @@ pub use encointer_primitives::{
 	scheduler::CeremonyPhaseType,
 };
 use frame_support::traits::{
-	tokens::{ConversionFromAssetBalance, PayFromAccount},
+	tokens::{ConversionFromAssetBalance, PayFromAccount, PaymentStatus},
 	ConstBool,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
+pub use polkadot_runtime_common::impls::VersionedLocatableAsset;
 use sp_runtime::traits::IdentityLookup;
 
 mod weights;
@@ -139,7 +140,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: Cow::Borrowed("encointer-node-notee"),
 	impl_name: Cow::Borrowed("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 370,
+	spec_version: 390,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -290,6 +291,8 @@ impl frame_system::Config for Runtime {
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
 }
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
@@ -418,8 +421,11 @@ parameter_types! {
 impl pallet_encointer_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	// attention!: EncointerDemocracy must be first hook as it potentially changes the rules for following hooks
-	type OnCeremonyPhaseChange =
-		(pallet_encointer_democracy::Pallet<Runtime>, pallet_encointer_ceremonies::Pallet<Runtime>);
+	type OnCeremonyPhaseChange = (
+		pallet_encointer_democracy::Pallet<Runtime>,
+		pallet_encointer_ceremonies::Pallet<Runtime>,
+		pallet_encointer_reputation_rings::Pallet<Runtime>,
+	);
 	type MomentsPerDay = MomentsPerDay;
 	type CeremonyMaster = EnsureRoot<AccountId>;
 	type WeightInfo = weights::pallet_encointer_scheduler::WeightInfo<Runtime>;
@@ -556,6 +562,32 @@ impl pallet_encointer_faucet::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MaxProofSize: u32 = 256;
+	pub const MaxVkSize: u32 = 2048;
+}
+
+impl pallet_encointer_offline_payment::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_encointer_offline_payment::WeightInfo<Runtime>;
+	type Currency = Balances;
+	type MaxProofSize = MaxProofSize;
+	type MaxVkSize = MaxVkSize;
+	type TrustedSetupOrigin = EnsureRoot<AccountId>;
+}
+
+parameter_types! {
+	pub const MaxRingSize: u32 = 255;
+	pub const RingChunkSize: u32 = 100;
+}
+
+impl pallet_encointer_reputation_rings::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_encointer_reputation_rings::WeightInfo<Runtime>;
+	type MaxRingSize = MaxRingSize;
+	type ChunkSize = RingChunkSize;
+}
+
+parameter_types! {
 	pub const ConfirmationPeriod: Moment = 5 * 60 * 1000; // [ms]
 	pub const ProposalLifetime: Moment = 20 * 60 * 1000; // [ms]
 }
@@ -576,7 +608,64 @@ impl pallet_encointer_treasuries::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type PalletId = TreasuriesPalletId;
+	// Make our live easier by using the same type as in the parachain
+	type AssetKind = VersionedLocatableAsset;
+	type Paymaster = NoAssetPayments;
 	type WeightInfo = weights::pallet_encointer_treasuries::WeightInfo<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = MockAssetArguments;
+}
+
+/// Type that fails when we try to pay out a non-native asset as a result of a `SpendAsset` or
+/// a swap of an `AssetOption`, as we only support this on the parachain.
+pub struct NoAssetPayments;
+
+impl pallet_encointer_treasuries::Transfer for NoAssetPayments {
+	type Balance = Balance;
+	type Payer = AccountId;
+	type Beneficiary = AccountId;
+	type AssetKind = VersionedLocatableAsset;
+	type Id = ();
+	type Error = alloc::string::String;
+
+	fn transfer(
+		_: &Self::Payer,
+		_: &Self::Beneficiary,
+		_: Self::AssetKind,
+		_: Self::Balance,
+	) -> Result<Self::Id, Self::Error> {
+		Err("No asset payment allowed in this runtime config".into())
+	}
+
+	fn check_payment(_: Self::Id) -> PaymentStatus {
+		PaymentStatus::Failure
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn ensure_successful(
+		_: &Self::Payer,
+		_: &Self::Beneficiary,
+		_: Self::AssetKind,
+		_: Self::Balance,
+	) {
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn ensure_concluded(_: Self::Id) {}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct MockAssetArguments;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_encointer_treasuries::benchmarking::ArgumentsFactory<VersionedLocatableAsset>
+	for MockAssetArguments
+{
+	fn create_asset_kind(_: u32) -> VersionedLocatableAsset {
+		// Just a dummy to make it compile
+		use xcm::latest::{AssetId as A, Location as L};
+		(L::here(), A(L::here())).into()
+	}
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -610,6 +699,8 @@ construct_runtime!(
 		EncointerFaucet: pallet_encointer_faucet::{Pallet, Call, Storage, Config<T>, Event<T>} = 66,
 		EncointerDemocracy: pallet_encointer_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 67,
 		EncointerTreasuries: pallet_encointer_treasuries::{Pallet, Call, Storage, Event<T>} = 68,
+		EncointerOfflinePayment: pallet_encointer_offline_payment::{Pallet, Call, Storage, Event<T>} = 69,
+		EncointerReputationRings: pallet_encointer_reputation_rings::{Pallet, Call, Storage, Event<T>} = 70,
 
 	}
 );
@@ -642,7 +733,7 @@ pub type UncheckedExtrinsic =
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
 
 /// storage migrations to be applied upon runtime upgrade
-pub type Migrations = (pallet_encointer_democracy::migrations::v1::MigrateV0toV1purging<Runtime>,);
+pub type Migrations = ();
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -651,7 +742,6 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	Migrations,
 >;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -668,7 +758,9 @@ mod benches {
 		[pallet_encointer_communities, EncointerCommunities]
 		[pallet_encointer_democracy, EncointerDemocracy]
 		[pallet_encointer_faucet, EncointerFaucet]
+		[pallet_encointer_offline_payment, EncointerOfflinePayment]
 		[pallet_encointer_reputation_commitments, EncointerReputationCommitments]
+		[pallet_encointer_reputation_rings, EncointerReputationRings]
 		[pallet_encointer_scheduler, EncointerScheduler]
 		[pallet_encointer_treasuries, EncointerTreasuries]
 	);
@@ -695,7 +787,7 @@ impl_runtime_apis! {
 			VERSION
 		}
 
-		fn execute_block(block: Block) {
+		fn execute_block(block: <Block as BlockT>::LazyBlock) {
 			Executive::execute_block(block);
 		}
 
@@ -732,7 +824,7 @@ impl_runtime_apis! {
 		}
 
 		fn check_inherents(
-			block: Block,
+			block: <Block as BlockT>::LazyBlock,
 			data: sp_inherents::InherentData,
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
@@ -960,7 +1052,7 @@ impl_runtime_apis! {
 		}
 
 		fn execute_block(
-			block: Block,
+			block: <Block as BlockT>::LazyBlock,
 			state_root_check: bool,
 			signature_check: bool,
 			select: frame_try_runtime::TryStateSelect

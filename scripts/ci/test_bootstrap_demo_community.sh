@@ -9,6 +9,6 @@ CURRENT_DIR=$(pwd)
 
 cd "$CLIENT_DIR"
 
-python bootstrap_demo_community.py --client $CLIENT_BIN --signer //Bob --test $TEST
+python bootstrap_demo_community.py --client $CLIENT_BIN --signer //Bob -l --test $TEST
 
 cd "$CURRENT_DIR"

@@ -72,7 +72,7 @@ class Client:
         fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
         ipfs_cid_part = ["--ipfs-cid", ipfs_cid] if ipfs_cid else []
         command = self.cli + cid_part + fee_part + command + ipfs_cid_part
-        ret = subprocess.run(command, stdout=subprocess.PIPE, **kwargs)
+        ret = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):
@@ -320,3 +320,69 @@ class Client:
 
     def get_proposals(self):
         return parse_proposals(self.list_proposals())
+
+    def submit_issue_swap_native_option_proposal(self, account, to, native_allowance,
+                                                    rate=None, do_burn=False,
+                                                    valid_from=None, valid_until=None,
+                                                    cid=None, pay_fees_in_cc=False):
+        cmd = ["submit-issue-swap-native-option-proposal", account, to,
+               "--native-allowance", str(native_allowance)]
+        if rate is not None:
+            cmd += ["--rate", str(rate)]
+        if do_burn:
+            cmd += ["--do-burn"]
+        if valid_from is not None:
+            cmd += ["--valid-from", str(valid_from)]
+        if valid_until is not None:
+            cmd += ["--valid-until", str(valid_until)]
+        ret = self.run_cli_command(cmd, cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+
+    def submit_issue_swap_asset_option_proposal(self, account, to, asset_id, asset_allowance,
+                                                   rate=None, do_burn=False,
+                                                   valid_from=None, valid_until=None,
+                                                   cid=None, pay_fees_in_cc=False):
+        cmd = ["submit-issue-swap-asset-option-proposal", account, to,
+               "--asset-id", asset_id, "--asset-allowance", str(asset_allowance)]
+        if rate is not None:
+            cmd += ["--rate", str(rate)]
+        if do_burn:
+            cmd += ["--do-burn"]
+        if valid_from is not None:
+            cmd += ["--valid-from", str(valid_from)]
+        if valid_until is not None:
+            cmd += ["--valid-until", str(valid_until)]
+        ret = self.run_cli_command(cmd, cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+
+    def get_swap_native_option(self, account, cid=None):
+        ret = self.run_cli_command(["get-swap-native-option", account], cid)
+        return ret.stdout.decode("utf-8").strip()
+
+    def get_swap_asset_option(self, account, cid=None):
+        ret = self.run_cli_command(["get-swap-asset-option", account], cid)
+        return ret.stdout.decode("utf-8").strip()
+
+    def swap_native(self, account, amount, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["swap-native", account, str(amount)], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+
+    def swap_asset(self, account, amount, cid=None, pay_fees_in_cc=False):
+        ret = self.run_cli_command(["swap-asset", account, str(amount)], cid, pay_fees_in_cc)
+        return ret.stdout.decode("utf-8").strip()
+
+    def ipfs_upload(self, signer, file_path, cid, gateway_url=None):
+        """Upload file to IPFS via authenticated gateway.
+        Returns (success: bool, output: str, exit_code: int)
+        """
+        cmd = ["ipfs-upload", "--signer", signer]
+        if gateway_url:
+            cmd += ["--gateway", gateway_url]
+        cmd += [file_path]
+        ret = self.run_cli_command(cmd, cid=cid)
+        output = ret.stdout.decode("utf-8").strip()
+        if ret.stderr:
+            stderr_text = ret.stderr.decode("utf-8").strip()
+            if stderr_text:
+                output = f"{output}\n{stderr_text}".strip()
+        return (ret.returncode == 0, output, ret.returncode)

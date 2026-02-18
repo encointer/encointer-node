@@ -15,13 +15,12 @@ use encointer_api_client_extension::{
 };
 use encointer_node_notee_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
+	balances::BalanceType,
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
 	common::{FromStr, PalletString},
 	communities::CommunityIdentifier,
-	democracy::{
-		Proposal, ProposalAccessPolicy, ProposalAction, ProposalIdType, ProposalState,
-		ReputationVec, Vote,
-	},
+	democracy::{ProposalAccessPolicy, ProposalIdType, ProposalState, ReputationVec, Vote},
+	treasuries::{SwapAssetOption, SwapNativeOption},
 };
 use log::{debug, error};
 use parity_scale_codec::{Decode, Encode};
@@ -29,6 +28,16 @@ use sp_core::{sr25519 as sr25519_core, ConstU32};
 use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetStorage, SubmitAndWatch, XtStatus,
 };
+
+// Some type aliases
+pub use encointer_node_notee_runtime::VersionedLocatableAsset as XcmLocation;
+
+// We have configured the runtime such that the ProposalTypes are the same for the solonode
+// and the parachain.
+pub type Proposal =
+	encointer_primitives::democracy::Proposal<Moment, AccountId, Balance, XcmLocation>;
+pub type ProposalAction =
+	encointer_primitives::democracy::ProposalAction<AccountId, Balance, Moment, XcmLocation>;
 
 pub fn submit_set_inactivity_timeout_proposal(
 	_args: &str,
@@ -47,7 +56,7 @@ pub fn submit_set_inactivity_timeout_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::SetInactivityTimeout(inactivity_timeout)
+			ProposalAction::SetInactivityTimeout(inactivity_timeout)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -78,7 +87,7 @@ pub fn submit_update_nominal_income_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::UpdateNominalIncome(cid, new_income)
+			ProposalAction::UpdateNominalIncome(cid, new_income)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -111,10 +120,7 @@ pub fn submit_update_demurrage_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::UpdateDemurrage(
-				cid,
-				new_demurrage_per_block
-			)
+			ProposalAction::UpdateDemurrage(cid, new_demurrage_per_block)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -145,7 +151,7 @@ pub fn submit_petition(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::Petition(maybecid, demand.clone())
+			ProposalAction::Petition(maybecid, demand.clone())
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -183,7 +189,7 @@ pub fn submit_spend_native_proposal(
 			api,
 			"EncointerDemocracy",
 			"submit_proposal",
-			ProposalAction::<AccountId, Balance, Moment>::SpendNative(maybecid, to.clone(), amount)
+			ProposalAction::SpendNative(maybecid, to.clone(), amount)
 		)
 		.unwrap();
 		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
@@ -193,6 +199,120 @@ pub fn submit_spend_native_proposal(
 	})
 	.into()
 }
+pub fn submit_issue_swap_native_option_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
+		let to = get_accountid_from_str(matches.value_of("to").unwrap());
+		let native_allowance = matches
+			.value_of("native-allowance")
+			.unwrap()
+			.parse::<u128>()
+			.expect("native-allowance can be converted to u128");
+		let rate = matches.value_of("rate").map(|v| {
+			BalanceType::from_num(v.parse::<f64>().expect("rate can be converted to f64"))
+		});
+		let do_burn = matches.is_present("do-burn");
+		let valid_from = matches
+			.value_of("valid-from")
+			.map(|v| v.parse::<Moment>().expect("valid-from can be converted to u64"));
+		let valid_until = matches
+			.value_of("valid-until")
+			.map(|v| v.parse::<Moment>().expect("valid-until can be converted to u64"));
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let option =
+			SwapNativeOption { cid, native_allowance, rate, do_burn, valid_from, valid_until };
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::IssueSwapNativeOption(cid, to.clone(), option)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!(
+			"Proposal Submitted: Issue SwapNativeOption for {cid} to {to}, allowance={native_allowance}"
+		);
+		Ok(())
+	})
+	.into()
+}
+
+pub fn submit_issue_swap_asset_option_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
+		let to = get_accountid_from_str(matches.value_of("to").unwrap());
+		let asset_allowance = matches
+			.value_of("asset-allowance")
+			.unwrap()
+			.parse::<u128>()
+			.expect("asset-allowance can be converted to u128");
+		let rate = matches.value_of("rate").map(|v| {
+			BalanceType::from_num(v.parse::<f64>().expect("rate can be converted to f64"))
+		});
+		let do_burn = matches.is_present("do-burn");
+		let valid_from = matches
+			.value_of("valid-from")
+			.map(|v| v.parse::<Moment>().expect("valid-from can be converted to u64"));
+		let valid_until = matches
+			.value_of("valid-until")
+			.map(|v| v.parse::<Moment>().expect("valid-until can be converted to u64"));
+		// For the solochain, AssetKind = VersionedLocatableAsset, but we accept a dummy for now
+		// as asset swaps aren't supported on this runtime. The proposal can still be submitted.
+		let asset_id_hex = matches.value_of("asset-id").unwrap();
+		let asset_id_bytes = hex::decode(asset_id_hex.strip_prefix("0x").unwrap_or(asset_id_hex))
+			.expect("asset-id must be valid hex");
+		let asset_id: XcmLocation =
+			Decode::decode(&mut asset_id_bytes.as_slice()).expect("invalid asset-id encoding");
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let option = SwapAssetOption {
+			cid,
+			asset_id: asset_id.clone(),
+			asset_allowance,
+			rate,
+			do_burn,
+			valid_from,
+			valid_until,
+		};
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::IssueSwapAssetOption(cid, to.clone(), option)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!(
+			"Proposal Submitted: Issue SwapAssetOption for {cid} to {to}, allowance={asset_allowance}"
+		);
+		Ok(())
+	})
+	.into()
+}
+
 pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -212,7 +332,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 		let proposal_lifetime = api.get_proposal_lifetime().await.unwrap();
 		let min_turnout_permill = api.get_min_turnout().await.unwrap();
 		println!("📜 Number of proposals: {}, global config: proposal lifetime: {:?}, confirmation period: {:?}, min turnout: {:.3}%", storage_keys.len(), proposal_lifetime, confirmation_period, min_turnout_permill as f64 / 10f64);
-		let mut proposals: Vec<(ProposalIdType, Proposal<Moment, AccountId, Balance>)> = Vec::new();
+		let mut proposals: Vec<(ProposalIdType, Proposal)> = Vec::new();
 		for storage_key in storage_keys.iter() {
 			debug!("storage_key: 0x{}", hex::encode(storage_key));
 			let key_postfix = storage_key.as_ref();
@@ -220,7 +340,7 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 				ProposalIdType::decode(&mut key_postfix[key_postfix.len() - 16..].as_ref())
 					.unwrap();
 			debug!("proposalid: {:?}", proposal_id);
-			let proposal: Proposal<Moment, AccountId, Balance> =
+			let proposal: Proposal =
 				api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap();
 			if !matches.all_flag() && proposal.state.has_failed() {
 				continue
@@ -270,6 +390,10 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					format!("Petition for {} demanding: {}", cid_or_global(maybecid), String::from_utf8_lossy(demand)),
 				ProposalAction::SpendNative(maybecid, to, amount) =>
 					format!("Spend Native from {} treasury to {to}, amount {amount}", cid_or_global(maybecid)),
+				ProposalAction::IssueSwapNativeOption(cid, to, opt) =>
+					super::encointer_treasuries::format_swap_native_option(cid, to, opt),
+				ProposalAction::IssueSwapAssetOption(cid, to, opt) =>
+					super::encointer_treasuries::format_swap_asset_option(cid, to, opt),
 				_ => format!("{:?}", proposal.action),
 			};
 			println!("🛠 action: {:?}", proposal_str);

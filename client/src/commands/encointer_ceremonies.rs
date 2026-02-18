@@ -914,13 +914,7 @@ async fn get_attendees_for_community_ceremony(
 	let mut attendees = Vec::new();
 	let mut noshows = Vec::new();
 	for storage_key in storage_keys.iter() {
-		match api
-			.get_storage_by_key(storage_key.clone(), maybe_at)
-			.await
-			// todo: back to simple unwarp()  https://github.com/encointer/encointer-node/issues/364
-			.unwrap_or(Some(Reputation::VerifiedLinked(0)))
-			.unwrap()
-		{
+		match api.get_storage_by_key(storage_key.clone(), maybe_at).await.unwrap().unwrap() {
 			Reputation::VerifiedUnlinked | Reputation::VerifiedLinked(_) => {
 				let key_postfix = storage_key.as_ref();
 				attendees.push(

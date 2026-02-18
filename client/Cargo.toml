@@ -3,7 +3,7 @@ name = "encointer-client-notee"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 #keep with node version. major, minor and patch
-version = "1.16.2"
+version = "1.21.1"
 
 [dependencies]
 # todo migrate to clap >=3 https://github.com/encointer/encointer-node/issues/107
@@ -17,8 +17,10 @@ geojson = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["std"] }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 # local deps
 encointer-api-client-extension = { path = "./encointer-api-client-extension" }
@@ -30,6 +32,13 @@ encointer-primitives = { workspace = true, features = ["std"] }
 pallet-encointer-balances = { workspace = true, features = ["std"] }
 pallet-encointer-ceremonies = { workspace = true, features = ["std"] }
 pallet-encointer-communities = { workspace = true, features = ["std"] }
+pallet-encointer-offline-payment = { workspace = true, features = ["std"] }
+
+# arkworks (for trusted setup generation)
+ark-bn254 = { workspace = true, features = ["std"] }
+ark-groth16 = { workspace = true, features = ["std"] }
+ark-snark = { workspace = true }
+ark-std = { workspace = true, features = ["std"] }
 pallet-encointer-scheduler = { workspace = true, features = ["std"] }
 
 # scs deps
@@ -42,7 +51,8 @@ frame-system = { workspace = true, features = ["std"] }
 itertools = "0.10.5"
 pallet-transaction-payment = { workspace = true, features = ["std"] }
 sp-application-crypto = { workspace = true, features = ["std"] }
-sp-core = { workspace = true, features = ["std"] }
+sp-core = { workspace = true, features = ["std", "bandersnatch-experimental"] }
+sp-io = { workspace = true, features = ["std"] }
 sp-keyring = { workspace = true }
 sp-keystore = { workspace = true, features = ["std"] }
 sp-rpc = { workspace = true }

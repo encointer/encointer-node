@@ -38,6 +38,7 @@ mod exit_code {
 	pub const FEE_PAYMENT_FAILED: i32 = 51;
 	pub const INVALID_REPUTATION: i32 = 52;
 	pub const RPC_ERROR: i32 = 60;
+	pub const NOT_CC_HOLDER: i32 = 61;
 	pub const NO_CID_SPECIFIED: i32 = 70;
 }
 
@@ -524,6 +525,18 @@ fn main() {
 		        .runner(commands::encointer_bazaar::list_business_offerings),
 		)
 		.add_cmd(
+		    Command::new("ipfs-upload")
+		        .description("Upload file to IPFS via authenticated gateway (requires CC holder)")
+		        .options(|app| {
+		            app.setting(AppSettings::ColoredHelp)
+		                .signer_arg("account to authenticate (must be CC holder)")
+		                .optional_cid_arg()
+		                .gateway_url_arg()
+		                .file_path_arg()
+		        })
+		        .runner(commands::encointer_ipfs::ipfs_upload),
+		)
+		.add_cmd(
 		    Command::new("create-faucet")
 		        .description("Create faucet")
 		        .options(|app| {
@@ -608,6 +621,138 @@ fn main() {
 				.runner(commands::encointer_reputation_commitments::list_purposes)
 		)
 		.add_cmd(
+			Command::new("register-bandersnatch-key")
+				.description("Register a Bandersnatch public key for reputation rings")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("key")
+								.long("key")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded 32-byte Bandersnatch public key (auto-derived from account if omitted)"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::register_bandersnatch_key),
+		)
+		.add_cmd(
+			Command::new("initiate-rings")
+				.description("Initiate ring computation for a community at a ceremony index")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index for which to compute rings"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::initiate_rings),
+		)
+		.add_cmd(
+			Command::new("continue-ring-computation")
+				.description("Continue the pending ring computation (one step)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+				})
+				.runner(commands::encointer_reputation_rings::continue_ring_computation),
+		)
+		.add_cmd(
+			Command::new("get-rings")
+				.description("Query ring members for a community and ceremony index")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.at_block_arg()
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index to query rings for"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::get_rings),
+		)
+		.add_cmd(
+			Command::new("prove-personhood")
+				.description("Produce a ring-VRF proof of personhood")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index of the ring"),
+						)
+						.arg(
+							Arg::with_name("level")
+								.long("level")
+								.takes_value(true)
+								.default_value("1")
+								.value_name("U8")
+								.help("attendance level (1-5)"),
+						)
+						.arg(
+							Arg::with_name("sub-ring")
+								.long("sub-ring")
+								.takes_value(true)
+								.default_value("0")
+								.value_name("U32")
+								.help("sub-ring index"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::prove_personhood),
+		)
+		.add_cmd(
+			Command::new("verify-personhood")
+				.description("Verify a ring-VRF proof of personhood")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("signature")
+								.long("signature")
+								.takes_value(true)
+								.required(true)
+								.value_name("HEX")
+								.help("hex-encoded ring-VRF signature"),
+						)
+						.arg(
+							Arg::with_name("ceremony-index")
+								.long("ceremony-index")
+								.takes_value(true)
+								.required(true)
+								.value_name("U32")
+								.help("ceremony index of the ring"),
+						)
+						.arg(
+							Arg::with_name("level")
+								.long("level")
+								.takes_value(true)
+								.default_value("1")
+								.value_name("U8")
+								.help("attendance level (1-5)"),
+						)
+						.arg(
+							Arg::with_name("sub-ring")
+								.long("sub-ring")
+								.takes_value(true)
+								.default_value("0")
+								.value_name("U32")
+								.help("sub-ring index"),
+						)
+				})
+				.runner(commands::encointer_reputation_rings::verify_personhood),
+		)
+		.add_cmd(
 			Command::new("submit-set-inactivity-timeout-proposal")
 				.description("Submit set inactivity timeout proposal")
 				.options(|app| {
@@ -677,6 +822,124 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_spend_native_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-issue-swap-native-option-proposal")
+				.description("Submit proposal to issue a swap native option for a beneficiary")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("beneficiary's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("native-allowance")
+								.long("native-allowance")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("total native token allowance"),
+						)
+						.arg(
+							Arg::with_name("rate")
+								.long("rate")
+								.takes_value(true)
+								.required(false)
+								.value_name("FLOAT")
+								.help("CC per native token exchange rate (omit for oracle/auction)"),
+						)
+						.arg(
+							Arg::with_name("do-burn")
+								.long("do-burn")
+								.takes_value(false)
+								.required(false)
+								.help("if set, CC will be burned instead of sent to treasury"),
+						)
+						.arg(
+							Arg::with_name("valid-from")
+								.long("valid-from")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("first time of validity (unix timestamp in milliseconds)"),
+						)
+						.arg(
+							Arg::with_name("valid-until")
+								.long("valid-until")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("expiry time (unix timestamp in milliseconds)"),
+						)
+				})
+				.runner(commands::encointer_democracy::submit_issue_swap_native_option_proposal),
+		)
+		.add_cmd(
+			Command::new("submit-issue-swap-asset-option-proposal")
+				.description("Submit proposal to issue a swap asset option for a beneficiary")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("beneficiary's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("asset-id")
+								.long("asset-id")
+								.takes_value(true)
+								.required(true)
+								.value_name("HEX")
+								.help("SCALE-encoded VersionedLocatableAsset (hex)"),
+						)
+						.arg(
+							Arg::with_name("asset-allowance")
+								.long("asset-allowance")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("total asset token allowance"),
+						)
+						.arg(
+							Arg::with_name("rate")
+								.long("rate")
+								.takes_value(true)
+								.required(false)
+								.value_name("FLOAT")
+								.help("CC per asset token exchange rate (omit for oracle/auction)"),
+						)
+						.arg(
+							Arg::with_name("do-burn")
+								.long("do-burn")
+								.takes_value(false)
+								.required(false)
+								.help("if set, CC will be burned instead of sent to treasury"),
+						)
+						.arg(
+							Arg::with_name("valid-from")
+								.long("valid-from")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("first time of validity (unix timestamp in milliseconds)"),
+						)
+						.arg(
+							Arg::with_name("valid-until")
+								.long("valid-until")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("expiry time (unix timestamp in milliseconds)"),
+						)
+				})
+				.runner(commands::encointer_democracy::submit_issue_swap_asset_option_proposal),
+		)
+		.add_cmd(
 			Command::new("list-proposals")
 				.description("list all proposals.")
 				.options(|app| {
@@ -719,6 +982,397 @@ fn main() {
 			Command::new("get-treasury")
 				.description("get treasury address for a community")
 				.runner(commands::encointer_treasuries::get_treasury_account),
+		)
+		.add_cmd(
+			Command::new("get-swap-native-option")
+				.description("Query swap native option for an account in a community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_treasuries::get_swap_native_option),
+		)
+		.add_cmd(
+			Command::new("get-swap-asset-option")
+				.description("Query swap asset option for an account in a community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_treasuries::get_swap_asset_option),
+		)
+		.add_cmd(
+			Command::new("swap-native")
+				.description("Exercise a swap native option: swap CC for native tokens from community treasury")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("desired amount of native tokens to receive"),
+						)
+				})
+				.runner(commands::encointer_treasuries::swap_native),
+		)
+		.add_cmd(
+			Command::new("swap-asset")
+				.description("Exercise a swap asset option: swap CC for asset tokens from community treasury")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("desired amount of asset tokens to receive"),
+						)
+				})
+				.runner(commands::encointer_treasuries::swap_asset),
+		)
+		.add_cmd(
+			Command::new("register-offline-identity")
+				.description("Register an offline payment identity (ZK commitment) for an account")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+				})
+				.runner(commands::encointer_offline_payment::register_offline_identity),
+		)
+		.add_cmd(
+			Command::new("get-offline-identity")
+				.description("Get the offline payment identity (commitment) for an account")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_offline_payment::get_offline_identity),
+		)
+		.add_cmd(
+			Command::new("generate-offline-payment")
+				.description("Generate an offline payment proof (outputs JSON)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("sender account (--signer)")
+						.arg(
+							Arg::with_name("to")
+								.long("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("recipient's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("amount")
+								.long("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("FLOAT")
+								.help("amount to transfer"),
+						)
+						.arg(
+							Arg::with_name("pk-file")
+								.long("pk-file")
+								.takes_value(true)
+								.value_name("PATH")
+								.help("path to proving key file (omit for test key)"),
+						)
+						.optional_cid_arg()
+				})
+				.runner(commands::encointer_offline_payment::generate_offline_payment),
+		)
+		.add_cmd(
+			Command::new("submit-offline-payment")
+				.description("Submit an offline payment proof for settlement")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("account to sign the transaction")
+						.arg(
+							Arg::with_name("proof-file")
+								.long("proof-file")
+								.takes_value(true)
+								.value_name("PATH")
+								.help("path to JSON file containing proof (alternative to inline args)"),
+						)
+						.arg(
+							Arg::with_name("proof")
+								.long("proof")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded proof"),
+						)
+						.arg(
+							Arg::with_name("sender")
+								.long("sender")
+								.takes_value(true)
+								.value_name("SS58")
+								.help("sender's AccountId"),
+						)
+						.arg(
+							Arg::with_name("recipient")
+								.long("recipient")
+								.takes_value(true)
+								.value_name("SS58")
+								.help("recipient's AccountId"),
+						)
+						.arg(
+							Arg::with_name("amount")
+								.long("amount")
+								.takes_value(true)
+								.value_name("FLOAT")
+								.help("transfer amount"),
+						)
+						.arg(
+							Arg::with_name("nullifier")
+								.long("nullifier")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded nullifier"),
+						)
+						.optional_cid_arg()
+						.tx_payment_cid_arg()
+				})
+				.runner(commands::encointer_offline_payment::submit_offline_payment),
+		)
+		.add_cmd(
+			Command::new("set-offline-payment-vk")
+				.description("Set the Groth16 verification key for offline payments (requires sudo)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.signer_arg("sudo account (defaults to //Alice)")
+						.arg(
+							Arg::with_name("vk-file")
+								.long("vk-file")
+								.takes_value(true)
+								.value_name("PATH")
+								.help("path to verifying key file (from generate-trusted-setup)"),
+						)
+						.arg(
+							Arg::with_name("vk")
+								.long("vk")
+								.takes_value(true)
+								.value_name("HEX")
+								.help("hex-encoded verification key (alternative to --vk-file)"),
+						)
+						.tx_payment_cid_arg()
+				})
+				.runner(commands::encointer_offline_payment::set_verification_key),
+		)
+		.add_cmd(
+			Command::new("generate-test-vk")
+				.description("Generate and print the test verification key (hex)")
+				.runner(commands::encointer_offline_payment::generate_test_vk),
+		)
+		.add_cmd(
+			Command::new("generate-trusted-setup")
+				.description(concat!(
+					"Generate proving key + verifying key for offline payments.\n\n",
+					"TRUSTED SETUP CEREMONY — PROCESS OVERVIEW\n",
+					"==========================================\n\n",
+					"The offline payment system uses Groth16 zero-knowledge proofs.\n",
+					"A one-time trusted setup must be performed before the system can be used.\n",
+					"The setup produces two keys:\n\n",
+					"  Proving Key (PK)   — used by wallets to generate payment proofs (~50-100 KB)\n",
+					"  Verifying Key (VK) — stored on-chain to verify proofs (~400-600 bytes)\n\n",
+					"STEPS:\n\n",
+					"  1. GENERATE: A trusted individual runs this command on a secure, air-gapped\n",
+					"     machine. The OS CSPRNG provides randomness. The machine should be wiped\n",
+					"     after key generation to destroy the toxic waste (internal randomness).\n\n",
+					"     $ encointer-client-notee generate-trusted-setup \\\n",
+					"         --pk-out proving_key.bin --vk-out verifying_key.bin\n\n",
+					"  2. VERIFY: Independently verify that PK and VK are consistent:\n\n",
+					"     $ encointer-client-notee verify-trusted-setup \\\n",
+					"         --pk proving_key.bin --vk verifying_key.bin\n\n",
+					"  3. SET ON-CHAIN: Submit the VK via governance (or sudo in dev):\n\n",
+					"     $ encointer-client-notee set-offline-payment-vk \\\n",
+					"         --vk-file verifying_key.bin --signer //Alice\n\n",
+					"  4. DISTRIBUTE PK: Bundle proving_key.bin in the wallet app. All wallet\n",
+					"     users need the PK to generate proofs. The PK is NOT secret.\n\n",
+					"  5. DESTROY TOXIC WASTE: Securely wipe the machine used for generation.\n",
+					"     If the internal randomness is recovered, proofs can be forged.\n\n",
+					"SECURITY MODEL:\n",
+					"  This is a single-party trusted setup. The generator must be trusted.\n",
+					"  For higher security, consider a multi-party computation (MPC) ceremony\n",
+					"  where multiple independent parties contribute randomness."
+				))
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk-out")
+								.long("pk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("proving_key.bin")
+								.help("output path for the proving key"),
+						)
+						.arg(
+							Arg::with_name("vk-out")
+								.long("vk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("verifying_key.bin")
+								.help("output path for the verifying key"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::generate_trusted_setup),
+		)
+		.add_cmd(
+			Command::new("verify-trusted-setup")
+				.description("Verify that a proving key and verifying key are consistent")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.required(true)
+								.value_name("PATH")
+								.help("path to the proving key file"),
+						)
+						.arg(
+							Arg::with_name("vk")
+								.long("vk")
+								.takes_value(true)
+								.required(true)
+								.value_name("PATH")
+								.help("path to the verifying key file"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::verify_trusted_setup),
+		)
+		.add_cmd(
+			Command::new("ceremony-init")
+				.description("Initialize a multiparty trusted setup ceremony (generates initial CRS)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk-out")
+								.long("pk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("output path for the ceremony proving key"),
+						)
+						.arg(
+							Arg::with_name("transcript")
+								.long("transcript")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_transcript.json")
+								.help("output path for the ceremony transcript"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_init),
+		)
+		.add_cmd(
+			Command::new("ceremony-contribute")
+				.description("Apply one participant's contribution to a ceremony")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("path to the ceremony proving key (read + overwrite)"),
+						)
+						.arg(
+							Arg::with_name("transcript")
+								.long("transcript")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_transcript.json")
+								.help("path to the ceremony transcript (read + append)"),
+						)
+						.arg(
+							Arg::with_name("participant")
+								.long("participant")
+								.takes_value(true)
+								.required(true)
+								.value_name("NAME")
+								.help("name of the participant (recorded in transcript)"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_contribute),
+		)
+		.add_cmd(
+			Command::new("ceremony-verify")
+				.description("Verify all contributions in a ceremony transcript")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("path to the final ceremony proving key"),
+						)
+						.arg(
+							Arg::with_name("transcript")
+								.long("transcript")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_transcript.json")
+								.help("path to the ceremony transcript"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_verify),
+		)
+		.add_cmd(
+			Command::new("ceremony-finalize")
+				.description("Finalize a ceremony — extract proving key and verifying key files")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("pk")
+								.long("pk")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("ceremony_pk.bin")
+								.help("path to the ceremony proving key (input)"),
+						)
+						.arg(
+							Arg::with_name("pk-out")
+								.long("pk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("proving_key.bin")
+								.help("output path for the final proving key"),
+						)
+						.arg(
+							Arg::with_name("vk-out")
+								.long("vk-out")
+								.takes_value(true)
+								.value_name("PATH")
+								.default_value("verifying_key.bin")
+								.help("output path for the verifying key"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::cmd_ceremony_finalize),
+		)
+		.add_cmd(
+			Command::new("inspect-setup-key")
+				.description("Inspect a proving key or verifying key file (shows size, hash, type)")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.arg(
+							Arg::with_name("file")
+								.long("file")
+								.takes_value(true)
+								.required(true)
+								.value_name("PATH")
+								.help("path to the key file to inspect"),
+						)
+				})
+				.runner(commands::encointer_offline_payment::inspect_setup_key),
 		)
 		// To handle when no subcommands match
 		.no_cmd(|_args, _matches| {
