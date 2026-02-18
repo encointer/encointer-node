@@ -65,12 +65,18 @@ class _BaseClient:
             print("🔌 connecting to local chain")
             self.cli = [rust_client, '-p', str(port)]
 
+        self.log = None
+
     def run_cli_command(self, command, cid=None, pay_fees_in_cc=False, ipfs_cid=None, **kwargs):
         cid_part = ["--cid", cid] if cid else []
         fee_part = ["--tx-payment-cid", cid] if pay_fees_in_cc else []
         ipfs_cid_part = ["--ipfs-cid", ipfs_cid] if ipfs_cid else []
-        command = self.cli + cid_part + fee_part + command + ipfs_cid_part
-        ret = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
+        full_command = self.cli + cid_part + fee_part + command + ipfs_cid_part
+        ret = subprocess.run(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
+        if self.log is not None:
+            meaningful = cid_part + fee_part + command + ipfs_cid_part
+            stdout_first = ret.stdout.decode('utf-8', errors='replace').strip().split('\n')[0][:120]
+            self.log.command(meaningful, ret.returncode, stdout_first)
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):

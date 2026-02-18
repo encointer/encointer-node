@@ -523,6 +523,48 @@ class AgentPool:
         self.stats.append(stat)
         return total
 
+    def write_ceremony_summary(self, cindex):
+        """Write a human-readable ceremony summary to the simulation log."""
+        if self.client.log is None:
+            return
+
+        population = len(self.agents)
+        reputables = sum(1 for a in self.agents if a.is_reputable)
+        businesses = sum(1 for a in self.agents if a.has_business)
+        offline_ids = sum(1 for a in self.agents if a.has_offline_identity)
+        ring_members = sum(1 for a in self.agents if a.bandersnatch_key is not None)
+
+        # Try to find rings
+        rings_info = "none yet"
+        chain_cindex = self.client.get_cindex()
+        for ci in range(chain_cindex - 2, 0, -1):
+            rings_output = self.client.get_rings(self.cid, ci)
+            levels = re.findall(r'Level (\d)/5:\s+(\d+)\s+members', rings_output)
+            if levels and any(int(c) > 0 for _, c in levels):
+                parts = [f"L{lv}/5={ct}" for lv, ct in levels]
+                rings_info = f"cindex={ci}: {', '.join(parts)}"
+                break
+
+        aux_map = {
+            2: "bazaar, reputation-rings-setup",
+            3: "offline-payment-setup, democracy-proposals",
+            4: "offline-payment-back-and-forth, reputation-rings-verify, transfers",
+            5: "faucet-lifecycle, treasury, queries",
+            6: "advanced-democracy",
+        }
+        aux = aux_map.get(cindex, "queries" if cindex >= 7 else "none")
+
+        text = (
+            f"  Population:         {population}\n"
+            f"  Reputables:         {reputables}\n"
+            f"  Businesses:         {businesses}\n"
+            f"  Offline identities: {offline_ids}\n"
+            f"  Ring members:       {ring_members}\n"
+            f"  Rings: {rings_info}\n"
+            f"  Auxiliary features: {aux}"
+        )
+        self.client.log.summary(text)
+
     def write_stats(self, path='bot-stats.csv'):
         with open(path, 'w') as f:
             for s in self.stats:

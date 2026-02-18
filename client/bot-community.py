@@ -37,6 +37,7 @@ from py_client.helpers import purge_prompt, read_cid, write_cid, set_local_or_re
 from py_client.client import Client
 from py_client.ipfs import Ipfs, ASSETS_PATH
 from py_client.agent_pool import AgentPool
+from py_client.simulation_log import SimulationLog
 
 KEYSTORE_PATH = './my_keystore'
 
@@ -154,6 +155,9 @@ def simulate(ctx, ceremonies, assert_invariants):
     cid = read_cid()
     waiting_blocks = ctx['waiting_blocks']
 
+    log = SimulationLog('bot-community-log.txt')
+    client.log = log
+
     pool = AgentPool(client, cid=cid, faucet_url=ctx['faucet_url'],
                      max_population=ctx['max_population'], waiting_blocks=waiting_blocks)
     pool.load_agents()
@@ -166,6 +170,7 @@ def simulate(ctx, ceremonies, assert_invariants):
 
     while cindex < target:
         cindex += 1
+        log.ceremony(cindex)
         print(f'\n{"="*60}')
         print(f'🔄 Ceremony {cindex}')
         print(f'{"="*60}')
@@ -178,6 +183,7 @@ def simulate(ctx, ceremonies, assert_invariants):
                 client.next_phase()
                 client.await_block(waiting_blocks)
 
+        log.phase('Registering')
         print(f'\n📋 Phase: Registering')
         pool.execute_registering()
 
@@ -185,6 +191,7 @@ def simulate(ctx, ceremonies, assert_invariants):
         client.next_phase()
         client.await_block(waiting_blocks)
 
+        log.phase('Assigning')
         print(f'\n📋 Phase: Assigning')
         pool.execute_assigning()
 
@@ -192,6 +199,7 @@ def simulate(ctx, ceremonies, assert_invariants):
         client.next_phase()
         client.await_block(waiting_blocks)
 
+        log.phase('Attesting')
         print(f'\n📋 Phase: Attesting')
         pool.execute_attesting()
 
@@ -200,13 +208,17 @@ def simulate(ctx, ceremonies, assert_invariants):
         client.await_block(waiting_blocks)
 
         # Run auxiliary features for this ceremony
+        log.phase('Auxiliary Features')
         pool.run_auxiliary_features(cindex)
+
+        pool.write_ceremony_summary(cindex)
 
         if assert_invariants:
             pool.assert_invariants(cindex)
 
         print(f'\n✅ Ceremony {cindex} complete')
 
+    log.close()
     pool.write_stats()
     print(f'\n🏁 Simulation complete: {cindex} ceremonies')
     print(f'📊 Stats written to bot-stats.csv')
