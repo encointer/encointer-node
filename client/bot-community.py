@@ -38,6 +38,8 @@ from py_client.client import Client
 from py_client.ipfs import Ipfs, ASSETS_PATH
 from py_client.agent_pool import AgentPool
 from py_client.simulation_log import SimulationLog
+from py_client.campaign_personhood import ProvePersonhoodCampaign
+from py_client.campaign_offline_payment import OfflinePaymentCampaign
 
 KEYSTORE_PATH = './my_keystore'
 
@@ -134,7 +136,7 @@ def execute_current_phase(ctx):
 
     if phase == 'Registering':
         pool.execute_registering()
-        pool.run_auxiliary_features(cindex % 7 or 7)
+        pool.run_base_auxiliary(cindex % 7 or 7)
     elif phase == 'Assigning':
         pool.execute_assigning()
     elif phase == 'Attesting':
@@ -162,6 +164,11 @@ def simulate(ctx, ceremonies, assert_invariants):
                      max_population=ctx['max_population'], waiting_blocks=waiting_blocks)
     pool.load_agents()
 
+    campaigns = [
+        ProvePersonhoodCampaign(pool, log),
+        OfflinePaymentCampaign(pool, log, target_ceremony=ceremonies),
+    ]
+
     infinite = ceremonies == 0
     target = ceremonies if not infinite else float('inf')
     cindex = 0
@@ -186,6 +193,8 @@ def simulate(ctx, ceremonies, assert_invariants):
         log.phase('Registering')
         print(f'\n📋 Phase: Registering')
         pool.execute_registering()
+        for c in campaigns:
+            c.on_registering(cindex)
 
         # Advance to Assigning
         client.next_phase()
@@ -194,6 +203,8 @@ def simulate(ctx, ceremonies, assert_invariants):
         log.phase('Assigning')
         print(f'\n📋 Phase: Assigning')
         pool.execute_assigning()
+        for c in campaigns:
+            c.on_assigning(cindex)
 
         # Advance to Attesting
         client.next_phase()
@@ -202,16 +213,24 @@ def simulate(ctx, ceremonies, assert_invariants):
         log.phase('Attesting')
         print(f'\n📋 Phase: Attesting')
         pool.execute_attesting()
+        for c in campaigns:
+            c.on_attesting(cindex)
 
         # Advance back to Registering
         client.next_phase()
         client.await_block(waiting_blocks)
 
-        # Run auxiliary features for this ceremony
-        log.phase('Auxiliary Features')
-        pool.run_auxiliary_features(cindex)
+        # Run base auxiliary features
+        log.phase('Base Auxiliary')
+        pool.run_base_auxiliary(cindex)
+
+        # Run campaign post-ceremony hooks
+        for c in campaigns:
+            c.on_post_ceremony(cindex)
 
         pool.write_ceremony_summary(cindex)
+        for c in campaigns:
+            c.write_summary(cindex)
 
         if assert_invariants:
             pool.assert_invariants(cindex)

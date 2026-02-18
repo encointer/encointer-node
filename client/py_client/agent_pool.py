@@ -1,9 +1,6 @@
 import ast
-import json
-import os
 import random
 import re
-import tempfile
 from math import floor
 
 from py_client.agents import Agent, AgentRole
@@ -118,7 +115,7 @@ class AgentPool:
     # ── Phase execution ────────────────────────────────────────────────
 
     def execute_registering(self):
-        """Claim rewards, grow population, register all."""
+        """Claim rewards, grow population, register keys/identities, register all."""
         print("🏆 all participants claim their potential reward")
         for agent in self.agents:
             self.client.claim_reward(agent.account, self.cid)
@@ -129,6 +126,8 @@ class AgentPool:
         total_supply = self._write_current_stats()
         if total_supply > 0:
             self.grow()
+
+        self._register_keys_and_identities()
 
         self._register_all()
         self._wait()
@@ -162,35 +161,19 @@ class AgentPool:
                 agent.ceremony_count += 1
                 agent.promote()
 
-    # ── Auxiliary features (staged by ceremony index) ──────────────────
+    # ── Setup & base auxiliary features ─────────────────────────────
 
-    def run_auxiliary_features(self, cindex):
-        """Run auxiliary feature exercises staged by ceremony index."""
-        if cindex == 2:
-            self._aux_bazaar()
-            self._aux_reputation_rings_setup()
-        elif cindex == 3:
-            self._aux_offline_payment_setup()
-            self._aux_democracy_proposals()
-        elif cindex == 4:
-            self._aux_offline_payment_back_and_forth()
-            self._aux_reputation_rings_verify()
-            self._aux_transfers()
-        elif cindex == 5:
-            self._aux_faucet_lifecycle()
-            self._aux_treasury()
-            self._aux_queries()
-        elif cindex == 6:
-            self._aux_advanced_democracy()
-        elif cindex >= 7:
-            # Steady state: all features active
-            self._aux_queries()
+    def _setup_vk(self):
+        """Set the offline payment verification key (once)."""
+        print("🔐 Setting offline payment verification key")
+        self.client.set_offline_payment_vk(signer="//Alice")
+        print("  verification key set")
 
-    def _aux_bazaar(self):
-        """Ceremony 2: Create businesses and offerings."""
+    def _setup_bazaar(self):
+        """Create 5 merchant businesses and offerings."""
         print("🏪 Bazaar: creating businesses and offerings")
         ipfs_cid = "QmDUMMYikh7VqTu8pvzd2G2vAd4eK7EaazXTEgqGN6AWoD"
-        merchants = [a for a in self.agents if a.is_reputable][:2]
+        merchants = [a for a in self.agents if a.is_reputable][:5]
         for agent in merchants:
             self.client.create_business(agent.account, self.cid, ipfs_cid)
             agent.has_business = True
@@ -206,143 +189,46 @@ class AgentPool:
         offerings = self.client.list_offerings(self.cid)
         print(f"  offerings: {offerings}")
 
-    def _aux_offline_payment_setup(self):
-        """Ceremony 3: Set VK, register offline identities."""
-        print("🔐 Offline payment setup")
-        self.client.set_offline_payment_vk(signer="//Alice")
-        print("  verification key set")
-
-        reputables = [a for a in self.agents if a.is_reputable and not a.has_offline_identity][:2]
-        for agent in reputables:
-            self.client.register_offline_identity(agent.account, cid=self.cid)
-            agent.has_offline_identity = True
-            print(f"  registered offline identity for {agent.account[:8]}...")
-        self._wait()
-
-        for agent in reputables:
-            identity = self.client.get_offline_identity(agent.account, cid=self.cid)
-            print(f"  offline identity for {agent.account[:8]}...: {identity[:60]}...")
-
-    def _aux_reputation_rings_setup(self):
-        """Ceremony 2: Register auto-derived bandersnatch keys.
-
-        Keys must be registered before the next Assigning phase so that
-        automatic ring computation picks them up via on_idle.
-        """
-        print("🔑 Reputation rings: registering bandersnatch keys (auto-derived)")
-        reputables = [a for a in self.agents if a.is_reputable][:3]
-        for agent in reputables:
-            secret = self.client.export_secret(agent.account)
-            output = self.client.register_bandersnatch_key(secret)
-            agent.bandersnatch_key = "auto-derived"
-            print(f"  registered key for {agent.account[:8]}...: {output[:80]}...")
-        self._wait()
-
-    def _aux_democracy_proposals(self):
-        """Ceremony 3: Submit various proposals."""
-        print("🗳 Democracy: submitting proposals")
-        proposer = self._first_reputable()
-        if not proposer:
-            return
-        self.client.submit_update_nominal_income_proposal(proposer.account, 1.1, cid=self.cid)
-        print("  submitted update nominal income proposal")
-        self.client.submit_petition(proposer.account, "test-petition", cid=self.cid)
-        print("  submitted petition")
-
-    def _aux_offline_payment_back_and_forth(self):
-        """Ceremony 4: Alice→Bob 6, Bob→Alice 3, Alice→Bob 6 — settle in order."""
-        offline_agents = [a for a in self.agents if a.has_offline_identity]
-        if len(offline_agents) < 2:
-            print("⚠ Not enough offline agents for payment back-and-forth")
-            return
-
-        alice, bob = offline_agents[0], offline_agents[1]
-        print(f"💸 Offline payment back-and-forth: {alice.account[:8]}... ↔ {bob.account[:8]}...")
-
-        # Generate 3 proofs
-        proofs = []
-        proof_specs = [
-            (alice, bob, "0.6"),
-            (bob, alice, "0.3"),
-            (alice, bob, "0.6"),
-        ]
-        for sender, recipient, amount in proof_specs:
-            proof_json = self.client.generate_offline_payment(
-                signer=sender.account, to=recipient.account, amount=amount, cid=self.cid)
-            proof_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
-            proof_file.write(proof_json)
-            proof_file.close()
-            proofs.append(proof_file.name)
-            print(f"  generated proof: {sender.account[:8]}... → {recipient.account[:8]}... amount={amount}")
-
-        # Settle in order with a neutral third party
-        settler = self.agents[2].account if len(self.agents) > 2 else "//Charlie"
-        for i, proof_path in enumerate(proofs):
-            self.client.submit_offline_payment(signer=settler, proof_file=proof_path)
-            self._wait()
-            a_bal = self.client.balance(alice.account, cid=self.cid)
-            b_bal = self.client.balance(bob.account, cid=self.cid)
-            print(f"  after settlement {i+1}: alice={a_bal:.2f} bob={b_bal:.2f}")
-            os.unlink(proof_path)
-
-    def _aux_reputation_rings_verify(self):
-        """Ceremony 4: Query auto-computed rings and exercise ring-VRF prove/verify.
-
-        Rings were auto-computed during the Assigning phase via on_idle.
-        Bandersnatch keys were registered at ceremony 2, so they appear in
-        rings for ceremony 2+ (computed at ceremony 3's Assigning phase).
-        Exercises all reputation levels from 1/5 to 5/5.
-        """
-        print("💍 Reputation rings: verifying auto-computed rings + ring-VRF")
-
-        ring_agents = [a for a in self.agents if a.has_bandersnatch]
-        if not ring_agents:
-            print("  ⚠ no agents with bandersnatch keys, skipping")
-            return
-
-        # Find the most recent ceremony with rings, scanning backwards.
-        # Rings for cindex N are auto-computed during ceremony N+1's Assigning phase.
-        chain_cindex = self.client.get_cindex()
-        ring_cindex = None
-        rings_output = None
-        for ci in range(chain_cindex - 2, 0, -1):
-            rings_output = self.client.get_rings(self.cid, ci)
-            m = re.search(r'Level 1/5:\s+(\d+)\s+members', rings_output)
-            if m and int(m.group(1)) > 0:
-                ring_cindex = ci
-                print(f"  found rings at cindex={ci}")
-                break
-
-        if ring_cindex is None:
-            print("  ⚠ no rings with members found, skipping ring-VRF")
-            return
-
-        # Parse which levels have members from the get-rings output.
-        # Format: "  Level N/5: M members (S sub-rings)"
-        available_levels = []
-        for m in re.finditer(r'Level (\d)/5:\s+(\d+)\s+members', rings_output):
-            level, count = int(m.group(1)), int(m.group(2))
-            if count > 0:
-                available_levels.append(level)
-        print(f"  levels with members: {available_levels}")
-
-        # Ring-VRF prove/verify for each level and agent
-        for level in available_levels:
-            print(f"  🔮 Ring-VRF level {level}/5 at cindex={ring_cindex}")
-            for agent in ring_agents:
+    def _register_keys_and_identities(self):
+        """Register bandersnatch keys and offline identities for all eligible agents."""
+        keys_registered = 0
+        ids_registered = 0
+        for agent in self.agents:
+            if not agent.has_bandersnatch:
                 try:
                     secret = self.client.export_secret(agent.account)
-                    sig, output = self.client.prove_personhood(
-                        secret, self.cid, ring_cindex, level=level, sub_ring=0)
-                    print(f"    proved level {level}/5 for {agent.account[:8]}...")
+                    self.client.register_bandersnatch_key(secret)
+                    agent.bandersnatch_key = "auto-derived"
+                    keys_registered += 1
+                except Exception:
+                    pass
+            if agent.is_reputable and not agent.has_offline_identity:
+                try:
+                    self.client.register_offline_identity(agent.account, cid=self.cid)
+                    agent.has_offline_identity = True
+                    ids_registered += 1
+                except Exception:
+                    pass
+        if keys_registered or ids_registered:
+            self._wait()
+        print(f"🔑 Registered {keys_registered} bandersnatch keys, {ids_registered} offline identities")
 
-                    valid, verify_output = self.client.verify_personhood(
-                        sig, self.cid, ring_cindex, level=level, sub_ring=0)
-                    assert valid, f"verification failed for {agent.account[:8]}... at level {level}"
-                    print(f"    verified: {verify_output[:80]}...")
-                except Exception as e:
-                    # Agent may not be in higher-level rings (not enough ceremonies attended)
-                    print(f"    level {level}/5 not available for {agent.account[:8]}...: {e}")
+    def run_base_auxiliary(self, cindex):
+        """Run base auxiliary feature exercises staged by ceremony index."""
+        if cindex == 1:
+            self._setup_vk()
+        elif cindex == 2:
+            self._setup_bazaar()
+        elif cindex == 4:
+            self._aux_transfers()
+        elif cindex == 5:
+            self._aux_faucet_lifecycle()
+            self._aux_treasury()
+            self._aux_queries()
+        elif cindex == 6:
+            self._aux_advanced_democracy()
+        elif cindex >= 7:
+            self._aux_queries()
 
     def _aux_transfers(self):
         """Ceremony 4: CC transfers between agents."""
@@ -585,9 +471,9 @@ class AgentPool:
                 break
 
         aux_map = {
-            2: "bazaar, reputation-rings-setup",
-            3: "offline-payment-setup, democracy-proposals",
-            4: "offline-payment-back-and-forth, reputation-rings-verify, transfers",
+            1: "setup-vk",
+            2: "setup-bazaar",
+            4: "transfers",
             5: "faucet-lifecycle, treasury, queries",
             6: "advanced-democracy",
         }
@@ -621,31 +507,27 @@ class AgentPool:
         # Population should be positive
         assert stat['population'] > 0, f"population is 0 at cindex {cindex}"
 
-        # After ceremony 2: businesses should exist
+        # After ceremony 2: businesses should exist (5 merchants)
         if cindex >= 2:
             businesses = self.client.list_businesses(self.cid)
             if stat['businesses'] > 0:
                 assert len(businesses) > 0, "expected businesses after ceremony 2"
-                print(f"  ✓ businesses exist")
+                print(f"  ✓ {len(businesses)} businesses exist")
 
-        # After ceremony 2: bandersnatch keys registered
-        if cindex >= 2:
-            if stat['ring_members'] > 0:
-                print(f"  ✓ bandersnatch keys registered")
+        # Bandersnatch keys grow every ceremony (registered in execute_registering)
+        if cindex >= 2 and stat['ring_members'] > 0:
+            print(f"  ✓ {stat['ring_members']} bandersnatch keys registered")
 
-        # After ceremony 3: offline identities registered
-        if cindex >= 3:
-            if stat['offline_ids'] > 0:
-                offline_agents = [a for a in self.agents if a.has_offline_identity]
-                for agent in offline_agents[:1]:
-                    identity = self.client.get_offline_identity(agent.account, cid=self.cid)
-                    assert len(identity) > 0, f"offline identity empty for {agent.account[:8]}..."
-                print(f"  ✓ offline identities registered")
+        # Offline identities grow every ceremony (registered in execute_registering)
+        if cindex >= 2 and stat['offline_ids'] > 0:
+            offline_agents = [a for a in self.agents if a.has_offline_identity]
+            for agent in offline_agents[:1]:
+                identity = self.client.get_offline_identity(agent.account, cid=self.cid)
+                assert len(identity) > 0, f"offline identity empty for {agent.account[:8]}..."
+            print(f"  ✓ {stat['offline_ids']} offline identities registered")
 
         # After ceremony 4: rings auto-computed
         if cindex >= 4 and stat['ring_members'] > 0:
-            # Rings for cindex N are auto-computed during ceremony N+1's Assigning phase.
-            # By ceremony 4 end, rings for cindex 2 should exist.
             for ci in range(self.client.get_cindex() - 2, 0, -1):
                 rings = self.client.get_rings(self.cid, ci)
                 if "members" in rings:
