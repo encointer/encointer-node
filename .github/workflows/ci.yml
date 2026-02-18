@@ -316,7 +316,7 @@ jobs:
           - bootstrap_demo_community.py --signer //Bob --test unregister-and-upgrade-registration
           - bootstrap_demo_community.py --signer //Bob --test endorsement
           - bootstrap_demo_community.py --signer //Bob --test democracy
-          - bot-community-test -f http://host.docker.internal:5000/api
+          # bot-community-test removed: duplicate of test_bot_community.sh in integration-test
           # Todo: #386
           # - test-register-businesses -f http://host.docker.internal:5000/api
     steps:
