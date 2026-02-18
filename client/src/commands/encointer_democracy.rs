@@ -15,10 +15,12 @@ use encointer_api_client_extension::{
 };
 use encointer_node_notee_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
+	balances::BalanceType,
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
 	common::{FromStr, PalletString},
 	communities::CommunityIdentifier,
 	democracy::{ProposalAccessPolicy, ProposalIdType, ProposalState, ReputationVec, Vote},
+	treasuries::{SwapAssetOption, SwapNativeOption},
 };
 use log::{debug, error};
 use parity_scale_codec::{Decode, Encode};
@@ -197,6 +199,120 @@ pub fn submit_spend_native_proposal(
 	})
 	.into()
 }
+pub fn submit_issue_swap_native_option_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
+		let to = get_accountid_from_str(matches.value_of("to").unwrap());
+		let native_allowance = matches
+			.value_of("native-allowance")
+			.unwrap()
+			.parse::<u128>()
+			.expect("native-allowance can be converted to u128");
+		let rate = matches.value_of("rate").map(|v| {
+			BalanceType::from_num(v.parse::<f64>().expect("rate can be converted to f64"))
+		});
+		let do_burn = matches.is_present("do-burn");
+		let valid_from = matches
+			.value_of("valid-from")
+			.map(|v| v.parse::<Moment>().expect("valid-from can be converted to u64"));
+		let valid_until = matches
+			.value_of("valid-until")
+			.map(|v| v.parse::<Moment>().expect("valid-until can be converted to u64"));
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let option =
+			SwapNativeOption { cid, native_allowance, rate, do_burn, valid_from, valid_until };
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::IssueSwapNativeOption(cid, to.clone(), option)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!(
+			"Proposal Submitted: Issue SwapNativeOption for {cid} to {to}, allowance={native_allowance}"
+		);
+		Ok(())
+	})
+	.into()
+}
+
+pub fn submit_issue_swap_asset_option_proposal(
+	_args: &str,
+	matches: &ArgMatches<'_>,
+) -> Result<(), clap::Error> {
+	let rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(async {
+		let who = matches.account_arg().map(get_pair_from_str).unwrap();
+		let mut api = get_chain_api(matches).await;
+		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(who.clone())));
+		let cid = api
+			.verify_cid(matches.cid_arg().expect("please supply argument --cid"), None)
+			.await;
+		let to = get_accountid_from_str(matches.value_of("to").unwrap());
+		let asset_allowance = matches
+			.value_of("asset-allowance")
+			.unwrap()
+			.parse::<u128>()
+			.expect("asset-allowance can be converted to u128");
+		let rate = matches.value_of("rate").map(|v| {
+			BalanceType::from_num(v.parse::<f64>().expect("rate can be converted to f64"))
+		});
+		let do_burn = matches.is_present("do-burn");
+		let valid_from = matches
+			.value_of("valid-from")
+			.map(|v| v.parse::<Moment>().expect("valid-from can be converted to u64"));
+		let valid_until = matches
+			.value_of("valid-until")
+			.map(|v| v.parse::<Moment>().expect("valid-until can be converted to u64"));
+		// For the solochain, AssetKind = VersionedLocatableAsset, but we accept a dummy for now
+		// as asset swaps aren't supported on this runtime. The proposal can still be submitted.
+		let asset_id_hex = matches.value_of("asset-id").unwrap();
+		let asset_id_bytes = hex::decode(asset_id_hex.strip_prefix("0x").unwrap_or(asset_id_hex))
+			.expect("asset-id must be valid hex");
+		let asset_id: XcmLocation =
+			Decode::decode(&mut asset_id_bytes.as_slice()).expect("invalid asset-id encoding");
+		let tx_payment_cid_arg = matches.tx_payment_cid_arg();
+		set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
+
+		let option = SwapAssetOption {
+			cid,
+			asset_id: asset_id.clone(),
+			asset_allowance,
+			rate,
+			do_burn,
+			valid_from,
+			valid_until,
+		};
+		let xt: EncointerXt<_> = compose_extrinsic!(
+			api,
+			"EncointerDemocracy",
+			"submit_proposal",
+			ProposalAction::IssueSwapAssetOption(cid, to.clone(), option)
+		)
+		.unwrap();
+		ensure_payment(&api, &xt.encode().into(), tx_payment_cid_arg).await;
+		let _result = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).await;
+		println!(
+			"Proposal Submitted: Issue SwapAssetOption for {cid} to {to}, allowance={asset_allowance}"
+		);
+		Ok(())
+	})
+	.into()
+}
+
 pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap::Error> {
 	let rt = tokio::runtime::Runtime::new().unwrap();
 	rt.block_on(async {
@@ -274,6 +390,10 @@ pub fn list_proposals(_args: &str, matches: &ArgMatches<'_>) -> Result<(), clap:
 					format!("Petition for {} demanding: {}", cid_or_global(maybecid), String::from_utf8_lossy(demand)),
 				ProposalAction::SpendNative(maybecid, to, amount) =>
 					format!("Spend Native from {} treasury to {to}, amount {amount}", cid_or_global(maybecid)),
+				ProposalAction::IssueSwapNativeOption(cid, to, opt) =>
+					super::encointer_treasuries::format_swap_native_option(cid, to, opt),
+				ProposalAction::IssueSwapAssetOption(cid, to, opt) =>
+					super::encointer_treasuries::format_swap_asset_option(cid, to, opt),
 				_ => format!("{:?}", proposal.action),
 			};
 			println!("🛠 action: {:?}", proposal_str);
