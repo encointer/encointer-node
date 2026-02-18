@@ -17,6 +17,7 @@ class Agent:
     has_business: bool = False
     has_offline_identity: bool = False
     bandersnatch_key: str | None = None
+    endorsed: bool = False
 
     @property
     def is_bootstrapper(self):

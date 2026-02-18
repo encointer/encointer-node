@@ -83,7 +83,7 @@ class AgentPool:
             print(f'Fauceted new community members {len(new_members)}')
 
         for acc in endorsees:
-            self.agents.append(Agent(account=acc, role=AgentRole.NEWBIE))
+            self.agents.append(Agent(account=acc, role=AgentRole.NEWBIE, endorsed=True))
         for acc in newbies:
             self.agents.append(Agent(account=acc, role=AgentRole.NEWBIE))
 
@@ -139,6 +139,8 @@ class AgentPool:
         meetup_sizes = list(map(len, meetups))
         print(f'🔎 meetups assigned for {sum(meetup_sizes)} participants with sizes: {meetup_sizes}')
         self._update_proposal_states()
+        self.write_assigning_summary(len(meetups), meetup_sizes)
+        self.write_democracy_summary()
         self._submit_democracy_proposals()
 
     def execute_attesting(self):
@@ -230,7 +232,8 @@ class AgentPool:
         print("🔑 Reputation rings: registering bandersnatch keys (auto-derived)")
         reputables = [a for a in self.agents if a.is_reputable][:3]
         for agent in reputables:
-            output = self.client.register_bandersnatch_key(agent.account)
+            secret = self.client.export_secret(agent.account)
+            output = self.client.register_bandersnatch_key(secret)
             agent.bandersnatch_key = "auto-derived"
             print(f"  registered key for {agent.account[:8]}...: {output[:80]}...")
         self._wait()
@@ -328,8 +331,9 @@ class AgentPool:
             print(f"  🔮 Ring-VRF level {level}/5 at cindex={ring_cindex}")
             for agent in ring_agents:
                 try:
+                    secret = self.client.export_secret(agent.account)
                     sig, output = self.client.prove_personhood(
-                        agent.account, self.cid, ring_cindex, level=level, sub_ring=0)
+                        secret, self.cid, ring_cindex, level=level, sub_ring=0)
                     print(f"    proved level {level}/5 for {agent.account[:8]}...")
 
                     valid, verify_output = self.client.verify_personhood(
@@ -522,6 +526,41 @@ class AgentPool:
         }
         self.stats.append(stat)
         return total
+
+    def write_assigning_summary(self, num_meetups, meetup_sizes):
+        """Write newcomer and meetup stats to the simulation log."""
+        if self.client.log is None:
+            return
+        newbies = sum(1 for a in self.agents if a.role == AgentRole.NEWBIE and not a.endorsed)
+        endorsees = sum(1 for a in self.agents if a.role == AgentRole.NEWBIE and a.endorsed)
+        lines = (
+            f"  Newbies:    {newbies}\n"
+            f"  Endorsees:  {endorsees}\n"
+            f"  Meetups:    {num_meetups} ({sum(meetup_sizes)} participants, sizes {meetup_sizes})"
+        )
+        self.client.log.phase('Assigning Summary')
+        self.client.log._file.write(lines + '\n')
+
+    def write_democracy_summary(self):
+        """Write a democracy summary to the simulation log."""
+        if self.client.log is None:
+            return
+        proposals = self.client.get_proposals()
+        if not proposals:
+            self.client.log.phase('Democracy: no proposals')
+            return
+        by_state = {}
+        for p in proposals:
+            by_state.setdefault(p.state, []).append(p)
+        lines = []
+        for state in ['Ongoing', 'Confirming', 'Approved', 'Rejected', 'SupersededBy', 'Enacted']:
+            group = by_state.get(state, [])
+            if group:
+                lines.append(f"  {state}: {len(group)}")
+                for p in group:
+                    lines.append(f"    #{p.id} {p.action}  turnout={p.turnout} approval={p.approval}")
+        self.client.log.phase('Democracy')
+        self.client.log._file.write('\n'.join(lines) + '\n')
 
     def write_ceremony_summary(self, cindex):
         """Write a human-readable ceremony summary to the simulation log."""
