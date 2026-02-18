@@ -27,6 +27,7 @@ class AgentPool:
         self.agents: list[Agent] = []
         self.stats: list[dict] = []
         self._faucet_account = None  # set during faucet lifecycle test
+        self._heartbeat_account = None
         self._heartbeat_stop = None
         self._heartbeat_thread = None
 
@@ -137,21 +138,28 @@ class AgentPool:
     # ── Heartbeat ─────────────────────────────────────────────────────
 
     def start_heartbeat(self):
-        """Send periodic CC transfers to prevent phase.py idle-block detection."""
+        """Send periodic native transfers to prevent phase.py idle-block detection.
+
+        Uses a dedicated account to avoid nonce clashes with agent or faucet accounts.
+        """
         if self._heartbeat_thread is not None:
             return  # already running
-        reputables = [a for a in self.agents if a.is_reputable]
-        if len(reputables) < 2:
-            return
-        src, dst = reputables[0].account, reputables[1].account
+        if self._heartbeat_account is None:
+            self._heartbeat_account = self.client.create_accounts(1)[0]
+            self.client.faucet([self._heartbeat_account], faucet_url=self.faucet_url)
+            self._wait()
+        src = self._heartbeat_account
+        dst = self.agents[0].account if self.agents else src
         stop_evt = threading.Event()
 
         def beat():
-            while not stop_evt.wait(4):
+            while True:
                 try:
-                    self.client.transfer(self.cid, src, dst, "0.001")
+                    self.client.transfer(None, src, dst, "1")
                 except Exception:
                     pass
+                if stop_evt.wait(4):
+                    break
 
         t = threading.Thread(target=beat, daemon=True)
         t.start()
@@ -319,6 +327,9 @@ class AgentPool:
         print("🚰 Faucet lifecycle")
         creator = self._first_reputable()
         assert creator, "need at least one reputable for faucet lifecycle"
+        # Fund creator with native tokens for faucet reserve deposit
+        self.client.transfer(None, "//Eve", creator.account, "10000")
+        self._wait()
         cindex = self.client.get_cindex()
         whitelist = [self.cid]
         output = self.client.create_faucet(creator.account, "test-faucet", 1000, 10, whitelist)
@@ -558,9 +569,12 @@ class AgentPool:
         }
         aux = aux_map.get(cindex, "queries" if cindex >= 7 else "none")
 
+        total_supply = self.stats[-1]['total_supply'] if self.stats else 0
+
         text = (
             f"  Population:         {population}\n"
             f"  Reputables:         {reputables}\n"
+            f"  Money supply:       {total_supply}\n"
             f"  Businesses:         {businesses}\n"
             f"  Offline identities: {offline_ids}\n"
             f"  Ring members:       {ring_members}\n"

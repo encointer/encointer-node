@@ -4,6 +4,7 @@ import time
 SUPPRESSED_COMMANDS = {
     'export-secret', 'register-participant', 'register-offline-identity',
     'register-bandersnatch-key', 'reputation', 'attest-attendees',
+    'claim-reward', 'new-account',
 }
 
 
