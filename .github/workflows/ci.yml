@@ -245,7 +245,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10.16
+          python-version: "3.10"
       - name: install py dependencies
         run: ./scripts/install_python_deps.sh
 
