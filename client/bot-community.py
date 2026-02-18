@@ -41,6 +41,7 @@ from py_client.agent_pool import AgentPool
 from py_client.simulation_log import SimulationLog
 from py_client.campaign_personhood import ProvePersonhoodCampaign
 from py_client.campaign_offline_payment import OfflinePaymentCampaign
+from py_client.campaign_swap_option import SwapOptionCampaign
 
 KEYSTORE_PATH = './my_keystore'
 
@@ -167,6 +168,7 @@ def simulate(ctx, ceremonies, assert_invariants):
     campaigns = [
         ProvePersonhoodCampaign(pool, log),
         OfflinePaymentCampaign(pool, log, target_ceremony=ceremonies),
+        SwapOptionCampaign(pool, log),
     ]
 
     t0 = time.monotonic()
