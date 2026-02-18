@@ -247,10 +247,12 @@ class AgentPool:
     # ── Setup & base auxiliary features ─────────────────────────────
 
     def _setup_vk(self):
-        """Set the offline payment verification key (once)."""
+        """Set the offline payment verification key and faucet reserve amount (once)."""
         print("🔐 Setting offline payment verification key")
         self.client.set_offline_payment_vk(signer="//Alice")
         print("  verification key set")
+        self.client.set_faucet_reserve_amount("//Alice", 0)
+        print("  faucet reserve amount set to 0")
 
     def _setup_bazaar(self):
         """Create 5 merchant businesses and offerings."""
@@ -328,11 +330,11 @@ class AgentPool:
         creator = self._first_reputable()
         assert creator, "need at least one reputable for faucet lifecycle"
         # Fund creator with native tokens for faucet reserve deposit
-        self.client.transfer(None, "//Eve", creator.account, "10000")
+        self.client.transfer(None, "//Eve", creator.account, "100000")
         self._wait()
         cindex = self.client.get_cindex()
         whitelist = [self.cid]
-        output = self.client.create_faucet(creator.account, "test-faucet", 1000, 10, whitelist)
+        output = self.client.create_faucet(creator.account, "test-faucet", 10000, 1000, whitelist)
         print(f"  created faucet: {output[:80]}...")
         self._wait()
 
