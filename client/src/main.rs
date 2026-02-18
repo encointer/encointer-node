@@ -822,6 +822,124 @@ fn main() {
 				.runner(commands::encointer_democracy::submit_spend_native_proposal),
 		)
 		.add_cmd(
+			Command::new("submit-issue-swap-native-option-proposal")
+				.description("Submit proposal to issue a swap native option for a beneficiary")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("beneficiary's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("native-allowance")
+								.long("native-allowance")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("total native token allowance"),
+						)
+						.arg(
+							Arg::with_name("rate")
+								.long("rate")
+								.takes_value(true)
+								.required(false)
+								.value_name("FLOAT")
+								.help("CC per native token exchange rate (omit for oracle/auction)"),
+						)
+						.arg(
+							Arg::with_name("do-burn")
+								.long("do-burn")
+								.takes_value(false)
+								.required(false)
+								.help("if set, CC will be burned instead of sent to treasury"),
+						)
+						.arg(
+							Arg::with_name("valid-from")
+								.long("valid-from")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("first time of validity (unix timestamp in milliseconds)"),
+						)
+						.arg(
+							Arg::with_name("valid-until")
+								.long("valid-until")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("expiry time (unix timestamp in milliseconds)"),
+						)
+				})
+				.runner(commands::encointer_democracy::submit_issue_swap_native_option_proposal),
+		)
+		.add_cmd(
+			Command::new("submit-issue-swap-asset-option-proposal")
+				.description("Submit proposal to issue a swap asset option for a beneficiary")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("to")
+								.takes_value(true)
+								.required(true)
+								.value_name("SS58")
+								.help("beneficiary's AccountId in ss58check format"),
+						)
+						.arg(
+							Arg::with_name("asset-id")
+								.long("asset-id")
+								.takes_value(true)
+								.required(true)
+								.value_name("HEX")
+								.help("SCALE-encoded VersionedLocatableAsset (hex)"),
+						)
+						.arg(
+							Arg::with_name("asset-allowance")
+								.long("asset-allowance")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("total asset token allowance"),
+						)
+						.arg(
+							Arg::with_name("rate")
+								.long("rate")
+								.takes_value(true)
+								.required(false)
+								.value_name("FLOAT")
+								.help("CC per asset token exchange rate (omit for oracle/auction)"),
+						)
+						.arg(
+							Arg::with_name("do-burn")
+								.long("do-burn")
+								.takes_value(false)
+								.required(false)
+								.help("if set, CC will be burned instead of sent to treasury"),
+						)
+						.arg(
+							Arg::with_name("valid-from")
+								.long("valid-from")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("first time of validity (unix timestamp in milliseconds)"),
+						)
+						.arg(
+							Arg::with_name("valid-until")
+								.long("valid-until")
+								.takes_value(true)
+								.required(false)
+								.value_name("MILLIS")
+								.help("expiry time (unix timestamp in milliseconds)"),
+						)
+				})
+				.runner(commands::encointer_democracy::submit_issue_swap_asset_option_proposal),
+		)
+		.add_cmd(
 			Command::new("list-proposals")
 				.description("list all proposals.")
 				.options(|app| {
@@ -864,6 +982,58 @@ fn main() {
 			Command::new("get-treasury")
 				.description("get treasury address for a community")
 				.runner(commands::encointer_treasuries::get_treasury_account),
+		)
+		.add_cmd(
+			Command::new("get-swap-native-option")
+				.description("Query swap native option for an account in a community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_treasuries::get_swap_native_option),
+		)
+		.add_cmd(
+			Command::new("get-swap-asset-option")
+				.description("Query swap asset option for an account in a community")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.at_block_arg()
+				})
+				.runner(commands::encointer_treasuries::get_swap_asset_option),
+		)
+		.add_cmd(
+			Command::new("swap-native")
+				.description("Exercise a swap native option: swap CC for native tokens from community treasury")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("desired amount of native tokens to receive"),
+						)
+				})
+				.runner(commands::encointer_treasuries::swap_native),
+		)
+		.add_cmd(
+			Command::new("swap-asset")
+				.description("Exercise a swap asset option: swap CC for asset tokens from community treasury")
+				.options(|app| {
+					app.setting(AppSettings::ColoredHelp)
+						.account_arg()
+						.arg(
+							Arg::with_name("amount")
+								.takes_value(true)
+								.required(true)
+								.value_name("U128")
+								.help("desired amount of asset tokens to receive"),
+						)
+				})
+				.runner(commands::encointer_treasuries::swap_asset),
 		)
 		.add_cmd(
 			Command::new("register-offline-identity")
