@@ -40,13 +40,7 @@ pub async fn get_swap_native_option(cli: &Cli, account: &str) {
 	let account = get_accountid_from_str(account);
 	let maybe_at = cli.at_block();
 	let option: Option<SwapNativeOption<Balance, Moment>> = api
-		.get_storage_double_map(
-			"EncointerTreasuries",
-			"SwapNativeOptions",
-			cid,
-			&account,
-			maybe_at,
-		)
+		.get_storage_double_map("EncointerTreasuries", "SwapNativeOptions", cid, &account, maybe_at)
 		.await
 		.unwrap();
 	match option {
@@ -64,13 +58,7 @@ pub async fn get_swap_asset_option(cli: &Cli, account: &str) {
 	let maybe_at = cli.at_block();
 	use super::encointer_democracy::XcmLocation;
 	let option: Option<SwapAssetOption<Balance, Moment, XcmLocation>> = api
-		.get_storage_double_map(
-			"EncointerTreasuries",
-			"SwapAssetOptions",
-			cid,
-			&account,
-			maybe_at,
-		)
+		.get_storage_double_map("EncointerTreasuries", "SwapAssetOptions", cid, &account, maybe_at)
 		.await
 		.unwrap();
 	match option {

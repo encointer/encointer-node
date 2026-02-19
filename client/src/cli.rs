@@ -48,18 +48,26 @@ impl Cli {
 #[derive(Subcommand)]
 pub enum Commands {
 	#[command(flatten)]
-	Account(AccountCmd),
-	#[command(flatten)]
 	Chain(ChainCmd),
-	/// Ceremony-related commands
-	Ceremony {
+	/// Account management commands
+	Account {
 		#[command(subcommand)]
-		cmd: CeremonyCmd,
+		cmd: AccountCmd,
 	},
 	/// Community-related commands
 	Community {
 		#[command(subcommand)]
 		cmd: CommunityCmd,
+	},
+	/// Ceremony-related commands
+	Ceremony {
+		#[command(subcommand)]
+		cmd: CeremonyCmd,
+	},
+	/// Democracy-related commands
+	Democracy {
+		#[command(subcommand)]
+		cmd: DemocracyCmd,
 	},
 	/// Bazaar-related commands
 	Bazaar {
@@ -71,18 +79,12 @@ pub enum Commands {
 		#[command(subcommand)]
 		cmd: FaucetCmd,
 	},
-	/// Reputation-related commands
-	Reputation {
+	/// Personhood-related commands
+	Personhood {
 		#[command(subcommand)]
-		cmd: ReputationCmd,
-	},
-	/// Democracy-related commands
-	Democracy {
-		#[command(subcommand)]
-		cmd: DemocracyCmd,
+		cmd: PersonhoodCmd,
 	},
 	/// Offline payment-related commands
-	#[command(name = "offline-payment")]
 	OfflinePayment {
 		#[command(subcommand)]
 		cmd: OfflinePaymentCmd,
@@ -91,30 +93,6 @@ pub enum Commands {
 	Ipfs {
 		#[command(subcommand)]
 		cmd: IpfsCmd,
-	},
-}
-
-// -- Account (flattened top-level) --
-
-#[derive(Subcommand)]
-pub enum AccountCmd {
-	/// Import account into key store (creates new or uses supplied seed)
-	NewAccount {
-		/// Seed, mnemonic or SURI
-		seed: Option<String>,
-	},
-	/// List all accounts in keystore
-	ListAccounts,
-	/// Print mnemonic phrase for a keystore account
-	ExportSecret {
-		/// AccountId in SS58 format
-		account: String,
-	},
-	/// Send bootstrapping funds to account(s)
-	Fund {
-		/// Account(s) to fund, SS58 encoded
-		#[arg(required = true, num_args = 1..)]
-		fundees: Vec<String>,
 	},
 }
 
@@ -130,8 +108,6 @@ pub enum ChainCmd {
 		#[arg(short = 'a', long)]
 		all: bool,
 	},
-	/// Query total issuance for community (requires --cid)
-	Issuance,
 	/// Transfer funds between accounts
 	Transfer {
 		/// Sender's AccountId (SS58)
@@ -145,7 +121,6 @@ pub enum ChainCmd {
 		dryrun: bool,
 	},
 	/// Transfer all community currency funds (requires --cid)
-	#[command(name = "transfer-all")]
 	TransferAll {
 		/// Sender's AccountId (SS58)
 		from: String,
@@ -165,10 +140,216 @@ pub enum ChainCmd {
 	PrintMetadata,
 }
 
+// -- Account --
+
+#[derive(Subcommand)]
+pub enum AccountCmd {
+	/// Import account into key store (creates new or uses supplied seed)
+	New {
+		/// Seed, mnemonic or SURI
+		seed: Option<String>,
+	},
+	/// List all accounts in keystore
+	List,
+	/// Print mnemonic phrase for a keystore account
+	Export {
+		/// AccountId in SS58 format
+		account: String,
+	},
+	/// Send bootstrapping funds to account(s)
+	Fund {
+		/// Account(s) to fund, SS58 encoded
+		#[arg(required = true, num_args = 1..)]
+		fundees: Vec<String>,
+	},
+	/// Poseidon commitment (offline identity) management
+	PoseidonCommitment {
+		#[command(subcommand)]
+		cmd: PoseidonCommitmentCmd,
+	},
+	/// Bandersnatch public key management
+	BandersnatchPubkey {
+		#[command(subcommand)]
+		cmd: BandersnatchPubkeyCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum PoseidonCommitmentCmd {
+	/// Register offline payment identity (ZK commitment)
+	Register {
+		/// AccountId (SS58)
+		account: String,
+	},
+	/// Get offline identity commitment
+	Get {
+		/// AccountId (SS58)
+		account: String,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum BandersnatchPubkeyCmd {
+	/// Register a Bandersnatch public key
+	Register {
+		/// AccountId (SS58)
+		account: String,
+		/// Hex-encoded 32-byte Bandersnatch key (auto-derived if omitted)
+		#[arg(long)]
+		key: Option<String>,
+	},
+}
+
+// -- Community --
+
+#[derive(Subcommand)]
+pub enum CommunityCmd {
+	/// Register new community
+	New {
+		/// Enhanced geojson file specifying the community
+		specfile: String,
+		/// Account with necessary privileges
+		#[arg(short = 's', long)]
+		signer: Option<String>,
+		/// Print encoded call instead of sending
+		#[arg(short = 'd', long)]
+		dryrun: bool,
+		/// Call wrapping: none|sudo|collective
+		#[arg(short = 'w', long = "wrap-call", default_value = "none")]
+		wrap_call: String,
+		/// Maximum batch size
+		#[arg(long = "batch-size", default_value = "100")]
+		batch_size: u32,
+	},
+	/// List all registered communities
+	List,
+	/// Query total issuance for community (requires --cid)
+	Issuance,
+	/// Location management commands
+	Location {
+		#[command(subcommand)]
+		cmd: LocationCmd,
+	},
+	/// Treasury commands
+	Treasury {
+		#[command(subcommand)]
+		cmd: TreasuryCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum LocationCmd {
+	/// List all meetup locations for a community
+	List,
+	/// Register new locations for a community
+	Add {
+		/// Geojson file with locations as points
+		specfile: String,
+		/// Account with necessary privileges
+		#[arg(short = 's', long)]
+		signer: Option<String>,
+		/// Print encoded call instead of sending
+		#[arg(short = 'd', long)]
+		dryrun: bool,
+	},
+	/// Remove a location for a community
+	Remove {
+		/// Account with necessary privileges
+		#[arg(short = 's', long)]
+		signer: Option<String>,
+		/// Print encoded call instead of sending
+		#[arg(short = 'd', long)]
+		dryrun: bool,
+		/// Geohash of the location
+		#[arg(short = 'g', long)]
+		geohash: Option<String>,
+		/// Location index to remove
+		#[arg(short = 'l', long)]
+		location_index: Option<u32>,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum TreasuryCmd {
+	/// Get community treasury account
+	GetAccount,
+	/// Swap option commands
+	SwapOption {
+		#[command(subcommand)]
+		cmd: SwapOptionCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum SwapOptionCmd {
+	/// Query swap native option for an account
+	GetNative {
+		/// AccountId (SS58)
+		account: String,
+	},
+	/// Query swap asset option for an account
+	GetAsset {
+		/// AccountId (SS58)
+		account: String,
+	},
+	/// Exercise a swap native option
+	ExerciseNative {
+		/// AccountId (SS58)
+		account: String,
+		/// Desired amount of native tokens to receive
+		amount: u128,
+	},
+	/// Exercise a swap asset option
+	ExerciseAsset {
+		/// AccountId (SS58)
+		account: String,
+		/// Desired amount of asset tokens to receive
+		amount: u128,
+	},
+}
+
 // -- Ceremony --
 
 #[derive(Subcommand)]
 pub enum CeremonyCmd {
+	/// Read current ceremony phase
+	Phase,
+	/// Read current ceremony index
+	Index,
+	/// Participant-related commands
+	Participant {
+		#[command(subcommand)]
+		cmd: ParticipantCmd,
+	},
+	/// List assigned meetups
+	ListMeetups {
+		/// Ceremony index (negative = relative to current)
+		#[arg(allow_hyphen_values = true)]
+		ceremony_index: Option<i32>,
+	},
+	/// List attestees
+	ListAttestees {
+		/// Ceremony index (negative = relative to current)
+		#[arg(allow_hyphen_values = true)]
+		ceremony_index: Option<i32>,
+	},
+	/// List reputables
+	ListReputables,
+	/// Print ceremony statistics as JSON
+	Stats {
+		/// Ceremony index (negative = relative to current)
+		#[arg(long = "ceremony-index", allow_hyphen_values = true)]
+		ceremony_index: Option<i32>,
+	},
+	/// Admin commands (privileged)
+	Admin {
+		#[command(subcommand)]
+		cmd: CeremonyAdminCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum ParticipantCmd {
 	/// Register for ceremony
 	Register {
 		/// AccountId (SS58)
@@ -189,7 +370,7 @@ pub enum CeremonyCmd {
 		ceremony_index: Option<i32>,
 	},
 	/// Upgrade registration to reputable
-	UpgradeRegistration {
+	Upgrade {
 		/// AccountId (SS58)
 		account: String,
 		/// Account which signs the tx
@@ -232,44 +413,36 @@ pub enum CeremonyCmd {
 		all: bool,
 	},
 	/// List registered participants
-	ListParticipants {
+	List {
 		/// Ceremony index (negative = relative to current)
 		#[arg(allow_hyphen_values = true)]
-		ceremony_index: Option<i32>,
-	},
-	/// List assigned meetups
-	ListMeetups {
-		/// Ceremony index (negative = relative to current)
-		#[arg(allow_hyphen_values = true)]
-		ceremony_index: Option<i32>,
-	},
-	/// List attestees
-	ListAttestees {
-		/// Ceremony index (negative = relative to current)
-		#[arg(allow_hyphen_values = true)]
-		ceremony_index: Option<i32>,
-	},
-	/// List reputables
-	ListReputables,
-	/// Print ceremony statistics as JSON
-	Stats {
-		/// Ceremony index (negative = relative to current)
-		#[arg(long = "ceremony-index", allow_hyphen_values = true)]
-		ceremony_index: Option<i32>,
-	},
-	/// Get proof of attendance
-	GetProofOfAttendance {
-		/// AccountId (SS58)
-		account: String,
-		/// Ceremony index (negative = relative to current)
-		#[arg(long = "ceremony-index", allow_hyphen_values = true)]
 		ceremony_index: Option<i32>,
 	},
 	/// List reputation history
-	GetReputation {
+	Reputation {
 		/// AccountId (SS58)
 		account: String,
 	},
+	/// Get proof of attendance
+	ProofOfAttendance {
+		/// AccountId (SS58)
+		account: String,
+		/// Ceremony index (negative = relative to current)
+		#[arg(long = "ceremony-index", allow_hyphen_values = true)]
+		ceremony_index: Option<i32>,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum CeremonyAdminCmd {
+	/// Advance to next ceremony phase (ROOT)
+	NextPhase {
+		/// Account with privileges (sudo or councillor)
+		#[arg(short = 's', long)]
+		signer: Option<String>,
+	},
+	/// Get bootstrappers with remaining newbie tickets
+	BootstrapperTickets,
 	/// Purge ceremony history for a community
 	Purge {
 		/// First ceremony index to purge
@@ -283,96 +456,139 @@ pub enum CeremonyCmd {
 		#[arg(long = "time-offset", allow_hyphen_values = true)]
 		time_offset: i32,
 	},
-	/// Read current ceremony phase
-	GetPhase,
-	/// Advance to next ceremony phase (ROOT)
-	NextPhase {
-		/// Account with privileges (sudo or councillor)
-		#[arg(short = 's', long)]
-		signer: Option<String>,
-	},
-	/// Read current ceremony index
-	GetCindex,
-	/// Get bootstrappers with remaining newbie tickets
-	GetBootstrapperTickets,
 }
 
-// -- Community --
+// -- Democracy --
 
 #[derive(Subcommand)]
-pub enum CommunityCmd {
-	/// Register new community
-	New {
-		/// Enhanced geojson file specifying the community
-		specfile: String,
-		/// Account with necessary privileges
-		#[arg(short = 's', long)]
-		signer: Option<String>,
-		/// Print encoded call instead of sending
-		#[arg(short = 'd', long)]
-		dryrun: bool,
-		/// Call wrapping: none|sudo|collective
-		#[arg(short = 'w', long = "wrap-call", default_value = "none")]
-		wrap_call: String,
-		/// Maximum batch size
-		#[arg(long = "batch-size", default_value = "100")]
-		batch_size: u32,
+pub enum DemocracyCmd {
+	/// Submit a proposal
+	Propose {
+		#[command(subcommand)]
+		cmd: ProposeCmd,
 	},
-	/// List all registered communities
-	List,
-	/// List all meetup locations for a community
-	ListLocations,
-	/// Register new locations for a community
-	AddLocations {
-		/// Geojson file with locations as points
-		specfile: String,
-		/// Account with necessary privileges
-		#[arg(short = 's', long)]
-		signer: Option<String>,
-		/// Print encoded call instead of sending
-		#[arg(short = 'd', long)]
-		dryrun: bool,
+	/// Proposal queries
+	Proposal {
+		#[command(subcommand)]
+		cmd: ProposalCmd,
 	},
-	/// Get community treasury account
-	GetTreasury,
-	/// Query swap native option for an account
-	GetSwapNativeOption {
+	/// List enactment queue
+	EnactmentQueue,
+	/// Submit a vote
+	Vote {
 		/// AccountId (SS58)
 		account: String,
+		/// Proposal ID
+		proposal_id: u128,
+		/// Vote: aye or nay
+		vote: String,
+		/// Reputation: cid1_cindex1,cid2_cindex2,...
+		reputation_vec: String,
 	},
-	/// Query swap asset option for an account
-	GetSwapAssetOption {
+}
+
+#[derive(Subcommand)]
+pub enum ProposeCmd {
+	/// Submit set inactivity timeout proposal
+	SetInactivityTimeout {
 		/// AccountId (SS58)
 		account: String,
+		/// Inactivity timeout value
+		inactivity_timeout: u32,
 	},
-	/// Exercise a swap native option
-	SwapNative {
+	/// Submit update nominal income proposal
+	UpdateNominalIncome {
 		/// AccountId (SS58)
 		account: String,
-		/// Desired amount of native tokens to receive
+		/// New nominal income
+		nominal_income: f64,
+	},
+	/// Submit update demurrage proposal
+	UpdateDemurrage {
+		/// AccountId (SS58)
+		account: String,
+		/// Demurrage halving blocks
+		demurrage_halving_blocks: u64,
+	},
+	/// Submit a petition
+	Petition {
+		/// AccountId (SS58)
+		account: String,
+		/// What the petition demands
+		demand: String,
+	},
+	/// Submit spend native proposal
+	SpendNative {
+		/// AccountId (SS58)
+		account: String,
+		/// Beneficiary (SS58)
+		to: String,
+		/// Amount
 		amount: u128,
 	},
-	/// Exercise a swap asset option
-	SwapAsset {
+	/// Submit proposal to issue a swap native option
+	IssueSwapNativeOption {
 		/// AccountId (SS58)
 		account: String,
-		/// Desired amount of asset tokens to receive
-		amount: u128,
+		/// Beneficiary (SS58)
+		to: String,
+		/// Total native token allowance
+		#[arg(long = "native-allowance")]
+		native_allowance: u128,
+		/// CC per native token exchange rate (omit for oracle/auction)
+		#[arg(long)]
+		rate: Option<f64>,
+		/// Burn CC instead of sending to treasury
+		#[arg(long = "do-burn")]
+		do_burn: bool,
+		/// First time of validity (unix timestamp in milliseconds)
+		#[arg(long = "valid-from")]
+		valid_from: Option<u64>,
+		/// Expiry time (unix timestamp in milliseconds)
+		#[arg(long = "valid-until")]
+		valid_until: Option<u64>,
 	},
-	/// Remove a location for a community
-	RemoveLocation {
-		/// Account with necessary privileges
-		#[arg(short = 's', long)]
-		signer: Option<String>,
-		/// Print encoded call instead of sending
-		#[arg(short = 'd', long)]
-		dryrun: bool,
-		/// Geohash of the location
-		#[arg(short = 'g', long)]
-		geohash: Option<String>,
-		/// Location index to remove
-		#[arg(short = 'l', long)]
-		location_index: Option<u32>,
+	/// Submit proposal to issue a swap asset option
+	IssueSwapAssetOption {
+		/// AccountId (SS58)
+		account: String,
+		/// Beneficiary (SS58)
+		to: String,
+		/// SCALE-encoded VersionedLocatableAsset (hex)
+		#[arg(long = "asset-id")]
+		asset_id: String,
+		/// Total asset token allowance
+		#[arg(long = "asset-allowance")]
+		asset_allowance: u128,
+		/// CC per asset token exchange rate (omit for oracle/auction)
+		#[arg(long)]
+		rate: Option<f64>,
+		/// Burn CC instead of sending to treasury
+		#[arg(long = "do-burn")]
+		do_burn: bool,
+		/// First time of validity (unix timestamp in milliseconds)
+		#[arg(long = "valid-from")]
+		valid_from: Option<u64>,
+		/// Expiry time (unix timestamp in milliseconds)
+		#[arg(long = "valid-until")]
+		valid_until: Option<u64>,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum ProposalCmd {
+	/// List proposals
+	List {
+		/// Include failed proposals
+		#[arg(short = 'a', long)]
+		all: bool,
+	},
+	/// Update proposal state
+	UpdateState {
+		/// AccountId (SS58)
+		account: String,
+		/// Proposal ID
+		proposal_id: u128,
 	},
 }
 
@@ -380,8 +596,22 @@ pub enum CommunityCmd {
 
 #[derive(Subcommand)]
 pub enum BazaarCmd {
+	/// Business management commands
+	Business {
+		#[command(subcommand)]
+		cmd: BusinessCmd,
+	},
+	/// Offering management commands
+	Offering {
+		#[command(subcommand)]
+		cmd: OfferingCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum BusinessCmd {
 	/// Register a community business
-	CreateBusiness {
+	Create {
 		/// Business owner AccountId (SS58)
 		account: String,
 		/// IPFS content identifier
@@ -389,15 +619,7 @@ pub enum BazaarCmd {
 		ipfs_cid: String,
 	},
 	/// Update an existing community business
-	UpdateBusiness {
-		/// Business owner AccountId (SS58)
-		account: String,
-		/// IPFS content identifier
-		#[arg(long = "ipfs-cid")]
-		ipfs_cid: String,
-	},
-	/// Create an offering for a business
-	CreateOffering {
+	Update {
 		/// Business owner AccountId (SS58)
 		account: String,
 		/// IPFS content identifier
@@ -405,14 +627,26 @@ pub enum BazaarCmd {
 		ipfs_cid: String,
 	},
 	/// List businesses for a community
-	ListBusinesses,
-	/// List offerings for a community
-	ListOfferings,
+	List,
 	/// List offerings for a specific business
-	ListBusinessOfferings {
+	Offerings {
 		/// Business owner AccountId (SS58)
 		account: String,
 	},
+}
+
+#[derive(Subcommand)]
+pub enum OfferingCmd {
+	/// Create an offering for a business
+	Create {
+		/// Business owner AccountId (SS58)
+		account: String,
+		/// IPFS content identifier
+		#[arg(long = "ipfs-cid")]
+		ipfs_cid: String,
+	},
+	/// List offerings for a community
+	List,
 }
 
 // -- Faucet --
@@ -470,39 +704,17 @@ pub enum FaucetCmd {
 	List,
 }
 
-// -- Reputation --
+// -- Personhood --
 
 #[derive(Subcommand)]
-pub enum ReputationCmd {
-	/// Register a Bandersnatch public key
-	RegisterKey {
-		/// AccountId (SS58)
-		account: String,
-		/// Hex-encoded 32-byte Bandersnatch key (auto-derived if omitted)
-		#[arg(long)]
-		key: Option<String>,
-	},
-	/// Initiate ring computation
-	InitiateRings {
-		/// AccountId (SS58)
-		account: String,
-		/// Ceremony index
-		#[arg(long = "ceremony-index")]
-		ceremony_index: u32,
-	},
-	/// Continue pending ring computation
-	ContinueRings {
-		/// AccountId (SS58)
-		account: String,
-	},
-	/// Query ring members
-	GetRings {
-		/// Ceremony index
-		#[arg(long = "ceremony-index")]
-		ceremony_index: u32,
+pub enum PersonhoodCmd {
+	/// Ring computation commands
+	Ring {
+		#[command(subcommand)]
+		cmd: RingCmd,
 	},
 	/// Produce ring-VRF proof of personhood
-	ProvePersonhood {
+	ProveRingMembership {
 		/// AccountId (SS58)
 		account: String,
 		/// Ceremony index
@@ -516,7 +728,7 @@ pub enum ReputationCmd {
 		sub_ring: u32,
 	},
 	/// Verify ring-VRF proof of personhood
-	VerifyPersonhood {
+	VerifyRingMembership {
 		/// Hex-encoded ring-VRF signature
 		#[arg(long)]
 		signature: String,
@@ -530,148 +742,54 @@ pub enum ReputationCmd {
 		#[arg(long = "sub-ring", default_value = "0")]
 		sub_ring: u32,
 	},
+	/// Reputation commitment commands
+	Commitment {
+		#[command(subcommand)]
+		cmd: CommitmentCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum RingCmd {
+	/// Initiate ring computation
+	Initiate {
+		/// AccountId (SS58)
+		account: String,
+		/// Ceremony index
+		#[arg(long = "ceremony-index")]
+		ceremony_index: u32,
+	},
+	/// Continue pending ring computation
+	Continue {
+		/// AccountId (SS58)
+		account: String,
+	},
+	/// Query ring members
+	Get {
+		/// Ceremony index
+		#[arg(long = "ceremony-index")]
+		ceremony_index: u32,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum CommitmentCmd {
 	/// List reputation commitments
-	ListCommitments {
+	List {
 		/// Filter by purpose ID
 		#[arg(long = "purpose-id")]
 		purpose_id: Option<u64>,
 	},
 	/// List reputation commitment purposes
-	ListPurposes,
-}
-
-// -- Democracy --
-
-#[derive(Subcommand)]
-pub enum DemocracyCmd {
-	/// Submit set inactivity timeout proposal
-	SubmitSetInactivityTimeout {
-		/// AccountId (SS58)
-		account: String,
-		/// Inactivity timeout value
-		inactivity_timeout: u32,
-	},
-	/// Submit update nominal income proposal
-	SubmitUpdateNominalIncome {
-		/// AccountId (SS58)
-		account: String,
-		/// New nominal income
-		nominal_income: f64,
-	},
-	/// Submit update demurrage proposal
-	SubmitUpdateDemurrage {
-		/// AccountId (SS58)
-		account: String,
-		/// Demurrage halving blocks
-		demurrage_halving_blocks: u64,
-	},
-	/// Submit a petition
-	SubmitPetition {
-		/// AccountId (SS58)
-		account: String,
-		/// What the petition demands
-		demand: String,
-	},
-	/// Submit spend native proposal
-	SubmitSpendNative {
-		/// AccountId (SS58)
-		account: String,
-		/// Beneficiary (SS58)
-		to: String,
-		/// Amount
-		amount: u128,
-	},
-	/// Submit proposal to issue a swap native option
-	SubmitIssueSwapNativeOption {
-		/// AccountId (SS58)
-		account: String,
-		/// Beneficiary (SS58)
-		to: String,
-		/// Total native token allowance
-		#[arg(long = "native-allowance")]
-		native_allowance: u128,
-		/// CC per native token exchange rate (omit for oracle/auction)
-		#[arg(long)]
-		rate: Option<f64>,
-		/// Burn CC instead of sending to treasury
-		#[arg(long = "do-burn")]
-		do_burn: bool,
-		/// First time of validity (unix timestamp in milliseconds)
-		#[arg(long = "valid-from")]
-		valid_from: Option<u64>,
-		/// Expiry time (unix timestamp in milliseconds)
-		#[arg(long = "valid-until")]
-		valid_until: Option<u64>,
-	},
-	/// Submit proposal to issue a swap asset option
-	SubmitIssueSwapAssetOption {
-		/// AccountId (SS58)
-		account: String,
-		/// Beneficiary (SS58)
-		to: String,
-		/// SCALE-encoded VersionedLocatableAsset (hex)
-		#[arg(long = "asset-id")]
-		asset_id: String,
-		/// Total asset token allowance
-		#[arg(long = "asset-allowance")]
-		asset_allowance: u128,
-		/// CC per asset token exchange rate (omit for oracle/auction)
-		#[arg(long)]
-		rate: Option<f64>,
-		/// Burn CC instead of sending to treasury
-		#[arg(long = "do-burn")]
-		do_burn: bool,
-		/// First time of validity (unix timestamp in milliseconds)
-		#[arg(long = "valid-from")]
-		valid_from: Option<u64>,
-		/// Expiry time (unix timestamp in milliseconds)
-		#[arg(long = "valid-until")]
-		valid_until: Option<u64>,
-	},
-	/// List proposals
-	ListProposals {
-		/// Include failed proposals
-		#[arg(short = 'a', long)]
-		all: bool,
-	},
-	/// List enactment queue
-	ListEnactments,
-	/// Submit a vote
-	Vote {
-		/// AccountId (SS58)
-		account: String,
-		/// Proposal ID
-		proposal_id: u128,
-		/// Vote: aye or nay
-		vote: String,
-		/// Reputation: cid1_cindex1,cid2_cindex2,...
-		reputation_vec: String,
-	},
-	/// Update proposal state
-	UpdateProposalState {
-		/// AccountId (SS58)
-		account: String,
-		/// Proposal ID
-		proposal_id: u128,
-	},
+	Purposes,
 }
 
 // -- Offline Payment --
 
 #[derive(Subcommand)]
 pub enum OfflinePaymentCmd {
-	/// Register offline payment identity (ZK commitment)
-	RegisterIdentity {
-		/// AccountId (SS58)
-		account: String,
-	},
-	/// Get offline identity commitment
-	GetIdentity {
-		/// AccountId (SS58)
-		account: String,
-	},
 	/// Generate offline payment proof (JSON)
-	Generate {
+	Pay {
 		/// Sender account
 		#[arg(short = 's', long)]
 		signer: Option<String>,
@@ -686,7 +804,7 @@ pub enum OfflinePaymentCmd {
 		pk_file: Option<String>,
 	},
 	/// Submit offline payment proof
-	Submit {
+	Settle {
 		/// Account to sign the transaction
 		#[arg(short = 's', long)]
 		signer: Option<String>,
@@ -709,6 +827,15 @@ pub enum OfflinePaymentCmd {
 		#[arg(long)]
 		nullifier: Option<String>,
 	},
+	/// Admin commands
+	Admin {
+		#[command(subcommand)]
+		cmd: OfflinePaymentAdminCmd,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum OfflinePaymentAdminCmd {
 	/// Set Groth16 verification key (sudo)
 	SetVk {
 		/// Sudo account
@@ -723,8 +850,28 @@ pub enum OfflinePaymentCmd {
 	},
 	/// Generate test verification key
 	GenerateTestVk,
+	/// Trusted setup commands
+	TrustedSetup {
+		#[command(subcommand)]
+		cmd: TrustedSetupCmd,
+	},
+	/// Setup ceremony commands
+	Ceremony {
+		#[command(subcommand)]
+		cmd: SetupCeremonyCmd,
+	},
+	/// Inspect a key file
+	InspectKey {
+		/// Path to key file
+		#[arg(long)]
+		file: String,
+	},
+}
+
+#[derive(Subcommand)]
+pub enum TrustedSetupCmd {
 	/// Generate trusted setup (PK + VK)
-	GenerateTrustedSetup {
+	Generate {
 		/// Output path for proving key
 		#[arg(long = "pk-out", default_value = "proving_key.bin")]
 		pk_out: String,
@@ -733,7 +880,7 @@ pub enum OfflinePaymentCmd {
 		vk_out: String,
 	},
 	/// Verify trusted setup consistency
-	VerifyTrustedSetup {
+	Verify {
 		/// Path to proving key
 		#[arg(long)]
 		pk: String,
@@ -741,8 +888,12 @@ pub enum OfflinePaymentCmd {
 		#[arg(long)]
 		vk: String,
 	},
+}
+
+#[derive(Subcommand)]
+pub enum SetupCeremonyCmd {
 	/// Initialize multiparty trusted setup ceremony
-	CeremonyInit {
+	Init {
 		/// Output path for ceremony PK
 		#[arg(long = "pk-out", default_value = "ceremony_pk.bin")]
 		pk_out: String,
@@ -751,7 +902,7 @@ pub enum OfflinePaymentCmd {
 		transcript: String,
 	},
 	/// Apply ceremony contribution
-	CeremonyContribute {
+	Contribute {
 		/// Path to ceremony PK
 		#[arg(long, default_value = "ceremony_pk.bin")]
 		pk: String,
@@ -763,7 +914,7 @@ pub enum OfflinePaymentCmd {
 		participant: String,
 	},
 	/// Verify ceremony contributions
-	CeremonyVerify {
+	Verify {
 		/// Path to ceremony PK
 		#[arg(long, default_value = "ceremony_pk.bin")]
 		pk: String,
@@ -772,7 +923,7 @@ pub enum OfflinePaymentCmd {
 		transcript: String,
 	},
 	/// Finalize ceremony — extract PK and VK
-	CeremonyFinalize {
+	Finalize {
 		/// Path to ceremony PK (input)
 		#[arg(long, default_value = "ceremony_pk.bin")]
 		pk: String,
@@ -782,12 +933,6 @@ pub enum OfflinePaymentCmd {
 		/// Output path for VK
 		#[arg(long = "vk-out", default_value = "verifying_key.bin")]
 		vk_out: String,
-	},
-	/// Inspect a key file
-	InspectKey {
-		/// Path to key file
-		#[arg(long)]
-		file: String,
 	},
 }
 

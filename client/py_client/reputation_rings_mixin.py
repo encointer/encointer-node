@@ -3,7 +3,7 @@ from py_client.base import ensure_clean_exit
 
 class _ReputationRingsMixin:
     def register_bandersnatch_key(self, account, key=None, pay_fees_in_cc=False):
-        args = ["reputation", "register-key", account]
+        args = ["account", "bandersnatch-pubkey", "register", account]
         if key is not None:
             args += ["--key", key]
         ret = self.run_cli_command(args, pay_fees_in_cc=pay_fees_in_cc)
@@ -12,22 +12,22 @@ class _ReputationRingsMixin:
 
     def initiate_rings(self, account, cid, ceremony_index, pay_fees_in_cc=False):
         ret = self.run_cli_command(
-            ["reputation", "initiate-rings", account, "--ceremony-index", str(ceremony_index)],
+            ["personhood", "ring", "initiate", account, "--ceremony-index", str(ceremony_index)],
             cid=cid, pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
         return ret.stdout.decode("utf-8").strip()
 
     def continue_ring_computation(self, account, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["reputation", "continue-rings", account], pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(["personhood", "ring", "continue", account], pay_fees_in_cc=pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def get_rings(self, cid, ceremony_index):
-        ret = self.run_cli_command(["reputation", "get-rings", "--ceremony-index", str(ceremony_index)], cid=cid)
+        ret = self.run_cli_command(["personhood", "ring", "get", "--ceremony-index", str(ceremony_index)], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
     def prove_personhood(self, account, cid, ceremony_index, level=1, sub_ring=0):
         ret = self.run_cli_command([
-            "reputation", "prove-personhood", account,
+            "personhood", "prove-ring-membership", account,
             "--ceremony-index", str(ceremony_index),
             "--level", str(level),
             "--sub-ring", str(sub_ring),
@@ -42,7 +42,7 @@ class _ReputationRingsMixin:
 
     def verify_personhood(self, signature, cid, ceremony_index, level=1, sub_ring=0):
         ret = self.run_cli_command([
-            "reputation", "verify-personhood",
+            "personhood", "verify-ring-membership",
             "--signature", signature,
             "--ceremony-index", str(ceremony_index),
             "--level", str(level),

@@ -438,10 +438,13 @@ pub fn generate_trusted_setup(pk_path: &str, vk_path: &str) {
 	println!();
 	println!("Next steps:");
 	println!(
-		"  1. Verify:      encointer-cli offline-payment verify-trusted-setup --pk {} --vk {}",
+		"  1. Verify:      encointer-cli offline-payment admin trusted-setup verify --pk {} --vk {}",
 		pk_path, vk_path
 	);
-	println!("  2. Set on-chain: encointer-cli offline-payment set-vk --vk-file {} --signer //Alice", vk_path);
+	println!(
+		"  2. Set on-chain: encointer-cli offline-payment admin set-vk --vk-file {} --signer //Alice",
+		vk_path
+	);
 	println!("  3. Distribute {} to wallet apps (bundle as asset)", pk_path);
 }
 
@@ -710,11 +713,11 @@ pub fn cmd_ceremony_finalize(pk_in: &str, pk_out: &str, vk_out: &str) {
 	println!();
 	println!("Next steps:");
 	println!(
-		"  1. Verify:       encointer-cli offline-payment verify-trusted-setup --pk {} --vk {}",
+		"  1. Verify:       encointer-cli offline-payment admin trusted-setup verify --pk {} --vk {}",
 		pk_out, vk_out
 	);
 	println!(
-		"  2. Set on-chain: encointer-cli offline-payment set-vk --vk-file {} --signer //Alice",
+		"  2. Set on-chain: encointer-cli offline-payment admin set-vk --vk-file {} --signer //Alice",
 		vk_out
 	);
 	println!("  3. Distribute {} to wallet apps", pk_out);

@@ -4,26 +4,26 @@ from py_client.base import ensure_clean_exit
 
 class _DemocracyMixin:
     def submit_set_inactivity_timeout_proposal(self, account, inactivity_timeout, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["democracy", "submit-set-inactivity-timeout", account, str(inactivity_timeout)], cid,
+        ret = self.run_cli_command(["democracy", "propose", "set-inactivity-timeout", account, str(inactivity_timeout)], cid,
                                    pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def submit_update_nominal_income_proposal(self, account, new_income, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["democracy", "submit-update-nominal-income", account, str(new_income)], cid,
+        ret = self.run_cli_command(["democracy", "propose", "update-nominal-income", account, str(new_income)], cid,
                                    pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def submit_update_demurrage_proposal(self, account, demurrage_halving_blocks, cid=None, pay_fees_in_cc=False):
         ret = self.run_cli_command(
-            ["democracy", "submit-update-demurrage", account, str(demurrage_halving_blocks)], cid, pay_fees_in_cc)
+            ["democracy", "propose", "update-demurrage", account, str(demurrage_halving_blocks)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def submit_petition(self, account, demand, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["democracy", "submit-petition", account, demand], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["democracy", "propose", "petition", account, demand], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def submit_spend_native_proposal(self, account, to, amount, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["democracy", "submit-spend-native", account, to, str(amount)],
+        ret = self.run_cli_command(["democracy", "propose", "spend-native", account, to, str(amount)],
                                    pay_fees_in_cc=pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
@@ -34,11 +34,11 @@ class _DemocracyMixin:
         return ret.stdout.decode("utf-8").strip()
 
     def update_proposal_state(self, account, proposal_id, cid=None, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["democracy", "update-proposal-state", account, str(proposal_id)], cid, pay_fees_in_cc)
+        ret = self.run_cli_command(["democracy", "proposal", "update-state", account, str(proposal_id)], cid, pay_fees_in_cc)
         return ret.stdout.decode("utf-8").strip()
 
     def list_proposals(self):
-        ret = self.run_cli_command(["democracy", "list-proposals"])
+        ret = self.run_cli_command(["democracy", "proposal", "list"])
         return ret.stdout.decode("utf-8").strip()
 
     def get_proposals(self):
@@ -48,7 +48,7 @@ class _DemocracyMixin:
                                                     rate=None, do_burn=False,
                                                     valid_from=None, valid_until=None,
                                                     cid=None, pay_fees_in_cc=False):
-        cmd = ["democracy", "submit-issue-swap-native-option", account, to,
+        cmd = ["democracy", "propose", "issue-swap-native-option", account, to,
                "--native-allowance", str(native_allowance)]
         if rate is not None:
             cmd += ["--rate", str(rate)]
@@ -62,5 +62,5 @@ class _DemocracyMixin:
         return ret.stdout.decode("utf-8").strip()
 
     def list_enactment_queue(self):
-        ret = self.run_cli_command(["democracy", "list-enactments"])
+        ret = self.run_cli_command(["democracy", "enactment-queue"])
         return ret.stdout.decode("utf-8").strip()

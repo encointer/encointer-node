@@ -183,8 +183,7 @@ pub async fn submit_issue_swap_native_option_proposal(
 	let tx_payment_cid_arg = cli.tx_payment_cid.as_deref();
 	set_api_extrisic_params_builder(&mut api, tx_payment_cid_arg).await;
 
-	let option =
-		SwapNativeOption { cid, native_allowance, rate, do_burn, valid_from, valid_until };
+	let option = SwapNativeOption { cid, native_allowance, rate, do_burn, valid_from, valid_until };
 	let xt: EncointerXt<_> = compose_extrinsic!(
 		api,
 		"EncointerDemocracy",

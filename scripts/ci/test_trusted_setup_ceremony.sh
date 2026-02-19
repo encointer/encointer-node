@@ -27,31 +27,31 @@ FINAL_VK="$TMPDIR/verifying_key.bin"
 # =================================================================
 
 echo "=== Step 1: Initialize ceremony ==="
-$CLI_BIN offline-payment ceremony-init --pk-out "$PK" --transcript "$TRANSCRIPT"
+$CLI_BIN offline-payment admin ceremony init --pk-out "$PK" --transcript "$TRANSCRIPT"
 echo ""
 
 echo "=== Step 2: Alice contributes ==="
-$CLI_BIN offline-payment ceremony-contribute --pk "$PK" --transcript "$TRANSCRIPT" --participant Alice
+$CLI_BIN offline-payment admin ceremony contribute --pk "$PK" --transcript "$TRANSCRIPT" --participant Alice
 echo ""
 
 echo "=== Step 3: Bob contributes ==="
-$CLI_BIN offline-payment ceremony-contribute --pk "$PK" --transcript "$TRANSCRIPT" --participant Bob
+$CLI_BIN offline-payment admin ceremony contribute --pk "$PK" --transcript "$TRANSCRIPT" --participant Bob
 echo ""
 
 echo "=== Step 4: Charlie contributes ==="
-$CLI_BIN offline-payment ceremony-contribute --pk "$PK" --transcript "$TRANSCRIPT" --participant Charlie
+$CLI_BIN offline-payment admin ceremony contribute --pk "$PK" --transcript "$TRANSCRIPT" --participant Charlie
 echo ""
 
 echo "=== Step 5: Verify all contributions ==="
-$CLI_BIN offline-payment ceremony-verify --pk "$PK" --transcript "$TRANSCRIPT"
+$CLI_BIN offline-payment admin ceremony verify --pk "$PK" --transcript "$TRANSCRIPT"
 echo ""
 
 echo "=== Step 6: Finalize ceremony ==="
-$CLI_BIN offline-payment ceremony-finalize --pk "$PK" --pk-out "$FINAL_PK" --vk-out "$FINAL_VK"
+$CLI_BIN offline-payment admin ceremony finalize --pk "$PK" --pk-out "$FINAL_PK" --vk-out "$FINAL_VK"
 echo ""
 
-echo "=== Step 7: Cross-check with verify-trusted-setup ==="
-$CLI_BIN offline-payment verify-trusted-setup --pk "$FINAL_PK" --vk "$FINAL_VK"
+echo "=== Step 7: Cross-check with trusted-setup verify ==="
+$CLI_BIN offline-payment admin trusted-setup verify --pk "$FINAL_PK" --vk "$FINAL_VK"
 echo ""
 
 # =================================================================
@@ -72,17 +72,17 @@ if [ -z "$CID" ]; then
 fi
 
 echo "=== Step 10: Set ceremony VK on-chain via sudo ==="
-$CLI offline-payment set-vk --vk-file "$FINAL_VK" --signer //Alice
+$CLI offline-payment admin set-vk --vk-file "$FINAL_VK" --signer //Alice
 echo ""
 
 echo "=== Step 11: Register offline identities ==="
-$CLI offline-payment register-identity //Alice
-$CLI offline-payment register-identity //Bob
+$CLI account poseidon-commitment register //Alice
+$CLI account poseidon-commitment register //Bob
 echo ""
 
 echo "=== Step 12: Verify offline identities ==="
-ALICE_COMMITMENT=$($CLI offline-payment get-identity //Alice | grep "Commitment:" | awk '{print $2}')
-BOB_COMMITMENT=$($CLI offline-payment get-identity //Bob | grep "Commitment:" | awk '{print $2}')
+ALICE_COMMITMENT=$($CLI account poseidon-commitment get //Alice | grep "Commitment:" | awk '{print $2}')
+BOB_COMMITMENT=$($CLI account poseidon-commitment get //Bob | grep "Commitment:" | awk '{print $2}')
 echo "Alice commitment: $ALICE_COMMITMENT"
 echo "Bob commitment:   $BOB_COMMITMENT"
 if [ -z "$ALICE_COMMITMENT" ] || [ -z "$BOB_COMMITMENT" ]; then
@@ -92,7 +92,7 @@ fi
 
 echo "=== Step 13: Generate offline payment with ceremony PK ==="
 echo "Generating ZK proof with ceremony-derived proving key..."
-$CLI offline-payment generate --signer //Alice --to //Bob --amount 0.1 --cid "$CID" \
+$CLI offline-payment pay --signer //Alice --to //Bob --amount 0.1 --cid "$CID" \
     --pk-file "$FINAL_PK" 2>/dev/null > "$TMPDIR/payment.json"
 echo "Generated payment proof:"
 cat "$TMPDIR/payment.json"
@@ -103,7 +103,7 @@ if ! grep -q "proof" "$TMPDIR/payment.json"; then
 fi
 
 echo "=== Step 14: Submit offline payment ==="
-$CLI offline-payment submit --signer //Charlie --proof-file "$TMPDIR/payment.json"
+$CLI offline-payment settle --signer //Charlie --proof-file "$TMPDIR/payment.json"
 echo ""
 
 echo "=== Step 15: Verify balances ==="

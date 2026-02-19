@@ -37,21 +37,21 @@ echo "Alice balance: $ALICE_BALANCE"
 
 echo "=== Step 4: Set verification key via sudo ==="
 echo "Setting verification key via sudo..."
-$CLI offline-payment set-vk --signer //Alice
+$CLI offline-payment admin set-vk --signer //Alice
 echo "Verification key set successfully"
 
 echo "=== Step 5: Register offline identities ==="
-$CLI offline-payment register-identity //Alice
+$CLI account poseidon-commitment register //Alice
 echo "Registered offline identity for Alice"
 
-$CLI offline-payment register-identity //Bob
+$CLI account poseidon-commitment register //Bob
 echo "Registered offline identity for Bob"
 
 echo "=== Step 6: Verify offline identities ==="
-ALICE_COMMITMENT=$($CLI offline-payment get-identity //Alice | grep "Commitment:" | awk '{print $2}')
+ALICE_COMMITMENT=$($CLI account poseidon-commitment get //Alice | grep "Commitment:" | awk '{print $2}')
 echo "Alice commitment: $ALICE_COMMITMENT"
 
-BOB_COMMITMENT=$($CLI offline-payment get-identity //Bob | grep "Commitment:" | awk '{print $2}')
+BOB_COMMITMENT=$($CLI account poseidon-commitment get //Bob | grep "Commitment:" | awk '{print $2}')
 echo "Bob commitment: $BOB_COMMITMENT"
 
 if [ -z "$ALICE_COMMITMENT" ] || [ -z "$BOB_COMMITMENT" ]; then
@@ -65,7 +65,7 @@ echo "Alice balance before: $ALICE_BALANCE_BEFORE"
 
 echo "=== Step 8: Generate offline payment with ZK proof ==="
 echo "Generating ZK proof (this may take a few seconds)..."
-$CLI offline-payment generate --signer //Alice --to //Bob --amount 0.1 --cid $CID 2>/dev/null > /tmp/payment.json
+$CLI offline-payment pay --signer //Alice --to //Bob --amount 0.1 --cid $CID 2>/dev/null > /tmp/payment.json
 echo "Generated payment proof:"
 cat /tmp/payment.json
 
@@ -87,7 +87,7 @@ echo "Proof size: $PROOF_LEN bytes"
 
 echo "=== Step 9: Submit offline payment ==="
 echo "Submitting ZK proof to settle payment..."
-$CLI offline-payment submit --signer //Charlie --proof-file /tmp/payment.json
+$CLI offline-payment settle --signer //Charlie --proof-file /tmp/payment.json
 
 echo "=== Step 10: Verify balances after payment ==="
 ALICE_BALANCE_AFTER=$($CLI balance //Alice --cid $CID | tail -1)

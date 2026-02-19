@@ -15,7 +15,7 @@
 //! an RPC client to encointer node using websockets
 //!
 //! examples:
-//! encointer-cli ceremony get-phase
+//! encointer-cli ceremony phase
 //! encointer-cli transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 

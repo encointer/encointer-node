@@ -80,15 +80,15 @@ class _BaseClient:
         return ret
 
     def next_phase(self, pay_fees_in_cc=False):
-        ret = self.run_cli_command(["ceremony", "next-phase"], pay_fees_in_cc=pay_fees_in_cc)
+        ret = self.run_cli_command(["ceremony", "admin", "next-phase"], pay_fees_in_cc=pay_fees_in_cc)
         ensure_clean_exit(ret)
 
     def get_phase(self):
-        ret = self.run_cli_command(["ceremony", "get-phase"])
+        ret = self.run_cli_command(["ceremony", "phase"])
         return ret.stdout.strip().decode("utf-8")
 
     def get_cindex(self):
-        ret = self.run_cli_command(["ceremony", "get-cindex"])
+        ret = self.run_cli_command(["ceremony", "index"])
         return int(ret.stdout.strip().decode("utf-8"))
 
     def go_to_phase(self, phase, blocks_to_wait):
@@ -105,15 +105,15 @@ class _BaseClient:
             self.await_block(blocks_to_wait)
 
     def list_accounts(self):
-        ret = self.run_cli_command(["list-accounts"])
+        ret = self.run_cli_command(["account", "list"])
         return ret.stdout.decode("utf-8").splitlines()
 
     def new_account(self):
-        ret = self.run_cli_command(["new-account"])
+        ret = self.run_cli_command(["account", "new"])
         return ret.stdout.decode("utf-8").strip()
 
     def export_secret(self, account):
-        ret = self.run_cli_command(["export-secret", account])
+        ret = self.run_cli_command(["account", "export", account])
         return ret.stdout.decode("utf-8").strip().strip('"')
 
     def create_accounts(self, amount):

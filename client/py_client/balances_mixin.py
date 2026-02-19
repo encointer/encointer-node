@@ -8,7 +8,7 @@ class _BalanceMixin:
             self.await_block(1)
             from py_client.base import ensure_clean_exit
             ret = self.run_cli_command(
-                ['fund'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
+                ['account', 'fund'] + accounts, pay_fees_in_cc=pay_fees_in_cc, check=True, timeout=2)
             print(ret.stdout.decode("utf-8"))
             ensure_clean_exit(ret)
         else:
@@ -32,5 +32,5 @@ class _BalanceMixin:
         return ret.stdout.decode("utf-8").strip()
 
     def issuance(self, cid):
-        ret = self.run_cli_command(["issuance"], cid=cid)
+        ret = self.run_cli_command(["community", "issuance"], cid=cid)
         return ret.stdout.decode("utf-8").strip()

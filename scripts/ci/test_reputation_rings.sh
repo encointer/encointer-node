@@ -34,21 +34,21 @@ if [ -z "$CID" ]; then
     exit 1
 fi
 
-CINDEX=$($CLI ceremony get-cindex)
+CINDEX=$($CLI ceremony index)
 echo "Current ceremony index: $CINDEX"
-PHASE=$($CLI ceremony get-phase)
+PHASE=$($CLI ceremony phase)
 echo "Current phase: $PHASE"
 
 echo "=== Step 3: Register Bandersnatch keys (auto-derived) ==="
 # Keys must be registered BEFORE the Assigning phase so they are
 # picked up by automatic ring computation.
-$CLI reputation register-key //Alice
+$CLI account bandersnatch-pubkey register //Alice
 echo "Registered Bandersnatch key for Alice"
 
-$CLI reputation register-key //Bob
+$CLI account bandersnatch-pubkey register //Bob
 echo "Registered Bandersnatch key for Bob"
 
-$CLI reputation register-key //Charlie
+$CLI account bandersnatch-pubkey register //Charlie
 echo "Registered Bandersnatch key for Charlie"
 
 echo "=== Step 4: Advance to Assigning phase (triggers auto ring computation) ==="
@@ -57,8 +57,8 @@ echo "=== Step 4: Advance to Assigning phase (triggers auto ring computation) ==
 # which queues ring computation for completed ceremony (cindex-1 = 1).
 # Participants got reputation from ceremony 1 (bootstrap), and we just
 # registered their Bandersnatch keys, so on_idle will build rings.
-$CLI ceremony next-phase --signer //Alice
-PHASE=$($CLI ceremony get-phase)
+$CLI ceremony admin next-phase --signer //Alice
+PHASE=$($CLI ceremony phase)
 echo "Phase after advance: $PHASE"
 if [ "$PHASE" != "Assigning" ]; then
     echo "ERROR: Expected Assigning phase, got $PHASE"
@@ -74,7 +74,7 @@ COMPLETED_CINDEX=$((CINDEX - 1))
 echo "Ring-computed ceremony index: $COMPLETED_CINDEX"
 
 echo "=== Step 5: Query auto-computed rings ==="
-RINGS_OUTPUT=$($CLI reputation get-rings --cid $CID --ceremony-index $COMPLETED_CINDEX)
+RINGS_OUTPUT=$($CLI personhood ring get --cid $CID --ceremony-index $COMPLETED_CINDEX)
 echo "$RINGS_OUTPUT"
 
 echo "=== Step 6: Verify rings ==="
@@ -102,21 +102,21 @@ for level in 2 3 4 5; do
 done
 
 echo "=== Step 7: Ring-VRF Proof of Personhood ==="
-PROVE_OUTPUT=$($CLI reputation prove-personhood //Alice --cid $CID \
+PROVE_OUTPUT=$($CLI personhood prove-ring-membership //Alice --cid $CID \
     --ceremony-index $COMPLETED_CINDEX --level 1 --sub-ring 0)
 echo "$PROVE_OUTPUT"
 SIGNATURE=$(echo "$PROVE_OUTPUT" | grep "^signature:" | awk '{print $2}')
 [ -n "$SIGNATURE" ] || { echo "ERROR: prove-personhood failed"; exit 1; }
 
 echo "=== Step 8: Verify ring-VRF proof ==="
-VERIFY_OUTPUT=$($CLI reputation verify-personhood --cid $CID \
+VERIFY_OUTPUT=$($CLI personhood verify-ring-membership --cid $CID \
     --ceremony-index $COMPLETED_CINDEX --level 1 --sub-ring 0 \
     --signature $SIGNATURE)
 echo "$VERIFY_OUTPUT"
 echo "$VERIFY_OUTPUT" | grep -q "VALID" || { echo "ERROR: verify failed"; exit 1; }
 
 echo "=== Step 9: Wrong context must fail ==="
-$CLI reputation verify-personhood --cid $CID --ceremony-index 999 \
+$CLI personhood verify-ring-membership --cid $CID --ceremony-index 999 \
     --level 1 --sub-ring 0 --signature $SIGNATURE 2>&1 && {
     echo "ERROR: should have failed"; exit 1; } || true
 

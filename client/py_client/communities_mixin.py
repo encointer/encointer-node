@@ -17,7 +17,7 @@ class _CommunityMixin:
         return ret.stdout.decode("utf-8").strip()
 
     def add_locations(self, specfile, signer=None, cid=None, pay_fees_in_cc=False):
-        cmd = ["community", "add-locations", specfile]
+        cmd = ["community", "location", "add", specfile]
         if signer:
             cmd += ["--signer", signer]
         ret = self.run_cli_command(cmd, cid=cid, pay_fees_in_cc=pay_fees_in_cc)
@@ -25,7 +25,7 @@ class _CommunityMixin:
         return ret.stdout.decode("utf-8").strip()
 
     def remove_location(self, signer, geohash, location_index=None, cid=None, pay_fees_in_cc=False):
-        cmd = ["community", "remove-location", "--signer", signer, "--geohash", geohash]
+        cmd = ["community", "location", "remove", "--signer", signer, "--geohash", geohash]
         if location_index is not None:
             cmd += ["--location-index", str(location_index)]
         ret = self.run_cli_command(cmd, cid=cid, pay_fees_in_cc=pay_fees_in_cc)
@@ -33,5 +33,5 @@ class _CommunityMixin:
         return ret.stdout.decode("utf-8").strip()
 
     def list_locations(self, cid=None):
-        ret = self.run_cli_command(["community", "list-locations"], cid=cid)
+        ret = self.run_cli_command(["community", "location", "list"], cid=cid)
         return ret.stdout.decode("utf-8").strip()
