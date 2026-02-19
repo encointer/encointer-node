@@ -3,7 +3,7 @@ name = "encointer-cli"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 #keep with node version. major, minor and patch
-version = "1.21.1"
+version = "1.21.2"
 
 [dependencies]
 array-bytes = "6.2.2"

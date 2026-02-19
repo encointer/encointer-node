@@ -2840,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-api-client-extension"
-version = "14.4.0"
+version = "21.4.0"
 dependencies = [
  "ac-keystore",
  "async-trait",
@@ -2924,7 +2924,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-cli"
-version = "1.21.1"
+version = "1.21.2"
 dependencies = [
  "ac-keystore",
  "ark-bn254",
@@ -2982,7 +2982,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node"
-version = "1.21.1"
+version = "1.21.2"
 dependencies = [
  "clap",
  "encointer-balances-tx-payment-rpc",
@@ -3042,7 +3042,7 @@ dependencies = [
 
 [[package]]
 name = "encointer-node-runtime"
-version = "1.21.390"
+version = "1.21.400"
 dependencies = [
  "encointer-balances-tx-payment",
  "encointer-balances-tx-payment-rpc-runtime-api",
