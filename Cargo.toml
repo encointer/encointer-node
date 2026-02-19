@@ -3,8 +3,8 @@ resolver = "2"
 members = [
     'node',
     'runtime',
-    'client',
-    'client/encointer-api-client-extension',
+    'cli',
+    'cli/encointer-api-client-extension',
 ]
 
 [profile.release]

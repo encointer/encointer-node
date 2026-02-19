@@ -7,7 +7,7 @@ Substrate-based blockchain node for the Encointer protocol.
 ```
 node/     - Node binary (networking, consensus, RPC)
 runtime/  - WASM runtime (pallets, weights, genesis)
-client/   - API client library
+cli/      - CLI client and API client library
 ```
 
 ## Build & Run
@@ -101,11 +101,11 @@ Key files:
 Change branch in all `[patch.crates-io]` entries (there are ~22 of them).
 Use find-replace: `branch = "old-branch"` → `branch = "new-branch"`
 
-## Bot Community Simulation (`client/`)
+## Bot Community Simulation (`cli/`)
 
 ### Running locally
 
-Must run from `client/` directory (keystore, typedefs.json, community specs are relative paths).
+Must run from `cli/` directory (keystore, typedefs.json, community specs are relative paths).
 
 ```bash
 cd client
@@ -133,8 +133,8 @@ python3 bot-community.py simulate --ceremonies 7
 - `phase.py` — watches block events, advances ceremony phase after N idle blocks. Has an "armed" gate: ignores idle blocks until the first user extrinsic is seen (prevents premature advancement on startup).
 - `faucet.py` — Flask HTTP service on port 5000, funds accounts with native tokens via `//Alice`.
 - `bot-community.py` — orchestrator: init creates community, simulate runs N ceremonies.
-- `py_client/agent_pool.py` — core agent logic: registration, attestation, growth, auxiliary features, assertions.
-- `py_client/campaign_*.py` — modular campaign plugins (personhood, offline payment, swap option).
+- `py_cli/agent_pool.py` — core agent logic: registration, attestation, growth, auxiliary features, assertions.
+- `py_cli/campaign_*.py` — modular campaign plugins (personhood, offline payment, swap option).
 
 ### Key patterns
 

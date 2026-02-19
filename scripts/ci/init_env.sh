@@ -6,7 +6,7 @@ set -euo pipefail
 export CI_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export SCRIPT_DIR="$(dirname "$CI_DIR")"
 export PROJ_ROOT="$(dirname "$SCRIPT_DIR")"
-export CLIENT_DIR="$PROJ_ROOT/client"
+export CLIENT_DIR="$PROJ_ROOT/cli"
 export CLIENT_BIN="$PROJ_ROOT/target/release/encointer-cli"
 export NODE_BIN="$PROJ_ROOT/target/release/encointer-node"
 
