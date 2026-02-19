@@ -8,6 +8,7 @@ useful for benchmarking bot communities in a local setup
 """
 
 import subprocess
+import time
 import click
 from substrateinterface import SubstrateInterface
 import json
@@ -44,7 +45,13 @@ def main(client, url, port, idle_blocks):
     while True:
         result = substrate.query("System", "EventCount", subscription_handler=subscription_handler)
         print('NEXT PHASE!')
-        client.next_phase()
+        for attempt in range(5):
+            try:
+                client.next_phase()
+                break
+            except Exception as e:
+                print(f'next_phase attempt {attempt + 1} failed: {e}, retrying in 6s...')
+                time.sleep(6)
         COUNT = 0
 
 
