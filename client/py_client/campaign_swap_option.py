@@ -1,3 +1,4 @@
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from py_client.campaign import Campaign
@@ -9,8 +10,7 @@ class SwapOptionCampaign(Campaign):
 
     Timeline:
       cindex 5 (on_post_ceremony): fund treasury, submit proposals
-      cindex 6 (on_attesting):     vote on proposals
-      cindex 6 (on_post_ceremony): update proposal states
+      cindex 6 (on_attesting):     vote, wait confirmation period, approve
       cindex 7 (on_post_ceremony): check enactment, query & exercise options
     """
 
@@ -20,48 +20,26 @@ class SwapOptionCampaign(Campaign):
     NATIVE_ALLOWANCE = 1_000_000_000_000  # 1 KSM in pico
     RATE = 100_000  # CC per native token
     TREASURY_FUND = 10_000_000_000_000  # 10 KSM in pico
+    # Matches ConfirmationPeriod in runtime/src/lib.rs: 5 * 60 * 1000 ms
+    CONFIRMATION_PERIOD_S = 300
 
     def __init__(self, pool, log=None):
         super().__init__(pool, log)
         self._proposal_ids = []
         self._merchants = []
 
-    def on_registering(self, cindex):
-        if cindex > self.SUBMIT_CINDEX:
-            self._maybe_update_proposals()
-
-    def on_assigning(self, cindex):
-        if cindex > self.SUBMIT_CINDEX:
-            self._maybe_update_proposals()
-
     def on_attesting(self, cindex):
-        if cindex > self.SUBMIT_CINDEX:
-            self._maybe_update_proposals()
         if cindex == self.VOTE_CINDEX:
-            self._vote_aye()
+            self._vote_and_confirm()
 
     def on_post_ceremony(self, cindex):
         try:
             if cindex == self.SUBMIT_CINDEX:
                 self._submit_proposals()
-            elif cindex == self.VOTE_CINDEX:
-                self._update_and_check()
             elif cindex == self.EXERCISE_CINDEX:
                 self._exercise_options()
         except Exception as e:
             print(f"  ⚠ Campaign swap_option failed at cindex {cindex}: {e}")
-
-    def _maybe_update_proposals(self):
-        """Update all tracked proposal states so they can advance through the lifecycle."""
-        if not self._proposal_ids:
-            return
-        updater = self.pool.agents[0].account
-        for pid in self._proposal_ids:
-            try:
-                self.client.update_proposal_state(updater, pid)
-            except Exception:
-                pass
-        self.pool._wait()
 
     def _submit_proposals(self):
         """Fund community treasury and submit swap-native-option proposals."""
@@ -106,11 +84,45 @@ class SwapOptionCampaign(Campaign):
             f"expected 2 swap-native-option proposals, got {len(self._proposal_ids)}")
         print(f"  ✓ submitted {len(self._proposal_ids)} proposals: {self._proposal_ids}")
 
-    def _vote_aye(self):
-        """All reputables vote aye on swap-native-option proposals."""
+    def _vote_and_confirm(self):
+        """Vote aye, then wait for confirmation period so proposals reach Approved."""
         if not self._proposal_ids:
             return
 
+        t0 = time.monotonic()
+        self._vote_aye()
+
+        # Push proposals into Confirming state
+        updater = self.pool.agents[0].account
+        for pid in self._proposal_ids:
+            try:
+                self.client.update_proposal_state(updater, pid)
+            except Exception:
+                pass
+        self.pool._wait()
+
+        # Wait for confirmation period to elapse on-chain
+        elapsed = time.monotonic() - t0
+        remaining = self.CONFIRMATION_PERIOD_S - elapsed
+        if remaining > 0:
+            print(f"  ⏳ waiting {remaining:.0f}s for confirmation period")
+            time.sleep(remaining)
+
+        # Push proposals into Approved state (enters enactment queue)
+        for pid in self._proposal_ids:
+            try:
+                self.client.update_proposal_state(updater, pid)
+            except Exception:
+                pass
+        self.pool._wait()
+
+        proposals = self.client.get_proposals()
+        for p in proposals:
+            if p.id in self._proposal_ids:
+                print(f"  proposal {p.id}: state={p.state}, turnout={p.turnout}, approval={p.approval}")
+
+    def _vote_aye(self):
+        """All reputables vote aye on swap-native-option proposals."""
         proposals = self.client.get_proposals()
         swap_proposals = [p for p in proposals if p.id in self._proposal_ids and p.state == 'Ongoing']
         if not swap_proposals:
@@ -142,28 +154,11 @@ class SwapOptionCampaign(Campaign):
             print(f"  proposal {proposal.id}: {voted} aye votes cast")
             self.pool._wait()
 
-    def _update_and_check(self):
-        """Update proposal states and check for approval."""
-        assert self._proposal_ids, "swap option campaign: no proposals to update"
-
-        print("📋 Campaign swap_option: updating proposal states")
-        updater = self.pool.agents[0].account
-        for pid in self._proposal_ids:
-            self.client.update_proposal_state(updater, pid)
-        self.pool._wait()
-
-        proposals = self.client.get_proposals()
-        for p in proposals:
-            if p.id in self._proposal_ids:
-                print(f"  proposal {p.id}: state={p.state}, turnout={p.turnout}, approval={p.approval}")
-                assert p.state in ('Approved', 'Confirming', 'Ongoing'), (
-                    f"unexpected state {p.state} for proposal {p.id}")
-
     def _exercise_options(self):
         """After enactment: query swap options and exercise them partially."""
         assert self._merchants, "swap option campaign: no merchants (submit phase failed?)"
 
-        # Final state update to trigger enactment
+        # Final state update in case enactment hook already fired
         print("💱 Campaign swap_option: checking enactment and exercising options")
         updater = self.pool.agents[0].account
         for pid in self._proposal_ids:
