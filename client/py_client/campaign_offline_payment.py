@@ -97,7 +97,7 @@ class OfflinePaymentCampaign(Campaign):
         return proofs
 
     def _settle_with_retries(self, proof_paths):
-        """Settle all proofs with retry rounds, distributing across agents in parallel."""
+        """Settle all proofs, parallel across settlers, sequential per settler."""
         settlers = [a.account for a in self.pool.agents if a.is_reputable]
         if not settlers:
             settlers = [self.pool.agents[0].account]
@@ -105,30 +105,37 @@ class OfflinePaymentCampaign(Campaign):
 
         pending = list(proof_paths)
         total = len(pending)
-        round_stats = []
 
-        for round_num in range(1, self.MAX_RETRY_ROUNDS + 1):
-            if not pending:
-                break
-            settled = []
-            failed = []
-            tasks = [(settlers[i % len(settlers)], path) for i, path in enumerate(pending)]
-            with ThreadPoolExecutor(max_workers=100) as pool:
-                futures = {pool.submit(self.client.submit_offline_payment,
-                                       signer=settler, proof_file=path): path
-                           for settler, path in tasks}
-                for future in as_completed(futures):
-                    path = futures[future]
-                    try:
-                        future.result()
-                        os.unlink(path)
-                        settled.append(path)
-                    except Exception:
-                        failed.append(path)
-            self.pool._wait()
-            round_stats.append({'round': round_num, 'settled': len(settled), 'failed': len(failed)})
-            print(f"  settlement round {round_num}: {len(settled)} settled, {len(failed)} failed")
-            pending = failed
+        # Bucket proofs by settler: each settler submits its batch sequentially
+        buckets = {s: [] for s in settlers}
+        for i, path in enumerate(pending):
+            buckets[settlers[i % len(settlers)]].append(path)
+
+        settled_count = 0
+        failed_paths = []
+
+        def settle_batch(settler, paths):
+            ok, fail = 0, []
+            for path in paths:
+                try:
+                    self.client.submit_offline_payment(signer=settler, proof_file=path)
+                    os.unlink(path)
+                    ok += 1
+                except Exception:
+                    fail.append(path)
+            return ok, fail
+
+        with ThreadPoolExecutor(max_workers=len(settlers)) as pool:
+            futures = {pool.submit(settle_batch, s, paths): s
+                       for s, paths in buckets.items() if paths}
+            for future in as_completed(futures):
+                ok, fail = future.result()
+                settled_count += ok
+                failed_paths.extend(fail)
+
+        self.pool._wait()
+        print(f"  settlement: {settled_count} settled, {len(failed_paths)} failed")
+        pending = failed_paths
 
         # Clean up any remaining temp files
         for path in pending:
@@ -138,12 +145,12 @@ class OfflinePaymentCampaign(Campaign):
                 pass
 
         total_settled = total - len(pending)
-        stats = {'total': total, 'settled': total_settled, 'rounds': len(round_stats), 'per_round': round_stats}
+        stats = {'total': total, 'settled': total_settled, 'failed': len(pending)}
 
         if pending:
-            print(f"  ⚠ {len(pending)} proofs failed to settle after {self.MAX_RETRY_ROUNDS} rounds")
+            print(f"  ⚠ {len(pending)} proofs failed to settle")
         else:
-            print(f"  all {total_settled}/{total} proofs settled in {len(round_stats)} round(s)")
+            print(f"  all {total_settled}/{total} proofs settled")
         return stats
 
     def write_summary(self, cindex):
@@ -154,6 +161,4 @@ class OfflinePaymentCampaign(Campaign):
         self.log._file.write(
             f"  Total proofs: {s['total']}\n"
             f"  Settled:      {s['settled']}\n"
-            f"  Rounds:       {s['rounds']}\n")
-        for r in s['per_round']:
-            self.log._file.write(f"    Round {r['round']}: {r['settled']} settled, {r['failed']} failed\n")
+            f"  Failed:       {s['failed']}\n")
