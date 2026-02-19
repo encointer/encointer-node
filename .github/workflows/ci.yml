@@ -408,7 +408,7 @@ jobs:
             --add-host host.docker.internal:host-gateway \
             encointer-cli-test phase.py \
             -u ws://host.docker.internal \
-            --port 9944 --idle-blocks 5 &
+            --port 9944 --idle-blocks 6 &
 
       - name: Test ${{ matrix.test }}
         run: |
