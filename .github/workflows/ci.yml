@@ -257,7 +257,7 @@ jobs:
 
       - name: start dev node
         run:
-          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
+          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe --rpc-max-connections 500 &
 
       - name: start faucet service
         run: |
