@@ -189,7 +189,10 @@ class SwapOptionCampaign(Campaign):
         print(f"  ✓ {len(enacted)} / {len(self._proposal_ids)} proposals enacted")
 
         exercised = 0
+        self._balances = []
         for merchant in self._merchants:
+            bal_before = self.client.balance(merchant.account)
+
             # Query the swap option
             option_str = self.client.get_swap_native_option(merchant.account, cid=self.cid)
             print(f"  {merchant.account[:8]}... option: {option_str[:120]}")
@@ -210,6 +213,9 @@ class SwapOptionCampaign(Campaign):
             assert "No swap" not in remaining, "option disappeared after partial exercise"
             print(f"    ✓ remaining option: {remaining[:120]}")
 
+            bal_after = self.client.balance(merchant.account)
+            self._balances.append((merchant.account[:10], bal_before, bal_after))
+
         assert exercised == len(self._merchants), (
             f"expected {len(self._merchants)} exercises, got {exercised}")
 
@@ -223,3 +229,5 @@ class SwapOptionCampaign(Campaign):
             proposals = self.client.get_proposals()
             enacted = sum(1 for p in proposals if p.id in self._proposal_ids and p.state == 'Enacted')
             self.log._file.write(f"  Enacted: {enacted}\n")
+            for acct, before, after in getattr(self, '_balances', []):
+                self.log._file.write(f"  {acct}...: native {before:.0f} → {after:.0f}\n")
