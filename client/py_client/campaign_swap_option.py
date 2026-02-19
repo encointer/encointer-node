@@ -26,17 +26,42 @@ class SwapOptionCampaign(Campaign):
         self._proposal_ids = []
         self._merchants = []
 
-    def on_post_ceremony(self, cindex):
-        if cindex == self.SUBMIT_CINDEX:
-            self._submit_proposals()
-        elif cindex == self.VOTE_CINDEX:
-            self._update_and_check()
-        elif cindex == self.EXERCISE_CINDEX:
-            self._exercise_options()
+    def on_registering(self, cindex):
+        if cindex > self.SUBMIT_CINDEX:
+            self._maybe_update_proposals()
+
+    def on_assigning(self, cindex):
+        if cindex > self.SUBMIT_CINDEX:
+            self._maybe_update_proposals()
 
     def on_attesting(self, cindex):
+        if cindex > self.SUBMIT_CINDEX:
+            self._maybe_update_proposals()
         if cindex == self.VOTE_CINDEX:
             self._vote_aye()
+
+    def on_post_ceremony(self, cindex):
+        try:
+            if cindex == self.SUBMIT_CINDEX:
+                self._submit_proposals()
+            elif cindex == self.VOTE_CINDEX:
+                self._update_and_check()
+            elif cindex == self.EXERCISE_CINDEX:
+                self._exercise_options()
+        except Exception as e:
+            print(f"  ⚠ Campaign swap_option failed at cindex {cindex}: {e}")
+
+    def _maybe_update_proposals(self):
+        """Update all tracked proposal states so they can advance through the lifecycle."""
+        if not self._proposal_ids:
+            return
+        updater = self.pool.agents[0].account
+        for pid in self._proposal_ids:
+            try:
+                self.client.update_proposal_state(updater, pid)
+            except Exception:
+                pass
+        self.pool._wait()
 
     def _submit_proposals(self):
         """Fund community treasury and submit swap-native-option proposals."""
