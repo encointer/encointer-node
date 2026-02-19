@@ -128,9 +128,9 @@ fn testnet_genesis(
 			"currentPhase": CeremonyPhaseType::Registering,
 			"currentCeremonyIndex": 1,
 			"phaseDurations": vec![
-				(CeremonyPhaseType::Registering, 604800000u64), // 7d
-				(CeremonyPhaseType::Assigning, 86400000u64),    // 1d
-				(CeremonyPhaseType::Attesting, 172800000u64),   // 2d
+				(CeremonyPhaseType::Registering, 1200000u64), // 20min
+				(CeremonyPhaseType::Assigning, 1200000u64),   // 20min
+				(CeremonyPhaseType::Attesting, 1200000u64),   // 20min
 			],
 		},
 		"encointerCeremonies": {

@@ -204,6 +204,7 @@ jobs:
   integration-test:
     name: ${{ matrix.test }}
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs: build
     strategy:
       fail-fast: false
@@ -245,7 +246,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10.16
+          python-version: "3.10"
       - name: install py dependencies
         run: ./scripts/install_python_deps.sh
 
@@ -256,12 +257,12 @@ jobs:
 
       - name: start dev node
         run:
-          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe &
+          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe --rpc-max-connections 500 &
 
       - name: start faucet service
         run: |
           cd client
-          python faucet.py &
+          PYTHONUNBUFFERED=1 python faucet.py &
 
       - name: Start IPFS gateway
         if: contains(matrix.test, 'ipfs-upload')
@@ -280,7 +281,7 @@ jobs:
       - name: start phase accelerator service
         run: |
           cd client
-          python phase.py --idle-blocks 3 &
+          PYTHONUNBUFFERED=1 python phase.py --idle-blocks 3 &
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
@@ -289,6 +290,14 @@ jobs:
             export IPFS_GATEWAY_URL=http://127.0.0.1:5050
           fi
           source ./init_env.sh && ./${{ matrix.test }}
+
+      - name: Upload bot-community simulation log
+        if: always() && contains(matrix.test, 'test_bot_community')
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-community-log-${{ github.sha }}
+          path: client/bot-community-log.txt
+          if-no-files-found: warn
 
       - name: Print IPFS gateway logs
         if: always() && contains(matrix.test, 'ipfs-upload')
@@ -308,7 +317,7 @@ jobs:
           - bootstrap_demo_community.py --signer //Bob --test unregister-and-upgrade-registration
           - bootstrap_demo_community.py --signer //Bob --test endorsement
           - bootstrap_demo_community.py --signer //Bob --test democracy
-          - bot-community-test -f http://host.docker.internal:5000/api
+          # bot-community-test removed: duplicate of test_bot_community.sh in integration-test
           # Todo: #386
           # - test-register-businesses -f http://host.docker.internal:5000/api
     steps:

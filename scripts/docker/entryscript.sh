@@ -18,7 +18,7 @@ case $1 in
     # docker run -it --add-host host.docker.internal:host-gateway test-client bot-community-test -u ws://host.docker.internal --port 9944 -f http://host.docker.internal:5000/api
 
     /bot-community.py --client /encointer-client-notee $PARAMS init
-    /bot-community.py --client /encointer-client-notee $PARAMS test
+    /bot-community.py --client /encointer-client-notee $PARAMS simulate --ceremonies 7
     diff bot-stats.csv bot-stats-golden.csv
     ;;
 
