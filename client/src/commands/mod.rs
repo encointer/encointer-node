@@ -108,6 +108,14 @@ pub async fn run(cli: &Cli) {
 				)
 				.await,
 			CommunityCmd::GetTreasury => encointer_treasuries::get_treasury_account(cli).await,
+			CommunityCmd::GetSwapNativeOption { account } =>
+				encointer_treasuries::get_swap_native_option(cli, account).await,
+			CommunityCmd::GetSwapAssetOption { account } =>
+				encointer_treasuries::get_swap_asset_option(cli, account).await,
+			CommunityCmd::SwapNative { account, amount } =>
+				encointer_treasuries::swap_native(cli, account, *amount).await,
+			CommunityCmd::SwapAsset { account, amount } =>
+				encointer_treasuries::swap_asset(cli, account, *amount).await,
 		},
 		Commands::Bazaar { cmd } => match cmd {
 			BazaarCmd::CreateBusiness { account, ipfs_cid } =>
@@ -218,6 +226,48 @@ pub async fn run(cli: &Cli) {
 				encointer_democracy::submit_petition(cli, account, demand).await,
 			DemocracyCmd::SubmitSpendNative { account, to, amount } =>
 				encointer_democracy::submit_spend_native_proposal(cli, account, to, *amount).await,
+			DemocracyCmd::SubmitIssueSwapNativeOption {
+				account,
+				to,
+				native_allowance,
+				rate,
+				do_burn,
+				valid_from,
+				valid_until,
+			} =>
+				encointer_democracy::submit_issue_swap_native_option_proposal(
+					cli,
+					account,
+					to,
+					*native_allowance,
+					*rate,
+					*do_burn,
+					*valid_from,
+					*valid_until,
+				)
+				.await,
+			DemocracyCmd::SubmitIssueSwapAssetOption {
+				account,
+				to,
+				asset_id,
+				asset_allowance,
+				rate,
+				do_burn,
+				valid_from,
+				valid_until,
+			} =>
+				encointer_democracy::submit_issue_swap_asset_option_proposal(
+					cli,
+					account,
+					to,
+					asset_id,
+					*asset_allowance,
+					*rate,
+					*do_burn,
+					*valid_from,
+					*valid_until,
+				)
+				.await,
 			DemocracyCmd::ListProposals { all } =>
 				encointer_democracy::list_proposals(cli, *all).await,
 			DemocracyCmd::ListEnactments => encointer_democracy::list_enactment_queue(cli).await,

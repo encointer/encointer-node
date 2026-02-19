@@ -335,6 +335,30 @@ pub enum CommunityCmd {
 	},
 	/// Get community treasury account
 	GetTreasury,
+	/// Query swap native option for an account
+	GetSwapNativeOption {
+		/// AccountId (SS58)
+		account: String,
+	},
+	/// Query swap asset option for an account
+	GetSwapAssetOption {
+		/// AccountId (SS58)
+		account: String,
+	},
+	/// Exercise a swap native option
+	SwapNative {
+		/// AccountId (SS58)
+		account: String,
+		/// Desired amount of native tokens to receive
+		amount: u128,
+	},
+	/// Exercise a swap asset option
+	SwapAsset {
+		/// AccountId (SS58)
+		account: String,
+		/// Desired amount of asset tokens to receive
+		amount: u128,
+	},
 	/// Remove a location for a community
 	RemoveLocation {
 		/// Account with necessary privileges
@@ -556,6 +580,53 @@ pub enum DemocracyCmd {
 		to: String,
 		/// Amount
 		amount: u128,
+	},
+	/// Submit proposal to issue a swap native option
+	SubmitIssueSwapNativeOption {
+		/// AccountId (SS58)
+		account: String,
+		/// Beneficiary (SS58)
+		to: String,
+		/// Total native token allowance
+		#[arg(long = "native-allowance")]
+		native_allowance: u128,
+		/// CC per native token exchange rate (omit for oracle/auction)
+		#[arg(long)]
+		rate: Option<f64>,
+		/// Burn CC instead of sending to treasury
+		#[arg(long = "do-burn")]
+		do_burn: bool,
+		/// First time of validity (unix timestamp in milliseconds)
+		#[arg(long = "valid-from")]
+		valid_from: Option<u64>,
+		/// Expiry time (unix timestamp in milliseconds)
+		#[arg(long = "valid-until")]
+		valid_until: Option<u64>,
+	},
+	/// Submit proposal to issue a swap asset option
+	SubmitIssueSwapAssetOption {
+		/// AccountId (SS58)
+		account: String,
+		/// Beneficiary (SS58)
+		to: String,
+		/// SCALE-encoded VersionedLocatableAsset (hex)
+		#[arg(long = "asset-id")]
+		asset_id: String,
+		/// Total asset token allowance
+		#[arg(long = "asset-allowance")]
+		asset_allowance: u128,
+		/// CC per asset token exchange rate (omit for oracle/auction)
+		#[arg(long)]
+		rate: Option<f64>,
+		/// Burn CC instead of sending to treasury
+		#[arg(long = "do-burn")]
+		do_burn: bool,
+		/// First time of validity (unix timestamp in milliseconds)
+		#[arg(long = "valid-from")]
+		valid_from: Option<u64>,
+		/// Expiry time (unix timestamp in milliseconds)
+		#[arg(long = "valid-until")]
+		valid_until: Option<u64>,
 	},
 	/// List proposals
 	ListProposals {
