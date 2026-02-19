@@ -48,7 +48,7 @@ class _DemocracyMixin:
                                                     rate=None, do_burn=False,
                                                     valid_from=None, valid_until=None,
                                                     cid=None, pay_fees_in_cc=False):
-        cmd = ["submit-issue-swap-native-option-proposal", account, to,
+        cmd = ["democracy", "submit-issue-swap-native-option", account, to,
                "--native-allowance", str(native_allowance)]
         if rate is not None:
             cmd += ["--rate", str(rate)]
