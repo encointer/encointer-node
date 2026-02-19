@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTHONUNBUFFERED=1
 
 echo "grow community for 7 ceremony cycles with full feature coverage"
 

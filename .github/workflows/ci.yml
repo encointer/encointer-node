@@ -261,7 +261,7 @@ jobs:
       - name: start faucet service
         run: |
           cd client
-          python faucet.py &
+          PYTHONUNBUFFERED=1 python faucet.py &
 
       - name: Start IPFS gateway
         if: contains(matrix.test, 'ipfs-upload')
@@ -280,7 +280,7 @@ jobs:
       - name: start phase accelerator service
         run: |
           cd client
-          python phase.py --idle-blocks 3 &
+          PYTHONUNBUFFERED=1 python phase.py --idle-blocks 3 &
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
