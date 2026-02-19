@@ -21,7 +21,12 @@ class OfflinePaymentCampaign(Campaign):
     def on_post_ceremony(self, cindex):
         if cindex != self.target_ceremony:
             return
+        try:
+            self._run_offline_payments()
+        except Exception as e:
+            print(f"  ⚠ Campaign offline_payment failed: {e}")
 
+    def _run_offline_payments(self):
         offline_agents = [a for a in self.pool.agents if a.has_offline_identity]
         merchants = [a for a in self.pool.agents if a.has_business]
 
@@ -145,7 +150,7 @@ class OfflinePaymentCampaign(Campaign):
         if self._stats is None or self.log is None or cindex != self.target_ceremony:
             return
         s = self._stats
-        self.log.phase('Campaign: offline_payment')
+        self.log.phase('Campaign: offline_payment', cindex)
         self.log._file.write(
             f"  Total proofs: {s['total']}\n"
             f"  Settled:      {s['settled']}\n"

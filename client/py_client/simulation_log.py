@@ -31,11 +31,15 @@ class SimulationLog:
     def ceremony(self, cindex):
         self._file.write(f"\n{'═' * 60}\n CEREMONY {cindex}\n{'═' * 60}\n")
 
-    def phase(self, name):
-        self._file.write(f"\n── {name} {'─' * (50 - len(name))}\n")
+    def phase(self, name, cindex=None):
+        tag = f" [{cindex}]" if cindex is not None else ""
+        label = f"{name}{tag}"
+        self._file.write(f"\n── {label} {'─' * max(1, 50 - len(label))}\n")
 
-    def summary(self, text):
-        self._file.write(f"\n── Summary {'─' * 42}\n{text}\n")
+    def summary(self, text, cindex=None):
+        tag = f" [{cindex}]" if cindex is not None else ""
+        label = f"Summary{tag}"
+        self._file.write(f"\n── {label} {'─' * max(1, 50 - len(label))}\n{text}\n")
 
     def close(self):
         self._file.flush()

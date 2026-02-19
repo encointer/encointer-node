@@ -11,7 +11,7 @@ class ProvePersonhoodCampaign(Campaign):
     level (anonymity check).
     """
 
-    MIN_CINDEX = 4
+    TARGET_CINDEX = 6
     MAX_WORKERS = 100
     MAX_PROVERS = 10
 
@@ -20,7 +20,7 @@ class ProvePersonhoodCampaign(Campaign):
         self._results = []  # (cindex, level, agent_count, anonymity_ok)
 
     def on_post_ceremony(self, cindex):
-        if cindex < self.MIN_CINDEX:
+        if cindex != self.TARGET_CINDEX:
             return
 
         all_ring_agents = [a for a in self.pool.agents if a.has_bandersnatch]
@@ -28,27 +28,26 @@ class ProvePersonhoodCampaign(Campaign):
             print("  Campaign prove_personhood: no agents with bandersnatch keys, skipping")
             return
 
-        # Sample a few provers — ring size is determined by total membership, not prover count
-        ring_agents = all_ring_agents[:self.MAX_PROVERS]
-        print(f"🔮 Campaign prove_personhood: {len(ring_agents)}/{len(all_ring_agents)} agents (ring size {len(all_ring_agents)})")
-
         # Find most recent cindex with populated rings
         chain_cindex = self.client.get_cindex()
         ring_cindex = None
         rings_output = None
         for ci in range(chain_cindex - 2, 0, -1):
-            rings_output = self.client.get_rings(self.cid, ci)
-            m = re.search(r'Level 1/5:\s+(\d+)\s+members', rings_output)
+            output = self.client.get_rings(self.cid, ci)
+            m = re.search(r'Level 1/5:\s+(\d+)\s+members', output)
             if m and int(m.group(1)) > 0:
                 ring_cindex = ci
-                print(f"  found rings at cindex={ci}")
+                rings_output = output
                 break
 
         if ring_cindex is None:
             print("  no rings with members found, skipping")
             return
 
-        # Parse levels with members
+        ring_agents = all_ring_agents[:self.MAX_PROVERS]
+        print(f"🔮 Campaign prove_personhood: {len(ring_agents)}/{len(all_ring_agents)} agents (ring size {len(all_ring_agents)})")
+        print(f"  found rings at cindex={ring_cindex}")
+
         available_levels = []
         for m in re.finditer(r'Level (\d)/5:\s+(\d+)\s+members', rings_output):
             level, count = int(m.group(1)), int(m.group(2))
@@ -109,6 +108,6 @@ class ProvePersonhoodCampaign(Campaign):
         ceremony_results = [(lv, cnt, ok) for ci, lv, cnt, ok in self._results if ci == cindex]
         if not ceremony_results:
             return
-        self.log.phase('Campaign: prove_personhood')
+        self.log.phase('Campaign: prove_personhood', cindex)
         for level, count, ok in ceremony_results:
             self.log._file.write(f"  Level {level}/5: {count} proved, anonymity={'PASS' if ok else 'FAIL'}\n")

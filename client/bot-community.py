@@ -210,7 +210,7 @@ def simulate(ctx, ceremonies, assert_invariants, fail_fast):
         # Registering
         wait_for_phase('Registering')
         pool.start_heartbeat()
-        log.phase('Registering')
+        log.phase('Registering', cindex)
         ts('Phase: Registering')
         pool.execute_registering()
         for c in campaigns:
@@ -220,7 +220,7 @@ def simulate(ctx, ceremonies, assert_invariants, fail_fast):
         # Assigning (phase.py advances after idle detection)
         wait_for_phase('Assigning')
         pool.start_heartbeat()
-        log.phase('Assigning')
+        log.phase('Assigning', cindex)
         ts('Phase: Assigning')
         pool.execute_assigning()
         for c in campaigns:
@@ -230,13 +230,13 @@ def simulate(ctx, ceremonies, assert_invariants, fail_fast):
         # Attesting + post-ceremony work
         wait_for_phase('Attesting')
         pool.start_heartbeat()
-        log.phase('Attesting')
+        log.phase('Attesting', cindex)
         ts('Phase: Attesting')
         pool.execute_attesting()
         for c in campaigns:
             c.on_attesting(cindex)
 
-        log.phase('Base Auxiliary')
+        log.phase('Base Auxiliary', cindex)
         pool.run_base_auxiliary(cindex)
         for c in campaigns:
             c.on_post_ceremony(cindex)

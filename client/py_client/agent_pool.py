@@ -30,6 +30,7 @@ class AgentPool:
         self._heartbeat_account = None
         self._heartbeat_stop = None
         self._heartbeat_thread = None
+        self.skip_proposal_ids = set()  # campaigns register IDs to exclude from base democracy voting
 
     def _wait(self, blocks=None):
         self.client.await_block(blocks or self.waiting_blocks)
@@ -446,7 +447,7 @@ class AgentPool:
             print(
                 f"checking proposal {proposal.id}, state: {proposal.state}, "
                 f"approval: {proposal.approval} turnout: {proposal.turnout}")
-            if proposal.state == 'Ongoing' and proposal.turnout <= 1:
+            if proposal.state == 'Ongoing' and proposal.turnout <= 1 and proposal.id not in self.skip_proposal_ids:
                 choices = ['aye', 'nay']
                 target_approval = self.rng.random()
                 target_turnout = self.rng.random()
@@ -525,7 +526,7 @@ class AgentPool:
             f"  Endorsees:  {endorsees}\n"
             f"  Meetups:    {num_meetups} ({sum(meetup_sizes)} participants, sizes {meetup_sizes})"
         )
-        self.client.log.phase('Assigning Summary')
+        self.client.log.phase('Assigning Summary', self.client.get_cindex())
         self.client.log._file.write(lines + '\n')
 
     def write_democracy_summary(self):
@@ -534,7 +535,7 @@ class AgentPool:
             return
         proposals = self.client.get_proposals()
         if not proposals:
-            self.client.log.phase('Democracy: no proposals')
+            self.client.log.phase('Democracy: no proposals', self.client.get_cindex())
             return
         by_state = {}
         for p in proposals:
@@ -546,7 +547,7 @@ class AgentPool:
                 lines.append(f"  {state}: {len(group)}")
                 for p in group:
                     lines.append(f"    #{p.id} {p.action}  turnout={p.turnout} approval={p.approval}")
-        self.client.log.phase('Democracy')
+        self.client.log.phase('Democracy', self.client.get_cindex())
         self.client.log._file.write('\n'.join(lines) + '\n')
 
     def write_ceremony_summary(self, cindex):
@@ -592,7 +593,7 @@ class AgentPool:
             f"  Rings: {rings_info}\n"
             f"  Auxiliary features: {aux}"
         )
-        self.client.log.summary(text)
+        self.client.log.summary(text, cindex)
 
     def write_stats(self, path='bot-stats.csv'):
         with open(path, 'w') as f:

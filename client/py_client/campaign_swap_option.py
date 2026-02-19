@@ -82,6 +82,7 @@ class SwapOptionCampaign(Campaign):
         ]
         assert len(self._proposal_ids) == 2, (
             f"expected 2 swap-native-option proposals, got {len(self._proposal_ids)}")
+        self.pool.skip_proposal_ids.update(self._proposal_ids)
         print(f"  ✓ submitted {len(self._proposal_ids)} proposals: {self._proposal_ids}")
 
     def _vote_and_confirm(self):
@@ -201,7 +202,7 @@ class SwapOptionCampaign(Campaign):
         if self.log is None:
             return
         if cindex == self.EXERCISE_CINDEX and self._merchants:
-            self.log.phase('Campaign: swap_option')
+            self.log.phase('Campaign: swap_option', cindex)
             self.log._file.write(f"  Merchants: {len(self._merchants)}\n")
             self.log._file.write(f"  Proposals: {len(self._proposal_ids)}\n")
             proposals = self.client.get_proposals()
