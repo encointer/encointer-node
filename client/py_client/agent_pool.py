@@ -137,6 +137,13 @@ class AgentPool:
 
     # ── Heartbeat ─────────────────────────────────────────────────────
 
+    def init_heartbeat(self):
+        """Pre-create and fund the heartbeat account so start_heartbeat() is instant."""
+        if self._heartbeat_account is None:
+            self._heartbeat_account = self.client.create_accounts(1)[0]
+            self.client.faucet([self._heartbeat_account], faucet_url=self.faucet_url)
+            self._wait()
+
     def start_heartbeat(self):
         """Send periodic native transfers to prevent phase.py idle-block detection.
 
@@ -144,10 +151,7 @@ class AgentPool:
         """
         if self._heartbeat_thread is not None:
             return  # already running
-        if self._heartbeat_account is None:
-            self._heartbeat_account = self.client.create_accounts(1)[0]
-            self.client.faucet([self._heartbeat_account], faucet_url=self.faucet_url)
-            self._wait()
+        self.init_heartbeat()
         src = self._heartbeat_account
         dst = self.agents[0].account if self.agents else src
         stop_evt = threading.Event()
@@ -596,44 +600,58 @@ class AgentPool:
                 f.write(f"{s['population']}, {s['total_supply']}, "
                         f"{s['businesses']}, {s['offline_ids']}, {s['ring_members']}\n")
 
-    def assert_invariants(self, cindex):
+    def assert_invariants(self, cindex, fail_fast=False, failures=None):
         """Per-ceremony assertions for CI mode."""
         stat = self.stats[-1] if self.stats else None
         if not stat:
             return
 
+        if failures is None:
+            failures = []
+
+        def check(condition, msg):
+            if not condition:
+                tagged = f"[ceremony {cindex}] {msg}"
+                if fail_fast:
+                    assert False, tagged
+                failures.append(tagged)
+                print(f"  ✗ {tagged}")
+                return False
+            return True
+
         print(f"🔬 Asserting invariants for ceremony {cindex}")
 
         # Population should be positive and growing
-        assert stat['population'] > 0, f"population is 0 at cindex {cindex}"
+        check(stat['population'] > 0, f"population is 0")
         if cindex >= 3:
-            assert stat['population'] > 10, f"population should grow beyond bootstrappers by ceremony {cindex}"
+            check(stat['population'] > 10, f"population should grow beyond bootstrappers")
 
         # All agents should have bandersnatch keys and offline identities (registered at creation)
-        assert stat['ring_members'] == stat['population'], (
-            f"ring_members ({stat['ring_members']}) != population ({stat['population']}) at cindex {cindex}")
-        assert stat['offline_ids'] == stat['population'], (
-            f"offline_ids ({stat['offline_ids']}) != population ({stat['population']}) at cindex {cindex}")
-        print(f"  ✓ {stat['ring_members']} keys, {stat['offline_ids']} offline ids == population")
+        ok = check(stat['ring_members'] == stat['population'],
+                   f"ring_members ({stat['ring_members']}) != population ({stat['population']})")
+        ok = check(stat['offline_ids'] == stat['population'],
+                   f"offline_ids ({stat['offline_ids']}) != population ({stat['population']})") and ok
+        if ok:
+            print(f"  ✓ {stat['ring_members']} keys, {stat['offline_ids']} offline ids == population")
 
         # After ceremony 1: total supply should be positive (bootstrappers earned income)
         if cindex >= 2:
-            assert stat['total_supply'] > 0, f"total supply is 0 at cindex {cindex}"
-            print(f"  ✓ total supply {stat['total_supply']} > 0")
+            if check(stat['total_supply'] > 0, "total supply is 0"):
+                print(f"  ✓ total supply {stat['total_supply']} > 0")
 
         # After ceremony 2: businesses should exist (5 merchants set up in ceremony 2)
         if cindex >= 3:
             businesses = self.client.list_businesses(self.cid)
-            assert stat['businesses'] >= 5, f"expected >= 5 businesses, got {stat['businesses']}"
-            assert len(businesses) >= 5, f"expected >= 5 on-chain businesses, got {len(businesses)}"
-            print(f"  ✓ {len(businesses)} businesses on-chain")
+            check(stat['businesses'] >= 5, f"expected >= 5 businesses, got {stat['businesses']}")
+            if check(len(businesses) >= 5, f"expected >= 5 on-chain businesses, got {len(businesses)}"):
+                print(f"  ✓ {len(businesses)} businesses on-chain")
 
         # Verify offline identity readable on-chain
         if cindex >= 3:
             offline_agents = [a for a in self.agents if a.has_offline_identity]
             identity = self.client.get_offline_identity(offline_agents[0].account, cid=self.cid)
-            assert len(identity) > 0, f"offline identity empty for {offline_agents[0].account[:8]}..."
-            print(f"  ✓ offline identity verified on-chain")
+            if check(len(identity) > 0, f"offline identity empty for {offline_agents[0].account[:8]}..."):
+                print(f"  ✓ offline identity verified on-chain")
 
         # After ceremony 2: rings should exist with members matching population
         if cindex >= 3:
@@ -647,14 +665,15 @@ class AgentPool:
                     print(f"  ✓ rings at cindex={ci}: level 1/5 has {members} members")
                     found_rings = True
                     break
-            assert found_rings, f"no rings with members found by ceremony {cindex}"
+            check(found_rings, f"no rings with members found")
 
         # After ceremony 5: democracy proposals should have been voted on
         if cindex >= 5:
             proposals = self.client.get_proposals()
-            assert len(proposals) > 0, "expected democracy proposals by ceremony 5"
+            check(len(proposals) > 0, "expected democracy proposals by ceremony 5")
             voted = [p for p in proposals if p.turnout > 0]
-            assert len(voted) > 0, "expected at least one proposal with votes"
-            print(f"  ✓ {len(proposals)} proposals, {len(voted)} with votes")
+            if check(len(voted) > 0, "expected at least one proposal with votes"):
+                print(f"  ✓ {len(proposals)} proposals, {len(voted)} with votes")
 
-        print(f"  ✓ all invariants passed for ceremony {cindex}")
+        if not any(f.startswith(f"[ceremony {cindex}]") for f in failures):
+            print(f"  ✓ all invariants passed for ceremony {cindex}")

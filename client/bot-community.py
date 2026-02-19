@@ -152,8 +152,10 @@ def execute_current_phase(ctx):
 @click.option('--ceremonies', default=7, help='Number of ceremonies to simulate. 0 for infinite.')
 @click.option('--assert-invariants/--no-assert-invariants', default=True,
               help='Run per-ceremony assertions (CI mode).')
+@click.option('--fail-fast', is_flag=True, default=False,
+              help='Abort on first assertion failure. Without this, failures are collected and reported at the end.')
 @click.pass_obj
-def simulate(ctx, ceremonies, assert_invariants):
+def simulate(ctx, ceremonies, assert_invariants, fail_fast):
     """Run N ceremonies. Phase advancement is handled by phase.py (idle-block detection)."""
     client = ctx['client']
     cid = read_cid()
@@ -164,6 +166,8 @@ def simulate(ctx, ceremonies, assert_invariants):
     pool = AgentPool(client, cid=cid, faucet_url=ctx['faucet_url'],
                      max_population=ctx['max_population'], waiting_blocks=ctx['waiting_blocks'])
     pool.load_agents()
+    pool.init_heartbeat()
+    failures = []
 
     campaigns = [
         ProvePersonhoodCampaign(pool, log),
@@ -242,7 +246,7 @@ def simulate(ctx, ceremonies, assert_invariants):
             c.write_summary(cindex)
 
         if assert_invariants:
-            pool.assert_invariants(cindex)
+            pool.assert_invariants(cindex, fail_fast=fail_fast, failures=failures)
 
         pool.stop_heartbeat()
         ts(f'Ceremony {cindex} complete')
@@ -254,7 +258,13 @@ def simulate(ctx, ceremonies, assert_invariants):
     ts('Stats written to bot-stats.csv')
 
     if assert_invariants:
-        ts('All assertions passed')
+        if failures:
+            ts(f'{len(failures)} assertion(s) FAILED:')
+            for f in failures:
+                print(f'  ✗ {f}')
+            raise SystemExit(1)
+        else:
+            ts('All assertions passed')
 
 
 def purge_keystore_prompt():
