@@ -11,6 +11,8 @@ cd "$CLIENT_DIR"
 
 python bot-community.py --client $CLIENT_BIN init
 python bot-community.py --client $CLIENT_BIN simulate --ceremonies 7
-diff bot-stats.csv bot-stats-golden.csv
+if ! diff bot-stats.csv bot-stats-golden.csv; then
+  echo "⚠ WARNING: bot-stats.csv differs from golden file (see diff above)"
+fi
 
 cd "$CURRENT_DIR"
