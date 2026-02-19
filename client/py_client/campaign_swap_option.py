@@ -10,7 +10,8 @@ class SwapOptionCampaign(Campaign):
 
     Timeline:
       cindex 5 (on_post_ceremony): fund treasury, submit proposals
-      cindex 6 (on_attesting):     vote, wait confirmation period, approve
+      cindex 6 (on_attesting):     vote, push to Confirming
+      cindex 6 (on_post_ceremony): sleep remaining confirmation time, push to Approved
       cindex 7 (on_post_ceremony): check enactment, query & exercise options
     """
 
@@ -27,15 +28,18 @@ class SwapOptionCampaign(Campaign):
         super().__init__(pool, log)
         self._proposal_ids = []
         self._merchants = []
+        self._confirm_time = None  # wall-clock when Confirming was set
 
     def on_attesting(self, cindex):
         if cindex == self.VOTE_CINDEX:
-            self._vote_and_confirm()
+            self._vote_and_start_confirming()
 
     def on_post_ceremony(self, cindex):
         try:
             if cindex == self.SUBMIT_CINDEX:
                 self._submit_proposals()
+            elif cindex == self.VOTE_CINDEX:
+                self._finish_confirming()
             elif cindex == self.EXERCISE_CINDEX:
                 self._exercise_options()
         except Exception as e:
@@ -85,8 +89,8 @@ class SwapOptionCampaign(Campaign):
         self.pool.skip_proposal_ids.update(self._proposal_ids)
         print(f"  ✓ submitted {len(self._proposal_ids)} proposals: {self._proposal_ids}")
 
-    def _vote_and_confirm(self):
-        """Vote aye, then wait for confirmation period so proposals reach Approved."""
+    def _vote_and_start_confirming(self):
+        """Vote aye and push proposals into Confirming state."""
         if not self._proposal_ids:
             return
 
@@ -100,13 +104,24 @@ class SwapOptionCampaign(Campaign):
             except Exception:
                 pass
         self.pool._wait()
+        self._confirm_time = time.monotonic()
+        print(f"  ✓ proposals pushed to Confirming, confirmation timer started")
+
+    def _finish_confirming(self):
+        """Wait remaining confirmation time, then push proposals to Approved."""
+        if self._confirm_time is None:
+            return
 
         # Pallet checks strict `now - since > ConfirmationPeriod`, so add one block
-        wait = self.CONFIRMATION_PERIOD_S + 6
-        print(f"  ⏳ waiting {wait}s for confirmation period ({self.CONFIRMATION_PERIOD_S}s + 1 block)")
-        time.sleep(wait)
+        deadline = self._confirm_time + self.CONFIRMATION_PERIOD_S + 6
+        remaining = deadline - time.monotonic()
+        if remaining > 0:
+            print(f"  ⏳ waiting {remaining:.0f}s for confirmation period to elapse")
+            if self.log:
+                self.log.phase(f'Campaign: swap_option — waiting {remaining:.0f}s for confirmation period')
+            time.sleep(remaining)
 
-        # Push proposals into Approved state (enters enactment queue)
+        updater = self.pool.agents[0].account
         for pid in self._proposal_ids:
             try:
                 self.client.update_proposal_state(updater, pid)
