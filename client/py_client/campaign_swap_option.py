@@ -89,10 +89,9 @@ class SwapOptionCampaign(Campaign):
         if not self._proposal_ids:
             return
 
-        t0 = time.monotonic()
         self._vote_aye()
 
-        # Push proposals into Confirming state
+        # Push proposals into Confirming state — sets on-chain 'since' timestamp
         updater = self.pool.agents[0].account
         for pid in self._proposal_ids:
             try:
@@ -101,12 +100,10 @@ class SwapOptionCampaign(Campaign):
                 pass
         self.pool._wait()
 
-        # Wait for confirmation period to elapse on-chain
-        elapsed = time.monotonic() - t0
-        remaining = self.CONFIRMATION_PERIOD_S - elapsed
-        if remaining > 0:
-            print(f"  ⏳ waiting {remaining:.0f}s for confirmation period")
-            time.sleep(remaining)
+        # Pallet checks strict `now - since > ConfirmationPeriod`, so add one block
+        wait = self.CONFIRMATION_PERIOD_S + 6
+        print(f"  ⏳ waiting {wait}s for confirmation period ({self.CONFIRMATION_PERIOD_S}s + 1 block)")
+        time.sleep(wait)
 
         # Push proposals into Approved state (enters enactment queue)
         for pid in self._proposal_ids:
