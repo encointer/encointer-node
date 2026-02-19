@@ -10,9 +10,9 @@ echo ""
 # Get absolute path for the binary
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJ_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-CLI_BIN="${CLIENT_BIN:-$PROJ_ROOT/target/release/encointer-client-notee}"
+CLI_BIN="${CLIENT_BIN:-$PROJ_ROOT/target/release/encointer-cli}"
 CLI="$CLI_BIN -u ws://127.0.0.1 -p 9944"
-CLIENT_DIR_DEFAULT="$PROJ_ROOT/client"
+CLIENT_DIR_DEFAULT="$PROJ_ROOT/cli"
 CLIENT_DIR="${CLIENT_DIR:-$CLIENT_DIR_DEFAULT}"
 
 echo "=== Step 1: Bootstrap a demo community ==="
@@ -23,7 +23,7 @@ echo ""
 
 echo "=== Step 2: Get community ID ==="
 # The output is like "sqm1v79dF6b: Mediterranea, locations: ..."
-CID=$($CLI list-communities | grep -v "number of" | head -1 | awk -F: '{print $1}')
+CID=$($CLI community list | grep -v "number of" | head -1 | awk -F: '{print $1}')
 echo "Using community: $CID"
 
 if [ -z "$CID" ]; then
@@ -37,21 +37,21 @@ echo "Alice balance: $ALICE_BALANCE"
 
 echo "=== Step 4: Set verification key via sudo ==="
 echo "Setting verification key via sudo..."
-$CLI set-offline-payment-vk --signer //Alice
+$CLI offline-payment admin set-vk --signer //Alice
 echo "Verification key set successfully"
 
 echo "=== Step 5: Register offline identities ==="
-$CLI register-offline-identity //Alice
+$CLI account poseidon-commitment register //Alice
 echo "Registered offline identity for Alice"
 
-$CLI register-offline-identity //Bob
+$CLI account poseidon-commitment register //Bob
 echo "Registered offline identity for Bob"
 
 echo "=== Step 6: Verify offline identities ==="
-ALICE_COMMITMENT=$($CLI get-offline-identity //Alice | grep "Commitment:" | awk '{print $2}')
+ALICE_COMMITMENT=$($CLI account poseidon-commitment get //Alice | grep "Commitment:" | awk '{print $2}')
 echo "Alice commitment: $ALICE_COMMITMENT"
 
-BOB_COMMITMENT=$($CLI get-offline-identity //Bob | grep "Commitment:" | awk '{print $2}')
+BOB_COMMITMENT=$($CLI account poseidon-commitment get //Bob | grep "Commitment:" | awk '{print $2}')
 echo "Bob commitment: $BOB_COMMITMENT"
 
 if [ -z "$ALICE_COMMITMENT" ] || [ -z "$BOB_COMMITMENT" ]; then
@@ -65,7 +65,7 @@ echo "Alice balance before: $ALICE_BALANCE_BEFORE"
 
 echo "=== Step 8: Generate offline payment with ZK proof ==="
 echo "Generating ZK proof (this may take a few seconds)..."
-$CLI generate-offline-payment --signer //Alice --to //Bob --amount 0.1 --cid $CID 2>/dev/null > /tmp/payment.json
+$CLI offline-payment pay --signer //Alice --to //Bob --amount 0.1 --cid $CID 2>/dev/null > /tmp/payment.json
 echo "Generated payment proof:"
 cat /tmp/payment.json
 
@@ -87,7 +87,7 @@ echo "Proof size: $PROOF_LEN bytes"
 
 echo "=== Step 9: Submit offline payment ==="
 echo "Submitting ZK proof to settle payment..."
-$CLI submit-offline-payment --signer //Charlie --proof-file /tmp/payment.json
+$CLI offline-payment settle --signer //Charlie --proof-file /tmp/payment.json
 
 echo "=== Step 10: Verify balances after payment ==="
 ALICE_BALANCE_AFTER=$($CLI balance //Alice --cid $CID | tail -1)

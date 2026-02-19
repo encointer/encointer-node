@@ -3,7 +3,7 @@ authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 homepage = "https://encointer.org"
 license = "GPL-3.0"
-name = "encointer-node-notee-runtime"
+name = "encointer-node-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version

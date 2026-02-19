@@ -36,13 +36,13 @@ You can start a development chain with:
 
 ```bash
 export RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer=debug
-./target/release/encointer-node-notee --dev --enable-offchain-indexing true
+./target/release/encointer-node --dev --enable-offchain-indexing true
 ```
 
 Offchain-indexing is needed for the custom rpc `encointer_getAllCommunities`. If you don't want it, omit the flag.
 `--rpc-methods unsafe` is needed for the bazaar's business and offering aggregation rpcs.
 
-Additional CLI usage options are available and may be shown by running `./target/release/encointer-node-notee --help`.
+Additional CLI usage options are available and may be shown by running `./target/release/encointer-node --help`.
 
 ### Test state migrations
 
@@ -55,7 +55,7 @@ cargo build --release --features try-runtime
 Then test state migrations with against live data on the Gesell network with:
 
 ```bash
-try-runtime --runtime target/release/wbuild/encointer-node-notee-runtime/encointer_node_notee_runtime.compact.compressed.wasm on-runtime-upgrade --checks=pre-and-post --disable-spec-version-check live --uri wss://gesell.encointer.org:443
+try-runtime --runtime target/release/wbuild/encointer-node-runtime/encointer_node_runtime.compact.compressed.wasm on-runtime-upgrade --checks=pre-and-post --disable-spec-version-check live --uri wss://gesell.encointer.org:443
 ```
 
 ### Run with docker
@@ -63,7 +63,7 @@ try-runtime --runtime target/release/wbuild/encointer-node-notee-runtime/encoint
 ```bash
 # Expose the node's ports to the host with the -p flag.
 docker run -p 30333:30333 -p 9944:9944 -p 9933:9933 -p 9615:9615 \
-  encointer/encointer-node-notee:0.0.2 \
+  encointer/encointer-node:0.0.2 \
   --dev \
   --enable-offchain-indexing true \
   --rpc-methods unsafe \
@@ -78,7 +78,7 @@ Join our testnet as a full node with
 
 ```bash
 RUST_LOG=INFO,parity_ws=WARN,sc_basic_authorship=warn,aura=warn,encointer=debug
-./target/release/encointer-node-notee --chain gesellv4SpecRaw.json --enable-offchain-indexing true --rpc-cors all
+./target/release/encointer-node --chain gesellv4SpecRaw.json --enable-offchain-indexing true --rpc-cors all
 ```
 
 ## CLI client
@@ -90,17 +90,17 @@ cli application instead that supports all interactions with the chain
 
 ```bash
 encointer-node/client> cargo build --release
-encointer-node/client> ../target/release/encointer-client-notee transfer //Alice 5GziKpBELV7fuYNy7quQfWGgVARn8onchS86azuPQkFj9nEZ 1000000
-encointer-node/client> ../target/release/encointer-client-notee list_participant_registry
-encointer-node/client> ../target/release/encointer-client-notee list_meetup_registry
-encointer-node/client> ../target/release/encointer-client-notee list_witnesses_registry
-encointer-node/client> ../target/release/encointer-client-notee --help
+encointer-node/client> ../target/release/encointer-cli transfer //Alice 5GziKpBELV7fuYNy7quQfWGgVARn8onchS86azuPQkFj9nEZ 1000000
+encointer-node/client> ../target/release/encointer-cli list_participant_registry
+encointer-node/client> ../target/release/encointer-cli list_meetup_registry
+encointer-node/client> ../target/release/encointer-cli list_witnesses_registry
+encointer-node/client> ../target/release/encointer-cli --help
 ```
 
 The master of ceremony can play fast-forward for demo purposes (ceremonies only happen ~monthly. not good for demos)
 
 ```bash
-encointer-node/client> ./encointer-client-notee next_phase
+encointer-node/client> ./encointer-cli next_phase
 ```
 
 To run a full demo (you may need to fix ports in the scripts if you change them):
@@ -112,13 +112,13 @@ encointer-node/client> ./bootstrap_demo_community.sh
 ### Run with docker
 
 ```bash
-docker run -it encointer/encointer-client-notee:<version> [encointer-client-notee|bootstrap_demo_community.py|cli.py] <params>
+docker run -it encointer/encointer-cli:<version> [encointer-cli|bootstrap_demo_community.py|cli.py] <params>
 
 # Example to talk to a node on the host.
-docker run -it encointer/encointer-client-notee:<version> encointer-client-notee list-communities -u ws://host.docker.internal -p 9944
+docker run -it encointer/encointer-cli:<version> encointer-cli list-communities -u ws://host.docker.internal -p 9944
 
 # Bootstrap demo community on a node on the host machine.
-docker run -it encointer-client-notee:dev bootstrap_demo_community.py -u ws://host.docker.internal -p 9944
+docker run -it encointer-cli:dev bootstrap_demo_community.py -u ws://host.docker.internal -p 9944
 ```
 
 ### Grow Bot Community

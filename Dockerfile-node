@@ -12,15 +12,15 @@ RUN apt update && apt install -yq jq netcat ca-certificates
 # 	chown -R encointer:encointer /encointer/.local && \
 # 	ln -s /encointer/.local/share/encointer-collator /data
 
-COPY encointer-node-notee /usr/local/bin
+COPY encointer-node /usr/local/bin
 #COPY ./scripts/healthcheck9933.sh /usr/local/bin
 
-RUN chmod +x /usr/local/bin/encointer-node-notee
+RUN chmod +x /usr/local/bin/encointer-node
 #RUN chmod +x /usr/local/bin/healthcheck9933.sh
 
 # checks
-RUN ldd /usr/local/bin/encointer-node-notee && \
-	/usr/local/bin/encointer-node-notee --version
+RUN ldd /usr/local/bin/encointer-node && \
+	/usr/local/bin/encointer-node --version
 
 # Shrinking
 #RUN rm -rf /usr/lib/python* && \
@@ -30,4 +30,4 @@ RUN ldd /usr/local/bin/encointer-node-notee && \
 EXPOSE 30333 9933 9944 9615
 VOLUME ["/data"]
 
-ENTRYPOINT ["/usr/local/bin/encointer-node-notee"]
+ENTRYPOINT ["/usr/local/bin/encointer-node"]

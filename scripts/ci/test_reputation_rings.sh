@@ -10,9 +10,9 @@ echo ""
 # Get absolute path for the binary
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJ_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-CLI_BIN="${CLIENT_BIN:-$PROJ_ROOT/target/release/encointer-client-notee}"
+CLI_BIN="${CLIENT_BIN:-$PROJ_ROOT/target/release/encointer-cli}"
 CLI="$CLI_BIN -u ws://127.0.0.1 -p 9944"
-CLIENT_DIR_DEFAULT="$PROJ_ROOT/client"
+CLIENT_DIR_DEFAULT="$PROJ_ROOT/cli"
 CLIENT_DIR="${CLIENT_DIR:-$CLIENT_DIR_DEFAULT}"
 
 echo "=== Step 1: Bootstrap a demo community (first ceremony) ==="
@@ -26,7 +26,7 @@ echo ""
 # phase (cindex=1) had completed=0 and on_ceremony_phase_change returns early.
 
 echo "=== Step 2: Get community ID and ceremony index ==="
-CID=$($CLI list-communities | grep -v "number of" | head -1 | awk -F: '{print $1}')
+CID=$($CLI community list | grep -v "number of" | head -1 | awk -F: '{print $1}')
 echo "Using community: $CID"
 
 if [ -z "$CID" ]; then
@@ -34,21 +34,21 @@ if [ -z "$CID" ]; then
     exit 1
 fi
 
-CINDEX=$($CLI get-cindex)
+CINDEX=$($CLI ceremony index)
 echo "Current ceremony index: $CINDEX"
-PHASE=$($CLI get-phase)
+PHASE=$($CLI ceremony phase)
 echo "Current phase: $PHASE"
 
 echo "=== Step 3: Register Bandersnatch keys (auto-derived) ==="
 # Keys must be registered BEFORE the Assigning phase so they are
 # picked up by automatic ring computation.
-$CLI register-bandersnatch-key //Alice
+$CLI account bandersnatch-pubkey register //Alice
 echo "Registered Bandersnatch key for Alice"
 
-$CLI register-bandersnatch-key //Bob
+$CLI account bandersnatch-pubkey register //Bob
 echo "Registered Bandersnatch key for Bob"
 
-$CLI register-bandersnatch-key //Charlie
+$CLI account bandersnatch-pubkey register //Charlie
 echo "Registered Bandersnatch key for Charlie"
 
 echo "=== Step 4: Advance to Assigning phase (triggers auto ring computation) ==="
@@ -57,8 +57,8 @@ echo "=== Step 4: Advance to Assigning phase (triggers auto ring computation) ==
 # which queues ring computation for completed ceremony (cindex-1 = 1).
 # Participants got reputation from ceremony 1 (bootstrap), and we just
 # registered their Bandersnatch keys, so on_idle will build rings.
-$CLI next-phase --signer //Alice
-PHASE=$($CLI get-phase)
+$CLI ceremony admin next-phase --signer //Alice
+PHASE=$($CLI ceremony phase)
 echo "Phase after advance: $PHASE"
 if [ "$PHASE" != "Assigning" ]; then
     echo "ERROR: Expected Assigning phase, got $PHASE"
@@ -74,7 +74,7 @@ COMPLETED_CINDEX=$((CINDEX - 1))
 echo "Ring-computed ceremony index: $COMPLETED_CINDEX"
 
 echo "=== Step 5: Query auto-computed rings ==="
-RINGS_OUTPUT=$($CLI get-rings --cid $CID --ceremony-index $COMPLETED_CINDEX)
+RINGS_OUTPUT=$($CLI personhood ring get --cid $CID --ceremony-index $COMPLETED_CINDEX)
 echo "$RINGS_OUTPUT"
 
 echo "=== Step 6: Verify rings ==="
@@ -102,21 +102,21 @@ for level in 2 3 4 5; do
 done
 
 echo "=== Step 7: Ring-VRF Proof of Personhood ==="
-PROVE_OUTPUT=$($CLI prove-personhood //Alice --cid $CID \
+PROVE_OUTPUT=$($CLI personhood prove-ring-membership //Alice --cid $CID \
     --ceremony-index $COMPLETED_CINDEX --level 1 --sub-ring 0)
 echo "$PROVE_OUTPUT"
 SIGNATURE=$(echo "$PROVE_OUTPUT" | grep "^signature:" | awk '{print $2}')
 [ -n "$SIGNATURE" ] || { echo "ERROR: prove-personhood failed"; exit 1; }
 
 echo "=== Step 8: Verify ring-VRF proof ==="
-VERIFY_OUTPUT=$($CLI verify-personhood --cid $CID \
+VERIFY_OUTPUT=$($CLI personhood verify-ring-membership --cid $CID \
     --ceremony-index $COMPLETED_CINDEX --level 1 --sub-ring 0 \
     --signature $SIGNATURE)
 echo "$VERIFY_OUTPUT"
 echo "$VERIFY_OUTPUT" | grep -q "VALID" || { echo "ERROR: verify failed"; exit 1; }
 
 echo "=== Step 9: Wrong context must fail ==="
-$CLI verify-personhood --cid $CID --ceremony-index 999 \
+$CLI personhood verify-ring-membership --cid $CID --ceremony-index 999 \
     --level 1 --sub-ring 0 --signature $SIGNATURE 2>&1 && {
     echo "ERROR: should have failed"; exit 1; } || true
 

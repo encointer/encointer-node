@@ -7,7 +7,7 @@ Substrate-based blockchain node for the Encointer protocol.
 ```
 node/     - Node binary (networking, consensus, RPC)
 runtime/  - WASM runtime (pallets, weights, genesis)
-client/   - API client library
+cli/      - CLI client and API client library
 ```
 
 ## Build & Run
@@ -25,7 +25,7 @@ cargo build --release
 ./target/release/encointer-node --dev
 
 # Build only the runtime WASM
-cargo build --release -p encointer-node-notee-runtime
+cargo build --release -p encointer-node-runtime
 ```
 
 ## formatting and linting
@@ -40,12 +40,12 @@ taplo fmt
 
 ## WASM Runtime Size
 
-The runtime WASM is at `target/release/wbuild/encointer-node-notee-runtime/`:
-- `encointer_node_notee_runtime.compact.compressed.wasm` - production artifact
+The runtime WASM is at `target/release/wbuild/encointer-node-runtime/`:
+- `encointer_node_runtime.compact.compressed.wasm` - production artifact
 
 Compare sizes:
 ```bash
-ls -la target/release/wbuild/encointer-node-notee-runtime/*.wasm
+ls -la target/release/wbuild/encointer-node-runtime/*.wasm
 ```
 
 The offline-payment pallet adds ~175 KB compressed due to arkworks BN254 pairing code.
@@ -101,17 +101,17 @@ Key files:
 Change branch in all `[patch.crates-io]` entries (there are ~22 of them).
 Use find-replace: `branch = "old-branch"` → `branch = "new-branch"`
 
-## Bot Community Simulation (`client/`)
+## Bot Community Simulation (`cli/`)
 
 ### Running locally
 
-Must run from `client/` directory (keystore, typedefs.json, community specs are relative paths).
+Must run from `cli/` directory (keystore, typedefs.json, community specs are relative paths).
 
 ```bash
 cd client
 
 # 1. Start node
-../target/release/encointer-node-notee --dev --tmp --rpc-port 9944 \
+../target/release/encointer-node --dev --tmp --rpc-port 9944 \
   --enable-offchain-indexing true --rpc-methods unsafe &
 
 # 2. Start phase controller (idle-blocks=3 for fast CI, 10 for relaxed)
@@ -133,8 +133,8 @@ python3 bot-community.py simulate --ceremonies 7
 - `phase.py` — watches block events, advances ceremony phase after N idle blocks. Has an "armed" gate: ignores idle blocks until the first user extrinsic is seen (prevents premature advancement on startup).
 - `faucet.py` — Flask HTTP service on port 5000, funds accounts with native tokens via `//Alice`.
 - `bot-community.py` — orchestrator: init creates community, simulate runs N ceremonies.
-- `py_client/agent_pool.py` — core agent logic: registration, attestation, growth, auxiliary features, assertions.
-- `py_client/campaign_*.py` — modular campaign plugins (personhood, offline payment, swap option).
+- `py_cli/agent_pool.py` — core agent logic: registration, attestation, growth, auxiliary features, assertions.
+- `py_cli/campaign_*.py` — modular campaign plugins (personhood, offline payment, swap option).
 
 ### Key patterns
 

@@ -35,7 +35,7 @@ jobs:
       - name: Delete docker tag
         run: |
           ORGANIZATION="encointer"
-          IMAGE="encointer-client-notee"
+          IMAGE="encointer-cli"
           TAG="${{ steps.vars.outputs.tag }}"
 
           login_data() {
@@ -56,7 +56,7 @@ jobs:
       - name: Delete docker tag node
         run: |
           ORGANIZATION="encointer"
-          IMAGE="encointer-node-notee"
+          IMAGE="encointer-node"
           TAG="${{ steps.vars.outputs.tag }}"
 
           login_data() {
