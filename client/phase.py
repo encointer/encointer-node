@@ -25,7 +25,7 @@ INTRINSIC_EVENTS = 3
 
 
 @click.command()
-@click.option('--client', default='../target/release/encointer-client-notee',
+@click.option('--client', default='../target/release/encointer-cli',
               help='Client binary to communicate with the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')
 @click.option('--port', default='9944', help='ws-port of the chain.')

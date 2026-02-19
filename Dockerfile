@@ -18,7 +18,7 @@ RUN mv /usr/share/ca* /tmp && \
 WORKDIR /
 
 COPY scripts/docker/entryscript.sh /
-COPY encointer-client-notee /
+COPY encointer-cli /
 
 #COPY ./scripts/healthcheck9933.sh /usr/local/bin
 
@@ -36,12 +36,12 @@ COPY client/phase.py /
 COPY client/typedefs.json /
 COPY client/register-random-businesses-and-offerings.py /
 
-RUN chmod +x /encointer-client-notee
+RUN chmod +x /encointer-cli
 #RUN chmod +x /usr/local/bin/healthcheck9933.sh
 
 # checks
-RUN ldd /encointer-client-notee && \
-	/encointer-client-notee --version
+RUN ldd /encointer-cli && \
+	/encointer-cli --version
 
 # Shrinking
 #RUN rm -rf /usr/lib/python* && \

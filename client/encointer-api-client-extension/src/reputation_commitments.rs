@@ -1,5 +1,5 @@
 use crate::{Api, Result};
-use encointer_node_notee_runtime::{AccountId, Hash};
+use encointer_node_runtime::{AccountId, Hash};
 use encointer_primitives::{
 	ceremonies::CommunityCeremony,
 	reputation_commitments::{DescriptorType, PurposeIdType},

@@ -10,7 +10,7 @@ use crate::{
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, ParentchainExtrinsicSigner, SchedulerApi,
 };
-use encointer_node_notee_runtime::Moment;
+use encointer_node_runtime::Moment;
 
 use log::{debug, info};
 

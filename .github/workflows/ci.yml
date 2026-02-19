@@ -1,4 +1,4 @@
-name: build and test notee client and node
+name: build and test client and node
 
 on:
   workflow_dispatch:
@@ -46,13 +46,13 @@ jobs:
       - name: Upload node
         uses: actions/upload-artifact@v4
         with:
-          name: encointer-node-notee-${{ github.sha }}
-          path: target/release/encointer-node-notee
+          name: encointer-node-${{ github.sha }}
+          path: target/release/encointer-node
       - name: Upload CLI client
         uses: actions/upload-artifact@v4
         with:
-          name: encointer-client-notee-${{ github.sha }}
-          path: target/release/encointer-client-notee
+          name: encointer-cli-${{ github.sha }}
+          path: target/release/encointer-cli
 
   build-try-runtime-and-benchmarks:
     runs-on: ubuntu-22.04
@@ -76,20 +76,20 @@ jobs:
       - name: Upload node
         uses: actions/upload-artifact@v4
         with:
-          name: encointer-node-notee-try-runtime-and-benchmarks-${{ github.sha }}
-          path: target/release/encointer-node-notee
+          name: encointer-node-try-runtime-and-benchmarks-${{ github.sha }}
+          path: target/release/encointer-node
       - name: Upload CLI client
         uses: actions/upload-artifact@v4
         with:
-          name: encointer-client-notee-try-runtime-and-benchmarks-${{ github.sha }}
-          path: target/release/encointer-client-notee
+          name: encointer-cli-try-runtime-and-benchmarks-${{ github.sha }}
+          path: target/release/encointer-cli
 
   build-runtimes:
     name: Build Runtimes
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        runtime: [ "encointer-node-notee" ]
+        runtime: [ "encointer-node" ]
     steps:
       - uses: actions/checkout@v3
 
@@ -157,7 +157,7 @@ jobs:
         os: [ ubuntu-22.04 ]
         rust: [ stable ]
         rust-target: [ x86_64-unknown-linux-gnu ]
-        check: [ +nightly fmt --all -- --check, clippy -p encointer-client-notee ]
+        check: [ +nightly fmt --all -- --check, clippy -p encointer-cli ]
     env:
       RUST_BACKTRACE: full
       RUSTV: ${{ matrix.rust }}
@@ -229,19 +229,19 @@ jobs:
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: encointer-node-notee-${{ github.sha }}
+          name: encointer-node-${{ github.sha }}
 
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: encointer-client-notee-${{ github.sha }}
+          name: encointer-cli-${{ github.sha }}
 
       - name: fix permissions of artifacts and move to original folder
         run: |
-          chmod +x encointer-node-notee
-          chmod +x encointer-client-notee
+          chmod +x encointer-node
+          chmod +x encointer-cli
           mkdir -p target/release
-          mv encointer-*-notee target/release
+          mv encointer-node encointer-cli target/release
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -257,7 +257,7 @@ jobs:
 
       - name: start dev node
         run:
-          ./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe --rpc-max-connections 500 &
+          ./target/release/encointer-node --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe --rpc-max-connections 500 &
 
       - name: start faucet service
         run: |
@@ -326,18 +326,18 @@ jobs:
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: encointer-node-notee-${{ github.sha }}
+          name: encointer-node-${{ github.sha }}
           # for debugging the integration tests, we can just download an image from a previous run
-      #          name: encointer-node-notee-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
+      #          name: encointer-node-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
       #          github-token: ${{ github.token }}
       #          run-id: 12787265993
 
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: encointer-client-notee-${{ github.sha }}
+          name: encointer-cli-${{ github.sha }}
           # for debugging the integration tests, we can just download an image from a previous run
-      #          name: encointer-client-notee-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
+      #          name: encointer-cli-4d0313f614223edf63cd0a5f0ad3d5ce16b81e6c
       #          github-token: ${{ github.token }}
       #          run-id: 12787265993
 
@@ -370,7 +370,7 @@ jobs:
         run: |
           docker build \
             --cache-from=type=gha \
-            -t encointer-client-test .
+            -t encointer-cli-test .
 
       - name: Docker build node
         run: |
@@ -398,7 +398,7 @@ jobs:
         run: |
           docker run -p 5000:5000 \
             --add-host host.docker.internal:host-gateway \
-            encointer-client-test faucet.py \
+            encointer-cli-test faucet.py \
             -u ws://host.docker.internal \
             --port 9944 &
 
@@ -406,7 +406,7 @@ jobs:
         run: |
           docker run \
             --add-host host.docker.internal:host-gateway \
-            encointer-client-test phase.py \
+            encointer-cli-test phase.py \
             -u ws://host.docker.internal \
             --port 9944 --idle-blocks 3 &
 
@@ -414,7 +414,7 @@ jobs:
         run: |
           docker run \
             --add-host host.docker.internal:host-gateway \
-            encointer-client-test ${{ matrix.test }} \
+            encointer-cli-test ${{ matrix.test }} \
             -u ws://host.docker.internal \
             --port 9944 \
 
@@ -432,12 +432,12 @@ jobs:
       - name: Download Encointer Node
         uses: actions/download-artifact@v4
         with:
-          name: encointer-node-notee-${{ github.sha }}
+          name: encointer-node-${{ github.sha }}
 
       - name: Download Encointer Client
         uses: actions/download-artifact@v4
         with:
-          name: encointer-client-notee-${{ github.sha }}
+          name: encointer-cli-${{ github.sha }}
 
       - name: Create required package.json
         run: test -f package.json || echo '{}' >package.json
@@ -460,8 +460,8 @@ jobs:
             ${{ steps.Changelog.outputs.changelog }}
           draft: true
           files: |
-            encointer-node-notee
-            encointer-client-notee
+            encointer-node
+            encointer-cli
 
   publish-runtimes:
     name: Publish Runtimes
@@ -469,7 +469,7 @@ jobs:
     needs: [ release, build-runtimes ]
     strategy:
       matrix:
-        runtime: [ "encointer-node-notee" ]
+        runtime: [ "encointer-node" ]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v4
@@ -493,8 +493,8 @@ jobs:
       #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #        with:
       #          upload_url: ${{ needs.release.outputs.asset_upload_url }}
-      #          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.wasm"
-      #          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
+      #          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_runtime.compact.wasm"
+      #          asset_name: encointer_node_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.wasm
       #          asset_content_type: application/wasm
 
       - name: Upload compressed ${{ matrix.runtime }} wasm
@@ -503,6 +503,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.asset_upload_url }}
-          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_notee_runtime.compact.compressed.wasm"
-          asset_name: encointer_node_notee_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.compressed.wasm
+          asset_path: "${{ matrix.runtime }}-runtime-${{ github.sha }}/encointer_node_runtime.compact.compressed.wasm"
+          asset_name: encointer_node_runtime-v${{ steps.get-runtime-ver.outputs.runtime_ver }}.compact.compressed.wasm
           asset_content_type: application/wasm

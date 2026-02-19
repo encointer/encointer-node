@@ -1,5 +1,5 @@
 use crate::Api;
-use encointer_node_notee_runtime::AccountId;
+use encointer_node_runtime::AccountId;
 use encointer_primitives::{
 	bazaar::{Business, BusinessIdentifier, OfferingData},
 	communities::CommunityIdentifier,

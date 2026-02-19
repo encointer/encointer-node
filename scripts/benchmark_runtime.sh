@@ -20,7 +20,7 @@
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJ_ROOT="$(dirname "$SCRIPTS_DIR")"
 
-NODE=${1:-target/release/encointer-node-notee}
+NODE=${1:-target/release/encointer-node}
 CHAIN_SPEC=${2:-dev}
 WEIGHT_OUTPUT_DIR=${3:-runtime/src/weights}
 

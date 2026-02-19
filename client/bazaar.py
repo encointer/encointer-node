@@ -35,7 +35,7 @@ import os
               help='the community identifier of the community you want to register your business in (11 digits).')
 @click.option('--bizaccount', required=False, help='the account of the owner in ss58 format or raw_seed.')
 @click.option('--price', default='0', help='price of your offering.')
-@click.option('--client', default='../target/release/encointer-client-notee',
+@click.option('--client', default='../target/release/encointer-cli',
               help='Client binary to communicate with the chain.')
 @click.option('--port', default='9944', help='ws-port of the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')

@@ -3,7 +3,7 @@ import os
 
 from py_client.scheduler import CeremonyPhase
 
-DEFAULT_CLIENT = '../target/release/encointer-client-notee'
+DEFAULT_CLIENT = '../target/release/encointer-cli'
 
 
 class Error(Exception):

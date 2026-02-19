@@ -11,13 +11,13 @@ Includes
 ## examples
 
 ```
-> encointer-client new_account
-> encointer-client 127.0.0.1 transfer 5GpuFm6t1AU9xpTAnQnHXakTGA9rSHz8xNkEvx7RVQz2BVpd 5FkGDttiYa9ZoDAuNxzwEdLzkgt6ngWykSBhobGvoFUcUo8B 12345
-> encointer-client 127.0.0.1:9979 register_participant 5FkGDttiYa9ZoDAuNxzwEdLzkgt6ngWykSBhobGvoFUcUo8B
-> encointer-client 127.0.0.1:9979 list_participant_registry
-> encointer-client 127.0.0.1:9979 get_phase
-> encointer-client 127.0.0.1:9979 new_claim 5EqvwjCA8mH6x9gWbSmcQhxDkYHJcUfwjaHHn9q1hBrKLL65 3
-> encointer-client 127.0.0.1:9979 sign_claim 5EqvwjCA8mH6x9gWbSmcQhxDkYHJcUfwjaHHn9q1hBrKLL65 7af690ced4cd1e84a857d047b4fc93f3b4801f9a94c9a4d568a01bc435f5bae903000000000000000000000003000000
+> encointer-cli new_account
+> encointer-cli 127.0.0.1 transfer 5GpuFm6t1AU9xpTAnQnHXakTGA9rSHz8xNkEvx7RVQz2BVpd 5FkGDttiYa9ZoDAuNxzwEdLzkgt6ngWykSBhobGvoFUcUo8B 12345
+> encointer-cli 127.0.0.1:9979 register_participant 5FkGDttiYa9ZoDAuNxzwEdLzkgt6ngWykSBhobGvoFUcUo8B
+> encointer-cli 127.0.0.1:9979 list_participant_registry
+> encointer-cli 127.0.0.1:9979 get_phase
+> encointer-cli 127.0.0.1:9979 new_claim 5EqvwjCA8mH6x9gWbSmcQhxDkYHJcUfwjaHHn9q1hBrKLL65 3
+> encointer-cli 127.0.0.1:9979 sign_claim 5EqvwjCA8mH6x9gWbSmcQhxDkYHJcUfwjaHHn9q1hBrKLL65 7af690ced4cd1e84a857d047b4fc93f3b4801f9a94c9a4d568a01bc435f5bae903000000000000000000000003000000
 ```
 
 Find a full ceremony cycle demo [here](./bootstrap_demo_community.py)
@@ -27,7 +27,7 @@ Find a full ceremony cycle demo [here](./bootstrap_demo_community.py)
 start encointer blockchain in dev mode
 
 ```bash
-./target/release/encointer-node-notee --tmp --dev --enable-offchain-indexing true -lencointer=debug
+./target/release/encointer-node --tmp --dev --enable-offchain-indexing true -lencointer=debug
 ```
 
 start faucet service
@@ -54,7 +54,7 @@ cd client
 listen to chain events for debugging (i.e. see failed extrinsics)
 
 ```bash
-RUST_LOG=encointer_client_notee=info ./target/release/encointer-client-notee listen
+RUST_LOG=encointer_cli=info ./target/release/encointer-cli listen
 ```
 
 execute the current phase (without advancing to the next phase)
@@ -154,7 +154,7 @@ insert your asset ipfs cid from above
 create a proposal:
 
 ```
-RUST_LOG=info ../target/release/encointer-client-notee -u wss://rococo.api.encointer.org -p 443 new-community test-data/leu.rococo.json
+RUST_LOG=info ../target/release/encointer-cli -u wss://rococo.api.encointer.org -p 443 new-community test-data/leu.rococo.json
 ```
 
 ## Logging

@@ -9,7 +9,7 @@ use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, CommunitiesApi, EncointerXt, Moment,
 	ParentchainExtrinsicSigner, TreasuriesApi,
 };
-use encointer_node_notee_runtime::{AccountId, Balance};
+use encointer_node_runtime::{AccountId, Balance};
 use encointer_primitives::{
 	communities::CommunityIdentifier,
 	treasuries::{SwapAssetOption, SwapNativeOption},

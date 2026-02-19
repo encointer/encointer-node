@@ -1,5 +1,5 @@
 use crate::Api;
-use encointer_node_notee_runtime::AccountId;
+use encointer_node_runtime::AccountId;
 use encointer_primitives::communities::CommunityIdentifier;
 
 use substrate_api_client::{ac_compose_macros::rpc_params, rpc::Request};

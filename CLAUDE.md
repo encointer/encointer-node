@@ -25,7 +25,7 @@ cargo build --release
 ./target/release/encointer-node --dev
 
 # Build only the runtime WASM
-cargo build --release -p encointer-node-notee-runtime
+cargo build --release -p encointer-node-runtime
 ```
 
 ## formatting and linting
@@ -40,12 +40,12 @@ taplo fmt
 
 ## WASM Runtime Size
 
-The runtime WASM is at `target/release/wbuild/encointer-node-notee-runtime/`:
-- `encointer_node_notee_runtime.compact.compressed.wasm` - production artifact
+The runtime WASM is at `target/release/wbuild/encointer-node-runtime/`:
+- `encointer_node_runtime.compact.compressed.wasm` - production artifact
 
 Compare sizes:
 ```bash
-ls -la target/release/wbuild/encointer-node-notee-runtime/*.wasm
+ls -la target/release/wbuild/encointer-node-runtime/*.wasm
 ```
 
 The offline-payment pallet adds ~175 KB compressed due to arkworks BN254 pairing code.
@@ -111,7 +111,7 @@ Must run from `client/` directory (keystore, typedefs.json, community specs are 
 cd client
 
 # 1. Start node
-../target/release/encointer-node-notee --dev --tmp --rpc-port 9944 \
+../target/release/encointer-node --dev --tmp --rpc-port 9944 \
   --enable-offchain-indexing true --rpc-methods unsafe &
 
 # 2. Start phase controller (idle-blocks=3 for fast CI, 10 for relaxed)

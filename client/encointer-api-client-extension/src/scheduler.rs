@@ -1,5 +1,5 @@
 use crate::{Api, Moment, Result};
-use encointer_node_notee_runtime::Hash;
+use encointer_node_runtime::Hash;
 use encointer_primitives::{ceremonies::CeremonyIndexType, scheduler::CeremonyPhaseType};
 use substrate_api_client::{api::error::Error as ApiClientError, GetStorage};
 

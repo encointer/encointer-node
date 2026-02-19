@@ -4,7 +4,7 @@
 
 use crate::service::FullClient;
 
-use encointer_node_notee_runtime as runtime;
+use encointer_node_runtime as runtime;
 use runtime::{AccountId, Balance, BalancesCall, SystemCall};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;

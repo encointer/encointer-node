@@ -2845,7 +2845,7 @@ dependencies = [
  "ac-keystore",
  "async-trait",
  "encointer-ceremonies-assignment",
- "encointer-node-notee-runtime",
+ "encointer-node-runtime",
  "encointer-primitives",
  "futures",
  "log",
@@ -2923,7 +2923,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "encointer-client-notee"
+name = "encointer-cli"
 version = "1.21.1"
 dependencies = [
  "ac-keystore",
@@ -2936,7 +2936,7 @@ dependencies = [
  "clap",
  "encointer-api-client-extension",
  "encointer-ceremonies-assignment",
- "encointer-node-notee-runtime",
+ "encointer-node-runtime",
  "encointer-primitives",
  "env_logger",
  "frame-support",
@@ -2981,13 +2981,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "encointer-node-notee"
+name = "encointer-node"
 version = "1.21.1"
 dependencies = [
  "clap",
  "encointer-balances-tx-payment-rpc",
  "encointer-balances-tx-payment-rpc-runtime-api",
- "encointer-node-notee-runtime",
+ "encointer-node-runtime",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-metadata-hash-extension",
@@ -3041,7 +3041,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "encointer-node-notee-runtime"
+name = "encointer-node-runtime"
 version = "1.21.390"
 dependencies = [
  "encointer-balances-tx-payment",

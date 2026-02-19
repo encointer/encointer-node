@@ -1,6 +1,6 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use encointer_node_notee_runtime::{self, opaque::Block, RuntimeApi};
+use encointer_node_runtime::{self, opaque::Block, RuntimeApi};
 use futures::FutureExt;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};

@@ -1,4 +1,4 @@
-use encointer_node_notee_runtime::{
+use encointer_node_runtime::{
 	AccountId, BalanceType, CeremonyPhaseType, Signature, WASM_BINARY,
 };
 use sc_service::{ChainType, Properties};

@@ -1,5 +1,5 @@
 [package]
-name = "encointer-client-notee"
+name = "encointer-cli"
 authors = ["encointer.org <alain@encointer.org>"]
 edition = "2021"
 #keep with node version. major, minor and patch
@@ -22,7 +22,7 @@ tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 # local deps
 encointer-api-client-extension = { path = "./encointer-api-client-extension" }
-encointer-node-notee-runtime = { path = "../runtime" }
+encointer-node-runtime = { path = "../runtime" }
 
 # encointer deps
 encointer-ceremonies-assignment = { workspace = true, features = ["std"] }

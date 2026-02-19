@@ -2,7 +2,7 @@ use crate::{Api, CommunitiesApi, Result, SchedulerApi};
 use encointer_ceremonies_assignment::{
 	assignment_fn_inverse, meetup_index, meetup_location, meetup_time,
 };
-use encointer_node_notee_runtime::{CeremonyIndexType, Hash};
+use encointer_node_runtime::{CeremonyIndexType, Hash};
 use encointer_primitives::{
 	ceremonies::{
 		Assignment, AssignmentCount, CommunityCeremony, MeetupIndexType, MeetupTimeOffsetType,
@@ -145,7 +145,7 @@ pub trait CeremoniesApi {
 	async fn get_participant_attestation_index(
 		&self,
 		key: CommunityCeremony,
-		accountid: &encointer_node_notee_runtime::AccountId,
+		accountid: &encointer_node_runtime::AccountId,
 		maybe_at: Option<Hash>,
 	) -> Option<ParticipantIndexType>;
 	async fn get_attestee_count(
@@ -541,7 +541,7 @@ impl CeremoniesApi for Api {
 	async fn get_participant_attestation_index(
 		&self,
 		key: CommunityCeremony,
-		accountid: &encointer_node_notee_runtime::AccountId,
+		accountid: &encointer_node_runtime::AccountId,
 		maybe_at: Option<Hash>,
 	) -> Option<ParticipantIndexType> {
 		self.get_storage_double_map(

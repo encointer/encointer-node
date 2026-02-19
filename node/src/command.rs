@@ -4,7 +4,7 @@ use crate::{
 	cli::{Cli, Subcommand},
 	service,
 };
-use encointer_node_notee_runtime::{Block, EXISTENTIAL_DEPOSIT};
+use encointer_node_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use sc_cli::SubstrateCli;
 use sc_service::PartialComponents;
@@ -187,8 +187,8 @@ pub fn run() -> sc_cli::Result<()> {
 				match config.network.network_backend {
 					sc_network::config::NetworkBackendType::Libp2p => service::new_full::<
 						sc_network::NetworkWorker<
-							encointer_node_notee_runtime::opaque::Block,
-							<encointer_node_notee_runtime::opaque::Block as sp_runtime::traits::Block>::Hash,
+							encointer_node_runtime::opaque::Block,
+							<encointer_node_runtime::opaque::Block as sp_runtime::traits::Block>::Hash,
 						>,
 					>(config)
 					.map_err(sc_cli::Error::Service),

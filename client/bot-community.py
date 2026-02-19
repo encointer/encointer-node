@@ -7,7 +7,7 @@ you may need to install a few packages first
    pip3 install randomwords geojson pyproj
 
 then start a node with
-   ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
+   ../target/release/encointer-node --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
 and init and grow a community
    ./bot-community.py --port 9945 init
@@ -47,7 +47,7 @@ KEYSTORE_PATH = './my_keystore'
 
 
 @click.group()
-@click.option('--client', default='../target/release/encointer-client-notee',
+@click.option('--client', default='../target/release/encointer-cli',
               help='Client binary to communicate with the chain.')
 @click.option('-p', '--port', default='9944', help='ws-port of the chain.')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')

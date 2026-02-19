@@ -3,7 +3,7 @@
 Demonstrate the bootstrapping of an Encointer community on a *dev* chain.
 
 start node with
-  ../target/release/encointer-node-notee --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
+  ../target/release/encointer-node --dev --tmp --ws-port 9945 --enable-offchain-indexing true --rpc-methods unsafe
 
 or start parachain with
 then run this script
@@ -552,7 +552,7 @@ def test_democracy(client, cid, blocks_to_wait):
 
 
 @click.command()
-@click.option('--client', default='../target/release/encointer-client-notee',
+@click.option('--client', default='../target/release/encointer-cli',
               help='Client binary to communicate with the chain.')
 @click.option('--signer', help='optional account keypair creating the community')
 @click.option('-u', '--url', default='ws://127.0.0.1', help='URL of the chain, or `gesell` alternatively.')

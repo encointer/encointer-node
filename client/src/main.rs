@@ -15,8 +15,8 @@
 //! an RPC client to encointer node using websockets
 //!
 //! examples:
-//! encointer-client-notee ceremony get-phase
-//! encointer-client-notee transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
+//! encointer-cli ceremony get-phase
+//! encointer-cli transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 
 pub(crate) mod cli;
@@ -27,7 +27,7 @@ mod utils;
 use clap::Parser;
 use cli::Cli;
 
-use encointer_node_notee_runtime::BalanceType;
+use encointer_node_runtime::BalanceType;
 
 const PREFUNDING_NR_OF_TRANSFER_EXTRINSICS: u128 = 1000;
 

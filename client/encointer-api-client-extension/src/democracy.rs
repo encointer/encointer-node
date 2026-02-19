@@ -1,5 +1,5 @@
 use crate::{Api, Moment, Result};
-use encointer_node_notee_runtime::Hash;
+use encointer_node_runtime::Hash;
 use encointer_primitives::{
 	ceremonies::ReputationCountType,
 	democracy::{ProposalIdType, Tally},

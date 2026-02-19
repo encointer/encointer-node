@@ -6,7 +6,7 @@ use crate::{
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, EncointerXt, ExtrinsicAddress, ParentchainExtrinsicSigner,
 };
-use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash};
+use encointer_node_runtime::{AccountId, BlockNumber, Hash};
 use log::{debug, info};
 use parity_scale_codec::{Compact, Encode};
 use sp_keyring::Sr25519Keyring as AccountKeyring;

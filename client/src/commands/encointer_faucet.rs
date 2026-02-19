@@ -10,7 +10,7 @@ use crate::{
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
 };
-use encointer_node_notee_runtime::{AccountId, Balance};
+use encointer_node_runtime::{AccountId, Balance};
 use encointer_primitives::faucet::{Faucet, FaucetNameType, FromStr, WhiteListType};
 use log::{error, info};
 use parity_scale_codec::{Decode, Encode};

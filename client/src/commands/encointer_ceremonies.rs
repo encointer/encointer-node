@@ -12,7 +12,7 @@ use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, ApiClientError, AttestationState, CeremoniesApi,
 	CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner, SchedulerApi, ENCOINTER_CEREMONIES,
 };
-use encointer_node_notee_runtime::{AccountId, Hash, Moment, Signature, ONE_DAY};
+use encointer_node_runtime::{AccountId, Hash, Moment, Signature, ONE_DAY};
 use encointer_primitives::{
 	ceremonies::{
 		AttestationIndexType, CeremonyIndexType, ClaimOfAttendance, CommunityCeremony,

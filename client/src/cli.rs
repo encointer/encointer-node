@@ -2,10 +2,10 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(
-	name = "encointer-client-notee",
+	name = "encointer-cli",
 	version,
 	author = "Encointer Association <info@encointer.org>",
-	about = "interact with encointer-node-notee"
+	about = "interact with encointer-node"
 )]
 pub struct Cli {
 	#[arg(short = 'u', long, global = true, default_value = "ws://127.0.0.1")]

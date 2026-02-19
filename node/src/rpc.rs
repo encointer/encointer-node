@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use encointer_node_notee_runtime::{
+use encointer_node_runtime::{
 	opaque::Block, AccountId, AssetBalance, AssetId, Balance, BlockNumber, Moment, Nonce,
 };
 use jsonrpsee::RpcModule;

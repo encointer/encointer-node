@@ -1,20 +1,17 @@
 [package]
 authors = ["encointer.org <alain@encointer.org>"]
 build = "build.rs"
-description = "Encointer Node noTEE"
+description = "Encointer Node"
 edition = "2021"
 homepage = "https://encointer.org"
 license = "GPL-3.0"
-name = "encointer-node-notee"
+name = "encointer-node"
 repository = "https://github.com/encointer/encointer-node"
 # Note the following for the versioning:
 #   * Align major and minor version with polkadot-sdk major.minor.
 #   * Bump patch version for new releases, and make it the release tag.
 #   * The client should follow this version.
 version = "1.21.1"
-
-[[bin]]
-name = "encointer-node-notee"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -71,7 +68,7 @@ frame-benchmarking = { workspace = true, features = ["std"] }
 frame-benchmarking-cli = { workspace = true }
 
 # encointer dependencies
-encointer-node-notee-runtime = { path = "../runtime" }
+encointer-node-runtime = { path = "../runtime" }
 
 encointer-balances-tx-payment-rpc = { workspace = true }
 encointer-balances-tx-payment-rpc-runtime-api = { workspace = true, features = ["std"] }
@@ -90,7 +87,7 @@ frame-try-runtime = { workspace = true, optional = true }
 [features]
 default = []
 runtime-benchmarks = [
-    "encointer-node-notee-runtime/runtime-benchmarks",
+    "encointer-node-runtime/runtime-benchmarks",
     "frame-benchmarking-cli/runtime-benchmarks",
     "frame-benchmarking/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
@@ -101,7 +98,7 @@ runtime-benchmarks = [
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future. Todo: implement try runtime for encointer-pallets
 try-runtime = [
-    "encointer-node-notee-runtime/try-runtime",
+    "encointer-node-runtime/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime/try-runtime",
     "pallet-asset-tx-payment/try-runtime",

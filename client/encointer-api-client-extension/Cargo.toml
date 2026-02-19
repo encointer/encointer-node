@@ -16,7 +16,7 @@ tokio = { workspace = true }
 
 # encointer deps
 encointer-ceremonies-assignment = { workspace = true, features = ["std"] }
-encointer-node-notee-runtime = { path = "../../runtime" }
+encointer-node-runtime = { path = "../../runtime" }
 encointer-primitives = { workspace = true, features = ["std"] }
 
 ac-keystore = { workspace = true }

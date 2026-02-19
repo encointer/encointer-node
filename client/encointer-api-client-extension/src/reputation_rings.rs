@@ -1,5 +1,5 @@
 use crate::{Api, Result};
-use encointer_node_notee_runtime::{AccountId, Hash};
+use encointer_node_runtime::{AccountId, Hash};
 use encointer_primitives::{communities::CommunityIdentifier, scheduler::CeremonyIndexType};
 use parity_scale_codec::Encode;
 use substrate_api_client::GetStorage;

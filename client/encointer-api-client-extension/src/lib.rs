@@ -3,7 +3,7 @@ use substrate_api_client::{
 	rpc::JsonrpseeClient,
 };
 
-pub use encointer_node_notee_runtime::Runtime;
+pub use encointer_node_runtime::Runtime;
 pub use substrate_api_client::{api::error::Error as ApiClientError, Result};
 
 pub type EncointerConfig = WithExtrinsicParams<

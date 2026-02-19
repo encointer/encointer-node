@@ -10,7 +10,7 @@ echo ""
 # Get absolute path for the binary
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJ_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-CLI_BIN="${CLIENT_BIN:-$PROJ_ROOT/target/release/encointer-client-notee}"
+CLI_BIN="${CLIENT_BIN:-$PROJ_ROOT/target/release/encointer-cli}"
 CLI="$CLI_BIN -u ws://127.0.0.1 -p 9944"
 CLIENT_DIR_DEFAULT="$PROJ_ROOT/client"
 CLIENT_DIR="${CLIENT_DIR:-$CLIENT_DIR_DEFAULT}"

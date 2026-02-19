@@ -10,7 +10,7 @@ use crate::{
 use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, CommunitiesApi, EncointerXt, ParentchainExtrinsicSigner,
 };
-use encointer_node_notee_runtime::{AccountId, BlockNumber, Hash, RuntimeEvent};
+use encointer_node_runtime::{AccountId, BlockNumber, Hash, RuntimeEvent};
 use encointer_primitives::balances::{to_U64F64, BalanceEntry, BalanceType, Demurrage};
 
 use encointer_primitives::{communities::CommunityIdentifier, fixed::transcendental::exp};

@@ -1,5 +1,5 @@
 use crate::{Api, Result};
-use encointer_node_notee_runtime::Hash;
+use encointer_node_runtime::Hash;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
 	communities::{CidName, CommunityIdentifier, CommunityMetadata, GeoHash, Location},

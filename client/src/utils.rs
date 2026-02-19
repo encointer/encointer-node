@@ -4,7 +4,7 @@ use crate::{
 	exit_code, BalanceType,
 };
 use encointer_api_client_extension::{Api, EncointerXt};
-use encointer_node_notee_runtime::AccountId;
+use encointer_node_runtime::AccountId;
 use encointer_primitives::{balances::EncointerBalanceConverter, scheduler::CeremonyIndexType};
 use log::{debug, error, info};
 use parity_scale_codec::{Compact, Encode};
@@ -228,7 +228,7 @@ impl Encode for OpaqueCall {
 /// Utils around key management for
 pub mod keys {
 	use ac_keystore::LocalKeystore;
-	use encointer_node_notee_runtime::{AccountId, Signature};
+	use encointer_node_runtime::{AccountId, Signature};
 	use log::{debug, trace};
 	use sp_application_crypto::sr25519;
 	use sp_core::{

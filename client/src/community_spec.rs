@@ -1,4 +1,4 @@
-use encointer_node_notee_runtime::AccountId;
+use encointer_node_runtime::AccountId;
 use encointer_primitives::{
 	balances::{BalanceType, Demurrage},
 	common::{BoundedIpfsCid, FromStr, PalletString},

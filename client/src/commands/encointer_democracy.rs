@@ -12,7 +12,7 @@ use encointer_api_client_extension::{
 	set_api_extrisic_params_builder, Api, CeremoniesApi, CommunitiesApi, DemocracyApi, EncointerXt,
 	Moment, ParentchainExtrinsicSigner, SchedulerApi,
 };
-use encointer_node_notee_runtime::{AccountId, Balance, Hash};
+use encointer_node_runtime::{AccountId, Balance, Hash};
 use encointer_primitives::{
 	balances::BalanceType,
 	ceremonies::{CeremonyIndexType, CommunityCeremony, ReputationCountType},
@@ -29,7 +29,7 @@ use substrate_api_client::{
 };
 
 // Some type aliases
-pub use encointer_node_notee_runtime::VersionedLocatableAsset as XcmLocation;
+pub use encointer_node_runtime::VersionedLocatableAsset as XcmLocation;
 
 // We have configured the runtime such that the ProposalTypes are the same for the solonode
 // and the parachain.
