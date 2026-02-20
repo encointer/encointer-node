@@ -97,13 +97,7 @@ impl PersonhoodCmd {
 					context,
 				)
 				.await,
-			Self::VerifyRingMembership {
-				signature,
-				ceremony_index,
-				level,
-				sub_ring,
-				context,
-			} =>
+			Self::VerifyRingMembership { signature, ceremony_index, level, sub_ring, context } =>
 				encointer_reputation_rings::verify_personhood(
 					cli,
 					signature,
