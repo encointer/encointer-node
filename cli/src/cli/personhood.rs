@@ -20,6 +20,9 @@ pub enum PersonhoodCmd {
 		/// Sub-ring index
 		#[arg(long = "sub-ring", default_value = "0")]
 		sub_ring: u32,
+		/// Application context for domain separation (different contexts yield unlinkable pseudonyms)
+		#[arg(long, default_value = "encointer-pop")]
+		context: String,
 	},
 	/// Verify ring-VRF proof of personhood
 	VerifyRingMembership {
@@ -35,6 +38,9 @@ pub enum PersonhoodCmd {
 		/// Sub-ring index
 		#[arg(long = "sub-ring", default_value = "0")]
 		sub_ring: u32,
+		/// Application context for domain separation (must match the context used for signing)
+		#[arg(long, default_value = "encointer-pop")]
+		context: String,
 	},
 	/// Reputation commitment commands
 	#[command(subcommand)]
@@ -81,22 +87,30 @@ impl PersonhoodCmd {
 		use crate::commands::encointer_reputation_rings;
 		match self {
 			Self::Ring(cmd) => cmd.run(cli).await,
-			Self::ProveRingMembership { account, ceremony_index, level, sub_ring } =>
+			Self::ProveRingMembership { account, ceremony_index, level, sub_ring, context } =>
 				encointer_reputation_rings::prove_personhood(
 					cli,
 					account,
 					*ceremony_index,
 					*level,
 					*sub_ring,
+					context,
 				)
 				.await,
-			Self::VerifyRingMembership { signature, ceremony_index, level, sub_ring } =>
+			Self::VerifyRingMembership {
+				signature,
+				ceremony_index,
+				level,
+				sub_ring,
+				context,
+			} =>
 				encointer_reputation_rings::verify_personhood(
 					cli,
 					signature,
 					*ceremony_index,
 					*level,
 					*sub_ring,
+					context,
 				)
 				.await,
 			Self::Commitment(cmd) => cmd.run(cli).await,
