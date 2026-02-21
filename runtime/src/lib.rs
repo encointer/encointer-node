@@ -571,7 +571,6 @@ impl pallet_encointer_offline_payment::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_offline_payment::WeightInfo<Runtime>;
 	type Currency = Balances;
 	type MaxProofSize = MaxProofSize;
-	type MaxProofSize = MaxProofSize;
 	type MaxVkSize = MaxVkSize;
 	type TrustedSetupOrigin = EnsureRoot<AccountId>;
 }
@@ -734,7 +733,7 @@ pub type UncheckedExtrinsic =
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
 
 /// storage migrations to be applied upon runtime upgrade
-pub type Migrations = (pallet_encointer_democracy::migrations::v2::MigrateV1toV2);
+pub type Migrations = (pallet_encointer_democracy::migrations::v2::MigrateV1toV2<Runtime>);
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
