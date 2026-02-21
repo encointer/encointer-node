@@ -22,14 +22,18 @@ fn get_bandersnatch_pair(account: &str) -> bandersnatch_core::Pair {
 		.expect("valid account string for Bandersnatch key derivation")
 }
 
-/// Build `VrfSignData` for proof-of-personhood context.
+/// Build `VrfSignData` with application-level domain separation.
+///
+/// The `context` string acts as a domain separator: different contexts yield
+/// unlinkable pseudonyms for the same person, enabling contextual pseudonymity.
 fn pop_vrf_sign_data(
 	cid: &encointer_primitives::communities::CommunityIdentifier,
 	ceremony_index: u32,
 	level: u8,
 	sub_ring: u32,
+	context: &str,
 ) -> bandersnatch_core::vrf::VrfSignData {
-	let vrf_input_data = (b"encointer-pop", cid, ceremony_index, level, sub_ring).encode();
+	let vrf_input_data = (context.as_bytes(), cid, ceremony_index, level, sub_ring).encode();
 	bandersnatch_core::vrf::VrfSignData::new(&vrf_input_data, &[])
 }
 
@@ -185,6 +189,7 @@ pub async fn prove_personhood(
 	ceremony_index: u32,
 	level: u8,
 	sub_ring: u32,
+	context: &str,
 ) {
 	let api = get_chain_api(cli).await;
 
@@ -215,7 +220,7 @@ pub async fn prove_personhood(
 	let prover = ring_ctx.prover(&ring_keys, prover_idx);
 
 	// Sign
-	let data = pop_vrf_sign_data(&cid, ceremony_index, level, sub_ring);
+	let data = pop_vrf_sign_data(&cid, ceremony_index, level, sub_ring, context);
 	let signature = pair.ring_vrf_sign(&data, &prover);
 
 	// Output
@@ -232,6 +237,7 @@ pub async fn verify_personhood(
 	ceremony_index: u32,
 	level: u8,
 	sub_ring: u32,
+	context: &str,
 ) {
 	let sig_bytes =
 		hex::decode(sig_hex.trim_start_matches("0x")).expect("Invalid hex for signature");
@@ -258,7 +264,7 @@ pub async fn verify_personhood(
 	let verifier = ring_ctx.verifier(&ring_keys);
 
 	// Verify
-	let data = pop_vrf_sign_data(&cid, ceremony_index, level, sub_ring);
+	let data = pop_vrf_sign_data(&cid, ceremony_index, level, sub_ring, context);
 	if signature.ring_vrf_verify(&data, &verifier) {
 		let pseudonym = signature.pre_output.make_bytes();
 		println!("VALID");

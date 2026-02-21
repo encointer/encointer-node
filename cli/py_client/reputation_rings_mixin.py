@@ -25,12 +25,13 @@ class _ReputationRingsMixin:
         ret = self.run_cli_command(["personhood", "ring", "get", "--ceremony-index", str(ceremony_index)], cid=cid)
         return ret.stdout.decode("utf-8").strip()
 
-    def prove_personhood(self, account, cid, ceremony_index, level=1, sub_ring=0):
+    def prove_personhood(self, account, cid, ceremony_index, level=1, sub_ring=0, context="encointer-pop"):
         ret = self.run_cli_command([
             "personhood", "prove-ring-membership", account,
             "--ceremony-index", str(ceremony_index),
             "--level", str(level),
             "--sub-ring", str(sub_ring),
+            "--context", context,
         ], cid=cid)
         ensure_clean_exit(ret)
         output = ret.stdout.decode("utf-8").strip()
@@ -40,13 +41,14 @@ class _ReputationRingsMixin:
                 return line.split(maxsplit=1)[1].strip(), output
         raise RuntimeError(f"prove-personhood did not return a signature: {output}")
 
-    def verify_personhood(self, signature, cid, ceremony_index, level=1, sub_ring=0):
+    def verify_personhood(self, signature, cid, ceremony_index, level=1, sub_ring=0, context="encointer-pop"):
         ret = self.run_cli_command([
             "personhood", "verify-ring-membership",
             "--signature", signature,
             "--ceremony-index", str(ceremony_index),
             "--level", str(level),
             "--sub-ring", str(sub_ring),
+            "--context", context,
         ], cid=cid)
         output = ret.stdout.decode("utf-8").strip()
         return "VALID" in output, output
