@@ -7,7 +7,7 @@ name = "encointer-node-runtime"
 repository = "https://github.com/encointer/encointer-node/"
 # minor revision must match node/client
 # patch revision must match runtime spec_version
-version = "1.21.400"
+version = "1.21.401"
 
 [dependencies]
 log = { workspace = true }

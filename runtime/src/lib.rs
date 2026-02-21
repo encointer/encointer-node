@@ -140,7 +140,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: Cow::Borrowed("encointer-node-notee"),
 	impl_name: Cow::Borrowed("encointer-node-notee"),
 	authoring_version: 0,
-	spec_version: 400,
+	spec_version: 401,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 5,
@@ -571,6 +571,7 @@ impl pallet_encointer_offline_payment::Config for Runtime {
 	type WeightInfo = weights::pallet_encointer_offline_payment::WeightInfo<Runtime>;
 	type Currency = Balances;
 	type MaxProofSize = MaxProofSize;
+	type MaxProofSize = MaxProofSize;
 	type MaxVkSize = MaxVkSize;
 	type TrustedSetupOrigin = EnsureRoot<AccountId>;
 }
@@ -733,7 +734,7 @@ pub type UncheckedExtrinsic =
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, TxExtension>;
 
 /// storage migrations to be applied upon runtime upgrade
-pub type Migrations = ();
+pub type Migrations = (pallet_encointer_democracy::migrations::v2::MigrateV1toV2);
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
