@@ -279,9 +279,10 @@ jobs:
           done
 
       - name: start phase accelerator service
+        if: contains(matrix.test, 'test_bot_community') || contains(matrix.test, 'test_register_business')
         run: |
           cd cli
-          PYTHONUNBUFFERED=1 python phase.py --idle-blocks 3 &
+          PYTHONUNBUFFERED=1 python phase.py --idle-blocks 0 &
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
@@ -401,14 +402,6 @@ jobs:
             encointer-cli-test faucet.py \
             -u ws://host.docker.internal \
             --port 9944 &
-
-      - name: start phase accelerator service
-        run: |
-          docker run \
-            --add-host host.docker.internal:host-gateway \
-            encointer-cli-test phase.py \
-            -u ws://host.docker.internal \
-            --port 9944 --idle-blocks 6 &
 
       - name: Test ${{ matrix.test }}
         run: |

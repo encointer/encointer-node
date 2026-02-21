@@ -15,9 +15,10 @@ import json
 from py_client.client import Client
 from py_client.helpers import set_local_or_remote_chain
 
-global COUNT, patience, armed
+global COUNT, patience, armed, substrate
 COUNT = 0
 armed = False
+substrate = None
 
 # a solochain has timestamp.set event in every block, a parachain additionaly has parachainSystem.setValidationData and
 # a balance transfer for the collator rewards.
@@ -32,7 +33,7 @@ INTRINSIC_EVENTS = 3
 @click.option('--idle-blocks', default=10, help='how many idle blocks to await before moving to next phase')
 def main(client, url, port, idle_blocks):
     client = set_local_or_remote_chain(client, port, url)
-    global COUNT, patience, armed
+    global COUNT, patience, armed, substrate
     patience = idle_blocks
     with open('typedefs.json') as f:
         custom_type_registry = json.load(f)
@@ -56,15 +57,19 @@ def main(client, url, port, idle_blocks):
 
 
 def subscription_handler(event_count, update_nr, subscription_id):
-    global COUNT, patience, armed
+    global COUNT, patience, armed, substrate
     print(f'events: {event_count}, idle blocks {COUNT}, armed: {armed}')
     if event_count.value > INTRINSIC_EVENTS:
         armed = True
         COUNT = 0
     elif armed:
-        COUNT += 1
-        if COUNT > patience:
-            return update_nr
+        pending = substrate.rpc_request("author_pendingExtrinsics", [])
+        if len(pending.get('result', [])) == 0:
+            COUNT += 1
+            if COUNT > patience:
+                return update_nr
+        else:
+            COUNT = 0
 
 
 def get_node_url(node_url, port):
