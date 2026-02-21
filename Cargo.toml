@@ -48,15 +48,15 @@ pallet-encointer-ceremonies-rpc-runtime-api = { default-features = false, versio
 pallet-encointer-communities = { default-features = false, version = "~21.1.0" }
 pallet-encointer-communities-rpc = { version = "~21.1.0" }
 pallet-encointer-communities-rpc-runtime-api = { default-features = false, version = "~21.1.0" }
-pallet-encointer-democracy = { default-features = false, version = "~21.6.0" }
+pallet-encointer-democracy = { default-features = false, version = "~21.7.0" }
 pallet-encointer-faucet = { default-features = false, version = "~21.2.0" }
 pallet-encointer-reputation-commitments = { default-features = false, version = "~21.1.0" }
 pallet-encointer-scheduler = { default-features = false, version = "~21.1.0" }
 pallet-encointer-treasuries = { default-features = false, version = "~21.7.0" }
 pallet-encointer-treasuries-rpc = { version = "~21.3.0" }
 pallet-encointer-treasuries-rpc-runtime-api = { default-features = false, version = "~21.3.0" }
-pallet-encointer-offline-payment = { git = "https://github.com/encointer/pallets", branch = "master", default-features = false }
-pallet-encointer-reputation-rings = { git = "https://github.com/encointer/pallets", branch = "master", default-features = false }
+pallet-encointer-offline-payment = { default-features = false, version = "~21.0.0" }
+pallet-encointer-reputation-rings = { default-features = false, version = "~21.0.0" }
 
 
 # substrate deps
@@ -182,56 +182,6 @@ ark-std = { version = "0.4.0", default-features = false }
 #pallet-encointer-treasuries-rpc = { path = "../encointer-pallets/treasuries/rpc" }
 #pallet-encointer-treasuries-rpc-runtime-api = { path = "../encointer-pallets/treasuries/rpc/runtime-api" }
 
-# Git patches for master branch (testing no_std fix)
-encointer-balances-tx-payment = { git = "https://github.com/encointer/pallets", branch = "master" }
-encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
-encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
-encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "master" }
-encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-balances = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-bazaar = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-bazaar-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-bazaar-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-ceremonies = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-ceremonies-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-ceremonies-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-communities = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-democracy = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-faucet = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-offline-payment = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-reputation-commitments = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-reputation-rings = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-treasuries = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-treasuries-rpc = { git = "https://github.com/encointer/pallets", branch = "master" }
-pallet-encointer-treasuries-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "master" }
-
-# Git patches for polkadot-stable2503 branch (alternative)
-#encointer-balances-tx-payment = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#encointer-balances-tx-payment-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#encointer-balances-tx-payment-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#encointer-ceremonies-assignment = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#encointer-primitives = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-balances = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-bazaar = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-bazaar-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-bazaar-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-ceremonies = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-ceremonies-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-ceremonies-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-communities = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-communities-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-communities-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-democracy = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-faucet = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-reputation-commitments = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-reputation-rings = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-scheduler = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-treasuries = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-treasuries-rpc = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
-#pallet-encointer-treasuries-rpc-runtime-api = { git = "https://github.com/encointer/pallets", branch = "polkadot-stable2503" }
 
 # [patch."https://github.com/encointer/substrate-fixed"]
 # substrate-fixed = { path = "../substrate-fixed" }
