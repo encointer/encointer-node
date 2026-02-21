@@ -127,11 +127,9 @@ Assuming a local node is running with default ports:
 
 ```bash
 pip3 install pip install geojson pyproj RandomWords substrate-interface
-# in first terminal, do this to accelerate phase progress
-./phase.py --idle-blocks 3
-# in second terminal, launch faucet service
-./faucet.py
-# in third terminal, populate your bot community
+# in first terminal, start the ceremony phase and faucet service
+python ceremony-phase-and-faucet-service.py
+# in second terminal, populate your bot community
 ./bot-community.py init
 ./bot-community.py benchmark
 ```

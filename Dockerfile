@@ -31,8 +31,7 @@ COPY cli/bootstrap_demo_community.py /
 COPY cli/bot-community.py /
 COPY cli/bot-stats-golden.csv /
 COPY cli/cli.py /
-COPY cli/faucet.py /
-COPY cli/phase.py /
+COPY cli/ceremony-phase-and-faucet-service.py /
 COPY cli/typedefs.json /
 COPY cli/register-random-businesses-and-offerings.py /
 
@@ -48,7 +47,7 @@ RUN ldd /encointer-cli && \
 #	rm -rf /usr/bin /usr/sbin /usr/share/man
 
 #USER encointer
-EXPOSE 30333 9933 9944 9615 5000
+EXPOSE 30333 9933 9944 9615 7070
 VOLUME ["/data"]
 
 ENTRYPOINT ["/entryscript.sh"]

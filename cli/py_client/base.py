@@ -93,7 +93,7 @@ class _BaseClient:
         return int(ret.stdout.strip().decode("utf-8"))
 
     def go_to_phase(self, phase, timeout=120):
-        """Advance to target phase via polling. Resilient to concurrent phase.py."""
+        """Advance to target phase via polling."""
         print("⏱ Advancing to phase: " + str(phase))
         deadline = time.monotonic() + timeout
         while True:

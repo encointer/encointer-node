@@ -114,13 +114,10 @@ cd client
 ../target/release/encointer-node --dev --tmp --rpc-port 9944 \
   --enable-offchain-indexing true --rpc-methods unsafe &
 
-# 2. Start phase controller (idle-blocks=3 for fast CI, 10 for relaxed)
-PYTHONUNBUFFERED=1 python3 phase.py --idle-blocks 3 &
+# 2. Start ceremony phase and faucet service
+PYTHONUNBUFFERED=1 python3 ceremony-phase-and-faucet-service.py &
 
-# 3. Start faucet HTTP service
-PYTHONUNBUFFERED=1 python3 faucet.py &
-
-# 4. Init community (purge keystore first)
+# 3. Init community (purge keystore first)
 rm -rf my_keystore
 python3 bot-community.py init
 
@@ -130,16 +127,14 @@ python3 bot-community.py simulate --ceremonies 7
 
 ### Architecture
 
-- `phase.py` — watches block events, advances ceremony phase after N idle blocks. Has an "armed" gate: ignores idle blocks until the first user extrinsic is seen (prevents premature advancement on startup).
-- `faucet.py` — Flask HTTP service on port 5000, funds accounts with native tokens via `//Alice`.
-- `bot-community.py` — orchestrator: init creates community, simulate runs N ceremonies.
-- `py_cli/agent_pool.py` — core agent logic: registration, attestation, growth, auxiliary features, assertions.
-- `py_cli/campaign_*.py` — modular campaign plugins (personhood, offline payment, swap option).
+- `ceremony-phase-and-faucet-service.py` — Flask HTTP service on port 7070. Combines phase coordination (barrier-based: communities register and signal readiness via HTTP) and faucet (funds accounts via `//Alice`). All `//Alice` operations serialized via lock, eliminating nonce clashes.
+- `bot-community.py` — orchestrator: init creates community, simulate runs N ceremonies. Coordinates with the service via `/register`, `/ready`, `/unregister` HTTP calls.
+- `py_client/agent_pool.py` — core agent logic: registration, attestation, growth, auxiliary features, assertions.
+- `py_client/campaign_*.py` — modular campaign plugins (personhood, offline payment, swap option).
 
 ### Key patterns
 
 - **Parallelization**: `ThreadPoolExecutor(max_workers=100)` for independent CLI calls (registration, attestation, voting, key registration). Safe because each account has its own nonce.
-- **Heartbeat**: `AgentPool.start_heartbeat()` sends periodic native transfers to prevent phase.py idle detection during read-heavy work (balance queries, ring queries, assertions). Uses native transfers (`cid=None`) so it works even before agents have CC balance.
 - **Early key registration**: Bandersnatch keys and offline identities are registered at account creation (bootstrap/grow), not during Registering phase. This populates rings from ceremony 1.
 - **Stats capture timing**: `_write_current_stats()` runs before `grow()` in execute_registering (total_supply gates growth). So stats for ceremony N reflect pre-growth state; growth shows up in ceremony N+1's stats.
 
@@ -147,5 +142,4 @@ python3 bot-community.py simulate --ceremonies 7
 
 - `PYTHONUNBUFFERED=1` required for real-time log output (Python buffers stdout when piped).
 - Keystore prompt: delete `my_keystore/` before `init` to avoid interactive y/n prompt.
-- `pip install substrate-interface` (not `substrateinterface`) for phase.py dependency.
 - Assertion timing: population > 10 only valid from cindex >= 3 (growth happens during ceremony 2's Registering but stats captured before growth).
