@@ -1,5 +1,6 @@
 import subprocess
 import os
+import time
 
 from py_client.scheduler import CeremonyPhase
 
@@ -91,18 +92,23 @@ class _BaseClient:
         ret = self.run_cli_command(["ceremony", "index"])
         return int(ret.stdout.strip().decode("utf-8"))
 
-    def go_to_phase(self, phase, blocks_to_wait):
+    def go_to_phase(self, phase, timeout=120):
+        """Advance to target phase via polling."""
         print("⏱ Advancing to phase: " + str(phase))
+        deadline = time.monotonic() + timeout
         while True:
-            p = CeremonyPhase[self.get_phase()]
-            if p == phase:
-                print(f"⏱ Arrived at {p}.")
+            current = CeremonyPhase[self.get_phase()]
+            if current == phase:
+                print(f"⏱ Arrived at {current}.")
                 return
-            else:
-                print(f"⏱ Phase is: {p}. Need to advance")
-                self.next_phase()
-                print(f"⏱ called next phase, waiting for {blocks_to_wait}")
-            self.await_block(blocks_to_wait)
+            if time.monotonic() > deadline:
+                raise TimeoutError(f"Timed out reaching {phase} (stuck at {current})")
+            print(f"⏱ Phase is: {current}. Need to advance")
+            self.next_phase()
+            while CeremonyPhase[self.get_phase()] == current:
+                if time.monotonic() > deadline:
+                    raise TimeoutError(f"Timed out reaching {phase} (stuck at {current})")
+                time.sleep(1)
 
     def list_accounts(self):
         ret = self.run_cli_command(["account", "list"])

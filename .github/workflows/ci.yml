@@ -259,10 +259,11 @@ jobs:
         run:
           ./target/release/encointer-node --tmp --dev --enable-offchain-indexing true --rpc-methods unsafe --rpc-max-connections 500 &
 
-      - name: start faucet service
+      - name: start ceremony phase and faucet service
+        if: contains(matrix.test, 'test_bot_community') || contains(matrix.test, 'test_register_business')
         run: |
           cd cli
-          PYTHONUNBUFFERED=1 python faucet.py &
+          PYTHONUNBUFFERED=1 python ceremony-phase-and-faucet-service.py &
 
       - name: Start IPFS gateway
         if: contains(matrix.test, 'ipfs-upload')
@@ -277,11 +278,6 @@ jobs:
             curl -s http://127.0.0.1:5050/health && break
             sleep 1
           done
-
-      - name: start phase accelerator service
-        run: |
-          cd cli
-          PYTHONUNBUFFERED=1 python phase.py --idle-blocks 3 &
 
       - name: Test ${{ matrix.test }}
         working-directory: ./scripts/ci
@@ -393,22 +389,6 @@ jobs:
             --rpc-methods=unsafe \
             -lencointer=debug,parity_ws=warn \
             --rpc-external &
-
-      - name: start faucet service
-        run: |
-          docker run -p 5000:5000 \
-            --add-host host.docker.internal:host-gateway \
-            encointer-cli-test faucet.py \
-            -u ws://host.docker.internal \
-            --port 9944 &
-
-      - name: start phase accelerator service
-        run: |
-          docker run \
-            --add-host host.docker.internal:host-gateway \
-            encointer-cli-test phase.py \
-            -u ws://host.docker.internal \
-            --port 9944 --idle-blocks 6 &
 
       - name: Test ${{ matrix.test }}
         run: |

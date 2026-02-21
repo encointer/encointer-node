@@ -27,9 +27,6 @@ class AgentPool:
         self.agents: list[Agent] = []
         self.stats: list[dict] = []
         self._faucet_account = None  # set during faucet lifecycle test
-        self._heartbeat_account = None
-        self._heartbeat_stop = None
-        self._heartbeat_thread = None
         self.skip_proposal_ids = set()  # campaigns register IDs to exclude from base democracy voting
 
     def _wait(self, blocks=None):
@@ -135,50 +132,6 @@ class AgentPool:
             start += endorsement_count
 
         return endorsees
-
-    # ── Heartbeat ─────────────────────────────────────────────────────
-
-    def init_heartbeat(self):
-        """Pre-create and fund the heartbeat account so start_heartbeat() is instant."""
-        if self._heartbeat_account is None:
-            self._heartbeat_account = self.client.create_accounts(1)[0]
-            self.client.faucet([self._heartbeat_account], faucet_url=self.faucet_url)
-            self._wait()
-
-    def start_heartbeat(self):
-        """Send periodic native transfers to prevent phase.py idle-block detection.
-
-        Uses a dedicated account to avoid nonce clashes with agent or faucet accounts.
-        """
-        if self._heartbeat_thread is not None:
-            return  # already running
-        self.init_heartbeat()
-        src = self._heartbeat_account
-        dst = self.agents[0].account if self.agents else src
-        stop_evt = threading.Event()
-
-        def beat():
-            while True:
-                try:
-                    self.client.transfer(None, src, dst, "1")
-                except Exception:
-                    pass
-                if stop_evt.wait(4):
-                    break
-
-        t = threading.Thread(target=beat, daemon=True)
-        t.start()
-        self._heartbeat_stop = stop_evt
-        self._heartbeat_thread = t
-
-    def stop_heartbeat(self):
-        """Stop the heartbeat thread."""
-        if self._heartbeat_stop is not None:
-            self._heartbeat_stop.set()
-        if self._heartbeat_thread is not None:
-            self._heartbeat_thread.join(timeout=5)
-        self._heartbeat_stop = None
-        self._heartbeat_thread = None
 
     # ── Parallel helpers ───────────────────────────────────────────────
 

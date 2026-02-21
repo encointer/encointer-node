@@ -65,12 +65,22 @@ if [ "$PHASE" != "Assigning" ]; then
     exit 1
 fi
 
-# Wait for on_idle to process ring computation across several blocks.
+# Poll for on_idle to process ring computation across several blocks.
 # Ring computation needs ~11 steps (6 collection + 5 building).
 echo "Waiting for on_idle ring computation..."
-sleep 24
-
 COMPLETED_CINDEX=$((CINDEX - 1))
+for i in $(seq 1 60); do
+    RINGS_OUTPUT=$($CLI personhood ring get --cid $CID --ceremony-index $COMPLETED_CINDEX 2>&1) || true
+    if echo "$RINGS_OUTPUT" | grep -q "Level 1/5"; then
+        echo "Rings computed after ${i}s"
+        break
+    fi
+    if [ "$i" -eq 60 ]; then
+        echo "ERROR: Ring computation timed out after 60s"
+        exit 1
+    fi
+    sleep 1
+done
 echo "Ring-computed ceremony index: $COMPLETED_CINDEX"
 
 echo "=== Step 5: Query auto-computed rings ==="

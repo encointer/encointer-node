@@ -30,11 +30,11 @@ start encointer blockchain in dev mode
 ./target/release/encointer-node --tmp --dev --enable-offchain-indexing true -lencointer=debug
 ```
 
-start faucet service
+start ceremony phase and faucet service
 
 ```bash
 cd client
-./faucet.py
+python ceremony-phase-and-faucet-service.py
 ```
 
 initialize bot community
@@ -42,13 +42,6 @@ initialize bot community
 ```bash
 cd client
 ./bot-community.py init
-```
-
-start phase controller service (fast forwards phase after N idle blocks)
-
-```bash
-cd client
-./phase.py
 ```
 
 listen to chain events for debugging (i.e. see failed extrinsics)
